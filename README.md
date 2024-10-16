@@ -1,9 +1,3 @@
-# Dari Penulis: Saya akan menterjemahkan kedalam bahasa Indonesia! (Masih dalam pengembangan)
-<div align="left">
-  <img src="https://raw.githubusercontent.com/d2l-ai/d2l-en/master/static/logo-with-text.png" width="350">
-</div>
-
-# Dari Penulis: Saya akan menerjemahkan ke dalam Bahasa Indonesia! (Masih dalam pengembangan)
 <div align="left">
   <img src="https://raw.githubusercontent.com/d2l-ai/d2l-en/master/static/logo-with-text.png" width="350">
 </div>
