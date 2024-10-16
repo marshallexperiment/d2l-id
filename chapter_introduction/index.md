@@ -1,335 +1,99 @@
-# Introduction
-:label:`chap_introduction`
+# Pendahuluan
 
-Until recently, nearly every computer program
-that you might have interacted with during
-an ordinary day
-was coded up as a rigid set of rules
-specifying precisely how it should behave.
-Say that we wanted to write an application
-to manage an e-commerce platform.
-After huddling around a whiteboard
-for a few hours to ponder the problem,
-we might settle on the broad strokes
-of a working solution, for example:
-(i) users interact with the application through an interface
-running in a web browser or mobile application;
-(ii) our application interacts with a commercial-grade database engine
-to keep track of each user's state and maintain records
-of historical transactions;
-and (iii) at the heart of our application,
-the *business logic* (you might say, the *brains*) of our application
-spells out a set of rules that map every conceivable circumstance
-to the corresponding action that our program should take.
+:label:`chap_pendahuluan`
 
-To build the brains of our application,
-we might enumerate all the common events
-that our program should handle.
-For example, whenever a customer clicks
-to add an item to their shopping cart,
-our program should add an entry
-to the shopping cart database table,
-associating that user's ID
-with the requested product's ID.
-We might then attempt to step through
-every possible corner case,
-testing the appropriateness of our rules
-and making any necessary modifications.
-What happens if a user
-initiates a purchase with an empty cart?
-While few developers ever get it
-completely right the first time
-(it might take some test runs to work out the kinks),
-for the most part we can write such programs
-and confidently launch them
-*before* ever seeing a real customer.
-Our ability to manually design automated systems
-that drive functioning products and systems,
-often in novel situations,
-is a remarkable cognitive feat.
-And when you are able to devise solutions
-that work $100\%$ of the time,
-you typically should not be
-worrying about machine learning.
+Hingga baru-baru ini, hampir setiap program komputer yang mungkin Anda gunakan sehari-hari ditulis sebagai seperangkat aturan kaku yang secara tepat menentukan bagaimana program tersebut harus berperilaku. Misalkan kita ingin membuat aplikasi untuk mengelola platform e-commerce. Setelah berdiskusi di sekitar papan tulis selama beberapa jam untuk memikirkan masalahnya, kita mungkin merumuskan garis besar solusi yang berfungsi, misalnya:
 
-Fortunately for the growing community
-of machine learning scientists,
-many tasks that we would like to automate
-do not bend so easily to human ingenuity.
-Imagine huddling around the whiteboard
-with the smartest minds you know,
-but this time you are tackling
-one of the following problems:
+Pengguna berinteraksi dengan aplikasi melalui antarmuka yang berjalan di peramban web atau aplikasi seluler.
 
-* Write a program that predicts tomorrow's weather given geographic information, satellite images, and a trailing window of past weather.
-* Write a program that takes in a factoid question, expressed in free-form text, and  answers it correctly.
-* Write a program that, given an image, identifies every person depicted in it and draws outlines around each.
-* Write a program that presents users with products that they are likely to enjoy but unlikely, in the natural course of browsing, to encounter.
+Aplikasi kita berinteraksi dengan mesin basis data kelas komersial untuk melacak status setiap pengguna dan menjaga catatan transaksi historis.
 
-For these problems,
-even elite programmers would struggle
-to code up solutions from scratch.
-The reasons can vary.
-Sometimes the program that we are looking for
-follows a pattern that changes over time,
-so there is no fixed right answer!
-In such cases, any successful solution
-must adapt gracefully to a changing world.
-At other times, the relationship (say between pixels,
-and abstract categories) may be too complicated,
-requiring thousands or millions of computations
-and following unknown principles.
-In the case of image recognition,
-the precise steps required to perform the task
-lie beyond our conscious understanding,
-even though our subconscious cognitive processes
-execute the task effortlessly.
+Di pusat aplikasi kita, logika bisnis (atau bisa disebut otak) dari aplikasi kita merinci seperangkat aturan yang memetakan setiap keadaan yang mungkin terjadi ke tindakan yang sesuai yang harus diambil oleh program kita.
 
 
-*Machine learning* is the study of algorithms
-that can learn from experience.
-As a machine learning algorithm accumulates more experience,
-typically in the form of observational data
-or interactions with an environment,
-its performance improves.
-Contrast this with our deterministic e-commerce platform,
-which follows the same business logic,
-no matter how much experience accrues,
-until the developers themselves learn and decide
-that it is time to update the software.
-In this book, we will teach you
-the fundamentals of machine learning,
-focusing in particular on *deep learning*,
-a powerful set of techniques
-driving innovations in areas as diverse as computer vision,
-natural language processing, healthcare, and genomics.
+Untuk membangun "otak" aplikasi kita, kita mungkin membuat daftar semua kejadian umum yang harus ditangani oleh program kita. Misalnya, setiap kali seorang pelanggan mengklik untuk menambahkan item ke keranjang belanja mereka, program kita harus menambahkan entri ke tabel basis data keranjang belanja, mengasosiasikan ID pengguna tersebut dengan ID produk yang diminta. Kemudian, kita mungkin mencoba melangkah melalui setiap kemungkinan kasus sudut (corner case), menguji kesesuaian aturan kita dan melakukan modifikasi yang diperlukan.
 
-## A Motivating Example
+Apa yang terjadi jika seorang pengguna memulai pembelian dengan keranjang yang kosong? Meskipun hanya sedikit pengembang yang langsung melakukannya dengan benar pada percobaan pertama (mungkin perlu beberapa uji coba untuk menyelesaikan masalah), sebagian besar kita dapat menulis program semacam itu dan meluncurkannya dengan percaya diri *sebelum* pernah melihat pelanggan sebenarnya.
 
-Before beginning writing, the authors of this book,
-like much of the work force, had to become caffeinated.
-We hopped in the car and started driving.
-Using an iPhone, Alex called out "Hey Siri",
-awakening the phone's voice recognition system.
-Then Mu commanded "directions to Blue Bottle coffee shop".
-The phone quickly displayed the transcription of his command.
-It also recognized that we were asking for directions
-and launched the Maps application (app)
-to fulfill our request.
-Once launched, the Maps app identified a number of routes.
-Next to each route, the phone displayed a predicted transit time.
-While this story was fabricated for pedagogical convenience,
-it demonstrates that in the span of just a few seconds,
-our everyday interactions with a smart phone
-can engage several machine learning models.
+Kemampuan kita untuk secara manual merancang sistem otomatis yang mendorong produk dan sistem yang berfungsi, sering kali dalam situasi yang baru, adalah prestasi kognitif yang luar biasa. Dan ketika Anda dapat merancang solusi yang bekerja $100\%$ sepanjang waktu, biasanya Anda tidak perlu khawatir tentang pembelajaran mesin.
 
+Untungnya bagi komunitas ilmuwan pembelajaran mesin yang terus berkembang, banyak tugas yang ingin kita otomatisasi tidak begitu mudah dipecahkan dengan kecerdikan manusia. Bayangkan berkumpul di sekitar papan tulis dengan orang-orang paling cerdas yang Anda kenal, tetapi kali ini Anda menghadapi salah satu dari masalah berikut:
 
-Imagine just writing a program to respond to a *wake word*
-such as "Alexa", "OK Google", and "Hey Siri".
-Try coding it up in a room by yourself
-with nothing but a computer and a code editor,
-as illustrated in :numref:`fig_wake_word`.
-How would you write such a program from first principles?
-Think about it... the problem is hard.
-Every second, the microphone will collect roughly
-44,000 samples.
-Each sample is a measurement of the amplitude of the sound wave.
-What rule could map reliably from a snippet of raw audio to confident predictions
-$\{\textrm{yes}, \textrm{no}\}$
-about whether the snippet contains the wake word?
-If you are stuck, do not worry.
-We do not know how to write such a program from scratch either.
-That is why we use machine learning.
+* Tulis program yang memprediksi cuaca besok berdasarkan informasi geografis, citra satelit, dan jendela historis cuaca sebelumnya.
+* Tulis program yang menerima pertanyaan faktual, yang diekspresikan dalam teks bebas, dan menjawabnya dengan benar.
+* Tulis program yang, diberikan sebuah gambar, mengidentifikasi setiap orang yang ada di dalamnya dan menggambar garis di sekelilingnya.
+* Tulis program yang menyajikan produk kepada pengguna yang kemungkinan besar akan mereka sukai tetapi tidak mungkin mereka temukan secara alami selama menjelajah.
 
-![Identify a wake word.](../img/wake-word.svg)
+Untuk masalah-masalah ini, bahkan programmer elit pun akan kesulitan untuk membuat solusi dari awal. Alasannya bisa beragam. Terkadang program yang kita cari mengikuti pola yang berubah seiring waktu, sehingga tidak ada jawaban tetap yang benar! Dalam kasus seperti itu, solusi yang berhasil harus dapat beradaptasi secara elegan dengan dunia yang terus berubah. Pada waktu lain, hubungan (misalnya antara piksel dan kategori abstrak) mungkin terlalu rumit, memerlukan ribuan atau jutaan komputasi dan mengikuti prinsip-prinsip yang tidak diketahui.
+
+Dalam kasus pengenalan gambar, langkah-langkah yang tepat yang diperlukan untuk melakukan tugas tersebut berada di luar pemahaman sadar kita, meskipun proses kognitif bawah sadar kita melakukan tugas itu dengan mudah.
+
+*Pembelajaran mesin* adalah studi tentang algoritma yang dapat belajar dari pengalaman. Saat algoritma pembelajaran mesin mengumpulkan lebih banyak pengalaman, biasanya dalam bentuk data observasi atau interaksi dengan lingkungan, kinerjanya meningkat. Bandingkan dengan platform e-commerce deterministik kita, yang mengikuti logika bisnis yang sama, tidak peduli seberapa banyak pengalaman yang terakumulasi, sampai para pengembang sendiri belajar dan memutuskan bahwa sudah waktunya memperbarui perangkat lunak.
+
+Dalam buku ini, kami akan mengajarkan Anda dasar-dasar pembelajaran mesin, dengan fokus khusus pada *pembelajaran mendalam* (deep learning), sebuah kumpulan teknik yang kuat yang mendorong inovasi di berbagai bidang seperti visi komputer, pemrosesan bahasa alami, perawatan kesehatan, dan genomik.
+
+## Contoh yang Memotivasi
+
+Sebelum memulai penulisan, penulis buku ini, seperti kebanyakan pekerja lainnya, harus mendapatkan kafein. Kami melompat ke dalam mobil dan mulai mengemudi. Menggunakan iPhone, Alex memanggil, "Hey Siri", membangunkan sistem pengenalan suara pada telepon. Kemudian Mu memberikan perintah "arah ke kedai kopi Blue Bottle". Telepon dengan cepat menampilkan transkripsi dari perintah tersebut. Telepon juga mengenali bahwa kami meminta arah dan meluncurkan aplikasi Peta (Maps) untuk memenuhi permintaan kami. Setelah diluncurkan, aplikasi Peta mengidentifikasi sejumlah rute. Di sebelah setiap rute, telepon menampilkan perkiraan waktu tempuh.
+
+Meskipun cerita ini dibuat untuk kenyamanan pedagogis, ini menunjukkan bahwa dalam rentang hanya beberapa detik, interaksi sehari-hari kita dengan ponsel pintar dapat melibatkan beberapa model pembelajaran mesin.
+
+Bayangkan saja menulis program untuk merespons *kata bangun* (wake word) seperti "Alexa", "OK Google", dan "Hey Siri". Cobalah menuliskannya sendiri di dalam ruangan hanya dengan komputer dan editor kode, seperti yang diilustrasikan pada :numref:`fig_wake_word`. Bagaimana Anda akan menulis program semacam itu dari prinsip dasar? Pikirkan... masalahnya sulit.
+
+Setiap detik, mikrofon akan mengumpulkan sekitar 44.000 sampel. Setiap sampel adalah pengukuran amplitudo gelombang suara. Aturan apa yang dapat memetakan secara andal dari potongan audio mentah menjadi prediksi yang percaya diri $\{\textrm{ya}, \textrm{tidak}\}$ tentang apakah potongan tersebut mengandung kata bangun? Jika Anda kesulitan, jangan khawatir. Kami juga tidak tahu bagaimana menulis program seperti itu dari awal. Itulah mengapa kami menggunakan pembelajaran mesin.
+
+![Mengidentifikasi kata bangun.](../img/wake-word.svg)
 :label:`fig_wake_word`
 
 
-Here is the trick.
-Often, even when we do not know how to tell a computer
-explicitly how to map from inputs to outputs,
-we are nonetheless capable of performing the cognitive feat ourselves.
-In other words, even if you do not know
-how to program a computer to recognize the word "Alexa",
-you yourself are able to recognize it.
-Armed with this ability, we can collect a huge *dataset*
-containing examples of audio snippets and associated labels,
-indicating which snippets contain the wake word.
-In the currently dominant approach to machine learning,
-we do not attempt to design a system
-*explicitly* to recognize wake words.
-Instead, we define a flexible program
-whose behavior is determined by a number of *parameters*.
-Then we use the dataset to determine the best possible parameter values,
-i.e., those that improve the performance of our program
-with respect to a chosen performance measure.
 
-You can think of the parameters as knobs that we can turn,
-manipulating the behavior of the program.
-Once the parameters are fixed, we call the program a *model*.
-The set of all distinct programs (input--output mappings)
-that we can produce just by manipulating the parameters
-is called a *family* of models.
-And the "meta-program" that uses our dataset
-to choose the parameters is called a *learning algorithm*.
+Inilah triknya. Sering kali, meskipun kita tidak tahu bagaimana memberi tahu komputer secara eksplisit cara memetakan dari input ke output, kita tetap mampu melakukan prestasi kognitif tersebut sendiri. Dengan kata lain, meskipun Anda tidak tahu cara memprogram komputer untuk mengenali kata "Alexa", Anda sendiri dapat mengenalinya. Dilengkapi dengan kemampuan ini, kita dapat mengumpulkan *dataset* besar yang berisi contoh potongan audio dan label terkait, yang menunjukkan potongan mana yang mengandung kata bangun.
 
-Before we can go ahead and engage the learning algorithm,
-we have to define the problem precisely,
-pinning down the exact nature of the inputs and outputs,
-and choosing an appropriate model family.
-In this case,
-our model receives a snippet of audio as *input*,
-and the model
-generates a selection among
-$\{\textrm{yes}, \textrm{no}\}$ as *output*.
-If all goes according to plan
-the model's guesses will
-typically be correct as to
-whether the snippet contains the wake word.
+Dalam pendekatan pembelajaran mesin yang saat ini dominan, kita tidak mencoba merancang sistem *secara eksplisit* untuk mengenali kata bangun. Sebaliknya, kita mendefinisikan program yang fleksibel yang perilakunya ditentukan oleh sejumlah *parameter*. Kemudian kita menggunakan dataset untuk menentukan nilai parameter terbaik, yaitu, nilai yang meningkatkan kinerja program kita sesuai dengan ukuran kinerja yang dipilih.
 
-If we choose the right family of models,
-there should exist one setting of the knobs
-such that the model fires "yes" every time it hears the word "Alexa".
-Because the exact choice of the wake word is arbitrary,
-we will probably need a model family sufficiently rich that,
-via another setting of the knobs, it could fire "yes"
-only upon hearing the word "Apricot".
-We expect that the same model family should be suitable
-for "Alexa" recognition and "Apricot" recognition
-because they seem, intuitively, to be similar tasks.
-However, we might need a different family of models entirely
-if we want to deal with fundamentally different inputs or outputs,
-say if we wanted to map from images to captions,
-or from English sentences to Chinese sentences.
+Anda dapat menganggap parameter sebagai kenop yang dapat kita putar, memanipulasi perilaku program. Setelah parameter ditetapkan, kita menyebut program tersebut sebagai *model*. Kumpulan semua program berbeda (pemetaan input-output) yang dapat kita hasilkan hanya dengan memanipulasi parameter disebut *keluarga* model. Dan "meta-program" yang menggunakan dataset kita untuk memilih parameter disebut *algoritma pembelajaran*.
 
-As you might guess, if we just set all of the knobs randomly,
-it is unlikely that our model will recognize "Alexa",
-"Apricot", or any other English word.
-In machine learning,
-the *learning* is the process
-by which we discover the right setting of the knobs
-for coercing the desired behavior from our model.
-In other words,
-we *train* our model with data.
-As shown in :numref:`fig_ml_loop`, the training process usually looks like the following:
+Sebelum kita dapat melanjutkan dan menjalankan algoritma pembelajaran, kita harus mendefinisikan masalah secara tepat, menetapkan sifat pasti dari input dan output, serta memilih keluarga model yang sesuai. Dalam kasus ini, model kita menerima potongan audio sebagai *input*, dan model menghasilkan pilihan di antara $\{\textrm{ya}, \textrm{tidak}\}$ sebagai *output*. Jika semuanya berjalan sesuai rencana, tebakan model akan benar dalam menentukan apakah potongan tersebut mengandung kata bangun.
 
-1. Start off with a randomly initialized model that cannot do anything useful.
-1. Grab some of your data (e.g., audio snippets and corresponding $\{\textrm{yes}, \textrm{no}\}$ labels).
-1. Tweak the knobs to make the model perform better as assessed on those examples.
-1. Repeat Steps 2 and 3 until the model is awesome.
+Jika kita memilih keluarga model yang tepat, seharusnya ada satu pengaturan kenop yang memungkinkan model mengeluarkan "ya" setiap kali mendengar kata "Alexa". Karena pilihan kata bangun itu sendiri bersifat sewenang-wenang, kita mungkin memerlukan keluarga model yang cukup kaya sehingga, melalui pengaturan kenop lainnya, model dapat mengeluarkan "ya" hanya ketika mendengar kata "Apricot". Kita berharap bahwa keluarga model yang sama cocok untuk pengenalan "Alexa" dan "Apricot" karena keduanya, secara intuitif, adalah tugas yang serupa. Namun, kita mungkin memerlukan keluarga model yang sepenuhnya berbeda jika kita ingin menangani input atau output yang secara fundamental berbeda, misalnya jika kita ingin memetakan dari gambar ke teks keterangan, atau dari kalimat bahasa Inggris ke kalimat bahasa Mandarin.
 
-![A typical training process.](../img/ml-loop.svg)
+Seperti yang mungkin Anda tebak, jika kita mengatur semua kenop secara acak, kemungkinan besar model kita tidak akan mengenali "Alexa", "Apricot", atau kata bahasa Inggris lainnya. Dalam pembelajaran mesin, *pembelajaran* adalah proses di mana kita menemukan pengaturan kenop yang tepat untuk memaksa perilaku yang diinginkan dari model kita. Dengan kata lain, kita *melatih* model kita dengan data. Seperti yang ditunjukkan pada :numref:`fig_ml_loop`, proses pelatihan biasanya terlihat seperti berikut:
+
+1. Mulai dengan model yang diinisialisasi secara acak yang tidak dapat melakukan apa pun yang berguna.
+2. Ambil beberapa data Anda (misalnya, potongan audio dan label $\{\textrm{ya}, \textrm{tidak}\}$ yang sesuai).
+3. Sesuaikan kenop untuk membuat model bekerja lebih baik seperti yang dinilai pada contoh-contoh tersebut.
+4. Ulangi Langkah 2 dan 3 sampai modelnya hebat.
+
+![Proses pelatihan yang khas.](../img/ml-loop.svg)
 :label:`fig_ml_loop`
 
-To summarize, rather than code up a wake word recognizer,
-we code up a program that can *learn* to recognize wake words,
-if presented with a large labeled dataset.
-You can think of this act of determining a program's behavior
-by presenting it with a dataset as *programming with data*.
-That is to say, we can "program" a cat detector
-by providing our machine learning system
-with many examples of cats and dogs.
-This way the detector will eventually learn to emit
-a very large positive number if it is a cat,
-a very large negative number if it is a dog,
-and something closer to zero if it is not sure.
-This barely scratches the surface of what machine learning can do.
-Deep learning, which we will explain in greater detail later,
-is just one among many popular methods
-for solving machine learning problems.
+Untuk merangkum, daripada menulis kode untuk mengenali kata bangun, kita menulis program yang dapat *belajar* mengenali kata bangun jika disajikan dengan dataset berlabel yang besar. Anda dapat menganggap tindakan menentukan perilaku program dengan menyajikannya dengan dataset sebagai *pemrograman dengan data*. Artinya, kita dapat "memprogram" detektor kucing dengan menyediakan sistem pembelajaran mesin kita dengan banyak contoh kucing dan anjing. Dengan cara ini, detektor akhirnya akan belajar mengeluarkan angka positif yang sangat besar jika itu adalah kucing, angka negatif yang sangat besar jika itu adalah anjing, dan sesuatu yang mendekati nol jika tidak yakin.
+
+Ini hanya menggores permukaan dari apa yang dapat dilakukan pembelajaran mesin. Pembelajaran mendalam, yang akan kami jelaskan lebih detail nanti, hanyalah salah satu dari banyak metode populer untuk memecahkan masalah pembelajaran mesin.
 
 
-## Key Components
 
-In our wake word example, we described a dataset
-consisting of audio snippets and binary labels,
-and we gave a hand-wavy sense of how we might train
-a model to approximate a mapping from snippets to classifications.
-This sort of problem,
-where we try to predict a designated unknown label
-based on known inputs
-given a dataset consisting of examples
-for which the labels are known,
-is called *supervised learning*.
-This is just one among many kinds of machine learning problems.
-Before we explore other varieties,
-we would like to shed more light
-on some core components that will follow us around,
-no matter what kind of machine learning problem we tackle:
+## Komponen Utama
 
-1. The *data* that we can learn from.
-1. A *model* of how to transform the data.
-1. An *objective function* that quantifies how well (or badly) the model is doing.
-1. An *algorithm* to adjust the model's parameters to optimize the objective function.
+Dalam contoh kata bangun kita, kami menggambarkan dataset yang terdiri dari potongan audio dan label biner, dan memberikan gambaran umum tentang bagaimana kita dapat melatih model untuk mendekati pemetaan dari potongan-potongan tersebut ke klasifikasi. Jenis masalah ini, di mana kita mencoba memprediksi label yang tidak diketahui berdasarkan input yang diketahui dengan menggunakan dataset yang terdiri dari contoh-contoh dengan label yang diketahui, disebut *pembelajaran terawasi* (supervised learning). Ini hanyalah salah satu dari banyak jenis masalah pembelajaran mesin. Sebelum kita mengeksplorasi jenis lainnya, kami ingin memberikan penjelasan lebih lanjut tentang beberapa komponen inti yang akan terus kita temui, apa pun jenis masalah pembelajaran mesin yang kita tangani:
+
+1. *Data* yang dapat kita pelajari.
+2. *Model* tentang bagaimana mengubah data.
+3. *Fungsi objektif* yang mengukur seberapa baik (atau buruk) model tersebut bekerja.
+4. *Algoritma* untuk menyesuaikan parameter model guna mengoptimalkan fungsi objektif.
 
 ### Data
 
-It might go without saying that you cannot do data science without data.
-We could lose hundreds of pages pondering what precisely data *is*,
-but for now, we will focus on the key properties
-of the datasets that we will be concerned with.
-Generally, we are concerned with a collection of examples.
-In order to work with data usefully, we typically
-need to come up with a suitable numerical representation.
-Each *example* (or *data point*, *data instance*, *sample*)
-typically consists of a set of attributes
-called *features* (sometimes called *covariates* or *inputs*),
-based on which the model must make its predictions.
-In supervised learning problems,
-our goal is to predict the value of a special attribute,
-called the *label* (or *target*),
-that is not part of the model's input.
+Mungkin tidak perlu dikatakan bahwa Anda tidak dapat melakukan ilmu data tanpa data. Kita bisa saja menghabiskan ratusan halaman untuk merenungkan apa sebenarnya *data* itu, tetapi untuk saat ini, kita akan fokus pada sifat-sifat utama dari dataset yang akan kita perhatikan. Secara umum, kita berurusan dengan kumpulan contoh. Agar dapat bekerja dengan data secara berguna, kita biasanya perlu menghasilkan representasi numerik yang sesuai. Setiap *contoh* (atau *titik data*, *instance data*, *sampel*) biasanya terdiri dari serangkaian atribut yang disebut *fitur* (kadang-kadang disebut *kovariat* atau *input*), berdasarkan fitur-fitur ini model harus membuat prediksinya. Dalam masalah pembelajaran terawasi, tujuan kita adalah memprediksi nilai dari atribut khusus, yang disebut *label* (atau *target*), yang bukan bagian dari input model.
 
-If we were working with image data,
-each example might consist of an
-individual photograph (the features)
-and a number indicating the category
-to which the photograph belongs (the label).
-The photograph would be represented numerically
-as three grids of numerical values representing
-the brightness of red, green, and blue light
-at each pixel location.
-For example, a $200\times 200$ pixel color photograph
-would consist of $200\times200\times3=120000$ numerical values.
 
-Alternatively, we might work with electronic health record data
-and tackle the task of predicting the likelihood
-that a given patient  will survive the next 30 days.
-Here, our features might consist of a collection
-of readily available attributes
-and frequently recorded measurements,
-including age, vital signs, comorbidities,
-current medications, and recent procedures.
-The label available for training would be a binary value
-indicating whether each patient in the historical data
-survived within the 30-day window.
+Jika kita bekerja dengan data gambar, setiap contoh mungkin terdiri dari sebuah foto individu (*fitur-fitur*) dan sebuah angka yang menunjukkan kategori foto tersebut (*label*). Foto tersebut direpresentasikan secara numerik sebagai tiga grid nilai numerik yang mewakili kecerahan cahaya merah, hijau, dan biru pada setiap lokasi piksel. Sebagai contoh, foto berwarna dengan ukuran $200\times 200$ piksel akan terdiri dari $200\times200\times3=120000$ nilai numerik.
 
-In such cases, when every example is characterized
-by the same number of numerical features,
-we say that the inputs are fixed-length vectors
-and we call the (constant) length of the vectors
-the *dimensionality* of the data.
-As you might imagine, fixed-length inputs can be convenient,
-giving us one less complication to worry about.
-However, not all data can easily
-be represented as *fixed-length* vectors.
-While we might expect microscope images
-to come from standard equipment,
-we cannot expect images mined from the Internet
-all to have the same resolution or shape.
-For images, we might consider
-cropping them to a standard size,
-but that strategy only gets us so far.
-We risk losing information in the cropped-out portions.
-Moreover, text data resists fixed-length
-representations even more stubbornly.
-Consider the customer reviews left
-on e-commerce sites such as Amazon, IMDb, and TripAdvisor.
-Some are short: "it stinks!".
-Others ramble for pages.
-One major advantage of deep learning over traditional methods
-is the comparative grace with which modern models
-can handle *varying-length* data.
+Sebaliknya, kita mungkin bekerja dengan data rekam medis elektronik dan menghadapi tugas untuk memprediksi kemungkinan bahwa seorang pasien akan bertahan hidup selama 30 hari ke depan. Dalam hal ini, fitur-fitur kita mungkin terdiri dari kumpulan atribut yang tersedia secara umum dan pengukuran yang sering direkam, termasuk usia, tanda-tanda vital, komorbiditas, obat yang sedang dikonsumsi, dan prosedur yang baru-baru ini dilakukan. Label yang tersedia untuk pelatihan adalah nilai biner yang menunjukkan apakah setiap pasien dalam data historis bertahan hidup dalam jangka waktu 30 hari tersebut.
+
+Dalam kasus seperti ini, ketika setiap contoh dicirikan oleh jumlah fitur numerik yang sama, kita menyebut input tersebut sebagai vektor dengan panjang tetap dan kita menyebut panjang (konstan) dari vektor tersebut sebagai *dimensi* dari data. Seperti yang dapat Anda bayangkan, input dengan panjang tetap dapat menjadi nyaman, memberikan kita satu komplikasi lebih sedikit untuk dikhawatirkan. Namun, tidak semua data dapat dengan mudah direpresentasikan sebagai vektor dengan panjang tetap. Meskipun kita mungkin mengharapkan gambar mikroskop berasal dari peralatan standar, kita tidak dapat mengharapkan gambar yang diambil dari internet semua memiliki resolusi atau bentuk yang sama. Untuk gambar, kita mungkin mempertimbangkan untuk memotongnya menjadi ukuran standar, tetapi strategi ini hanya bisa membantu sampai batas tertentu. Kita berisiko kehilangan informasi pada bagian yang dipotong. Selain itu, data teks bahkan lebih keras kepala dalam menolak representasi dengan panjang tetap. Pertimbangkan ulasan pelanggan yang ditinggalkan di situs e-commerce seperti Amazon, IMDb, dan TripAdvisor. Beberapa di antaranya pendek: "itu buruk!". Sementara yang lain bertele-tele berhalaman-halaman. Salah satu keunggulan utama pembelajaran mendalam dibandingkan dengan metode tradisional adalah kemampuan model modern untuk menangani data dengan panjang yang bervariasi (*varying-length data*) dengan lebih anggun.
+
+### Check-Point Translate!!
 
 Generally, the more data we have, the easier our job becomes.
 When we have more data, we can train more powerful models
