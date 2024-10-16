@@ -1,191 +1,117 @@
-# Installation
+# Instalasi
 :label:`chap_installation`
 
-In order to get up and running,
-we will need an environment for running Python,
-the Jupyter Notebook, the relevant libraries,
-and the code needed to run the book itself.
+Untuk dapat memulai, kita memerlukan lingkungan untuk menjalankan Python, Jupyter Notebook, pustaka yang relevan, dan kode yang diperlukan untuk menjalankan buku ini sendiri.
 
-## Installing Miniconda
+## Menginstal Miniconda
 
-Your simplest option is to install
-[Miniconda](https://conda.io/en/latest/miniconda.html).
-Note that the Python 3.x version is required.
-You can skip the following steps
-if your machine already has conda installed.
+Pilihan paling sederhana adalah menginstal [Miniconda](https://conda.io/en/latest/miniconda.html). Perlu dicatat bahwa versi Python 3.x diperlukan. Anda dapat melewati langkah-langkah berikut jika mesin Anda sudah memiliki conda terinstal.
 
-Visit the Miniconda website and determine
-the appropriate version for your system
-based on your Python 3.x version and machine architecture.
-Suppose that your Python version is 3.9
-(our tested version).
-If you are using macOS,
-you would download the bash script
-whose name contains the strings "MacOSX",
-navigate to the download location,
-and execute the installation as follows
-(taking Intel Macs as an example):
+Kunjungi situs Miniconda dan tentukan versi yang sesuai untuk sistem Anda berdasarkan versi Python 3.x dan arsitektur mesin Anda. Misalkan versi Python Anda adalah 3.9 (versi yang sudah kami uji). Jika Anda menggunakan macOS, unduh skrip bash yang namanya mengandung string "MacOSX", lalu navigasikan ke lokasi unduhan, dan jalankan instalasi sebagai berikut (mengambil contoh Intel Mac):
 
 ```bash
-# The file name is subject to changes
+# Nama file dapat berubah
 sh Miniconda3-py39_4.12.0-MacOSX-x86_64.sh -b
 ```
 
-
-A Linux user
-would download the file
-whose name contains the strings "Linux"
-and execute the following at the download location:
+Pengguna Linux akan mengunduh file yang namanya mengandung string "Linux" dan menjalankan perintah berikut di lokasi unduhan:
 
 ```bash
-# The file name is subject to changes
+# Nama file dapat berubah
 sh Miniconda3-py39_4.12.0-Linux-x86_64.sh -b
 ```
 
+Pengguna Windows akan mengunduh dan menginstal Miniconda dengan mengikuti [petunjuk online](https://conda.io/en/latest/miniconda.html). Di Windows, Anda dapat mencari `cmd` untuk membuka Command Prompt (interpretator baris perintah) untuk menjalankan perintah.
 
-A Windows user would download and install Miniconda by following its [online instructions](https://conda.io/en/latest/miniconda.html).
-On Windows, you may search for `cmd` to open the Command Prompt (command-line interpreter) for running commands.
-
-Next, initialize the shell so we can run `conda` directly.
+Selanjutnya, inisialisasi shell agar kita bisa menjalankan `conda` langsung.
 
 ```bash
 ~/miniconda3/bin/conda init
 ```
 
-
-Then close and reopen your current shell.
-You should be able to create
-a new environment as follows:
+Kemudian tutup dan buka kembali shell Anda saat ini. Anda seharusnya dapat membuat lingkungan baru seperti berikut:
 
 ```bash
 conda create --name d2l python=3.9 -y
 ```
 
-
-Now we can activate the `d2l` environment:
+Sekarang kita dapat mengaktifkan lingkungan `d2l`:
 
 ```bash
 conda activate d2l
 ```
 
+## Menginstal Framework Pembelajaran Mendalam dan Paket `d2l`
 
-## Installing the Deep Learning Framework and the `d2l` Package
-
-Before installing any deep learning framework,
-please first check whether or not
-you have proper GPUs on your machine
-(the GPUs that power the display
-on a standard laptop are not relevant for our purposes).
-For example,
-if your computer has NVIDIA GPUs and has installed [CUDA](https://developer.nvidia.com/cuda-downloads),
-then you are all set.
-If your machine does not house any GPU,
-there is no need to worry just yet.
-Your CPU provides more than enough horsepower
-to get you through the first few chapters.
-Just remember that you will want to access GPUs
-before running larger models.
-
+Sebelum menginstal framework pembelajaran mendalam apa pun, pastikan terlebih dahulu apakah Anda memiliki GPU yang sesuai pada mesin Anda (GPU yang digunakan untuk tampilan pada laptop standar tidak relevan untuk tujuan kita). Misalnya, jika komputer Anda memiliki GPU NVIDIA dan telah menginstal [CUDA](https://developer.nvidia.com/cuda-downloads), maka Anda sudah siap. Jika mesin Anda tidak memiliki GPU, tidak perlu khawatir dulu. CPU Anda menyediakan cukup tenaga untuk menyelesaikan beberapa bab pertama. Namun, Anda mungkin ingin mengakses GPU sebelum menjalankan model yang lebih besar.
 
 :begin_tab:`mxnet`
 
-To install a GPU-enabled version of MXNet,
-we need to find out what version of CUDA you have installed.
-You can check this by running `nvcc --version`
-or `cat /usr/local/cuda/version.txt`.
-Assume that you have installed CUDA 11.2,
-then execute the following command:
+Untuk menginstal versi MXNet yang mendukung GPU, kita perlu mengetahui versi CUDA yang telah terinstal. Anda dapat memeriksa ini dengan menjalankan `nvcc --version` atau `cat /usr/local/cuda/version.txt`. Misalkan Anda telah menginstal CUDA 11.2, maka jalankan perintah berikut:
 
 ```bash
-# For macOS and Linux users
+# Untuk pengguna macOS dan Linux
 pip install mxnet-cu112==1.9.1
 
-# For Windows users
+# Untuk pengguna Windows
 pip install mxnet-cu112==1.9.1 -f https://dist.mxnet.io/python
 ```
 
+Anda dapat mengganti dua digit terakhir sesuai dengan versi CUDA Anda, misalnya `cu101` untuk CUDA 10.1 dan `cu90` untuk CUDA 9.0.
 
-You may change the last digits according to your CUDA version, e.g., `cu101` for
-CUDA 10.1 and `cu90` for CUDA 9.0.
-
-
-If your machine has no NVIDIA GPUs
-or CUDA,
-you can install the CPU version
-as follows:
+Jika mesin Anda tidak memiliki GPU NVIDIA atau CUDA, Anda dapat menginstal versi CPU seperti berikut:
 
 ```bash
 pip install mxnet==1.9.1
 ```
 
-
 :end_tab:
-
 
 :begin_tab:`pytorch`
 
-You can install PyTorch (the specified versions are tested at the time of writing) with either CPU or GPU support as follows:
+Anda dapat menginstal PyTorch (versi yang ditentukan sudah diuji pada saat penulisan ini) dengan dukungan CPU atau GPU sebagai berikut:
 
 ```bash
 pip install torch==2.0.0 torchvision==0.15.1
 ```
 
-
 :end_tab:
 
 :begin_tab:`tensorflow`
-You can install TensorFlow with either CPU or GPU support as follows:
+Anda dapat menginstal TensorFlow dengan dukungan CPU atau GPU sebagai berikut:
 
 ```bash
 pip install tensorflow==2.12.0 tensorflow-probability==0.20.0
 ```
 
-
 :end_tab:
 
 :begin_tab:`jax`
-You can install JAX and Flax with either CPU or GPU support as follows:
+Anda dapat menginstal JAX dan Flax dengan dukungan CPU atau GPU sebagai berikut:
 
 ```bash
 # GPU
 pip install "jax[cuda11_pip]==0.4.13" -f https://storage.googleapis.com/jax-releases/jax_cuda_releases.html flax==0.7.0
 ```
 
-
-If your machine has no NVIDIA GPUs
-or CUDA,
-you can install the CPU version
-as follows:
+Jika mesin Anda tidak memiliki GPU NVIDIA atau CUDA, Anda dapat menginstal versi CPU sebagai berikut:
 
 ```bash
 # CPU
 pip install "jax[cpu]==0.4.13" flax==0.7.0
 ```
 
-
 :end_tab:
 
-
-Our next step is to install
-the `d2l` package that we developed
-in order to encapsulate
-frequently used functions and classes
-found throughout this book:
+Langkah selanjutnya adalah menginstal paket `d2l` yang kami kembangkan untuk mengenkapsulasi fungsi dan kelas yang sering digunakan di seluruh buku ini:
 
 ```bash
 pip install d2l==1.0.3
 ```
 
+## Mengunduh dan Menjalankan Kode
 
-## Downloading and Running the Code
-
-Next, you will want to download the notebooks
-so that you can run each of the book's code blocks.
-Simply click on the "Notebooks" tab at the top
-of any HTML page on [the D2L.ai website](https://d2l.ai/)
-to download the code and then unzip it.
-Alternatively, you can fetch the notebooks
-from the command line as follows:
+Selanjutnya, Anda perlu mengunduh notebook agar dapat menjalankan setiap blok kode dalam buku ini. Cukup klik tab "Notebooks" di bagian atas halaman HTML mana pun di [situs D2L.ai](https://d2l.ai/) untuk mengunduh kodenya dan kemudian unzip file tersebut. Sebagai alternatif, Anda dapat mengambil notebook dari baris perintah sebagai berikut:
 
 :begin_tab:`mxnet`
 
@@ -196,9 +122,7 @@ unzip d2l-en.zip && rm d2l-en.zip
 cd mxnet
 ```
 
-
 :end_tab:
-
 
 :begin_tab:`pytorch`
 
@@ -208,7 +132,6 @@ curl https://d2l.ai/d2l-en-1.0.3.zip -o d2l-en.zip
 unzip d2l-en.zip && rm d2l-en.zip
 cd pytorch
 ```
-
 
 :end_tab:
 
@@ -221,7 +144,6 @@ unzip d2l-en.zip && rm d2l-en.zip
 cd tensorflow
 ```
 
-
 :end_tab:
 
 :begin_tab:`jax`
@@ -233,43 +155,28 @@ unzip d2l-en.zip && rm d2l-en.zip
 cd jax
 ```
 
-
 :end_tab:
 
-If you do not already have `unzip` installed, first run `sudo apt-get install unzip`.
-Now we can start the Jupyter Notebook server by running:
+Jika Anda belum memiliki `unzip` terinstal, jalankan terlebih dahulu `sudo apt-get install unzip`. Sekarang kita dapat memulai server Jupyter Notebook dengan menjalankan:
 
 ```bash
 jupyter notebook
 ```
 
-
-At this point, you can open http://localhost:8888
-(it may have already opened automatically) in your web browser.
-Then we can run the code for each section of the book.
-Whenever you open a new command line window,
-you will need to execute `conda activate d2l`
-to activate the runtime environment
-before running the D2L notebooks,
-or updating your packages
-(either the deep learning framework
-or the `d2l` package).
-To exit the environment,
-run `conda deactivate`.
-
+Pada titik ini, Anda dapat membuka http://localhost:8888 (mungkin sudah terbuka secara otomatis) di peramban web Anda. Setelah itu kita dapat menjalankan kode untuk setiap bagian dari buku ini. Setiap kali Anda membuka jendela baris perintah baru, Anda perlu menjalankan `conda activate d2l` untuk mengaktifkan lingkungan runtime sebelum menjalankan notebook D2L, atau memperbarui paket Anda (baik framework pembelajaran mendalam atau paket `d2l`). Untuk keluar dari lingkungan, jalankan `conda deactivate`.
 
 :begin_tab:`mxnet`
-[Discussions](https://discuss.d2l.ai/t/23)
+[Diskusi](https://discuss.d2l.ai/t/23)
 :end_tab:
 
 :begin_tab:`pytorch`
-[Discussions](https://discuss.d2l.ai/t/24)
+[Diskusi](https://discuss.d2l.ai/t/24)
 :end_tab:
 
 :begin_tab:`tensorflow`
-[Discussions](https://discuss.d2l.ai/t/436)
+[Diskusi](https://discuss.d2l.ai/t/436)
 :end_tab:
 
 :begin_tab:`jax`
-[Discussions](https://discuss.d2l.ai/t/17964)
+[Diskusi](https://discuss.d2l.ai/t/17964)
 :end_tab:
