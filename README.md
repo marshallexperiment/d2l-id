@@ -3,38 +3,43 @@
   <img src="https://raw.githubusercontent.com/d2l-ai/d2l-en/master/static/logo-with-text.png" width="350">
 </div>
 
-# D2L.ai: Interactive Deep Learning Book with Multi-Framework Code, Math, and Discussions
+# Dari Penulis: Saya akan menerjemahkan ke dalam Bahasa Indonesia! (Masih dalam pengembangan)
+<div align="left">
+  <img src="https://raw.githubusercontent.com/d2l-ai/d2l-en/master/static/logo-with-text.png" width="350">
+</div>
 
-[![Continuous Integration](https://github.com/d2l-ai/d2l-en/actions/workflows/ci.yml/badge.svg)](https://github.com/d2l-ai/d2l-en/actions/workflows/ci.yml)
+# D2L.ai: Buku Pembelajaran Mendalam Interaktif dengan Kode Multi-Kerangka, Matematika, dan Diskusi
 
-[Book website](https://d2l.ai/) | [STAT 157 Course at UC Berkeley](http://courses.d2l.ai/berkeley-stat-157/index.html)
+[![Integrasi Berkelanjutan](https://github.com/d2l-ai/d2l-en/actions/workflows/ci.yml/badge.svg)](https://github.com/d2l-ai/d2l-en/actions/workflows/ci.yml)
 
-<h5 align="center"><i>The best way to understand deep learning is learning by doing.</i></h5>
+[Situs buku](https://d2l.ai/) | [Kursus STAT 157 di UC Berkeley](http://courses.d2l.ai/berkeley-stat-157/index.html)
+
+<h5 align="center"><i>Cara terbaik untuk memahami pembelajaran mendalam adalah dengan belajar sambil melakukan.</i></h5>
 
 <p align="center">
-  <img width="200"  src="static/frontpage/_images/eq.jpg">
-  <img width="200"  src="static/frontpage/_images/figure.jpg">
-  <img width="200"  src="static/frontpage/_images/code.jpg">
-  <img width="200"  src="static/frontpage/_images/notebook.gif">
+  <img width="200" src="static/frontpage/_images/eq.jpg">
+  <img width="200" src="static/frontpage/_images/figure.jpg">
+  <img width="200" src="static/frontpage/_images/code.jpg">
+  <img width="200" src="static/frontpage/_images/notebook.gif">
 </p>
 
-This open-source book represents our attempt to make deep learning approachable, teaching you the concepts, the context, and the code. The entire book is drafted in Jupyter notebooks, seamlessly integrating exposition figures, math, and interactive examples with self-contained code.
+Buku sumber terbuka ini adalah upaya kami untuk membuat pembelajaran mendalam menjadi lebih mudah diakses, dengan mengajarkan konsep, konteks, dan kodenya. Seluruh buku ini dibuat dalam bentuk *notebook* Jupyter, mengintegrasikan gambar, matematika, dan contoh interaktif dengan kode yang lengkap.
 
-Our goal is to offer a resource that could
-1. be freely available for everyone;
-1. offer sufficient technical depth to provide a starting point on the path to actually becoming an applied machine learning scientist;
-1. include runnable code, showing readers how to solve problems in practice;
-1. allow for rapid updates, both by us and also by the community at large;
-1. be complemented by a forum for interactive discussion of technical details and to answer questions.
+Tujuan kami adalah untuk menyediakan sumber daya yang:
+1. tersedia secara gratis untuk semua orang;
+2. menawarkan kedalaman teknis yang cukup sebagai titik awal untuk menjadi ilmuwan pembelajaran mesin yang terapan;
+3. menyertakan kode yang dapat dijalankan, menunjukkan kepada pembaca cara memecahkan masalah dalam praktik;
+4. memungkinkan pembaruan cepat, baik oleh kami maupun oleh komunitas secara umum;
+5. dilengkapi dengan forum untuk diskusi interaktif tentang detail teknis dan menjawab pertanyaan.
 
-## Universities Using D2L
+## Universitas yang Menggunakan D2L
 <p align="center">
-  <img width="600"  src="static/frontpage/_images/map.png">
+  <img width="600" src="static/frontpage/_images/map.png">
 </p>
 
+Jika Anda merasa buku ini berguna, mohon bintangi (★) repositori ini atau kutip buku ini menggunakan entri bibtex berikut:
 
 
-If you find this book useful, please star (★) this repository or cite this book using the following bibtex entry:
 
 ```
 @book{zhang2023dive,
@@ -47,25 +52,35 @@ If you find this book useful, please star (★) this repository or cite this boo
 ```
 
 
-## Endorsements
 
-> <p>"In less than a decade, the AI revolution has swept from research labs to broad industries to every corner of our daily life.  Dive into Deep Learning is an excellent text on deep learning and deserves attention from anyone who wants to learn why deep learning has ignited the AI revolution: the most powerful technology force of our time."</p>
-> <b>&mdash; Jensen Huang, Founder and CEO, NVIDIA</b>
+## Rekomendasi
 
-> <p>"This is a timely, fascinating book, providing with not only a comprehensive overview of deep learning principles but also detailed algorithms with hands-on programming code, and moreover, a state-of-the-art introduction to deep learning in computer vision and natural language processing. Dive into this book if you want to dive into deep learning!"</p>
-> <b>&mdash; Jiawei Han, Michael Aiken Chair Professor, University of Illinois at Urbana-Champaign</b>
+> <p>"Dalam kurang dari satu dekade, revolusi AI telah menyebar dari laboratorium penelitian ke industri luas hingga ke setiap sudut kehidupan sehari-hari kita. Dive into Deep Learning adalah teks yang sangat baik tentang pembelajaran mendalam dan pantas diperhatikan oleh siapa saja yang ingin belajar mengapa pembelajaran mendalam telah memicu revolusi AI: kekuatan teknologi paling kuat di zaman kita."</p>
+> <b>&mdash; Jensen Huang, Pendiri dan CEO, NVIDIA</b>
 
-> <p>"This is a highly welcome addition to the machine learning literature, with a focus on hands-on experience implemented via the integration of Jupyter notebooks. Students of deep learning should find this invaluable to become proficient in this field."</p>
-> <b>&mdash; Bernhard Schölkopf, Director, Max Planck Institute for Intelligent Systems</b>
+> <p>"Ini adalah buku yang tepat waktu dan menarik, tidak hanya memberikan tinjauan menyeluruh tentang prinsip-prinsip pembelajaran mendalam, tetapi juga algoritma terperinci dengan kode pemrograman langsung, dan lebih jauh lagi, pengenalan mutakhir tentang pembelajaran mendalam dalam visi komputer dan pemrosesan bahasa alami. Jelajahi buku ini jika Anda ingin mendalami pembelajaran mendalam!"</p>
+> <b>&mdash; Jiawei Han, Profesor Michael Aiken Chair, University of Illinois di Urbana-Champaign</b>
 
-> <p>"Dive into Deep Learning strikes an excellent balance between hands-on learning and in-depth explanation. I've used it in my deep learning course and recommend it to anyone who wants to develop a thorough and practical understanding of deep learning."</p>
-> <b>&mdash; Colin Raffel, Assistant Professor, University of North Carolina, Chapel Hill</b>
+> <p>"Ini adalah tambahan yang sangat disambut baik dalam literatur pembelajaran mesin, dengan fokus pada pengalaman langsung yang diimplementasikan melalui integrasi *notebook* Jupyter. Siswa pembelajaran mendalam pasti akan menemukan ini sangat berharga untuk menjadi ahli di bidang ini."</p>
+> <b>&mdash; Bernhard Schölkopf, Direktur, Max Planck Institute for Intelligent Systems</b>
 
-## Contributing ([Learn How](https://d2l.ai/chapter_appendix-tools-for-deep-learning/contributing.html))
+> <p>"Dive into Deep Learning menawarkan keseimbangan yang sangat baik antara pembelajaran langsung dan penjelasan mendalam. Saya telah menggunakannya di kursus pembelajaran mendalam saya dan merekomendasikannya kepada siapa saja yang ingin mengembangkan pemahaman menyeluruh dan praktis tentang pembelajaran mendalam."</p>
+> <b>&mdash; Colin Raffel, Asisten Profesor, University of North Carolina, Chapel Hill</b>
 
-This open source book has benefited from pedagogical suggestions, typo corrections, and other improvements from community contributors. Your help is valuable for making the book better for everyone.
+## Berkontribusi ([Pelajari Cara](https://d2l.ai/chapter_appendix-tools-for-deep-learning/contributing.html))
 
-**Dear [D2L contributors](https://github.com/d2l-ai/d2l-en/graphs/contributors), please email your GitHub ID and name to d2lbook.en AT gmail DOT com so your name will appear on the [acknowledgments](https://d2l.ai/chapter_preface/index.html#acknowledgments). Thanks.**
+Buku sumber terbuka ini telah mendapatkan manfaat dari saran pedagogis, koreksi kesalahan ketik, dan perbaikan lainnya dari para kontributor komunitas. Bantuan Anda sangat berharga untuk membuat buku ini lebih baik untuk semua orang.
+
+**Kepada [kontributor D2L](https://github.com/d2l-ai/d2l-en/graphs/contributors), silakan kirim email ID GitHub dan nama Anda ke d2lbook.en AT gmail DOT com agar nama Anda muncul di bagian [pengakuan](https://d2l.ai/chapter_preface/index.html#acknowledgments). Terima kasih.**
+
+## Ringkasan Lisensi
+
+Buku sumber terbuka ini tersedia di bawah Lisensi Creative Commons Attribution-ShareAlike 4.0 International. Lihat file [LICENSE](LICENSE).
+
+Contoh dan kode referensi dalam buku sumber terbuka ini tersedia di bawah lisensi MIT yang dimodifikasi. Lihat file [LICENSE-SAMPLECODE](LICENSE-SAMPLECODE).
+
+[Versi Bahasa Tiongkok](https://github.com/d2l-ai/d2l-zh) | [Diskusi dan laporkan masalah](https://discuss.d2l.ai/) | [Kode Etik](CODE_OF_CONDUCT.md)
+
 
 
 ## License Summary
