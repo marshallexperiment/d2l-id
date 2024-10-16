@@ -75,12 +75,3 @@ Contoh dan kode referensi dalam buku sumber terbuka ini tersedia di bawah lisens
 
 [Versi Bahasa Tiongkok](https://github.com/d2l-ai/d2l-zh) | [Diskusi dan laporkan masalah](https://discuss.d2l.ai/) | [Kode Etik](CODE_OF_CONDUCT.md)
 
-
-
-## License Summary
-
-This open source book is made available under the Creative Commons Attribution-ShareAlike 4.0 International License. See [LICENSE](LICENSE) file.
-
-The sample and reference code within this open source book is made available under a modified MIT license. See the [LICENSE-SAMPLECODE](LICENSE-SAMPLECODE) file.
-
-[Chinese version](https://github.com/d2l-ai/d2l-zh) | [Discuss and report issues](https://discuss.d2l.ai/) | [Code of conduct](CODE_OF_CONDUCT.md)
