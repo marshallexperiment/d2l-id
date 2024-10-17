@@ -1,345 +1,226 @@
-# Preface
+# Kata Pengantar
 
-Just a few years ago, there were no legions of deep learning scientists
-developing intelligent products and services at major companies and startups.
-When we entered the field, machine learning
-did not command headlines in daily newspapers.
-Our parents had no idea what machine learning was,
-let alone why we might prefer it to a career in medicine or law.
-Machine learning was a blue skies academic discipline
-whose industrial significance was limited
-to a narrow set of real-world applications,
-including speech recognition and computer vision.
-Moreover, many of these applications
-required so much domain knowledge
-that they were often regarded as entirely separate areas
-for which machine learning was one small component.
-At that time, neural networks---the
-predecessors of the deep learning methods
-that we focus on in this book---were
-generally regarded as outmoded.
+Beberapa tahun yang lalu, tidak ada banyak ilmuwan pembelajaran mendalam yang mengembangkan produk dan layanan cerdas di perusahaan besar maupun startup. Ketika kami memasuki bidang ini, pembelajaran mesin tidak menjadi berita utama di koran-koran harian. Orang tua kami tidak tahu apa itu pembelajaran mesin, apalagi mengapa kami lebih memilihnya daripada karir di bidang kedokteran atau hukum. Pembelajaran mesin adalah disiplin akademis yang bersifat teoretis, dan signifikansi industrinya terbatas pada sejumlah kecil aplikasi dunia nyata, termasuk pengenalan suara dan visi komputer. Selain itu, banyak dari aplikasi ini membutuhkan begitu banyak pengetahuan domain sehingga sering dianggap sebagai area yang sama sekali terpisah, di mana pembelajaran mesin hanyalah salah satu komponen kecil. Pada waktu itu, jaringan saraf—pendahulu dari metode pembelajaran mendalam yang menjadi fokus buku ini—umumnya dianggap sudah ketinggalan zaman.
+
+Namun, hanya dalam beberapa tahun, pembelajaran mendalam telah mengejutkan dunia, mendorong kemajuan pesat di berbagai bidang seperti visi komputer, pemrosesan bahasa alami, pengenalan suara otomatis, pembelajaran penguatan, dan informatika biomedis. Selain itu, keberhasilan pembelajaran mendalam dalam begitu banyak tugas yang bernilai praktis bahkan telah memicu perkembangan dalam pembelajaran mesin teoretis dan statistik. Dengan kemajuan ini, kita sekarang dapat membangun mobil yang mengemudi sendiri dengan otonomi yang lebih besar dari sebelumnya (meskipun tidak sebanyak yang mungkin diklaim beberapa perusahaan), sistem dialog yang memperbaiki kode dengan bertanya pertanyaan klarifikasi, dan agen perangkat lunak yang mengalahkan pemain manusia terbaik di dunia dalam permainan papan seperti Go, sebuah prestasi yang dulu dianggap masih puluhan tahun lagi. Alat-alat ini sudah mulai memberikan pengaruh yang semakin luas di industri dan masyarakat, mengubah cara pembuatan film, diagnosis penyakit, dan memainkan peran yang semakin besar dalam sains dasar—mulai dari astrofisika, hingga pemodelan iklim, hingga prediksi cuaca, dan biomedis.
 
 
-Yet in just a few years, deep learning has taken the world by surprise,
-driving rapid progress in such diverse fields
-as computer vision, natural language processing,
-automatic speech recognition, reinforcement learning,
-and biomedical informatics.
-Moreover, the success of deep learning
-in so many tasks of practical interest
-has even catalyzed developments
-in theoretical machine learning and statistics.
-With these advances in hand,
-we can now build cars that drive themselves
-with more autonomy than ever before
-(though less autonomy than some companies might have you believe),
-dialogue systems that debug code by asking clarifying questions,
-and software agents beating the best human players in the world at board games such as Go, a feat once thought to be decades away.
-Already, these tools exert ever-wider influence on industry and society,
-changing the way movies are made, diseases are diagnosed,
-and playing a growing role in basic sciences---from astrophysics, to climate modeling, to weather prediction, to biomedicine.
+## Tentang Buku Ini
 
+Buku ini adalah upaya kami untuk membuat pembelajaran mendalam lebih mudah diakses, dengan mengajarkan *konsep*, *konteks*, dan *kode*.
 
+### Satu Medium yang Menggabungkan Kode, Matematika, dan HTML
 
-## About This Book
+Agar teknologi komputasi dapat mencapai dampak penuhnya, teknologi tersebut harus dipahami dengan baik, didokumentasikan dengan baik, dan didukung oleh alat-alat yang matang dan terpelihara dengan baik. Ide-ide kunci harus disajikan secara jelas, sehingga waktu yang dibutuhkan untuk membawa praktisi baru bisa dipersingkat. Pustaka yang matang harus mengotomatiskan tugas-tugas umum, dan kode contoh harus memudahkan praktisi untuk memodifikasi, menerapkan, dan memperluas aplikasi umum sesuai dengan kebutuhan mereka.
 
-This book represents our attempt to make deep learning approachable,
-teaching you the *concepts*, the *context*, and the *code*.
+Sebagai contoh, ambil aplikasi web dinamis. Meskipun banyak perusahaan, seperti Amazon, yang berhasil mengembangkan aplikasi web berbasis database pada tahun 1990-an, potensi teknologi ini untuk membantu wirausahawan kreatif baru disadari secara jauh lebih besar dalam sepuluh tahun terakhir, sebagian berkat pengembangan kerangka kerja yang kuat dan terdokumentasi dengan baik.
 
-### One Medium Combining Code, Math, and HTML
+Menguji potensi pembelajaran mendalam menghadirkan tantangan unik karena setiap aplikasi tunggal menggabungkan berbagai disiplin ilmu. Menerapkan pembelajaran mendalam memerlukan pemahaman secara bersamaan mengenai (i) motivasi untuk merumuskan masalah dengan cara tertentu; (ii) bentuk matematis dari model yang diberikan; (iii) algoritma optimasi untuk menyesuaikan model dengan data; (iv) prinsip-prinsip statistik yang memberi tahu kita kapan kita bisa mengharapkan model kita untuk menggeneralisasi ke data yang tidak terlihat dan metode praktis untuk memastikan bahwa model tersebut benar-benar dapat menggeneralisasi; serta (v) teknik rekayasa yang diperlukan untuk melatih model secara efisien, menghindari jebakan komputasi numerik, dan memaksimalkan penggunaan perangkat keras yang tersedia. Mengajarkan keterampilan berpikir kritis yang diperlukan untuk merumuskan masalah, matematika untuk menyelesaikannya, dan alat perangkat lunak untuk mengimplementasikan solusi tersebut semuanya dalam satu tempat adalah tantangan besar. Tujuan kami dalam buku ini adalah untuk menyediakan sumber daya yang terpadu guna mempercepat pemahaman para calon praktisi.
 
-For any computing technology to reach its full impact,
-it must be well understood, well documented, and supported by
-mature, well-maintained tools.
-The key ideas should be clearly distilled,
-minimizing the onboarding time needed
-to bring new practitioners up to date.
-Mature libraries should automate common tasks,
-and exemplar code should make it easy for practitioners
-to modify, apply, and extend common applications to suit their needs.
+Ketika kami memulai proyek buku ini, tidak ada sumber daya yang sekaligus (i) tetap terkini; (ii) mencakup luasnya praktik pembelajaran mesin modern dengan kedalaman teknis yang memadai; dan (iii) menggabungkan penjelasan yang memiliki kualitas seperti buku teks dengan kode yang bersih dan dapat dijalankan, seperti yang diharapkan dari tutorial langsung. Kami menemukan banyak contoh kode yang menggambarkan cara menggunakan kerangka pembelajaran mendalam tertentu (misalnya, cara melakukan komputasi numerik dasar dengan matriks di TensorFlow) atau untuk mengimplementasikan teknik tertentu (misalnya, potongan kode untuk LeNet, AlexNet, ResNet, dll.) yang tersebar di berbagai posting blog dan repositori GitHub. Namun, contoh-contoh ini biasanya hanya berfokus pada *bagaimana* mengimplementasikan pendekatan tertentu, tetapi tidak menyertakan diskusi tentang *mengapa* keputusan algoritmik tertentu dibuat. Meskipun beberapa sumber daya interaktif muncul secara sporadis untuk membahas topik tertentu, misalnya, posting blog yang menarik di situs [Distill](http://distill.pub) atau blog pribadi, mereka hanya mencakup topik tertentu dalam pembelajaran mendalam dan sering kali tidak disertai kode yang relevan. Di sisi lain, meskipun beberapa buku teks pembelajaran mendalam telah muncul—misalnya, :citet:`Goodfellow.Bengio.Courville.2016`, yang menawarkan survei komprehensif tentang dasar-dasar pembelajaran mendalam—sumber-sumber ini tidak menghubungkan deskripsi dengan implementasi konsep dalam kode, sering kali membuat pembaca kebingungan tentang bagaimana mengimplementasikannya. Selain itu, terlalu banyak sumber daya yang disembunyikan di balik dinding pembayaran penyedia kursus komersial.
 
+Kami berangkat untuk membuat sumber daya yang dapat
+(i) tersedia secara gratis untuk semua orang;
+(ii) menawarkan kedalaman teknis yang cukup
+untuk menyediakan titik awal bagi mereka yang ingin menjadi ilmuwan pembelajaran mesin terapan;
+(iii) menyertakan kode yang dapat dijalankan, menunjukkan kepada pembaca
+*bagaimana* memecahkan masalah secara praktik;
+(iv) memungkinkan pembaruan cepat, baik oleh kami
+maupun oleh komunitas secara umum;
+dan (v) dilengkapi dengan [forum](https://discuss.d2l.ai/c/5)
+untuk diskusi interaktif tentang detail teknis dan untuk menjawab pertanyaan.
 
-As an example, take dynamic web applications.
-Despite a large number of companies, such as Amazon,
-developing successful database-driven web applications in the 1990s,
-the potential of this technology to aid creative entrepreneurs
-was realized to a far greater degree only in the past ten years,
-owing in part to the development of powerful, well-documented frameworks.
+Tujuan-tujuan ini sering kali bertentangan.
+Persamaan, teorema, dan kutipan
+paling baik dikelola dan disusun dalam LaTeX.
+Kode paling baik dijelaskan dalam Python.
+Dan halaman web ditulis secara native dalam HTML dan JavaScript.
+Selain itu, kami ingin konten ini
+dapat diakses baik sebagai kode yang dapat dijalankan, buku fisik,
+sebagai PDF yang dapat diunduh, dan di Internet sebagai situs web.
+Tidak ada alur kerja yang tampaknya sesuai dengan tuntutan ini,
+jadi kami memutuskan untuk merakit sistem kami sendiri (:numref:`sec_how_to_contribute`).
+Kami memilih GitHub untuk berbagi sumber
+dan untuk memfasilitasi kontribusi komunitas;
+Jupyter notebook untuk menggabungkan kode, persamaan, dan teks;
+Sphinx sebagai mesin rendering;
+dan Discourse sebagai platform diskusi.
+Meskipun sistem kami tidak sempurna,
+pilihan-pilihan ini memberikan kompromi
+di antara berbagai kepentingan yang bersaing.
+Kami percaya bahwa *Dive into Deep Learning*
+mungkin merupakan buku pertama yang diterbitkan
+dengan menggunakan alur kerja yang terintegrasi seperti ini.
 
+### Belajar dengan Melakukan
 
-Testing the potential of deep learning presents unique challenges
-because any single application brings together various disciplines.
-Applying deep learning requires simultaneously understanding
-(i) the motivations for casting a problem in a particular way;
-(ii) the mathematical form of a given model;
-(iii) the optimization algorithms for fitting the models to data;
-(iv) the statistical principles that tell us
-when we should expect our models
-to generalize to unseen data
-and practical methods for certifying
-that they have, in fact, generalized;
-and (v) the engineering techniques
-required to train models efficiently,
-navigating the pitfalls of numerical computing
-and getting the most out of available hardware.
-Teaching the critical thinking skills
-required to formulate problems,
-the mathematics to solve them,
-and the software tools to implement those solutions
-all in one place presents formidable challenges.
-Our goal in this book is to present a unified resource
-to bring would-be practitioners up to speed.
-
-When we started this book project,
-there were no resources that simultaneously
-(i) remained up to date;
-(ii) covered the breadth of modern machine learning practices
-with sufficient technical depth;
-and (iii) interleaved exposition of
-the quality one expects of a textbook
-with the clean runnable code
-that one expects of a hands-on tutorial.
-We found plenty of code examples illustrating
-how to use a given deep learning framework
-(e.g., how to do basic numerical computing with matrices in TensorFlow)
-or for implementing particular techniques
-(e.g., code snippets for LeNet, AlexNet, ResNet, etc.)
-scattered across various blog posts and GitHub repositories.
-However, these examples typically focused on
-*how* to implement a given approach,
-but left out the discussion of
-*why* certain algorithmic decisions are made.
-While some interactive resources
-have popped up sporadically
-to address a particular topic,
-e.g., the engaging blog posts
-published on the website [Distill](http://distill.pub), or personal blogs,
-they only covered selected topics in deep learning,
-and often lacked associated code.
-On the other hand, while several deep learning textbooks
-have emerged---e.g., :citet:`Goodfellow.Bengio.Courville.2016`,
-which offers a comprehensive survey
-on the basics of deep learning---these
-resources do not marry the descriptions
-to realizations of the concepts in code,
-sometimes leaving readers clueless
-as to how to implement them.
-Moreover, too many resources
-are hidden behind the paywalls
-of commercial course providers.
-
-We set out to create a resource that could
-(i) be freely available for everyone;
-(ii) offer sufficient technical depth
-to provide a starting point on the path
-to actually becoming an applied machine learning scientist;
-(iii) include runnable code, showing readers
-*how* to solve problems in practice;
-(iv) allow for rapid updates, both by us
-and also by the community at large;
-and (v) be complemented by a [forum](https://discuss.d2l.ai/c/5)
-for interactive discussion of technical details and to answer questions.
-
-These goals were often in conflict.
-Equations, theorems, and citations
-are best managed and laid out in LaTeX.
-Code is best described in Python.
-And webpages are native in HTML and JavaScript.
-Furthermore, we want the content to be
-accessible both as executable code, as a physical book,
-as a downloadable PDF, and on the Internet as a website.
-No workflows seemed suited to these demands,
-so we decided to assemble our own (:numref:`sec_how_to_contribute`).
-We settled on GitHub to share the source
-and to facilitate community contributions;
-Jupyter notebooks for mixing code, equations and text;
-Sphinx as a rendering engine;
-and Discourse as a discussion platform.
-While our system is not perfect,
-these choices strike a compromise
-among the competing concerns.
-We believe that *Dive into Deep Learning*
-might be the first book published
-using such an integrated workflow.
-
-
-### Learning by Doing
-
-Many textbooks present concepts in succession,
-covering each in exhaustive detail.
-For example,
-the excellent textbook of
+Banyak buku teks menyajikan konsep secara berurutan,
+mencakup setiap konsep secara mendetail.
+Misalnya, buku teks yang sangat baik dari
 :citet:`Bishop.2006`
-teaches each topic so thoroughly
-that getting to the chapter
-on linear regression requires
-a nontrivial amount of work.
-While experts love this book
-precisely for its thoroughness,
-for true beginners, this property limits
-its usefulness as an introductory text.
+mengajarkan setiap topik dengan sangat mendalam
+sehingga untuk sampai ke bab tentang regresi linier
+membutuhkan usaha yang tidak sedikit.
+Meskipun para ahli menyukai buku ini
+karena sifatnya yang sangat mendetail,
+bagi pemula sejati, sifat ini membatasi
+kegunaannya sebagai teks pengantar.
 
-In this book, we teach most concepts *just in time*.
-In other words, you will learn concepts at the very moment
-that they are needed to accomplish some practical end.
-While we take some time at the outset to teach
-fundamental preliminaries, like linear algebra and probability,
-we want you to taste the satisfaction of training your first model
-before worrying about more esoteric concepts.
+Dalam buku ini, kami mengajarkan sebagian besar konsep *tepat waktu*.
+Dengan kata lain, Anda akan mempelajari konsep-konsep tersebut tepat pada saat
+konsep-konsep itu diperlukan untuk mencapai tujuan praktis tertentu.
+Meskipun kami meluangkan sedikit waktu di awal untuk mengajarkan
+dasar-dasar penting, seperti aljabar linier dan probabilitas,
+kami ingin Anda merasakan kepuasan dari melatih model pertama Anda
+sebelum khawatir tentang konsep-konsep yang lebih rumit.
 
-Aside from a few preliminary notebooks that provide a crash course
-in the basic mathematical background,
-each subsequent chapter both introduces a reasonable number of new concepts
-and provides several self-contained working examples, using real datasets.
-This presented an organizational challenge.
-Some models might logically be grouped together in a single notebook.
-And some ideas might be best taught
-by executing several models in succession.
-By contrast, there is a big advantage to adhering
-to a policy of *one working example, one notebook*:
-This makes it as easy as possible for you to
-start your own research projects by leveraging our code.
-Just copy a notebook and start modifying it.
+Selain dari beberapa notebook awal yang memberikan kursus singkat
+tentang latar belakang matematika dasar,
+setiap bab berikutnya memperkenalkan sejumlah konsep baru yang wajar
+dan menyediakan beberapa contoh yang dapat dijalankan, menggunakan dataset nyata.
+Ini menghadirkan tantangan dalam hal organisasi.
+Beberapa model secara logis mungkin dikelompokkan bersama dalam satu notebook.
+Dan beberapa ide mungkin paling baik diajarkan
+dengan menjalankan beberapa model secara berurutan.
+Sebaliknya, ada keuntungan besar dalam mengikuti
+kebijakan *satu contoh yang dapat dijalankan, satu notebook*:
+Ini membuatnya semudah mungkin bagi Anda untuk
+memulai proyek penelitian Anda sendiri dengan memanfaatkan kode kami.
+Cukup salin sebuah notebook dan mulai memodifikasinya.
 
-Throughout, we interleave the runnable code
-with background material as needed.
-In general, we err on the side of making tools
-available before explaining them fully
-(often filling in the background later).
-For instance, we might use *stochastic gradient descent*
-before explaining why it is useful
-or offering some intuition for why it works.
-This helps to give practitioners the necessary
-ammunition to solve problems quickly,
-at the expense of requiring the reader
-to trust us with some curatorial decisions.
+Sepanjang buku ini, kami menggabungkan kode yang dapat dijalankan
+dengan materi latar belakang yang diperlukan.
+Secara umum, kami cenderung membuat alat-alat tersebut tersedia
+sebelum menjelaskannya sepenuhnya (seringkali mengisi latar belakang nanti).
+Sebagai contoh, kami mungkin menggunakan *stochastic gradient descent*
+sebelum menjelaskan mengapa itu berguna
+atau memberikan intuisi tentang mengapa itu berhasil.
+Hal ini membantu memberikan amunisi yang diperlukan
+kepada praktisi untuk memecahkan masalah dengan cepat,
+dengan konsekuensi bahwa pembaca harus mempercayai kami
+dalam beberapa keputusan kuratorial.
 
-This book teaches deep learning concepts from scratch.
-Sometimes, we delve into fine details about models
-that would typically be hidden from users
-by modern deep learning frameworks.
-This comes up especially in the basic tutorials,
-where we want you to understand everything
-that happens in a given layer or optimizer.
-In these cases, we often present
-two versions of the example:
-one where we implement everything from scratch,
-relying only on NumPy-like functionality
-and automatic differentiation,
-and a more practical example,
-where we write succinct code
-using the high-level APIs of deep learning frameworks.
-After explaining how some component works,
-we rely on the high-level API in subsequent tutorials.
+Buku ini mengajarkan konsep pembelajaran mendalam dari awal.
+Terkadang, kami menyelami detail-detail mendalam tentang model
+yang biasanya disembunyikan dari pengguna
+oleh kerangka kerja pembelajaran mendalam modern.
+Ini terutama muncul dalam tutorial dasar,
+di mana kami ingin Anda memahami segala sesuatu
+yang terjadi dalam lapisan atau pengoptimal tertentu.
+Dalam kasus ini, kami sering menyajikan
+dua versi dari contoh tersebut:
+satu di mana kami mengimplementasikan semuanya dari awal,
+hanya mengandalkan fungsi mirip NumPy
+dan diferensiasi otomatis,
+dan contoh yang lebih praktis,
+di mana kami menulis kode singkat
+menggunakan API tingkat tinggi dari kerangka kerja pembelajaran mendalam.
+Setelah menjelaskan bagaimana suatu komponen bekerja,
+kami akan mengandalkan API tingkat tinggi di tutorial berikutnya.
 
+### Konten dan Struktur
 
-### Content and Structure
+Buku ini dapat dibagi menjadi tiga bagian utama,
+yang membahas tentang dasar-dasar, 
+teknik pembelajaran mendalam, 
+dan topik-topik lanjutan
+yang berfokus pada sistem nyata
+dan aplikasi (:numref:`fig_book_org`).
 
-The book can be divided into roughly three parts,
-dealing with preliminaries,
-deep learning techniques,
-and advanced topics
-focused on real systems
-and applications (:numref:`fig_book_org`).
-
-![Book structure.](../img/book-org.svg)
+![Struktur Buku.](../img/book-org.svg)
 :label:`fig_book_org`
 
+* **Bagian 1: Dasar-dasar dan Pendahuluan**.
+:numref:`chap_introduction` adalah
+pengantar ke pembelajaran mendalam.
+Kemudian, di :numref:`chap_preliminaries`,
+kami dengan cepat membawa Anda
+pada prasyarat yang dibutuhkan
+untuk pembelajaran mendalam secara praktis,
+seperti cara menyimpan dan memanipulasi data,
+dan bagaimana menerapkan berbagai operasi numerik
+berdasarkan konsep dasar dari aljabar linier,
+kalkulus, dan probabilitas.
+:numref:`chap_regression` dan :numref:`chap_perceptrons`
+mencakup konsep dan teknik paling mendasar dalam pembelajaran mendalam,
+termasuk regresi dan klasifikasi;
+model linier; multilayer perceptrons;
+dan overfitting serta regularisasi.
 
-* **Part 1: Basics and Preliminaries**.
-:numref:`chap_introduction` is
-an introduction to deep learning.
-Then, in :numref:`chap_preliminaries`,
-we quickly bring you up to speed
-on the prerequisites required
-for hands-on deep learning,
-such as how to store and manipulate data,
-and how to apply various numerical operations
-based on elementary concepts from linear algebra,
-calculus, and probability.
-:numref:`chap_regression` and :numref:`chap_perceptrons`
-cover the most fundamental concepts and techniques in deep learning,
-including regression and classification;
-linear models; multilayer perceptrons;
-and overfitting and regularization.
+* **Bagian 2: Teknik Pembelajaran Mendalam Modern**.
+:numref:`chap_computation` menjelaskan
+komponen komputasi kunci
+dari sistem pembelajaran mendalam
+dan meletakkan dasar
+untuk implementasi model yang lebih kompleks
+pada bab-bab berikutnya.
+Selanjutnya, :numref:`chap_cnn` dan :numref:`chap_modern_cnn`
+memperkenalkan convolutional neural networks (CNNs),
+alat yang kuat yang menjadi tulang punggung
+sebagian besar sistem visi komputer modern.
+Demikian pula, :numref:`chap_rnn` dan :numref:`chap_modern_rnn`
+memperkenalkan recurrent neural networks (RNNs),
+model yang memanfaatkan struktur berurutan (misalnya, temporal)
+dalam data dan biasanya digunakan
+untuk pemrosesan bahasa alami
+dan prediksi deret waktu.
+Di :numref:`chap_attention-and-transformers`,
+kami menjelaskan kelas model yang relatif baru,
+berdasarkan mekanisme *attention*,
+yang telah menggantikan RNN sebagai arsitektur dominan
+untuk sebagian besar tugas pemrosesan bahasa alami.
+Bagian-bagian ini akan membuat Anda memahami
+alat paling kuat dan umum
+yang banyak digunakan oleh praktisi pembelajaran mendalam.
 
-* **Part 2: Modern Deep Learning Techniques**.
-:numref:`chap_computation` describes
-the key computational components
-of deep learning systems
-and lays the groundwork
-for our subsequent implementations
-of more complex models.
-Next, :numref:`chap_cnn` and :numref:`chap_modern_cnn`
-present convolutional neural networks (CNNs),
-powerful tools that form the backbone
-of most modern computer vision systems.
-Similarly, :numref:`chap_rnn` and :numref:`chap_modern_rnn`
-introduce recurrent neural networks (RNNs),
-models that exploit sequential (e.g., temporal)
-structure in data and are commonly used
-for natural language processing
-and time series prediction.
-In :numref:`chap_attention-and-transformers`,
-we describe a relatively new class of models,
-based on so-called *attention mechanisms*,
-that has displaced RNNs as the dominant architecture
-for most natural language processing tasks.
-These sections will bring you up to speed
-on the most powerful and general tools
-that are widely used by deep learning practitioners.
-
-* **Part 3: Scalability, Efficiency, and Applications** (available [online](https://d2l.ai)).
-In Chapter 12,
-we discuss several common optimization algorithms
-used to train deep learning models.
-Next, in Chapter 13,
-we examine several key factors
-that influence the computational performance
-of deep learning code.
-Then, in Chapter 14,
-we illustrate major applications
-of deep learning in computer vision.
-Finally, in Chapter 15 and Chapter 16,
-we demonstrate how to pretrain language representation models
-and apply them to natural language processing tasks.
+* **Bagian 3: Skalabilitas, Efisiensi, dan Aplikasi** (tersedia [online](https://d2l.ai)).
+Pada Bab 12,
+kami membahas beberapa algoritma optimasi umum
+yang digunakan untuk melatih model pembelajaran mendalam.
+Selanjutnya, pada Bab 13,
+kami memeriksa beberapa faktor kunci
+yang memengaruhi kinerja komputasi
+dari kode pembelajaran mendalam.
+Kemudian, pada Bab 14,
+kami mengilustrasikan aplikasi-aplikasi utama
+pembelajaran mendalam dalam visi komputer.
+Terakhir, pada Bab 15 dan Bab 16,
+kami mendemonstrasikan cara melatih model representasi bahasa
+dan menerapkannya pada tugas-tugas pemrosesan bahasa natural.
 
 
 ### Code
 :label:`sec_code`
 
-Most sections of this book feature executable code.
-We believe that some intuitions are best developed
-via trial and error,
-tweaking the code in small ways and observing the results.
-Ideally, an elegant mathematical theory might tell us
-precisely how to tweak our code to achieve a desired result.
-However, deep learning practitioners today
-must often tread where no solid theory provides guidance.
-Despite our best attempts, formal explanations
-for the efficacy of various techniques are
-still lacking, for a variety of reasons: the mathematics to characterize these models
-can be so difficult;
-the explanation likely depends on properties
-of the data that currently lack clear definitions;
-and serious inquiry on these topics
-has only recently kicked into high gear.
-We are hopeful that as the theory of deep learning progresses,
-each future edition of this book will provide insights
-that eclipse those presently available.
+Sebagian besar bagian dalam buku ini menampilkan kode yang dapat dijalankan.
+Kami percaya bahwa beberapa intuisi paling baik dikembangkan
+melalui percobaan dan kesalahan,
+dengan mengubah sedikit kode dan mengamati hasilnya.
+Idealnya, teori matematika yang elegan mungkin bisa memberi tahu kita
+secara tepat bagaimana mengubah kode kita untuk mencapai hasil yang diinginkan.
+Namun, praktisi pembelajaran mendalam saat ini
+sering kali harus melangkah ke wilayah di mana belum ada teori yang kuat sebagai panduan.
+Meskipun kami telah berusaha sebaik mungkin, penjelasan formal
+mengenai keefektifan berbagai teknik masih kurang, karena beberapa alasan: matematika yang diperlukan untuk mencirikan model-model ini
+bisa sangat sulit; penjelasannya mungkin bergantung pada sifat data
+yang saat ini masih kurang jelas definisinya;
+dan penyelidikan serius tentang topik ini baru-baru ini dimulai secara intensif.
+Kami berharap seiring dengan kemajuan teori pembelajaran mendalam,
+setiap edisi buku ini di masa mendatang akan memberikan wawasan
+yang melampaui apa yang tersedia saat ini.
 
-To avoid unnecessary repetition, we capture
-some of our most frequently imported and used
-functions and classes in the `d2l` package.
-Throughout, we mark blocks of code
-(such as functions, classes,
-or collection of import statements) with `#@save`
-to indicate that they will be accessed later
-via the `d2l` package.
-We offer a detailed overview
-of these classes and functions in :numref:`sec_d2l`.
-The `d2l` package is lightweight and only requires
-the following dependencies:
+Untuk menghindari pengulangan yang tidak perlu, kami mengumpulkan
+beberapa fungsi dan kelas yang paling sering diimpor dan digunakan
+ke dalam paket `d2l`.
+Sepanjang buku, kami menandai blok kode
+(seperti fungsi, kelas, atau kumpulan pernyataan impor) dengan `#@save`
+untuk menunjukkan bahwa mereka akan diakses nanti
+melalui paket `d2l`.
+Kami menawarkan ikhtisar mendetail
+tentang kelas dan fungsi ini di :numref:`sec_d2l`.
+Paket `d2l` ringan dan hanya memerlukan
+dependensi berikut:
+
 
 ```{.python .input}
 #@tab all
@@ -366,76 +247,74 @@ d2l = sys.modules[__name__]
 ```
 
 :begin_tab:`mxnet`
-Most of the code in this book is based on Apache MXNet,
-an open-source framework for deep learning
-that is the preferred choice
-of AWS (Amazon Web Services),
-as well as many colleges and companies.
-All of the code in this book has passed tests
-under the newest MXNet version.
-However, due to the rapid development of deep learning,
-some code *in the print edition*
-may not work properly in future versions of MXNet.
-We plan to keep the online version up to date.
-In case you encounter any problems,
-please consult :ref:`chap_installation`
-to update your code and runtime environment.
-Below lists dependencies in our MXNet implementation.
+Sebagian besar kode dalam buku ini didasarkan pada Apache MXNet,
+sebuah kerangka kerja open-source untuk pembelajaran mendalam
+yang merupakan pilihan utama AWS (Amazon Web Services),
+serta banyak perguruan tinggi dan perusahaan.
+Semua kode dalam buku ini telah diuji
+di versi terbaru MXNet.
+Namun, karena perkembangan pembelajaran mendalam yang sangat cepat,
+beberapa kode *dalam edisi cetak*
+mungkin tidak berfungsi dengan baik di versi MXNet yang akan datang.
+Kami berencana untuk terus memperbarui versi daring.
+Jika Anda mengalami masalah,
+silakan konsultasikan :ref:`chap_installation`
+untuk memperbarui kode dan lingkungan runtime Anda.
+Berikut adalah daftar dependensi dalam implementasi MXNet kami.
 :end_tab:
 
 :begin_tab:`pytorch`
-Most of the code in this book is based on PyTorch,
-a popular open-source framework
-that has been enthusiastically embraced
-by the deep learning research community.
-All of the code in this book has passed tests
-under the latest stable version of PyTorch.
-However, due to the rapid development of deep learning,
-some code *in the print edition*
-may not work properly in future versions of PyTorch.
-We plan to keep the online version up to date.
-In case you encounter any problems,
-please consult :ref:`chap_installation`
-to update your code and runtime environment.
-Below lists dependencies in our PyTorch implementation.
+Sebagian besar kode dalam buku ini didasarkan pada PyTorch,
+sebuah kerangka kerja open-source yang populer
+dan sangat diterima oleh komunitas penelitian pembelajaran mendalam.
+Semua kode dalam buku ini telah diuji
+di versi stabil terbaru PyTorch.
+Namun, karena perkembangan pembelajaran mendalam yang sangat cepat,
+beberapa kode *dalam edisi cetak*
+mungkin tidak berfungsi dengan baik di versi PyTorch yang akan datang.
+Kami berencana untuk terus memperbarui versi daring.
+Jika Anda mengalami masalah,
+silakan konsultasikan :ref:`chap_installation`
+untuk memperbarui kode dan lingkungan runtime Anda.
+Berikut adalah daftar dependensi dalam implementasi PyTorch kami.
 :end_tab:
 
 :begin_tab:`tensorflow`
-Most of the code in this book is based on TensorFlow,
-an open-source framework for deep learning
-that is widely adopted in industry
-and popular among researchers.
-All of the code in this book has passed tests
-under the latest stable version TensorFlow.
-However, due to the rapid development of deep learning,
-some code *in the print edition*
-may not work properly in future versions of TensorFlow.
-We plan to keep the online version up to date.
-In case you encounter any problems,
-please consult :ref:`chap_installation`
-to update your code and runtime environment.
-Below lists dependencies in our TensorFlow implementation.
+Sebagian besar kode dalam buku ini didasarkan pada TensorFlow,
+sebuah kerangka kerja open-source untuk pembelajaran mendalam
+yang banyak diadopsi dalam industri
+dan populer di kalangan peneliti.
+Semua kode dalam buku ini telah diuji
+di versi stabil terbaru TensorFlow.
+Namun, karena perkembangan pembelajaran mendalam yang sangat cepat,
+beberapa kode *dalam edisi cetak*
+mungkin tidak berfungsi dengan baik di versi TensorFlow yang akan datang.
+Kami berencana untuk terus memperbarui versi daring.
+Jika Anda mengalami masalah,
+silakan konsultasikan :ref:`chap_installation`
+untuk memperbarui kode dan lingkungan runtime Anda.
+Berikut adalah daftar dependensi dalam implementasi TensorFlow kami.
 :end_tab:
 
 :begin_tab:`jax`
-Most of the code in this book is based on Jax,
-an open-source framework enabling composable function
-transformations such as differentiation of arbitrary
-Python and NumPy functions, as well as JIT compliation,
-vectorization and much more! It is becoming popular in
-the machine learning research space and has an
-easy-to-learn NumPy-like API. Actually, JAX tries
-to achieve 1:1 parity with NumPy, so switching your
-code could be as simple as changing a single import statement!
-However, due to the rapid development of deep learning,
-some code *in the print edition*
-may not work properly in future versions of Jax.
-We plan to keep the online version up to date.
-In case you encounter any problems,
-please consult :ref:`chap_installation`
-to update your code and runtime environment.
-Below lists dependencies in our JAX implementation.
+Sebagian besar kode dalam buku ini didasarkan pada Jax,
+sebuah kerangka kerja open-source yang memungkinkan transformasi fungsi yang dapat digabungkan,
+seperti diferensiasi fungsi Python dan NumPy yang sewenang-wenang,
+serta kompilasi JIT, vektorisasi, dan banyak lagi!
+Jax semakin populer dalam ruang penelitian pembelajaran mesin
+dan memiliki API yang mudah dipelajari mirip dengan NumPy.
+Bahkan, JAX berusaha mencapai kesamaan 1:1 dengan NumPy,
+sehingga beralih dari kode Anda bisa sesederhana mengubah satu pernyataan impor!
+Namun, karena perkembangan pembelajaran mendalam yang sangat cepat,
+beberapa kode *dalam edisi cetak*
+mungkin tidak berfungsi dengan baik di versi Jax yang akan datang.
+Kami berencana untuk terus memperbarui versi daring.
+Jika Anda mengalami masalah,
+silakan konsultasikan :ref:`chap_installation`
+untuk memperbarui kode dan lingkungan runtime Anda.
+Berikut adalah daftar dependensi dalam implementasi JAX kami.
 :end_tab:
+
 
 ```{.python .input}
 #@tab mxnet
@@ -483,67 +362,61 @@ from types import FunctionType
 from typing import Any
 ```
 
-### Target Audience
+### Audiens Sasaran
 
-This book is for students (undergraduate or graduate),
-engineers, and researchers, who seek a solid grasp
-of the practical techniques of deep learning.
-Because we explain every concept from scratch,
-no previous background in deep learning or machine learning is required.
-Fully explaining the methods of deep learning
-requires some mathematics and programming,
-but we will only assume that you enter with some basics,
-including modest amounts of linear algebra,
-calculus, probability, and Python programming.
-Just in case you have forgotten anything,
-the [online Appendix](https://d2l.ai/chapter_appendix-mathematics-for-deep-learning/index.html) provides a refresher
-on most of the mathematics
-you will find in this book.
-Usually, we will prioritize
-intuition and ideas
-over mathematical rigor.
-If you would like to extend these foundations
-beyond the prerequisites to understand our book,
-we happily recommend some other terrific resources:
-*Linear Analysis* by :citet:`Bollobas.1999`
-covers linear algebra and functional analysis in great depth.
+Buku ini ditujukan untuk mahasiswa (sarjana atau pascasarjana),
+insinyur, dan peneliti yang ingin memahami secara mendalam
+teknik praktis pembelajaran mendalam.
+Karena kami menjelaskan setiap konsep dari awal,
+tidak diperlukan latar belakang sebelumnya dalam pembelajaran mendalam atau pembelajaran mesin.
+Untuk menjelaskan metode pembelajaran mendalam secara lengkap
+dibutuhkan sedikit matematika dan pemrograman,
+namun kami hanya mengasumsikan bahwa Anda memiliki pengetahuan dasar,
+termasuk sedikit aljabar linier, kalkulus, probabilitas, dan pemrograman Python.
+Jika Anda lupa beberapa hal,
+[Appendiks daring](https://d2l.ai/chapter_appendix-mathematics-for-deep-learning/index.html) menyediakan ulasan
+tentang sebagian besar matematika
+yang akan Anda temui dalam buku ini.
+Biasanya, kami akan lebih memprioritaskan
+intuisi dan ide
+dibandingkan ketelitian matematis.
+Jika Anda ingin memperdalam dasar-dasar ini
+di luar prasyarat yang dibutuhkan untuk memahami buku kami,
+kami dengan senang hati merekomendasikan beberapa sumber luar biasa lainnya:
+*Linear Analysis* oleh :citet:`Bollobas.1999`
+mencakup aljabar linier dan analisis fungsional secara mendalam.
 *All of Statistics* :cite:`Wasserman.2013`
-provides a marvelous introduction to statistics.
-Joe Blitzstein's [books](https://www.amazon.com/Introduction-Probability-Chapman-Statistical-Science/dp/1138369918)
-and [courses](https://projects.iq.harvard.edu/stat110/home)
-on probability and inference are pedagogical gems.
-And if you have not used Python before,
-you may want to peruse this [Python tutorial](http://learnpython.org/).
+memberikan pengantar yang luar biasa tentang statistik.
+Buku dan [kursus](https://projects.iq.harvard.edu/stat110/home) Joe Blitzstein tentang probabilitas dan inferensi adalah permata pedagogis.
+Dan jika Anda belum pernah menggunakan Python sebelumnya,
+Anda mungkin ingin melihat [tutorial Python](http://learnpython.org/) ini.
 
 
-### Notebooks, Website, GitHub, and Forum
+### Notebook, Website, GitHub, dan Forum
 
-All our notebooks can be downloaded
-from the [D2L.ai website](https://d2l.ai)
-and from [GitHub](https://github.com/d2l-ai/d2l-en).
-Associated with this book we have launched a discussion forum
-at [discuss.d2l.ai](https://discuss.d2l.ai/c/5).
-Whenever you have questions on any section of the book,
-you can find a link to the associated discussion page
-at the end of each notebook.
+Semua notebook kami dapat diunduh dari [website D2L.ai](https://d2l.ai)
+dan dari [GitHub](https://github.com/d2l-ai/d2l-en).
+Bersamaan dengan buku ini, kami telah meluncurkan forum diskusi
+di [discuss.d2l.ai](https://discuss.d2l.ai/c/5).
+Setiap kali Anda memiliki pertanyaan tentang bagian mana pun dari buku ini,
+Anda dapat menemukan tautan ke halaman diskusi terkait
+di akhir setiap notebook.
 
+## Ucapan Terima Kasih
 
+Kami berutang budi kepada ratusan kontributor baik untuk
+draft bahasa Inggris maupun bahasa Tiongkok.
+Mereka membantu memperbaiki konten dan memberikan masukan yang berharga.
+Buku ini awalnya diimplementasikan dengan MXNet sebagai kerangka kerja utama.
+Kami berterima kasih kepada Anirudh Dagar dan Yuan Tang atas adaptasi sebagian besar kode MXNet sebelumnya ke dalam implementasi PyTorch dan TensorFlow, masing-masing.
+Sejak Juli 2021, kami telah mendesain ulang dan mengimplementasikan ulang buku ini di PyTorch, MXNet, dan TensorFlow, dengan memilih PyTorch sebagai kerangka kerja utama.
+Kami berterima kasih kepada Anirudh Dagar atas adaptasi sebagian besar kode PyTorch yang lebih baru ke dalam implementasi JAX.
+Kami berterima kasih kepada Gaosheng Wu, Liujun Hu, Ge Zhang, dan Jiehang Xie dari Baidu atas adaptasi sebagian besar kode PyTorch yang lebih baru ke dalam implementasi PaddlePaddle dalam draft bahasa Tiongkok.
+Kami berterima kasih kepada Shuai Zhang karena telah mengintegrasikan gaya LaTeX dari penerbit ke dalam pembuatan PDF.
 
-## Acknowledgments
-
-We are indebted to the hundreds of contributors for both
-the English and the Chinese drafts.
-They helped improve the content and offered valuable feedback.
-This book was originally implemented with MXNet as the primary framework.
-We thank Anirudh Dagar and Yuan Tang for adapting a majority part of earlier MXNet code into PyTorch and TensorFlow implementations, respectively.
-Since July 2021, we have redesigned and reimplemented this book in PyTorch, MXNet, and TensorFlow, choosing PyTorch as the primary framework.
-We thank Anirudh Dagar for adapting a majority part of more recent PyTorch code into JAX implementations.
-We thank Gaosheng Wu, Liujun Hu, Ge Zhang, and Jiehang Xie from Baidu for adapting a majority part of more recent PyTorch code into PaddlePaddle implementations in the Chinese draft.
-We thank Shuai Zhang for integrating the LaTeX style from the press into the PDF building.
-
-On GitHub, we thank every contributor of this English draft
-for making it better for everyone.
-Their GitHub IDs or names are (in no particular order):
+Di GitHub, kami berterima kasih kepada setiap kontributor dari draft bahasa Inggris ini
+karena telah membuatnya lebih baik untuk semua orang.
+ID GitHub atau nama mereka adalah (tidak dalam urutan tertentu):
 alxnorden, avinashingit, bowen0701, brettkoonce, Chaitanya Prakash Bapat,
 cryptonaut, Davide Fiocco, edgarroman, gkutiel, John Mitro, Liang Pu,
 Rahul Agarwal, Mohamed Ali Jamaoui, Michael (Stu) Stewart, Mike Müller,
@@ -586,51 +459,49 @@ Joji Joseph, Anthony Biel, Zeming Zhao, shjustinbaek, gab-chen, nantekoto, Yutar
 Tian-MaoMao, Amin Allahyar, Gijs van Tulder, Mikhail Berkov, iamorphen, Matthew Caseres, Andrew Walsh,
 pggPL, RohanKarthikeyan, Ryan Choi, and Likun Lei.
 
-We thank Amazon Web Services, especially Wen-Ming Ye, George Karypis, Swami Sivasubramanian, Peter DeSantis, Adam Selipsky,
-and Andrew Jassy for their generous support in writing this book.
-Without the available time, resources, discussions with colleagues,
-and continuous encouragement, this book would not have happened.
-During the preparation of the book for publication,
-Cambridge University Press has offered excellent support.
-We thank our commissioning editor David Tranah
-for his help and professionalism.
+Kami berterima kasih kepada Amazon Web Services, terutama Wen-Ming Ye, George Karypis, Swami Sivasubramanian, Peter DeSantis, Adam Selipsky,
+dan Andrew Jassy atas dukungan besar mereka dalam penulisan buku ini.
+Tanpa waktu, sumber daya, diskusi dengan rekan-rekan, dan dorongan berkelanjutan,
+buku ini tidak akan terwujud.
+Selama persiapan buku ini untuk penerbitan,
+Cambridge University Press memberikan dukungan yang sangat baik.
+Kami berterima kasih kepada editor kami, David Tranah
+atas bantuan dan profesionalismenya.
 
+## Ringkasan
 
-## Summary
+Pembelajaran mendalam telah merevolusi pengenalan pola,
+memperkenalkan teknologi yang kini mendukung berbagai teknologi,
+di berbagai bidang seperti visi komputer,
+pemrosesan bahasa alami,
+dan pengenalan suara otomatis.
+Untuk berhasil menerapkan pembelajaran mendalam,
+Anda harus memahami cara merumuskan masalah,
+matematika dasar pemodelan,
+algoritma untuk menyesuaikan model Anda dengan data,
+dan teknik rekayasa untuk mengimplementasikan semuanya.
+Buku ini menyajikan sumber daya yang komprehensif,
+termasuk tulisan, gambar, matematika, dan kode, semuanya di satu tempat.
 
-Deep learning has revolutionized pattern recognition,
-introducing technology that now powers a wide range of  technologies,
-in such diverse fields as computer vision,
-natural language processing,
-and automatic speech recognition.
-To successfully apply deep learning,
-you must understand how to cast a problem,
-the basic mathematics of modeling,
-the algorithms for fitting your models to data,
-and the engineering techniques to implement it all.
-This book presents a comprehensive resource,
-including prose, figures, mathematics, and code, all in one place.
+## Latihan
 
-
-
-## Exercises
-
-1. Register an account on the discussion forum of this book [discuss.d2l.ai](https://discuss.d2l.ai/).
-1. Install Python on your computer.
-1. Follow the links at the bottom of the section to the forum, where you will be able to seek out help and discuss the book and find answers to your questions by engaging the authors and broader community.
+1. Daftarkan akun di forum diskusi buku ini [discuss.d2l.ai](https://discuss.d2l.ai/).
+2. Instal Python di komputer Anda.
+3. Ikuti tautan di bagian bawah untuk menuju forum, di mana Anda dapat meminta bantuan, mendiskusikan buku, dan menemukan jawaban atas pertanyaan Anda dengan berinteraksi dengan penulis dan komunitas yang lebih luas.
 
 :begin_tab:`mxnet`
-[Discussions](https://discuss.d2l.ai/t/18)
+[Diskusi](https://discuss.d2l.ai/t/18)
 :end_tab:
 
 :begin_tab:`pytorch`
-[Discussions](https://discuss.d2l.ai/t/20)
+[Diskusi](https://discuss.d2l.ai/t/20)
 :end_tab:
 
 :begin_tab:`tensorflow`
-[Discussions](https://discuss.d2l.ai/t/186)
+[Diskusi](https://discuss.d2l.ai/t/186)
 :end_tab:
 
 :begin_tab:`jax`
-[Discussions](https://discuss.d2l.ai/t/17963)
+[Diskusi](https://discuss.d2l.ai/t/17963)
 :end_tab:
+
