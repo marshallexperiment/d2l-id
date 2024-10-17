@@ -1,101 +1,86 @@
-# Notation
+# Notasi
 :label:`chap_notation`
 
-Throughout this book, we adhere 
-to the following notational conventions.
-Note that some of these symbols are placeholders,
-while others refer to specific objects.
-As a general rule of thumb, 
-the indefinite article "a" often indicates
-that the symbol is a placeholder
-and that similarly formatted symbols
-can denote other objects of the same type.
-For example, "$x$: a scalar" means 
-that lowercased letters generally
-represent scalar values,
-but "$\mathbb{Z}$: the set of integers"
-refers specifically to the symbol $\mathbb{Z}$.
+Sepanjang buku ini, kami mengikuti konvensi notasi berikut.
+Perhatikan bahwa beberapa simbol ini adalah placeholder,
+sedangkan yang lainnya merujuk pada objek spesifik.
+Sebagai aturan umum,
+artikel tak tentu "a" sering menunjukkan
+bahwa simbol tersebut adalah placeholder
+dan bahwa simbol dengan format serupa
+dapat menunjukkan objek lain dari jenis yang sama.
+Sebagai contoh, "$x$: sebuah skalar" berarti
+bahwa huruf kecil umumnya
+mewakili nilai skalar,
+tetapi "$\mathbb{Z}$: himpunan bilangan bulat"
+merujuk secara spesifik pada simbol $\mathbb{Z}$.
 
+## Objek Numerik
 
+* $x$: sebuah skalar
+* $\mathbf{x}$: sebuah vektor
+* $\mathbf{X}$: sebuah matriks
+* $\mathsf{X}$: tensor umum
+* $\mathbf{I}$: matriks identitas (dari dimensi tertentu), yaitu matriks persegi dengan $1$ pada semua elemen diagonal dan $0$ pada elemen di luar diagonal
+* $x_i$, $[\mathbf{x}]_i$: elemen ke-$i$ dari vektor $\mathbf{x}$
+* $x_{ij}$, $x_{i,j}$, $[\mathbf{X}]_{ij}$, $[\mathbf{X}]_{i,j}$: elemen dari matriks $\mathbf{X}$ pada baris $i$ dan kolom $j$.
 
-## Numerical Objects
+## Teori Himpunan
 
-* $x$: a scalar
-* $\mathbf{x}$: a vector
-* $\mathbf{X}$: a matrix
-* $\mathsf{X}$: a general tensor
-* $\mathbf{I}$: the identity matrix (of some given dimension), i.e., a square matrix with $1$ on all diagonal entries and $0$ on all off-diagonals
-* $x_i$, $[\mathbf{x}]_i$: the $i^\textrm{th}$ element of vector $\mathbf{x}$
-* $x_{ij}$, $x_{i,j}$,$[\mathbf{X}]_{ij}$, $[\mathbf{X}]_{i,j}$: the element of matrix $\mathbf{X}$ at row $i$ and column $j$.
+* $\mathcal{X}$: sebuah himpunan
+* $\mathbb{Z}$: himpunan bilangan bulat
+* $\mathbb{Z}^+$: himpunan bilangan bulat positif
+* $\mathbb{R}$: himpunan bilangan real
+* $\mathbb{R}^n$: himpunan vektor berdimensi-$n$ dari bilangan real
+* $\mathbb{R}^{a\times b}$: himpunan matriks bilangan real dengan $a$ baris dan $b$ kolom
+* $|\mathcal{X}|$: kardinalitas (jumlah elemen) dari himpunan $\mathcal{X}$
+* $\mathcal{A}\cup\mathcal{B}$: gabungan himpunan $\mathcal{A}$ dan $\mathcal{B}$
+* $\mathcal{A}\cap\mathcal{B}$: irisan himpunan $\mathcal{A}$ dan $\mathcal{B}$
+* $\mathcal{A}\setminus\mathcal{B}$: pengurangan himpunan $\mathcal{B}$ dari $\mathcal{A}$ (mengandung hanya elemen dari $\mathcal{A}$ yang tidak termasuk dalam $\mathcal{B}$)
 
+## Fungsi dan Operator
 
+* $f(\cdot)$: sebuah fungsi
+* $\log(\cdot)$: logaritma natural (basis $e$)
+* $\log_2(\cdot)$: logaritma dengan basis $2$
+* $\exp(\cdot)$: fungsi eksponensial
+* $\mathbf{1}(\cdot)$: fungsi indikator; bernilai $1$ jika argumen boolean benar, dan $0$ sebaliknya
+* $\mathbf{1}_{\mathcal{X}}(z)$: fungsi indikator keanggotaan himpunan; bernilai $1$ jika elemen $z$ termasuk dalam himpunan $\mathcal{X}$ dan $0$ sebaliknya
+* $\mathbf{(\cdot)}^\top$: transpose dari vektor atau matriks
+* $\mathbf{X}^{-1}$: invers dari matriks $\mathbf{X}$
+* $\odot$: hasil kali Hadamard (elemen-wise)
+* $[\cdot, \cdot]$: konkatenasi
+* $\|\cdot\|_p$: norma $\ell_p$
+* $\|\cdot\|$: norma $\ell_2$
+* $\langle \mathbf{x}, \mathbf{y} \rangle$: produk dalam (dot product) dari vektor $\mathbf{x}$ dan $\mathbf{y}$
+* $\sum$: penjumlahan atas suatu koleksi elemen
+* $\prod$: perkalian atas suatu koleksi elemen
+* $\stackrel{\textrm{def}}{=}$: kesetaraan yang ditegaskan sebagai definisi dari simbol di sisi kiri
 
-## Set Theory
+## Kalkulus
 
+* $\frac{dy}{dx}$: turunan dari $y$ terhadap $x$
+* $\frac{\partial y}{\partial x}$: turunan parsial dari $y$ terhadap $x$
+* $\nabla_{\mathbf{x}} y$: gradien dari $y$ terhadap $\mathbf{x}$
+* $\int_a^b f(x) \;dx$: integral tentu dari $f$ dari $a$ ke $b$ terhadap $x$
+* $\int f(x) \;dx$: integral tak tentu dari $f$ terhadap $x$
 
-* $\mathcal{X}$: a set
-* $\mathbb{Z}$: the set of integers
-* $\mathbb{Z}^+$: the set of positive integers
-* $\mathbb{R}$: the set of real numbers
-* $\mathbb{R}^n$: the set of $n$-dimensional vectors of real numbers
-* $\mathbb{R}^{a\times b}$: The set of matrices of real numbers with $a$ rows and $b$ columns
-* $|\mathcal{X}|$: cardinality (number of elements) of set $\mathcal{X}$
-* $\mathcal{A}\cup\mathcal{B}$: union of sets $\mathcal{A}$ and $\mathcal{B}$
-* $\mathcal{A}\cap\mathcal{B}$: intersection of sets $\mathcal{A}$ and $\mathcal{B}$
-* $\mathcal{A}\setminus\mathcal{B}$: set subtraction of $\mathcal{B}$ from $\mathcal{A}$ (contains only those elements of $\mathcal{A}$ that do not belong to $\mathcal{B}$)
+## Teori Probabilitas dan Informasi
 
+* $X$: sebuah variabel acak
+* $P$: sebuah distribusi probabilitas
+* $X \sim P$: variabel acak $X$ mengikuti distribusi $P$
+* $P(X=x)$: probabilitas yang diberikan kepada kejadian di mana variabel acak $X$ mengambil nilai $x$
+* $P(X \mid Y)$: distribusi probabilitas kondisional dari $X$ diberikan $Y$
+* $p(\cdot)$: fungsi densitas probabilitas (PDF) yang terkait dengan distribusi $P$
+* ${E}[X]$: ekspektasi dari variabel acak $X$
+* $X \perp Y$: variabel acak $X$ dan $Y$ independen
+* $X \perp Y \mid Z$: variabel acak $X$ dan $Y$ kondisional independen diberikan $Z$
+* $\sigma_X$: standar deviasi dari variabel acak $X$
+* $\textrm{Var}(X)$: variansi dari variabel acak $X$, sama dengan $\sigma^2_X$
+* $\textrm{Cov}(X, Y)$: kovarians dari variabel acak $X$ dan $Y$
+* $\rho(X, Y)$: koefisien korelasi Pearson antara $X$ dan $Y$, sama dengan $\frac{\textrm{Cov}(X, Y)}{\sigma_X \sigma_Y}$
+* $H(X)$: entropi dari variabel acak $X$
+* $D_{\textrm{KL}}(P\|Q)$: KL-divergence (atau entropi relatif) dari distribusi $Q$ ke distribusi $P$
 
-
-## Functions and Operators
-
-
-* $f(\cdot)$: a function
-* $\log(\cdot)$: the natural logarithm (base $e$)
-* $\log_2(\cdot)$: logarithm to base $2$
-* $\exp(\cdot)$: the exponential function
-* $\mathbf{1}(\cdot)$: the indicator function; evaluates to $1$ if the boolean argument is true, and $0$ otherwise
-* $\mathbf{1}_{\mathcal{X}}(z)$: the set-membership indicator function; evaluates to $1$ if the element $z$ belongs to the set $\mathcal{X}$ and $0$ otherwise
-* $\mathbf{(\cdot)}^\top$: transpose of a vector or a matrix
-* $\mathbf{X}^{-1}$: inverse of matrix $\mathbf{X}$
-* $\odot$: Hadamard (elementwise) product
-* $[\cdot, \cdot]$: concatenation
-* $\|\cdot\|_p$: $\ell_p$ norm
-* $\|\cdot\|$: $\ell_2$ norm
-* $\langle \mathbf{x}, \mathbf{y} \rangle$: inner (dot) product of vectors $\mathbf{x}$ and $\mathbf{y}$
-* $\sum$: summation over a collection of elements
-* $\prod$: product over a collection of elements
-* $\stackrel{\textrm{def}}{=}$: an equality asserted as a definition of the symbol on the left-hand side
-
-
-
-## Calculus
-
-* $\frac{dy}{dx}$: derivative of $y$ with respect to $x$
-* $\frac{\partial y}{\partial x}$: partial derivative of $y$ with respect to $x$
-* $\nabla_{\mathbf{x}} y$: gradient of $y$ with respect to $\mathbf{x}$
-* $\int_a^b f(x) \;dx$: definite integral of $f$ from $a$ to $b$ with respect to $x$
-* $\int f(x) \;dx$: indefinite integral of $f$ with respect to $x$
-
-
-
-## Probability and Information Theory
-
-* $X$: a random variable
-* $P$: a probability distribution
-* $X \sim P$: the random variable $X$ follows distribution $P$
-* $P(X=x)$: the probability assigned to the event where random variable $X$ takes value $x$
-* $P(X \mid Y)$: the conditional probability distribution of $X$ given $Y$
-* $p(\cdot)$: a probability density function (PDF) associated with distribution $P$
-* ${E}[X]$: expectation of a random variable $X$
-* $X \perp Y$: random variables $X$ and $Y$ are independent
-* $X \perp Y \mid Z$: random variables  $X$  and  $Y$ are conditionally independent given $Z$
-* $\sigma_X$: standard deviation of random variable $X$
-* $\textrm{Var}(X)$: variance of random variable $X$, equal to $\sigma^2_X$
-* $\textrm{Cov}(X, Y)$: covariance of random variables $X$ and $Y$
-* $\rho(X, Y)$: the Pearson correlation coefficient between $X$ and $Y$, equals $\frac{\textrm{Cov}(X, Y)}{\sigma_X \sigma_Y}$
-* $H(X)$: entropy of random variable $X$
-* $D_{\textrm{KL}}(P\|Q)$: the KL-divergence (or relative entropy) from distribution $Q$ to distribution $P$
-
-
-
-[Discussions](https://discuss.d2l.ai/t/25)
+[Diskusi](https://discuss.d2l.ai/t/25)
