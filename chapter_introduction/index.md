@@ -488,7 +488,7 @@ masalah pembelajaran mesin.
 
 
 
-### Supervised Learning
+### Supervised Learning (*Pembelajaran terawasi*)
 
 Pembelajaran terawasi (Supervised Learning) menggambarkan tugas-tugas
 di mana kita diberi dataset
@@ -755,7 +755,7 @@ mungkin dekat pada pohon filogenetik,
 tapi salah mengira derik untuk pita bisa berakibat fatal.
 
 
-#### Penandaan (*Tagging*)
+#### Tagging (*Penandaan*)
 
 Beberapa masalah klasifikasi dengan rapi masuk
 ke dalam pengaturan klasifikasi biner atau multikelas.
@@ -814,7 +814,7 @@ Memang, selama beberapa tahun, organisasi BioASQ
 telah [mengadakan kompetisi](http://bioasq.org/)
 untuk tugas ini.
 
-#### Pencarian (Search)
+#### Search (*Pencarian*)
 
 Di bidang pengambilan informasi,
 kita sering memberi peringkat pada kumpulan item.
@@ -841,7 +841,7 @@ Saat ini, mesin pencari menggunakan pembelajaran mesin dan model perilaku
 untuk mendapatkan skor relevansi yang bergantung pada kueri.
 Ada konferensi akademik yang sepenuhnya didedikasikan untuk topik ini.
 
-#### Sistem Rekomendasi
+#### Recommender Systems (*Sistem Rekomendasi*)
 :label:`subsec_recommender_systems`
 
 Sistem rekomendasi adalah pengaturan masalah lain
@@ -910,7 +910,7 @@ Banyak dari masalah ini—tentang
 bagaimana menangani sensor, insentif, dan loop umpan balik—adalah pertanyaan penelitian terbuka yang penting.
 
 
-#### Pembelajaran Urutan (*Sequence Learning*)
+#### Sequence Learning (*Pembelajaran Urutan*)
 
 Sejauh ini, kita telah melihat masalah di mana kita memiliki
 jumlah input tetap dan menghasilkan jumlah output tetap.
@@ -959,7 +959,7 @@ Meskipun tidak mungkin untuk mempertimbangkan
 semua jenis transformasi urutan,
 kasus-kasus khusus berikut patut disebutkan.
 
-**Penandaan dan Penguraian (*tagging* dan *parsing*)**.
+**tagging and parsing (*Penandaan* dan *Penguraian*)**.
 Ini melibatkan anotasi urutan teks dengan atribut.
 Di sini, input dan output adalah *sejajar*,
 yaitu, mereka memiliki jumlah yang sama
@@ -1029,16 +1029,17 @@ Wrong alignment:  Have you yourself already this excellent textbook looked at?
 ```
 
 
-Many related problems pop up in other learning tasks.
-For instance, determining the order in which a user
-reads a webpage is a two-dimensional layout analysis problem.
-Dialogue problems exhibit all kinds of additional complications,
-where determining what to say next requires taking into account
-real-world knowledge and the prior state of the conversation
-across long temporal distances.
-Such topics are active areas of research.
+Banyak masalah terkait muncul dalam tugas pembelajaran lainnya.
+Misalnya, menentukan urutan di mana pengguna
+membaca halaman web adalah masalah analisis tata letak dua dimensi.
+Masalah dialog menunjukkan berbagai komplikasi tambahan,
+di mana menentukan apa yang harus dikatakan selanjutnya memerlukan mempertimbangkan
+pengetahuan dunia nyata dan keadaan percakapan sebelumnya
+di sepanjang jarak waktu yang panjang.
+Topik-topik seperti ini adalah area penelitian yang aktif.
 
-### Unsupervised and Self-Supervised Learning
+
+### Unsupervised and Self-Supervised Learning (*Pembelajaran Terawasi dan Pembelajaran mandiri*)
 
 Contoh sebelumnya berfokus pada pembelajaran terawasi,
 di mana kita memberi model dataset besar
@@ -1131,7 +1132,7 @@ adalah versi terganggu dari gambar yang sama.
 Model mandiri sering kali mempelajari representasi
 yang selanjutnya dimanfaatkan
 dengan menyempurnakan model yang dihasilkan
-pada beberapa tugas hilir yang menarik.
+pada beberapa tugas hilir yang dituhu (*downstream task of interest*).
 
 ### Berinteraksi dengan Lingkungan
 
@@ -1190,7 +1191,7 @@ Selanjutnya, kita akan mendeskripsikan secara singkat tentang pembelajaran pengu
 kerangka kerja yang kaya untuk memformulasikan masalah pembelajaran di mana
 agen berinteraksi dengan lingkungan.
 
-### Reinforcement Learning
+### Reinforcement Learning (*Pembelajaran penguatan*)
 
 Jika Anda tertarik menggunakan pembelajaran mesin
 untuk mengembangkan agen yang berinteraksi dengan lingkungan
@@ -1302,571 +1303,429 @@ dengan imbalan yang awalnya tidak diketahui, kita memiliki masalah klasik *multi
 
 ## Roots
 
-We have just reviewed a small subset of problems
-that machine learning can address.
-For a diverse set of machine learning problems,
-deep learning provides powerful tools for their solution.
-Although many deep learning methods are recent inventions,
-the core ideas behind learning from data
-have been studied for centuries.
-In fact, humans have held the desire to analyze data
-and to predict future outcomes for 
-ages, and it is this desire that is at the root of much of natural science and mathematics.
-Two examples are the Bernoulli distribution, named after
+Kita baru saja meninjau sebagian kecil dari masalah
+yang dapat ditangani oleh pembelajaran mesin.
+Untuk berbagai set masalah pembelajaran mesin,
+pembelajaran mendalam menyediakan alat yang kuat untuk solusinya.
+Meskipun banyak metode pembelajaran mendalam adalah penemuan terbaru,
+ide-ide inti di balik pembelajaran dari data
+telah dipelajari selama berabad-abad.
+Faktanya, manusia telah memiliki keinginan untuk menganalisis data
+dan memprediksi hasil di masa depan selama 
+berabad-abad, dan keinginan inilah yang menjadi akar dari banyak ilmu pengetahuan alam dan matematika.
+Dua contoh adalah distribusi Bernoulli, yang dinamai setelah
 [Jacob Bernoulli (1655--1705)](https://en.wikipedia.org/wiki/Jacob_Bernoulli),
-and the Gaussian distribution discovered
-by [Carl Friedrich Gauss (1777--1855)](https://en.wikipedia.org/wiki/Carl_Friedrich_Gauss).
-Gauss invented, for instance, the least mean squares algorithm,
-which is still used today for a multitude of problems
-from insurance calculations to medical diagnostics.
-Such tools enhanced the experimental approach
-in the natural sciences---for instance, Ohm's law
-relating current and voltage in a resistor
-is perfectly described by a linear model.
+dan distribusi Gaussian yang ditemukan
+oleh [Carl Friedrich Gauss (1777--1855)](https://en.wikipedia.org/wiki/Carl_Friedrich_Gauss).
+Gauss menemukan, misalnya, algoritma kuadrat terkecil rata-rata,
+yang masih digunakan hari ini untuk banyak masalah
+dari perhitungan asuransi hingga diagnostik medis.
+Alat-alat seperti itu meningkatkan pendekatan eksperimental
+dalam ilmu pengetahuan alam---misalnya, hukum Ohm
+yang menghubungkan arus dan tegangan dalam resistor
+dijelaskan dengan sempurna oleh model linier.
 
-Even in the middle ages, mathematicians
-had a keen intuition of estimates.
-For instance, the geometry book of [Jacob Köbel (1460--1533)](https://www.maa.org/press/periodicals/convergence/mathematical-treasures-jacob-kobels-geometry)
-illustrates averaging the length of 16 adult men's feet
-to estimate the typical foot length in the population (:numref:`fig_koebel`).
+Bahkan di abad pertengahan, para matematikawan
+memiliki intuisi tajam tentang perkiraan.
+Misalnya, buku geometri [Jacob Köbel (1460--1533)](https://www.maa.org/press/periodicals/convergence/mathematical-treasures-jacob-kobels-geometry)
+mengilustrasikan rata-rata panjang kaki 16 pria dewasa
+untuk memperkirakan panjang kaki yang khas dalam populasi (:numref:`fig_koebel`).
 
-![Estimating the length of a foot.](../img/koebel.jpg)
+![Memperkirakan panjang kaki.](../img/koebel.jpg)
 :width:`500px`
 :label:`fig_koebel`
 
 
-As a group of individuals exited a church,
-16 adult men were asked to line up in a row
-and have their feet measured.
-The sum of these measurements was then divided by 16
-to obtain an estimate for what now is called one foot.
-This "algorithm" was later improved
-to deal with misshapen feet;
-The two men with the shortest and longest feet were sent away,
-averaging only over the remainder.
-This is among the earliest examples
-of a trimmed mean estimate.
 
-Statistics really took off with the availability and collection of data.
-One of its pioneers, [Ronald Fisher (1890--1962)](https://en.wikipedia.org/wiki/Ronald_Fisher),
-contributed significantly to its theory
-and also its applications in genetics.
-Many of his algorithms (such as linear discriminant analysis)
-and concepts (such as the Fisher information matrix)
-still hold a prominent place
-in the foundations of modern statistics.
-Even his data resources had a lasting impact.
-The Iris dataset that Fisher released in 1936
-is still sometimes used to demonstrate
-machine learning algorithms.
-Fisher was also a proponent of eugenics,
-which should remind us that the morally dubious use of data science
-has as long and enduring a history as its productive use
-in industry and the natural sciences.
+Ketika sekelompok individu keluar dari sebuah gereja,
+16 pria dewasa diminta untuk berbaris dalam satu baris
+dan ukuran kaki mereka diukur.
+Jumlah pengukuran ini kemudian dibagi dengan 16
+untuk memperoleh perkiraan untuk apa yang sekarang disebut satu kaki.
+"Algoritma" ini kemudian ditingkatkan
+untuk mengatasi kaki yang cacat;
+Dua pria dengan kaki terpendek dan terpanjang dikirim pergi,
+menghitung rata-rata hanya dari sisanya.
+Ini adalah salah satu contoh terawal
+dari perkiraan rata-rata yang dipangkas.
 
+Statistik benar-benar berkembang dengan ketersediaan dan pengumpulan data.
+Salah satu pelopornya, [Ronald Fisher (1890--1962)](https://en.wikipedia.org/wiki/Ronald_Fisher),
+berkontribusi secara signifikan terhadap teorinya
+dan juga aplikasinya dalam genetika.
+Banyak algoritmanya (seperti analisis diskriminan linier)
+dan konsep-konsepnya (seperti matriks informasi Fisher)
+masih memiliki tempat terkemuka
+dalam dasar-dasar statistik modern.
+Bahkan sumber data yang dia rilis memiliki dampak yang berkelanjutan.
+Dataset Iris yang Fisher rilis pada tahun 1936
+masih terkadang digunakan untuk mendemonstrasikan
+algoritma pembelajaran mesin.
+Fisher juga merupakan pendukung eugenika,
+yang seharusnya mengingatkan kita bahwa penggunaan ilmu data yang bermoral meragukan
+memiliki sejarah yang panjang dan bertahan lama seperti halnya penggunaannya yang produktif
+di industri dan ilmu pengetahuan alam.
 
-Other influences for machine learning
-came from the information theory of
+Pengaruh lain untuk pembelajaran mesin
+datang dari teori informasi
 [Claude Shannon (1916--2001)](https://en.wikipedia.org/wiki/Claude_Shannon)
-and the theory of computation proposed by
+dan teori komputasi yang diajukan oleh
 [Alan Turing (1912--1954)](https://en.wikipedia.org/wiki/Alan_Turing).
-Turing posed the question "can machines think?”
-in his famous paper *Computing Machinery and Intelligence* :cite:`Turing.1950`.
-Describing what is now known as the Turing test, he proposed that a machine
-can be considered *intelligent* if it is difficult
-for a human evaluator to distinguish between the replies
-from a machine and those of a human, based purely on textual interactions.
-
-Further influences came from neuroscience and psychology.
-After all, humans clearly exhibit intelligent behavior.
-Many scholars have asked whether one could explain
-and possibly reverse engineer this capacity.
-One of the first biologically inspired algorithms
-was formulated by [Donald Hebb (1904--1985)](https://en.wikipedia.org/wiki/Donald_O._Hebb).
-In his groundbreaking book *The Organization of Behavior* :cite:`Hebb.1949`,
-he posited that neurons learn by positive reinforcement.
-This became known as the Hebbian learning rule.
-These ideas inspired later work, such as
-Rosenblatt's perceptron learning algorithm,
-and laid the foundations of many stochastic gradient descent algorithms
-that underpin deep learning today:
-reinforce desirable behavior and diminish undesirable behavior
-to obtain good settings of the parameters in a neural network.
-
-Biological inspiration is what gave *neural networks* their name.
-For over a century (dating back to the models of Alexander Bain, 1873,
-and James Sherrington, 1890), researchers have tried to assemble
-computational circuits that resemble networks of interacting neurons.
-Over time, the interpretation of biology has become less literal,
-but the name stuck. At its heart lie a few key principles
-that can be found in most networks today:
-
-* The alternation of linear and nonlinear processing units, often referred to as *layers*.
-* The use of the chain rule (also known as *backpropagation*) for adjusting parameters in the entire network at once.
-
-After initial rapid progress, research in neural networks
-languished from around 1995 until 2005.
-This was mainly due to two reasons.
-First, training a network is computationally very expensive.
-While random-access memory was plentiful at the end of the past century,
-computational power was scarce.
-Second, datasets were relatively small.
-In fact, Fisher's Iris dataset from 1936
-was still a popular tool for testing the efficacy of algorithms.
-The MNIST dataset with its 60,000 handwritten digits was considered huge.
-
-Given the scarcity of data and computation,
-strong statistical tools such as kernel methods,
-decision trees, and graphical models
-proved empirically superior in many applications.
-Moreover, unlike neural networks,
-they did not require weeks to train
-and provided predictable results
-with strong theoretical guarantees.
+Turing mengajukan pertanyaan "dapatkah mesin berpikir?"
+dalam makalah terkenalnya *Computing Machinery and Intelligence* :cite:`Turing.1950`.
+Mendeskripsikan apa yang sekarang dikenal sebagai tes Turing, dia mengusulkan bahwa sebuah mesin
+dapat dianggap *cerdas* jika sulit
+bagi evaluator manusia untuk membedakan antara balasan
+dari mesin dan balasan dari manusia, berdasarkan interaksi teks semata.
 
 
-## The Road to Deep Learning
+Pengaruh lebih lanjut datang dari neurosains dan psikologi.
+Bagaimanapun, manusia jelas menunjukkan perilaku cerdas.
+Banyak ilmuwan telah bertanya apakah seseorang dapat menjelaskan
+dan mungkin merekayasa ulang kapasitas ini.
+Salah satu algoritma terinspirasi biologi pertama
+dirumuskan oleh [Donald Hebb (1904--1985)](https://en.wikipedia.org/wiki/Donald_O._Hebb).
+Dalam bukunya yang revolusioner *The Organization of Behavior* :cite:`Hebb.1949`,
+dia berpendapat bahwa neuron belajar melalui penguatan positif.
+Ini menjadi dikenal sebagai aturan pembelajaran Hebbian.
+Ide-ide ini menginspirasi pekerjaan selanjutnya, seperti
+algoritma pembelajaran perceptron Rosenblatt,
+dan meletakkan dasar dari banyak algoritma turunan gradien stokastik
+yang mendukung pembelajaran mendalam saat ini:
+memperkuat perilaku yang diinginkan dan mengurangi perilaku yang tidak diinginkan
+untuk mendapatkan pengaturan parameter yang baik dalam jaringan saraf.
 
-Much of this changed with the availability
-of massive amounts of data,
-thanks to the World Wide Web,
-the advent of companies serving
-hundreds of millions of users online,
-a dissemination of low-cost, high-quality sensors,
-inexpensive data storage (Kryder's law),
-and cheap computation (Moore's law).
-In particular, the landscape of computation in deep learning
-was revolutionized by advances in GPUs that were originally engineered for computer gaming.
-Suddenly algorithms and models
-that seemed computationally infeasible
-were within reach.
-This is best illustrated in :numref:`tab_intro_decade`.
+Inspirasi biologis adalah yang memberi *jaringan saraf* namanya.
+Selama lebih dari satu abad (berawal dari model Alexander Bain, 1873,
+dan James Sherrington, 1890), peneliti telah mencoba untuk merakit
+sirkuit komputasi yang menyerupai jaringan neuron yang berinteraksi.
+Seiring waktu, interpretasi biologi menjadi kurang harfiah,
+tetapi nama itu tetap. Di intinya terdapat beberapa prinsip kunci
+yang dapat ditemukan di sebagian besar jaringan saat ini:
 
-:Dataset vs. computer memory and computational power
+* Pergantian unit pengolahan linier dan nonlinier, sering disebut sebagai *lapisan*.
+* Penggunaan aturan rantai (juga dikenal sebagai *backpropagation*) untuk menyesuaikan parameter dalam seluruh jaringan sekaligus.
+
+Setelah kemajuan awal yang cepat, penelitian dalam jaringan saraf
+mengalami kelesuan dari sekitar tahun 1995 hingga 2005.
+Ini terutama disebabkan oleh dua alasan.
+Pertama, pelatihan jaringan sangat mahal secara komputasi.
+Sementara memori akses acak melimpah di akhir abad lalu,
+kekuatan komputasi sangat langka.
+Kedua, kumpulan data relatif kecil.
+Faktanya, dataset Iris Fisher dari tahun 1936
+masih merupakan alat populer untuk menguji efikasi algoritme.
+Dataset MNIST dengan 60.000 digit tulisan tangan dianggap besar.
+
+Mengingat kelangkaan data dan komputasi,
+alat statistik kuat seperti metode kernel,
+pohon keputusan, dan model grafis
+terbukti secara empiris lebih unggul dalam banyak aplikasi.
+Selain itu, tidak seperti jaringan saraf,
+mereka tidak memerlukan waktu berhari-hari untuk dilatih
+dan memberikan hasil yang dapat diprediksi
+dengan jaminan teoritis yang kuat.
+
+
+
+## perjalanan menuju *Deep Learning* (Pembelajaran Mendalam)
+
+Banyak perubahan terjadi dengan ketersediaan
+jumlah data yang masif,
+berkat World Wide Web,
+munculnya perusahaan yang melayani
+ratusan juta pengguna secara online,
+penyebaran sensor berkualitas tinggi yang murah,
+penyimpanan data yang murah (hukum Kryder),
+dan komputasi yang murah (hukum Moore).
+Secara khusus, lanskap komputasi dalam pembelajaran mendalam
+direvolusi oleh kemajuan dalam GPU yang awalnya dirancang untuk permainan komputer.
+Tiba-tiba algoritma dan model
+yang tampaknya tidak layak secara komputasi
+berada dalam jangkauan.
+Ini diilustrasikan dengan terbaik dalam :numref:`tab_intro_decade`.
+
+:Dataset vs. memori komputer dan daya komputasi
 :label:`tab_intro_decade`
 
-|Decade|Dataset|Memory|Floating point calculations per second|
+
+|Dekade|Dataset|Memori|Perhitungan floating point per detik|
 |:--|:-|:-|:-|
 |1970|100 (Iris)|1 KB|100 KF (Intel 8080)|
-|1980|1 K (house prices in Boston)|100 KB|1 MF (Intel 80186)|
-|1990|10 K (optical character recognition)|10 MB|10 MF (Intel 80486)|
-|2000|10 M (web pages)|100 MB|1 GF (Intel Core)|
-|2010|10 G (advertising)|1 GB|1 TF (NVIDIA C2050)|
-|2020|1 T (social network)|100 GB|1 PF (NVIDIA DGX-2)|
+|1980|1 K (harga rumah di Boston)|100 KB|1 MF (Intel 80186)|
+|1990|10 K (pengenalan karakter optik)|10 MB|10 MF (Intel 80486)|
+|2000|10 M (halaman web)|100 MB|1 GF (Intel Core)|
+|2010|10 G (periklanan)|1 GB|1 TF (NVIDIA C2050)|
+|2020|1 T (jaringan sosial)|100 GB|1 PF (NVIDIA DGX-2)|
 
 
-Note that random-access memory has not kept pace with the growth in data.
-At the same time, increases in computational power
-have outpaced the growth in datasets.
-This means that statistical models
-need to become more memory efficient,
-and so they are free to spend more computer cycles
-optimizing parameters, thanks to
-the increased compute budget.
-Consequently, the sweet spot in machine learning and statistics
-moved from (generalized) linear models and kernel methods
-to deep neural networks.
-This is also one of the reasons why many of the mainstays
-of deep learning, such as multilayer perceptrons
-:cite:`McCulloch.Pitts.1943`, convolutional neural networks
-:cite:`LeCun.Bottou.Bengio.ea.1998`, long short-term memory
+
+Perhatikan bahwa memori akses acak tidak mengikuti laju pertumbuhan data.
+Pada saat yang sama, peningkatan dalam kekuatan komputasi
+telah melampaui pertumbuhan dataset.
+Ini berarti bahwa model statistik
+perlu menjadi lebih efisien dalam penggunaan memori,
+dan sehingga mereka bebas untuk menghabiskan lebih banyak siklus komputer
+dalam mengoptimalkan parameter, berkat
+anggaran komputasi yang meningkat.
+Akibatnya, titik optimal dalam pembelajaran mesin dan statistik
+berpindah dari model linear (umum) dan metode kernel
+ke jaringan saraf dalam.
+Ini juga salah satu alasan mengapa banyak pilar utama
+pembelajaran mendalam, seperti perceptron berlapis
+:cite:`McCulloch.Pitts.1943`, jaringan saraf konvolusional
+:cite:`LeCun.Bottou.Bengio.ea.1998`, memori jangka panjang pendek
 :cite:`Hochreiter.Schmidhuber.1997`,
-and Q-Learning :cite:`Watkins.Dayan.1992`,
-were essentially "rediscovered" in the past decade,
-after lying comparatively dormant for considerable time.
+dan Q-Learning :cite:`Watkins.Dayan.1992`,
+pada dasarnya "ditemukan kembali" dalam dekade terakhir,
+setelah terletak relatif tidak aktif untuk waktu yang cukup lama.
 
-The recent progress in statistical models, applications, and algorithms
-has sometimes been likened to the Cambrian explosion:
-a moment of rapid progress in the evolution of species.
-Indeed, the state of the art is not just a mere consequence
-of available resources applied to decades-old algorithms.
-Note that the list of ideas below barely scratches the surface
-of what has helped researchers achieve tremendous progress
-over the past decade.
+Kemajuan terbaru dalam model statistik, aplikasi, dan algoritma
+kadang-kadang disamakan dengan ledakan Kambrium:
+momen kemajuan cepat dalam evolusi spesies.
+Memang, keadaan terkini bukan hanya sekedar akibat
+dari sumber daya yang tersedia yang diterapkan pada algoritma berusia puluhan tahun.
+Perhatikan bahwa daftar ide di bawah ini hampir tidak menyentuh permukaan
+dari apa yang telah membantu peneliti mencapai kemajuan luar biasa
+selama dekade terakhir.
 
 
-* Novel methods for capacity control, such as *dropout*
+
+* Metode baru untuk kontrol kapasitas, seperti *dropout*
   :cite:`Srivastava.Hinton.Krizhevsky.ea.2014`,
-  have helped to mitigate overfitting.
-  Here, noise is injected :cite:`Bishop.1995`
-  throughout the neural network during training.
-* *Attention mechanisms* solved a second problem
-  that had plagued statistics for over a century:
-  how to increase the memory and complexity of a system without
-  increasing the number of learnable parameters.
-  Researchers found an elegant solution
-  by using what can only be viewed as
-  a *learnable pointer structure* :cite:`Bahdanau.Cho.Bengio.2014`.
-  Rather than having to remember an entire text sequence, e.g.,
-  for machine translation in a fixed-dimensional representation,
-  all that needed to be stored was a pointer to the intermediate state
-  of the translation process. This allowed for significantly
-  increased accuracy for long sequences, since the model
-  no longer needed to remember the entire sequence before
-  commencing the generation of a new one.
-* Built solely on attention mechanisms,
-  the *Transformer* architecture :cite:`Vaswani.Shazeer.Parmar.ea.2017` has demonstrated superior *scaling* behavior: it performs better with an increase in dataset size, model size, and amount of training compute :cite:`kaplan2020scaling`. This architecture has demonstrated compelling success in a wide range of areas,
-  such as natural language processing :cite:`Devlin.Chang.Lee.ea.2018,brown2020language`, computer vision :cite:`Dosovitskiy.Beyer.Kolesnikov.ea.2021,liu2021swin`, speech recognition :cite:`gulati2020conformer`, reinforcement learning :cite:`chen2021decision`, and graph neural networks :cite:`dwivedi2020generalization`. For example, a single Transformer pretrained on modalities
-  as diverse as text, images, joint torques, and button presses
-  can play Atari, caption images, chat,
-  and control a robot :cite:`reed2022generalist`.
-* Modeling probabilities of text sequences, *language models* can predict text given other text. Scaling up the data, model, and compute has unlocked a growing number of capabilities of language models to perform desired tasks via human-like text generation based on input text :cite:`brown2020language,rae2021scaling,hoffmann2022training,chowdhery2022palm,openai2023gpt4,anil2023palm,touvron2023llama,touvron2023llama2`. For instance, aligning language models with human intent :cite:`ouyang2022training`, OpenAI's [ChatGPT](https://chat.openai.com/) allows users to interact with it in a conversational way to solve problems, such as code debugging and creative writing.
-* Multi-stage designs, e.g., via the memory networks
+  telah membantu untuk mengurangi overfitting.
+  Di sini, *noise* disuntikkan :cite:`Bishop.1995`
+  ke seluruh jaringan saraf selama pelatihan.
+* *Mekanisme perhatian* (Attention mechanisms) menyelesaikan masalah kedua
+  yang telah mengganggu statistik selama lebih dari satu abad:
+  bagaimana meningkatkan memori dan kompleksitas sistem tanpa
+  meningkatkan jumlah parameter yang dapat dipelajari.
+  Peneliti menemukan solusi elegan
+  dengan menggunakan apa yang hanya dapat dilihat sebagai
+  *struktur penunjuk yang dapat dipelajari* (learnable pointer structure) :cite:`Bahdanau.Cho.Bengio.2014`.
+  Daripada harus mengingat seluruh urutan teks, misalnya,
+  untuk penerjemahan mesin dalam representasi berdimensi tetap,
+  yang perlu disimpan hanyalah penunjuk ke keadaan antara
+  proses penerjemahan. Ini memungkinkan peningkatan akurasi yang signifikan
+  untuk urutan panjang, karena model
+  tidak lagi perlu mengingat seluruh urutan sebelum
+  memulai generasi yang baru.
+* Dibangun hanya berdasarkan mekanisme perhatian,
+  arsitektur *Transformer* :cite:`Vaswani.Shazeer.Parmar.ea.2017` telah menunjukkan perilaku *scaling* yang unggul: kinerjanya meningkat dengan peningkatan ukuran dataset, ukuran model, dan jumlah komputasi pelatihan :cite:`kaplan2020scaling`. Arsitektur ini telah menunjukkan keberhasilan yang menarik dalam berbagai bidang,
+  seperti pemrosesan bahasa alami :cite:`Devlin.Chang.Lee.ea.2018,brown2020language`, penglihatan komputer :cite:`Dosovitskiy.Beyer.Kolesnikov.ea.2021,liu2021swin`, pengenalan suara :cite:`gulati2020conformer`, pembelajaran penguatan :cite:`chen2021decision`, dan jaringan saraf grafis :cite:`dwivedi2020generalization`. Sebagai contoh, sebuah Transformer tunggal yang dilatih sebelumnya pada modalitas
+  yang beragam seperti teks, gambar, torsi gabungan, dan tekanan tombol
+  dapat bermain Atari, memberi keterangan pada gambar, mengobrol,
+  dan mengontrol robot :cite:`reed2022generalist`.
+
+* Pemodelan probabilitas dari urutan teks, *model bahasa* dapat memprediksi teks berdasarkan teks lain. Peningkatan data, model, dan komputasi telah membuka semakin banyak kemampuan model bahasa untuk melakukan tugas yang diinginkan melalui generasi teks yang mirip manusia berdasarkan teks masukan :cite:`brown2020language,rae2021scaling,hoffmann2022training,chowdhery2022palm,openai2023gpt4,anil2023palm,touvron2023llama,touvron2023llama2`. Sebagai contoh, menyelaraskan model bahasa dengan niat manusia :cite:`ouyang2022training`, [ChatGPT](https://chat.openai.com/) dari OpenAI memungkinkan pengguna berinteraksi dengannya secara percakapan untuk menyelesaikan masalah, seperti debugging kode dan penulisan kreatif.
+* Desain multi-tahap, misalnya, melalui jaringan memori
   :cite:`Sukhbaatar.Weston.Fergus.ea.2015`
-  and the neural programmer-interpreter :cite:`Reed.De-Freitas.2015`
-  permitted statistical modelers to describe iterative approaches to reasoning.
-  These tools allow for an internal state of the deep neural network
-  to be modified repeatedly,
-  thus carrying out subsequent steps
-  in a chain of reasoning, just as a processor
-  can modify memory for a computation.
-* A key development in *deep generative modeling* was the invention
-  of *generative adversarial networks*
+  dan pemrogram-penerjemah saraf :cite:`Reed.De-Freitas.2015`
+  memungkinkan perumus model statistik untuk mendeskripsikan pendekatan iteratif untuk penalaran.
+  Alat-alat ini memungkinkan keadaan internal dari jaringan saraf dalam
+  untuk dimodifikasi berulang kali,
+  sehingga melaksanakan langkah selanjutnya
+  dalam rantai penalaran, sama seperti prosesor
+  dapat memodifikasi memori untuk sebuah perhitungan.
+* Pengembangan kunci dalam *pemodelan generatif mendalam* adalah penemuan
+  *jaringan adversarial generatif*
   :cite:`Goodfellow.Pouget-Abadie.Mirza.ea.2014`.
-  Traditionally, statistical methods for density estimation
-  and generative models focused on finding proper probability distributions
-  and (often approximate) algorithms for sampling from them.
-  As a result, these algorithms were largely limited by the lack of
-  flexibility inherent in the statistical models.
-  The crucial innovation in generative adversarial networks was to replace the sampler
-  by an arbitrary algorithm with differentiable parameters.
-  These are then adjusted in such a way that the discriminator
-  (effectively a two-sample test) cannot distinguish fake from real data.
-  Through the ability to use arbitrary algorithms to generate data,
-  density estimation was opened up to a wide variety of techniques.
-  Examples of galloping zebras :cite:`Zhu.Park.Isola.ea.2017`
-  and of fake celebrity faces :cite:`Karras.Aila.Laine.ea.2017`
-  are each testimony to this progress.
-  Even amateur doodlers can produce
-  photorealistic images just based on sketches describing the layout of a scene :cite:`Park.Liu.Wang.ea.2019`. 
-* Furthermore, while the diffusion process gradually adds random noise to data samples, *diffusion models* :cite:`sohl2015deep,ho2020denoising` learn the denoising process to gradually construct data samples from random noise, reversing the diffusion process. They have started to replace generative adversarial networks in more recent deep generative models, such as in DALL-E 2 :cite:`ramesh2022hierarchical` and Imagen :cite:`saharia2022photorealistic` for creative art and image generation based on text descriptions.
-* In many cases, a single GPU is insufficient for processing the large amounts of data available for training.
-  Over the past decade the ability to build parallel and
-  distributed training algorithms has improved significantly.
-  One of the key challenges in designing scalable algorithms
-  is that the workhorse of deep learning optimization,
-  stochastic gradient descent, relies on relatively
-  small minibatches of data to be processed.
-  At the same time, small batches limit the efficiency of GPUs.
-  Hence, training on 1,024 GPUs with a minibatch size of,
-  say, 32 images per batch amounts to an aggregate minibatch
-  of about 32,000 images. Work, first by :citet:`Li.2017`
-  and subsequently by :citet:`You.Gitman.Ginsburg.2017`
-  and :citet:`Jia.Song.He.ea.2018` pushed the size up to 64,000 observations,
-  reducing training time for the ResNet-50 model
-  on the ImageNet dataset to less than 7 minutes.
-  By comparison, training times were initially of the order of days.
-* The ability to parallelize computation
-  has also contributed to progress in *reinforcement learning*.
-  This has led to significant progress in computers achieving
-  superhuman performance on tasks like Go, Atari games,
-  Starcraft, and in physics simulations (e.g., using MuJoCo)
-  where environment simulators are available.
-  See, e.g., :citet:`Silver.Huang.Maddison.ea.2016` for a description
-  of such achievements in AlphaGo. In a nutshell,
-  reinforcement learning works best
-  if plenty of (state, action, reward) tuples are available.
-  Simulation provides such an avenue.
-* Deep learning frameworks have played a crucial role
-  in disseminating ideas.
-  The first generation of open-source frameworks
-  for neural network modeling consisted of
+  Secara tradisional, metode statistik untuk estimasi kepadatan
+  dan model generatif berfokus pada menemukan distribusi probabilitas yang tepat
+  dan algoritme (seringkali pendekatan) untuk sampling dari mereka.
+  Akibatnya, algoritme ini sebagian besar terbatas oleh kurangnya
+  fleksibilitas yang melekat pada model statistik.
+  Inovasi penting dalam jaringan adversarial generatif adalah menggantikan sampel
+  dengan algoritme sembarang dengan parameter yang dapat dibedakan.
+  Parameter ini kemudian disesuaikan sedemikian rupa sehingga diskriminator
+  (secara efektif tes dua-sampel) tidak dapat membedakan data palsu dari data nyata.
+  Melalui kemampuan untuk menggunakan algoritme sembarang untuk menghasilkan data,
+  estimasi kepadatan dibuka untuk berbagai teknik.
+  Contoh zebra yang berlari :cite:`Zhu.Park.Isola.ea.2017`
+  dan wajah selebriti palsu :cite:`Karras.Aila.Laine.ea.2017`
+  adalah masing-masing kesaksian atas kemajuan ini.
+  Bahkan penggambar amatir dapat menghasilkan
+  gambar fotorealistis hanya berdasarkan sketsa yang menggambarkan tata letak sebuah adegan :cite:`Park.Liu.Wang.ea.2019`. 
+
+* Selanjutnya, sementara proses difusi secara bertahap menambahkan kebisingan acak ke sampel data, *model difusi* :cite:`sohl2015deep,ho2020denoising` belajar proses denoising untuk secara bertahap membangun sampel data dari kebisingan acak, membalikkan proses difusi. Mereka telah mulai menggantikan jaringan adversarial generatif dalam model generatif mendalam yang lebih baru, seperti dalam DALL-E 2 :cite:`ramesh2022hierarchical` dan Imagen :cite:`saharia2022photorealistic` untuk seni kreatif dan generasi gambar berdasarkan deskripsi teks.
+* Dalam banyak kasus, satu GPU tidak cukup untuk memproses jumlah data besar yang tersedia untuk pelatihan.
+  Selama dekade terakhir, kemampuan untuk membangun algoritma pelatihan paralel dan
+  terdistribusi telah meningkat secara signifikan.
+  Salah satu tantangan kunci dalam merancang algoritma yang skalabel
+  adalah bahwa kuda kerja optimisasi pembelajaran mendalam,
+  stochastic gradient descent, bergantung pada
+  minibatch data yang relatif kecil untuk diproses.
+  Pada saat yang sama, batch kecil membatasi efisiensi GPU.
+  Oleh karena itu, pelatihan pada 1.024 GPU dengan ukuran minibatch,
+  katakanlah, 32 gambar per batch berjumlah agregat minibatch
+  sekitar 32.000 gambar. Pekerjaan, pertama oleh :citet:`Li.2017`
+  dan selanjutnya oleh :citet:`You.Gitman.Ginsburg.2017`
+  dan :citet:`Jia.Song.He.ea.2018` mendorong ukuran hingga 64.000 pengamatan,
+  mengurangi waktu pelatihan untuk model ResNet-50
+  pada dataset ImageNet menjadi kurang dari 7 menit.
+  Sebagai perbandingan, waktu pelatihan awalnya sekitar hari.
+* Kemampuan untuk memparalelkan perhitungan
+  juga telah berkontribusi pada kemajuan dalam *pembelajaran penguatan*.
+  Ini telah mengarah pada kemajuan signifikan dalam komputer yang mencapai
+  kinerja superhuman pada tugas seperti Go, permainan Atari,
+  Starcraft, dan dalam simulasi fisika (misalnya, menggunakan MuJoCo)
+  di mana simulator lingkungan tersedia.
+  Lihat, misalnya, :citet:`Silver.Huang.Maddison.ea.2016` untuk deskripsi
+  prestasi semacam itu di AlphaGo. Singkatnya,
+  pembelajaran penguatan bekerja terbaik
+  jika banyak tupel (state, action, reward) tersedia.
+  Simulasi menyediakan jalan seperti itu.
+* Kerangka kerja pembelajaran mendalam telah memainkan peran penting
+  dalam menyebarluaskan ide.
+  Generasi pertama kerangka kerja sumber terbuka
+  untuk pemodelan jaringan saraf terdiri dari
   [Caffe](https://github.com/BVLC/caffe),
-  [Torch](https://github.com/torch), and
+  [Torch](https://github.com/torch), dan
   [Theano](https://github.com/Theano/Theano).
-  Many seminal papers were written using these tools.
-  These have now been superseded by
-  [TensorFlow](https://github.com/tensorflow/tensorflow) (often used via its high-level API [Keras](https://github.com/keras-team/keras)), [CNTK](https://github.com/Microsoft/CNTK), [Caffe 2](https://github.com/caffe2/caffe2), and [Apache MXNet](https://github.com/apache/incubator-mxnet).
-  The third generation of frameworks consists
-  of so-called *imperative* tools for deep learning,
-  a trend that was arguably ignited by [Chainer](https://github.com/chainer/chainer),
-  which used a syntax similar to Python NumPy to describe models.
-  This idea was adopted by both [PyTorch](https://github.com/pytorch/pytorch),
-  the [Gluon API](https://github.com/apache/incubator-mxnet) of MXNet,
-  and [JAX](https://github.com/google/jax).
-
-
-The division of labor between system researchers building better tools
-and statistical modelers building better neural networks
-has greatly simplified things. For instance,
-training a linear logistic regression model
-used to be a nontrivial homework problem,
-worthy to give to new machine learning
-Ph.D. students at Carnegie Mellon University in 2014.
-By now, this task can be accomplished
-with under 10 lines of code,
-putting it firmly within the reach of any programmer.
-
-
-## Success Stories
-
-Artificial intelligence has a long history of delivering results
-that would be difficult to accomplish otherwise.
-For instance, mail sorting systems
-using optical character recognition
-have been deployed since the 1990s.
-This is, after all, the source
-of the famous MNIST dataset
-of handwritten digits.
-The same applies to reading checks for bank deposits and scoring
-creditworthiness of applicants.
-Financial transactions are checked for fraud automatically.
-This forms the backbone of many e-commerce payment systems,
-such as PayPal, Stripe, AliPay, WeChat, Apple, Visa, and MasterCard.
-Computer programs for chess have been competitive for decades.
-Machine learning feeds search, recommendation, personalization,
-and ranking on the Internet.
-In other words, machine learning is pervasive, albeit often hidden from sight.
-
-It is only recently that AI
-has been in the limelight, mostly due to
-solutions to problems
-that were considered intractable previously
-and that are directly related to consumers.
-Many of such advances are attributed to deep learning.
-
-* Intelligent assistants, such as Apple's Siri,
-  Amazon's Alexa, and Google's assistant,
-  are able to respond to spoken requests
-  with a reasonable degree of accuracy.
-  This includes menial jobs, like turning on light switches,
-  and more complex tasks, such as arranging barber's appointments
-  and offering phone support dialog.
-  This is likely the most noticeable sign
-  that AI is affecting our lives.
-* A key ingredient in digital assistants
-  is their ability to recognize speech accurately.
-  The accuracy of such systems has gradually
-  increased to the point
-  of achieving parity with humans
-  for certain applications :cite:`Xiong.Wu.Alleva.ea.2018`.
-* Object recognition has likewise come a long way.
-  Identifying the object in a picture
-  was a fairly challenging task in 2010.
-  On the ImageNet benchmark researchers from NEC Labs
-  and University of Illinois at Urbana-Champaign
-  achieved a top-five error rate of 28% :cite:`Lin.Lv.Zhu.ea.2010`.
-  By 2017, this error rate was reduced to 2.25% :cite:`Hu.Shen.Sun.2018`.
-  Similarly, stunning results have been achieved
-  for identifying birdsong and for diagnosing skin cancer.
-* Prowess in games used to provide
-  a measuring stick for human ability.
-  Starting from TD-Gammon, a program for playing backgammon
-  using temporal difference reinforcement learning,
-  algorithmic and computational progress
-  has led to algorithms for a wide range of applications.
-  Compared with backgammon, chess has
-  a much more complex state space and set of actions.
-  DeepBlue beat Garry Kasparov using massive parallelism,
-  special-purpose hardware and efficient search
-  through the game tree :cite:`Campbell.Hoane-Jr.Hsu.2002`.
-  Go is more difficult still, due to its huge state space.
-  AlphaGo reached human parity in 2015,
-  using deep learning combined with Monte Carlo tree sampling :cite:`Silver.Huang.Maddison.ea.2016`.
-  The challenge in Poker was that the state space is large
-  and only partially observed
-  (we do not know the opponents' cards).
-  Libratus exceeded human performance in Poker
-  using efficiently structured strategies :cite:`Brown.Sandholm.2017`.
-* Another indication of progress in AI
-  is the advent of self-driving vehicles.
-  While full autonomy is not yet within reach,
-  excellent progress has been made in this direction,
-  with companies such as Tesla, NVIDIA,
-  and Waymo shipping products
-  that enable partial autonomy.
-  What makes full autonomy so challenging
-  is that proper driving requires
-  the ability to perceive, to reason
-  and to incorporate rules into a system.
-  At present, deep learning is used primarily
-  in the visual aspect of these problems.
-  The rest is heavily tuned by engineers.
+  Banyak makalah penting ditulis menggunakan alat-alat ini.
+  Sekarang ini telah digantikan oleh
+  [TensorFlow](https://github.com/tensorflow/tensorflow) (sering digunakan melalui API tingkat tinggi [Keras](https://github.com/keras-team/keras)), [CNTK](https://github.com/Microsoft/CNTK), [Caffe 2](https://github.com/caffe2/caffe2), dan [Apache MXNet](https://github.com/apache/incubator-mxnet).
+  Generasi ketiga dari kerangka kerja terdiri dari
+  alat *imperatif* untuk pembelajaran mendalam,
+  tren yang mungkin dipicu oleh [Chainer](https://github.com/chainer/chainer),
+  yang menggunakan sintaks mirip Python NumPy untuk mendeskripsikan model.
+  Ide ini diadopsi oleh [PyTorch](https://github.com/pytorch/pytorch),
+  [API Gluon](https://github.com/apache/incubator-mxnet) dari MXNet,
+  dan [JAX](https://github.com/google/jax).
 
 
 
-This barely scratches the surface
-of significant applications of machine learning.
-For instance, robotics, logistics, computational biology,
-particle physics, and astronomy
-owe some of their most impressive recent advances
-at least in parts to machine learning, which is thus becoming
-a ubiquitous tool for engineers and scientists.
-
-Frequently, questions about a coming AI apocalypse
-and the plausibility of a *singularity*
-have been raised in non-technical articles.
-The fear is that somehow machine learning systems
-will become sentient and make decisions,
-independently of their programmers,
-that directly impact the lives of humans.
-To some extent, AI already affects
-the livelihood of humans in direct ways:
-creditworthiness is assessed automatically,
-autopilots mostly navigate vehicles, decisions about
-whether to grant bail use statistical data as input.
-More frivolously, we can ask Alexa to switch on the coffee machine.
-
-Fortunately, we are far from a sentient AI system
-that could deliberately manipulate its human creators.
-First, AI systems are engineered,
-trained, and deployed
-in a specific, goal-oriented manner.
-While their behavior might give the illusion
-of general intelligence, it is a combination of rules, heuristics
-and statistical models that underlie the design.
-Second, at present, there are simply no tools for *artificial general intelligence*
-that are able to improve themselves,
-reason about themselves, and that are able to modify,
-extend, and improve their own architecture
-while trying to solve general tasks.
-
-A much more pressing concern is how AI is being used in our daily lives.
-It is likely that many routine tasks, currently fulfilled by humans, can and will be automated.
-Farm robots will likely reduce the costs for organic farmers
-but they will also automate harvesting operations.
-This phase of the industrial revolution
-may have profound consequences for large swaths of society,
-since menial jobs provide much employment 
-in many countries.
-Furthermore, statistical models, when applied without care,
-can lead to racial, gender, or age bias and raise
-reasonable concerns about procedural fairness
-if automated to drive consequential decisions.
-It is important to ensure that these algorithms are used with care.
-With what we know today, this strikes us as a much more pressing concern
-than the potential of malevolent superintelligence for destroying humanity.
+Pembagian tugas antara peneliti sistem yang membangun alat yang lebih baik
+dan perumus model statistik yang membangun jaringan saraf yang lebih baik
+telah sangat menyederhanakan hal-hal. Sebagai contoh,
+melatih model regresi logistik linear
+dulu merupakan masalah pekerjaan rumah yang tidak sepele,
+layak untuk diberikan kepada mahasiswa baru doktoral pembelajaran mesin
+di Universitas Carnegie Mellon pada tahun 2014.
+Sekarang, tugas ini dapat diselesaikan
+dengan kurang dari 10 baris kode,
+menempatkannya dengan kuat dalam jangkauan setiap pemrogram.
 
 
-## The Essence of Deep Learning
+## Kisah Sukses
 
-Thus far, we have talked in broad terms about machine learning.
-Deep learning is the subset of machine learning
-concerned with models based on many-layered neural networks.
-It is *deep* in precisely the sense that its models
-learn many *layers* of transformations.
-While this might sound narrow,
-deep learning has given rise
-to a dizzying array of models, techniques,
-problem formulations, and applications.
-Many intuitions have been developed
-to explain the benefits of depth.
-Arguably, all machine learning
-has many layers of computation,
-the first consisting of feature processing steps.
-What differentiates deep learning is that
-the operations learned at each of the many layers
-of representations are learned jointly from data.
+Kecerdasan buatan memiliki sejarah panjang dalam memberikan hasil
+yang sulit dicapai dengan cara lain.
+Sebagai contoh, sistem pengurutan surat
+menggunakan pengenalan karakter optik
+telah dikerahkan sejak tahun 1990-an.
+Ini adalah, bagaimanapun juga, sumber
+dari dataset MNIST terkenal
+dari digit tulisan tangan.
+Hal yang sama berlaku untuk membaca cek untuk deposito bank dan penilaian
+kelayakan kredit dari pelamar.
+Transaksi keuangan diperiksa untuk kecurangan secara otomatis.
+Ini merupakan tulang punggung dari banyak sistem pembayaran e-commerce,
+seperti PayPal, Stripe, AliPay, WeChat, Apple, Visa, dan MasterCard.
+Program komputer untuk catur telah kompetitif selama beberapa dekade.
+Pembelajaran mesin mendukung pencarian, rekomendasi, personalisasi,
+dan peringkat di Internet.
+Dengan kata lain, pembelajaran mesin ada di mana-mana, meskipun sering tersembunyi dari pandangan.
 
-The problems that we have discussed so far,
-such as learning from the raw audio signal,
-the raw pixel values of images,
-or mapping between sentences of arbitrary lengths and
-their counterparts in foreign languages,
-are those where deep learning excels
-and traditional methods falter.
-It turns out that these many-layered models
-are capable of addressing low-level perceptual data
-in a way that previous tools could not.
-Arguably the most significant commonality
-in deep learning methods is *end-to-end training*.
-That is, rather than assembling a system
-based on components that are individually tuned,
-one builds the system and then tunes their performance jointly.
-For instance, in computer vision scientists
-used to separate the process of *feature engineering*
-from the process of building machine learning models.
-The Canny edge detector :cite:`Canny.1987`
-and Lowe's SIFT feature extractor :cite:`Lowe.2004`
-reigned supreme for over a decade as algorithms
-for mapping images into feature vectors.
-In bygone days, the crucial part of applying machine learning to these problems
-consisted of coming up with manually-engineered ways
-of transforming the data into some form amenable to shallow models.
-Unfortunately, there is only so much that humans can accomplish
-by ingenuity in comparison with a consistent evaluation
-over millions of choices carried out automatically by an algorithm.
-When deep learning took over,
-these feature extractors were replaced
-by automatically tuned filters that yielded superior accuracy.
+Baru-baru ini kecerdasan buatan
+telah menjadi sorotan, sebagian besar karena
+solusi untuk masalah
+yang dianggap tidak dapat diatasi sebelumnya
+dan yang secara langsung terkait dengan konsumen.
+Banyak kemajuan semacam itu diatribusikan pada pembelajaran mendalam.
 
-Thus, one key advantage of deep learning is that it replaces
-not only the shallow models at the end of traditional learning pipelines,
-but also the labor-intensive process of feature engineering.
-Moreover, by replacing much of the domain-specific preprocessing,
-deep learning has eliminated many of the boundaries
-that previously separated computer vision, speech recognition,
-natural language processing, medical informatics, and other application areas,
-thereby offering a unified set of tools for tackling diverse problems.
+* Asisten cerdas, seperti Siri dari Apple,
+  Alexa dari Amazon, dan asisten Google,
+  mampu merespons permintaan suara
+  dengan tingkat akurasi yang wajar.
+  Ini termasuk pekerjaan sederhana, seperti menyalakan saklar lampu,
+  dan tugas yang lebih kompleks, seperti mengatur janji dengan tukang cukur
+  dan menawarkan dialog dukungan telepon.
+  Ini kemungkinan besar tanda yang paling nyata
+  bahwa AI memengaruhi kehidupan kita.
+* Salah satu bahan kunci dalam asisten digital
+  adalah kemampuan mereka untuk mengenali ucapan dengan akurat.
+  Akurasi sistem semacam itu telah bertambah
+  hingga mencapai paritas dengan manusia
+  untuk beberapa aplikasi :cite:`Xiong.Wu.Alleva.ea.2018`.
+* Pengenalan objek juga telah menempuh perjalanan panjang.
+  Mengidentifikasi objek dalam gambar
+  merupakan tugas yang cukup menantang pada tahun 2010.
+  Dalam benchmark ImageNet, para peneliti dari NEC Labs
+  dan University of Illinois at Urbana-Champaign
+  mencapai tingkat kesalahan lima besar sebesar 28% :cite:`Lin.Lv.Zhu.ea.2010`.
+  Pada tahun 2017, tingkat kesalahan ini berkurang menjadi 2,25% :cite:`Hu.Shen.Sun.2018`.
+  Hasil yang menakjubkan juga telah dicapai
+  untuk mengidentifikasi suara burung dan mendiagnosis kanker kulit.
+* Keahlian dalam permainan biasanya menjadi
+  tolak ukur kemampuan manusia.
+  Mulai dari TD-Gammon, program untuk bermain backgammon
+  menggunakan pembelajaran penguatan perbedaan temporal,
+  kemajuan algoritmik dan komputasi
+  telah mengarah pada algoritma untuk berbagai aplikasi.
+  Dibandingkan dengan backgammon, catur memiliki
+  ruang keadaan dan set tindakan yang jauh lebih kompleks.
+  DeepBlue mengalahkan Garry Kasparov dengan menggunakan paralelisme besar,
+  perangkat keras khusus dan pencarian yang efisien
+  melalui pohon permainan :cite:`Campbell.Hoane-Jr.Hsu.2002`.
+  Go masih lebih sulit, karena ruang keadaannya yang sangat besar.
+  AlphaGo mencapai paritas manusia pada tahun 2015,
+  menggunakan pembelajaran mendalam dikombinasikan dengan sampling pohon Monte Carlo :cite:`Silver.Huang.Maddison.ea.2016`.
+  Tantangan dalam Poker adalah bahwa ruang keadaannya besar
+  dan hanya diamati sebagian
+  (kita tidak tahu kartu lawan).
+  Libratus melebihi kinerja manusia dalam Poker
+  menggunakan strategi yang terstruktur dengan efisien :cite:`Brown.Sandholm.2017`.
+* Indikasi lain dari kemajuan dalam AI
+  adalah munculnya kendaraan otonom.
+  Meskipun otonomi penuh belum tercapai,
+  kemajuan yang sangat baik telah dibuat ke arah ini,
+  dengan perusahaan seperti Tesla, NVIDIA,
+  dan Waymo mengirimkan produk
+  yang memungkinkan otonomi sebagian.
+  Yang membuat otonomi penuh sangat menantang
+  adalah mengemudi yang tepat membutuhkan
+  kemampuan untuk mempersepsi, berpikir,
+  dan menggabungkan aturan ke dalam sistem.
+  Saat ini, pembelajaran mendalam terutama digunakan
+  dalam aspek visual dari masalah ini.
+  Sisanya sangat disesuaikan oleh insinyur.
 
-Beyond end-to-end training, we are experiencing a transition
-from parametric statistical descriptions to fully nonparametric models.
-When data is scarce, one needs to rely on simplifying assumptions about reality
-in order to obtain useful models.
-When data is abundant, these can be replaced
-by nonparametric models that better fit the data.
-To some extent, this mirrors the progress
-that physics experienced in the middle of the previous century
-with the availability of computers.
-Rather than solving by hand parametric approximations of how electrons behave,
-one can now resort to numerical simulations of the associated partial differential equations.
-This has led to much more accurate models,
-albeit often at the expense of interpretation.
+Ini baru menggores permukaan dari aplikasi signifikan pembelajaran mesin. Misalnya, robotika, logistik, biologi komputasional, fisika partikel, dan astronomi mendapatkan beberapa kemajuan paling mengesankan mereka setidaknya sebagian dari pembelajaran mesin, yang dengan demikian menjadi alat yang lazim digunakan oleh para insinyur dan ilmuwan.
 
-Another difference from previous work is the acceptance of suboptimal solutions,
-dealing with nonconvex nonlinear optimization problems,
-and the willingness to try things before proving them.
-This new-found empiricism in dealing with statistical problems,
-combined with a rapid influx of talent has led
-to rapid progress in the development of practical algorithms,
-albeit in many cases at the expense of modifying
-and re-inventing tools that existed for decades.
+Seringkali, pertanyaan tentang datangnya kiamat AI dan kemungkinan *singularity* diangkat dalam artikel non-teknis. Ketakutannya adalah bahwa entah bagaimana sistem pembelajaran mesin akan menjadi sadar dan membuat keputusan, secara independen dari pemrogramnya, yang secara langsung memengaruhi kehidupan manusia. Hingga tingkat tertentu, AI sudah memengaruhi mata pencaharian manusia secara langsung: kelayakan kredit dinilai secara otomatis, autopilot sebagian besar mengendalikan kendaraan, keputusan tentang apakah akan memberikan jaminan menggunakan data statistik sebagai input. Lebih ringan, kita dapat meminta Alexa untuk menyalakan mesin kopi.
 
-In the end, the deep learning community prides itself
-on sharing tools across academic and corporate boundaries,
-releasing many excellent libraries, statistical models,
-and trained networks as open source.
-It is in this spirit that the notebooks forming this book
-are freely available for distribution and use.
-We have worked hard to lower the barriers of access
-for anyone wishing to learn about deep learning
-and we hope that our readers will benefit from this.
+Untungnya, kita masih jauh dari sistem AI yang sadar yang bisa dengan sengaja memanipulasi penciptanya. Pertama, sistem AI dirancang, dilatih, dan diterapkan dengan cara yang spesifik dan berorientasi tujuan. Meskipun perilaku mereka mungkin memberikan ilusi kecerdasan umum, itu adalah kombinasi dari aturan, heuristik, dan model statistik yang mendasari desainnya. Kedua, saat ini, tidak ada alat untuk *kecerdasan umum buatan* yang mampu meningkatkan diri, merenungkan dirinya sendiri, serta memodifikasi, memperluas, dan meningkatkan arsitekturnya sendiri sambil mencoba menyelesaikan tugas-tugas umum.
+
+Kekhawatiran yang jauh lebih mendesak adalah bagaimana AI digunakan dalam kehidupan kita sehari-hari. Kemungkinan banyak tugas rutin yang saat ini dilakukan manusia bisa dan akan diotomatisasi. Robot pertanian kemungkinan akan mengurangi biaya bagi petani organik tetapi mereka juga akan mengotomatiskan operasi pemanenan. Fase revolusi industri ini mungkin memiliki dampak yang mendalam bagi sebagian besar masyarakat, karena pekerjaan menial memberikan banyak lapangan kerja di banyak negara. Lebih lanjut, model statistik, jika diterapkan tanpa hati-hati, dapat menyebabkan bias ras, gender, atau usia dan menimbulkan kekhawatiran yang masuk akal tentang keadilan prosedural jika diotomatisasi untuk mendorong keputusan-keputusan penting. Penting untuk memastikan bahwa algoritma ini digunakan dengan hati-hati. Berdasarkan apa yang kita ketahui hari ini, ini tampaknya menjadi kekhawatiran yang jauh lebih mendesak daripada potensi kecerdasan super jahat untuk menghancurkan umat manusia.
 
 
-## Summary
 
-Machine learning studies how computer systems
-can leverage experience (often data)
-to improve performance at specific tasks.
-It combines ideas from statistics, data mining, and optimization.
-Often, it is used as a means of implementing AI solutions.
-As a class of machine learning, representational learning
-focuses on how to automatically find
-the appropriate way to represent data.
-Considered as multi-level representation learning
-through learning many layers of transformations,
-deep learning replaces not only the shallow models
-at the end of traditional machine learning pipelines,
-but also the labor-intensive process of feature engineering.
-Much of the recent progress in deep learning
-has been triggered by an abundance of data
-arising from cheap sensors and Internet-scale applications,
-and by significant progress in computation, mostly through GPUs.
-Furthermore, the availability of efficient deep learning frameworks
-has made design and implementation of whole system optimization significantly easier,
-and this is a key component in obtaining high performance.
+## Esensi Deep Learning
 
-## Exercises
+Sejauh ini, kita telah berbicara secara umum tentang pembelajaran mesin. Pembelajaran mendalam (*deep learning*) adalah subset dari pembelajaran mesin yang berhubungan dengan model berbasis jaringan saraf berlapis-lapis. Disebut *deep* karena model ini mempelajari banyak *lapisan* transformasi. Meskipun ini terdengar sempit, pembelajaran mendalam telah melahirkan beragam model, teknik, perumusan masalah, dan aplikasi yang memusingkan. Banyak intuisi telah dikembangkan untuk menjelaskan manfaat dari kedalaman ini. Dapat dikatakan bahwa semua pembelajaran mesin memiliki banyak lapisan komputasi, yang pertama terdiri dari langkah-langkah pemrosesan fitur. Yang membedakan pembelajaran mendalam adalah bahwa operasi yang dipelajari di setiap lapisan representasi dipelajari bersama dari data.
 
-1. Which parts of code that you are currently writing could be "learned",
-   i.e., improved by learning and automatically determining design choices
-   that are made in your code?
-   Does your code include heuristic design choices?
-   What data might you need to learn the desired behavior?
-1. Which problems that you encounter have many examples for their solution,
-   yet no specific way for automating them?
-   These may be prime candidates for using deep learning.
-1. Describe the relationships between algorithms, data, and computation. How do characteristics of the data and the current available computational resources influence the appropriateness of various algorithms?
-1. Name some settings where end-to-end training is not currently the default approach but where it might be useful.
+Masalah-masalah yang telah kita bahas sejauh ini, seperti belajar dari sinyal audio mentah, nilai piksel mentah dari gambar, atau pemetaan antara kalimat dengan panjang yang sewenang-wenang dan padanannya dalam bahasa asing, adalah masalah-masalah di mana pembelajaran mendalam unggul dan metode tradisional gagal. Ternyata, model berlapis-lapis ini mampu menangani data persepsi tingkat rendah dengan cara yang tidak dapat dilakukan oleh alat sebelumnya. Mungkin kesamaan paling signifikan dalam metode pembelajaran mendalam adalah *pelatihan end-to-end*. Artinya, alih-alih merakit sistem berdasarkan komponen yang disesuaikan secara individual, kita membangun sistem tersebut dan kemudian menyetel kinerjanya secara bersamaan. Misalnya, dalam visi komputer, para ilmuwan dulu memisahkan proses *rekayasa fitur* dari proses membangun model pembelajaran mesin. Detektor tepi Canny :cite:`Canny.1987` dan ekstraktor fitur SIFT dari Lowe :cite:`Lowe.2004` memimpin selama lebih dari satu dekade sebagai algoritma untuk memetakan gambar ke dalam vektor fitur. Di masa lalu, bagian penting dari penerapan pembelajaran mesin pada masalah ini terdiri dari menemukan cara-cara rekayasa manual untuk mengubah data ke dalam bentuk yang sesuai dengan model dangkal. Sayangnya, hanya ada sedikit yang bisa dicapai manusia dengan kecerdasan mereka dibandingkan dengan evaluasi konsisten atas jutaan pilihan yang dilakukan secara otomatis oleh algoritma. Ketika pembelajaran mendalam muncul, ekstraktor fitur ini digantikan oleh filter yang disetel secara otomatis yang menghasilkan akurasi yang lebih baik.
 
-[Discussions](https://discuss.d2l.ai/t/22)
+Oleh karena itu, salah satu keunggulan utama dari pembelajaran mendalam adalah menggantikan tidak hanya model dangkal di akhir jalur pembelajaran tradisional, tetapi juga proses rekayasa fitur yang memakan waktu. Selain itu, dengan menggantikan sebagian besar pra-pemrosesan yang spesifik domain, pembelajaran mendalam telah menghilangkan banyak batasan yang sebelumnya memisahkan visi komputer, pengenalan suara, pemrosesan bahasa alami, informatika medis, dan bidang aplikasi lainnya, sehingga menawarkan satu set alat terpadu untuk menangani berbagai masalah.
+
+Selain pelatihan end-to-end, kita juga mengalami transisi dari deskripsi statistik parametrik ke model nonparametrik sepenuhnya. Ketika data langka, kita perlu bergantung pada asumsi penyederhanaan tentang realitas untuk mendapatkan model yang berguna. Ketika data melimpah, asumsi ini dapat digantikan oleh model nonparametrik yang lebih cocok dengan data. Sampai batas tertentu, ini mencerminkan kemajuan yang dialami fisika pada pertengahan abad sebelumnya dengan tersedianya komputer. Alih-alih memecahkan dengan tangan aproksimasi parametrik tentang bagaimana elektron berperilaku, sekarang kita dapat menggunakan simulasi numerik dari persamaan diferensial parsial terkait. Ini menghasilkan model yang jauh lebih akurat, meskipun seringkali dengan mengorbankan interpretasi.
+
+Perbedaan lain dari pekerjaan sebelumnya adalah penerimaan terhadap solusi yang tidak optimal, menangani masalah optimasi nonlinier nonkonveks, dan kesediaan untuk mencoba sesuatu sebelum membuktikannya. Empirisme baru ini dalam menangani masalah statistik, dikombinasikan dengan masuknya talenta yang cepat, telah mendorong kemajuan pesat dalam pengembangan algoritma praktis, meskipun dalam banyak kasus dengan mengorbankan modifikasi dan penemuan ulang alat yang telah ada selama beberapa dekade.
+
+Pada akhirnya, komunitas pembelajaran mendalam bangga berbagi alat melintasi batas akademis dan perusahaan, merilis banyak pustaka (Library), model statistik, dan jaringan terlatih (*Trained Networks*) yang luar biasa sebagai sumber terbuka. Dengan semangat inilah notebook yang membentuk buku ini tersedia secara gratis untuk distribusi dan penggunaan. Kami telah bekerja keras untuk menurunkan hambatan akses bagi siapa pun yang ingin belajar tentang pembelajaran mendalam dan kami berharap pembaca kami akan mendapatkan manfaat darinya.
+
+
+## Ringkasan
+
+Pembelajaran mesin mempelajari bagaimana sistem komputer dapat memanfaatkan pengalaman (sering kali data) untuk meningkatkan kinerja pada tugas-tugas tertentu. Ini menggabungkan ide-ide dari statistik, penambangan data, dan optimisasi. Sering kali, digunakan sebagai sarana untuk menerapkan solusi AI. Sebagai kelas dari pembelajaran mesin, pembelajaran representasional berfokus pada bagaimana secara otomatis menemukan cara yang tepat untuk merepresentasikan data. Dipandang sebagai pembelajaran representasi multi-level melalui pembelajaran banyak lapisan transformasi, pembelajaran mendalam (*deep learning*) menggantikan tidak hanya model dangkal di akhir jalur pembelajaran mesin tradisional, tetapi juga proses rekayasa fitur yang memakan banyak tenaga. Sebagian besar kemajuan baru-baru ini dalam pembelajaran mendalam dipicu oleh melimpahnya data yang berasal dari sensor murah dan aplikasi berskala Internet, serta oleh kemajuan signifikan dalam komputasi, terutama melalui GPU. Selain itu, tersedianya kerangka kerja pembelajaran mendalam yang efisien telah membuat desain dan implementasi optimisasi sistem secara keseluruhan menjadi lebih mudah, dan ini merupakan komponen kunci dalam mendapatkan kinerja tinggi.
+
+## Latihan
+
+1. Bagian kode mana yang saat ini Anda tulis yang bisa "dipelajari", yaitu, ditingkatkan dengan mempelajari dan secara otomatis menentukan pilihan desain yang dibuat dalam kode Anda? Apakah kode Anda mencakup pilihan desain heuristik? Data apa yang mungkin Anda butuhkan untuk mempelajari perilaku yang diinginkan?
+1. Masalah apa yang Anda temui yang memiliki banyak contoh untuk solusinya, namun tidak ada cara spesifik untuk mengotomasikannya? Ini mungkin merupakan kandidat utama untuk menggunakan pembelajaran mendalam.
+1. Jelaskan hubungan antara algoritma, data, dan komputasi. Bagaimana karakteristik data dan sumber daya komputasi yang tersedia saat ini memengaruhi kesesuaian berbagai algoritma?
+1. Sebutkan beberapa pengaturan di mana pelatihan end-to-end saat ini bukan merupakan pendekatan default, tetapi mungkin bermanfaat.
+
+[Diskusi](https://discuss.d2l.ai/t/22)
+
