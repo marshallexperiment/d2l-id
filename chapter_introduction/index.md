@@ -1220,7 +1220,7 @@ Proses ini diilustrasikan dalam :numref:`fig_rl-environment`.
 Kemudian agen menerima pengamatan selanjutnya,
 dan memilih tindakan berikutnya, dan seterusnya.
 Perilaku agen pembelajaran penguatan diatur oleh *kebijakan*.
-Secara singkat, *kebijakan* hanyalah fungsi yang memetakan
+Secara singkat, *kebijakan* (policy) hanyalah fungsi yang memetakan
 dari pengamatan lingkungan ke tindakan.
 Tujuan dari pembelajaran penguatan adalah untuk menghasilkan kebijakan yang baik.
 
@@ -1229,7 +1229,7 @@ Tujuan dari pembelajaran penguatan adalah untuk menghasilkan kebijakan yang baik
 
 Sulit untuk melebih-lebihkan keumuman
 kerangka kerja pembelajaran penguatan.
-Sebagai contoh, pembelajaran terawasi
+Sebagai contoh, pembelajaran terawasi (*unsupervised*)
 dapat diubah menjadi pembelajaran penguatan.
 Katakan kita memiliki masalah klasifikasi.
 Kita dapat membuat agen pembelajaran penguatan
