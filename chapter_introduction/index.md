@@ -1,794 +1,1026 @@
 # Pendahuluan
+:label:`chap_introduction`
 
-:label:`chap_pendahuluan`
+Hingga baru-baru ini, hampir setiap program komputer
+yang mungkin Anda interaksikan selama
+hari biasa
+dikodekan sebagai serangkaian aturan yang kaku
+yang menentukan secara tepat bagaimana seharusnya mereka berperilaku.
+Misalkan kita ingin menulis sebuah aplikasi
+untuk mengelola platform e-commerce.
+Setelah berkumpul di sekitar papan tulis
+selama beberapa jam untuk merenungkan masalah tersebut,
+kita mungkin menetapkan garis besar
+dari solusi yang berfungsi, misalnya:
+(i) pengguna berinteraksi dengan aplikasi melalui antarmuka
+yang berjalan di browser web atau aplikasi seluler;
+(ii) aplikasi kita berinteraksi dengan mesin database komersial
+untuk melacak keadaan setiap pengguna dan memelihara catatan
+dari transaksi historis;
+dan (iii) di jantung aplikasi kita,
+* logika bisnis * (Anda mungkin mengatakan, * otak *) dari aplikasi kita
+menjabarkan serangkaian aturan yang memetakan setiap keadaan yang dapat dibayangkan
+ke tindakan yang sesuai yang harus diambil program kita.
 
-Hingga baru-baru ini, hampir setiap program komputer yang mungkin Anda gunakan sehari-hari ditulis sebagai seperangkat aturan kaku yang secara tepat menentukan bagaimana program tersebut harus berperilaku. Misalkan kita ingin membuat aplikasi untuk mengelola platform e-commerce. Setelah berdiskusi di sekitar papan tulis selama beberapa jam untuk memikirkan masalahnya, kita mungkin merumuskan garis besar solusi yang berfungsi, misalnya:
+Untuk membangun otak dari aplikasi kita,
+kita mungkin menghitung semua peristiwa umum
+yang harus ditangani program kita.
+Misalnya, setiap kali pelanggan mengklik
+untuk menambahkan barang ke keranjang belanja mereka,
+program kita harus menambahkan entri
+ke tabel database keranjang belanja,
+mengaitkan ID pengguna tersebut
+dengan ID produk yang diminta.
+Kemudian kita mungkin mencoba melangkah melalui
+setiap kasus sudut yang mungkin,
+menguji kelayakan aturan kita
+dan melakukan modifikasi yang diperlukan.
+Apa yang terjadi jika pengguna
+memulai pembelian dengan keranjang kosong?
+Sedikit pengembang yang pernah mendapatkannya
+benar pada waktu pertama
+(mungkin butuh beberapa percobaan untuk mengatasi masalah),
+untuk sebagian besar kita dapat menulis program semacam itu
+dan dengan percaya diri meluncurkannya
+*sebelum* pernah melihat pelanggan nyata.
+Kemampuan kita untuk secara manual merancang sistem otomatis
+yang menggerakkan produk dan sistem yang berfungsi,
+seringkali dalam situasi baru,
+adalah prestasi kognitif yang luar biasa.
+Dan ketika Anda dapat merancang solusi
+yang bekerja $100\%$ dari waktu,
+Anda biasanya tidak seharusnya
+khawatir tentang pembelajaran mesin.
 
-Pengguna berinteraksi dengan aplikasi melalui antarmuka yang berjalan di peramban web atau aplikasi seluler.
 
-Aplikasi kita berinteraksi dengan mesin basis data kelas komersial untuk melacak status setiap pengguna dan menjaga catatan transaksi historis.
+Untungnya bagi komunitas ilmuwan pembelajaran mesin yang terus berkembang,
+banyak tugas yang ingin kita otomatisasi
+tidak mudah tunduk pada kecerdikan manusia.
+Bayangkan berkumpul di sekitar papan tulis
+dengan orang-orang terpintar yang Anda kenal,
+tetapi kali ini Anda sedang menghadapi
+salah satu masalah berikut:
 
-Di pusat aplikasi kita, logika bisnis (atau bisa disebut otak) dari aplikasi kita merinci seperangkat aturan yang memetakan setiap keadaan yang mungkin terjadi ke tindakan yang sesuai yang harus diambil oleh program kita.
+* Menulis program yang memprediksi cuaca esok hari berdasarkan informasi geografis, gambar satelit, dan jendela waktu cuaca masa lalu.
+* Menulis program yang menerima pertanyaan faktual, yang diungkapkan dalam teks bebas, dan menjawabnya dengan benar.
+* Menulis program yang, diberikan sebuah gambar, mengidentifikasi setiap orang yang digambarkan di dalamnya dan menggambar garis besar di sekitar masing-masing.
+* Menulis program yang menyajikan kepada pengguna produk-produk yang kemungkinan mereka nikmati tetapi tidak mungkin, dalam jalur alami penjelajahan, untuk ditemukan.
+
+Untuk masalah-masalah ini,
+bahkan pemrogram elit akan kesulitan
+untuk membuat solusi dari awal.
+Alasannya bisa bervariasi.
+Kadang-kadang program yang kita cari
+mengikuti pola yang berubah dari waktu ke waktu,
+jadi tidak ada jawaban yang benar yang tetap!
+Dalam kasus seperti itu, setiap solusi yang berhasil
+harus beradaptasi dengan anggun ke dunia yang berubah.
+Di waktu lain, hubungan (misalnya antara piksel,
+dan kategori abstrak) mungkin terlalu rumit,
+membutuhkan ribuan atau jutaan perhitungan
+dan mengikuti prinsip-prinsip yang tidak diketahui.
+Dalam kasus pengenalan gambar,
+langkah-langkah tepat yang diperlukan untuk melakukan tugas
+berada di luar pemahaman sadar kita,
+meskipun proses kognitif bawah sadar kita
+menjalankan tugas itu dengan mudah.
 
 
-Untuk membangun "otak" aplikasi kita, kita mungkin membuat daftar semua kejadian umum yang harus ditangani oleh program kita. Misalnya, setiap kali seorang pelanggan mengklik untuk menambahkan item ke keranjang belanja mereka, program kita harus menambahkan entri ke tabel basis data keranjang belanja, mengasosiasikan ID pengguna tersebut dengan ID produk yang diminta. Kemudian, kita mungkin mencoba melangkah melalui setiap kemungkinan kasus sudut (corner case), menguji kesesuaian aturan kita dan melakukan modifikasi yang diperlukan.
+*Pembelajaran mesin* adalah studi tentang algoritma
+yang dapat belajar dari pengalaman.
+Seiring algoritma pembelajaran mesin mengumpulkan lebih banyak pengalaman,
+biasanya dalam bentuk data observasional
+atau interaksi dengan lingkungan,
+kinerjanya meningkat.
+Bandingkan ini dengan platform e-commerce deterministik kita,
+yang mengikuti logika bisnis yang sama,
+tidak peduli berapa banyak pengalaman yang terakumulasi,
+sampai para pengembang sendiri belajar dan memutuskan
+bahwa sudah waktunya untuk memperbarui perangkat lunak.
+Dalam buku ini, kami akan mengajarkan Anda
+dasar-dasar pembelajaran mesin,
+dengan fokus khusus pada *pembelajaran mendalam*,
+seperangkat teknik yang kuat
+yang mendorong inovasi di berbagai area seperti visi komputer,
+pengolahan bahasa alami, kesehatan, dan genomik.
 
-Apa yang terjadi jika seorang pengguna memulai pembelian dengan keranjang yang kosong? Meskipun hanya sedikit pengembang yang langsung melakukannya dengan benar pada percobaan pertama (mungkin perlu beberapa uji coba untuk menyelesaikan masalah), sebagian besar kita dapat menulis program semacam itu dan meluncurkannya dengan percaya diri *sebelum* pernah melihat pelanggan sebenarnya.
-
-Kemampuan kita untuk secara manual merancang sistem otomatis yang mendorong produk dan sistem yang berfungsi, sering kali dalam situasi yang baru, adalah prestasi kognitif yang luar biasa. Dan ketika Anda dapat merancang solusi yang bekerja $100\%$ sepanjang waktu, biasanya Anda tidak perlu khawatir tentang pembelajaran mesin.
-
-Untungnya bagi komunitas ilmuwan pembelajaran mesin yang terus berkembang, banyak tugas yang ingin kita otomatisasi tidak begitu mudah dipecahkan dengan kecerdikan manusia. Bayangkan berkumpul di sekitar papan tulis dengan orang-orang paling cerdas yang Anda kenal, tetapi kali ini Anda menghadapi salah satu dari masalah berikut:
-
-* Tulis program yang memprediksi cuaca besok berdasarkan informasi geografis, citra satelit, dan jendela historis cuaca sebelumnya.
-* Tulis program yang menerima pertanyaan faktual, yang diekspresikan dalam teks bebas, dan menjawabnya dengan benar.
-* Tulis program yang, diberikan sebuah gambar, mengidentifikasi setiap orang yang ada di dalamnya dan menggambar garis di sekelilingnya.
-* Tulis program yang menyajikan produk kepada pengguna yang kemungkinan besar akan mereka sukai tetapi tidak mungkin mereka temukan secara alami selama menjelajah.
-
-Untuk masalah-masalah ini, bahkan programmer elit pun akan kesulitan untuk membuat solusi dari awal. Alasannya bisa beragam. Terkadang program yang kita cari mengikuti pola yang berubah seiring waktu, sehingga tidak ada jawaban tetap yang benar! Dalam kasus seperti itu, solusi yang berhasil harus dapat beradaptasi secara elegan dengan dunia yang terus berubah. Pada waktu lain, hubungan (misalnya antara piksel dan kategori abstrak) mungkin terlalu rumit, memerlukan ribuan atau jutaan komputasi dan mengikuti prinsip-prinsip yang tidak diketahui.
-
-Dalam kasus pengenalan gambar, langkah-langkah yang tepat yang diperlukan untuk melakukan tugas tersebut berada di luar pemahaman sadar kita, meskipun proses kognitif bawah sadar kita melakukan tugas itu dengan mudah.
-
-*Pembelajaran mesin* adalah studi tentang algoritma yang dapat belajar dari pengalaman. Saat algoritma pembelajaran mesin mengumpulkan lebih banyak pengalaman, biasanya dalam bentuk data observasi atau interaksi dengan lingkungan, kinerjanya meningkat. Bandingkan dengan platform e-commerce deterministik kita, yang mengikuti logika bisnis yang sama, tidak peduli seberapa banyak pengalaman yang terakumulasi, sampai para pengembang sendiri belajar dan memutuskan bahwa sudah waktunya memperbarui perangkat lunak.
-
-Dalam buku ini, kami akan mengajarkan Anda dasar-dasar pembelajaran mesin, dengan fokus khusus pada *pembelajaran mendalam* (deep learning), sebuah kumpulan teknik yang kuat yang mendorong inovasi di berbagai bidang seperti visi komputer, pemrosesan bahasa alami, perawatan kesehatan, dan genomik.
 
 ## Contoh yang Memotivasi
 
-Sebelum memulai penulisan, penulis buku ini, seperti kebanyakan pekerja lainnya, harus mendapatkan kafein. Kami melompat ke dalam mobil dan mulai mengemudi. Menggunakan iPhone, Alex memanggil, "Hey Siri", membangunkan sistem pengenalan suara pada telepon. Kemudian Mu memberikan perintah "arah ke kedai kopi Blue Bottle". Telepon dengan cepat menampilkan transkripsi dari perintah tersebut. Telepon juga mengenali bahwa kami meminta arah dan meluncurkan aplikasi Peta (Maps) untuk memenuhi permintaan kami. Setelah diluncurkan, aplikasi Peta mengidentifikasi sejumlah rute. Di sebelah setiap rute, telepon menampilkan perkiraan waktu tempuh.
+Sebelum mulai menulis, para penulis buku ini,
+seperti sebagian besar tenaga kerja, harus terkafinasi.
+Kami naik mobil dan mulai mengemudi.
+Menggunakan iPhone, Alex memanggil "Hey Siri",
+membangunkan sistem pengenalan suara ponsel.
+Kemudian Mu memerintahkan "petunjuk ke toko kopi Blue Bottle".
+Ponsel segera menampilkan transkripsi perintahnya.
+Ponsel juga mengenali bahwa kami meminta petunjuk arah
+dan meluncurkan aplikasi Peta (app)
+untuk memenuhi permintaan kami.
+Setelah diluncurkan, aplikasi Peta mengidentifikasi sejumlah rute.
+Di samping setiap rute, ponsel menampilkan waktu perjalanan yang diprediksi.
+Meskipun cerita ini dibuat untuk kemudahan pedagogis,
+ini menunjukkan bahwa hanya dalam beberapa detik,
+interaksi sehari-hari kita dengan ponsel pintar
+dapat melibatkan beberapa model pembelajaran mesin.
 
-Meskipun cerita ini dibuat untuk kenyamanan pedagogis, ini menunjukkan bahwa dalam rentang hanya beberapa detik, interaksi sehari-hari kita dengan ponsel pintar dapat melibatkan beberapa model pembelajaran mesin.
+Bayangkan hanya menulis program untuk merespons *kata bangun*
+seperti "Alexa", "OK Google", dan "Hey Siri".
+Cobalah membuatnya sendiri di sebuah ruangan
+hanya dengan komputer dan editor kode,
+seperti yang digambarkan di :numref:`fig_wake_word`.
+Bagaimana Anda akan menulis program tersebut dari prinsip dasar?
+Pikirkanlah... masalahnya sulit.
+Setiap detik, mikrofon akan mengumpulkan sekitar
+44.000 sampel.
+Setiap sampel adalah pengukuran amplitudo gelombang suara.
+Apa aturan yang bisa memetakan secara andal dari cuplikan audio mentah ke prediksi yang pasti
+$\{\text{ya}, \text{tidak}\}$
+tentang apakah cuplikan tersebut mengandung kata bangun?
+Jika Anda kesulitan, jangan khawatir.
+Kami juga tidak tahu cara menulis program seperti itu dari awal.
+Itulah mengapa kami menggunakan pembelajaran mesin.
 
-Bayangkan saja menulis program untuk merespons *kata bangun* (wake word) seperti "Alexa", "OK Google", dan "Hey Siri". Cobalah menuliskannya sendiri di dalam ruangan hanya dengan komputer dan editor kode, seperti yang diilustrasikan pada :numref:`fig_wake_word`. Bagaimana Anda akan menulis program semacam itu dari prinsip dasar? Pikirkan... masalahnya sulit.
-
-Setiap detik, mikrofon akan mengumpulkan sekitar 44.000 sampel. Setiap sampel adalah pengukuran amplitudo gelombang suara. Aturan apa yang dapat memetakan secara andal dari potongan audio mentah menjadi prediksi yang percaya diri $\{\textrm{ya}, \textrm{tidak}\}$ tentang apakah potongan tersebut mengandung kata bangun? Jika Anda kesulitan, jangan khawatir. Kami juga tidak tahu bagaimana menulis program seperti itu dari awal. Itulah mengapa kami menggunakan pembelajaran mesin.
-
-![Mengidentifikasi kata bangun.](../img/wake-word.svg)
+![Identifikasi kata bangun.](../img/wake-word.svg)
 :label:`fig_wake_word`
 
+Berikut triknya.
+Sering kali, meskipun kita tidak tahu bagaimana memberi tahu komputer
+secara eksplisit cara memetakan dari input ke output,
+kita masih mampu melakukan prestasi kognitif itu sendiri.
+Dengan kata lain, meskipun Anda tidak tahu
+bagaimana memprogram komputer untuk mengenali kata "Alexa",
+Anda sendiri mampu mengenalinya.
+Dengan kemampuan ini, kita dapat mengumpulkan *dataset* besar
+yang berisi contoh cuplikan audio dan label terkait,
+menunjukkan cuplikan mana yang mengandung kata bangun.
+Dalam pendekatan yang saat ini dominan terhadap pembelajaran mesin,
+kita tidak mencoba untuk merancang sistem
+*secara eksplisit* untuk mengenali kata bangun.
+Sebaliknya, kita mendefinisikan program yang fleksibel
+yang perilakunya ditentukan oleh sejumlah *parameter*.
+Kemudian kita menggunakan dataset untuk menentukan nilai parameter terbaik,
+yaitu, yang meningkatkan kinerja program kita
+sehubungan dengan ukuran kinerja yang dipilih.
 
 
-Inilah triknya. Sering kali, meskipun kita tidak tahu bagaimana memberi tahu komputer secara eksplisit cara memetakan dari input ke output, kita tetap mampu melakukan prestasi kognitif tersebut sendiri. Dengan kata lain, meskipun Anda tidak tahu cara memprogram komputer untuk mengenali kata "Alexa", Anda sendiri dapat mengenalinya. Dilengkapi dengan kemampuan ini, kita dapat mengumpulkan *dataset* besar yang berisi contoh potongan audio dan label terkait, yang menunjukkan potongan mana yang mengandung kata bangun.
+Anda dapat menganggap parameter sebagai kenop yang dapat kita putar,
+memanipulasi perilaku program.
+Setelah parameter ditetapkan, kami menyebut program itu sebagai *model*.
+Kumpulan semua program yang berbeda (pemetaan input--output)
+yang dapat kita hasilkan hanya dengan memanipulasi parameter
+disebut sebagai *keluarga* model.
+Dan "meta-program" yang menggunakan dataset kita
+untuk memilih parameter disebut *algoritma pembelajaran*.
 
-Dalam pendekatan pembelajaran mesin yang saat ini dominan, kita tidak mencoba merancang sistem *secara eksplisit* untuk mengenali kata bangun. Sebaliknya, kita mendefinisikan program yang fleksibel yang perilakunya ditentukan oleh sejumlah *parameter*. Kemudian kita menggunakan dataset untuk menentukan nilai parameter terbaik, yaitu, nilai yang meningkatkan kinerja program kita sesuai dengan ukuran kinerja yang dipilih.
+Sebelum kita dapat melanjutkan dan melibatkan algoritma pembelajaran,
+kita harus mendefinisikan masalah secara tepat,
+menetapkan sifat pasti dari input dan output,
+dan memilih keluarga model yang tepat.
+Dalam hal ini,
+model kita menerima potongan audio sebagai *input*,
+dan model
+menghasilkan pilihan di antara
+$\{\text{ya}, \text{tidak}\}$ sebagai *output*.
+Jika semua berjalan sesuai rencana
+tebakan model akan
+biasanya benar mengenai
+apakah cuplikan tersebut mengandung kata bangun.
 
-Anda dapat menganggap parameter sebagai kenop yang dapat kita putar, memanipulasi perilaku program. Setelah parameter ditetapkan, kita menyebut program tersebut sebagai *model*. Kumpulan semua program berbeda (pemetaan input-output) yang dapat kita hasilkan hanya dengan memanipulasi parameter disebut *keluarga* model. Dan "meta-program" yang menggunakan dataset kita untuk memilih parameter disebut *algoritma pembelajaran*.
+Jika kita memilih keluarga model yang tepat,
+harus ada satu pengaturan kenop
+sehingga model menyala "ya" setiap kali mendengar kata "Alexa".
+Karena pilihan kata bangun yang tepat bersifat sewenang-wenang,
+kita mungkin memerlukan keluarga model yang cukup kaya sehingga,
+melalui pengaturan kenop lain, itu bisa menyala "ya"
+hanya setelah mendengar kata "Apricot".
+Kita mengharapkan bahwa keluarga model yang sama harus cocok
+untuk pengenalan "Alexa" dan "Apricot"
+karena intuitif, mereka tampaknya tugas yang serupa.
+Namun, kita mungkin memerlukan keluarga model yang berbeda sepenuhnya
+jika kita ingin berurusan dengan input atau output yang fundamental berbeda,
+misalnya jika kita ingin memetakan dari gambar ke keterangan,
+atau dari kalimat bahasa Inggris ke kalimat bahasa Mandarin.
 
-Sebelum kita dapat melanjutkan dan menjalankan algoritma pembelajaran, kita harus mendefinisikan masalah secara tepat, menetapkan sifat pasti dari input dan output, serta memilih keluarga model yang sesuai. Dalam kasus ini, model kita menerima potongan audio sebagai *input*, dan model menghasilkan pilihan di antara $\{\textrm{ya}, \textrm{tidak}\}$ sebagai *output*. Jika semuanya berjalan sesuai rencana, tebakan model akan benar dalam menentukan apakah potongan tersebut mengandung kata bangun.
-
-Jika kita memilih keluarga model yang tepat, seharusnya ada satu pengaturan kenop yang memungkinkan model mengeluarkan "ya" setiap kali mendengar kata "Alexa". Karena pilihan kata bangun itu sendiri bersifat sewenang-wenang, kita mungkin memerlukan keluarga model yang cukup kaya sehingga, melalui pengaturan kenop lainnya, model dapat mengeluarkan "ya" hanya ketika mendengar kata "Apricot". Kita berharap bahwa keluarga model yang sama cocok untuk pengenalan "Alexa" dan "Apricot" karena keduanya, secara intuitif, adalah tugas yang serupa. Namun, kita mungkin memerlukan keluarga model yang sepenuhnya berbeda jika kita ingin menangani input atau output yang secara fundamental berbeda, misalnya jika kita ingin memetakan dari gambar ke teks keterangan, atau dari kalimat bahasa Inggris ke kalimat bahasa Mandarin.
-
-Seperti yang mungkin Anda tebak, jika kita mengatur semua kenop secara acak, kemungkinan besar model kita tidak akan mengenali "Alexa", "Apricot", atau kata bahasa Inggris lainnya. Dalam pembelajaran mesin, *pembelajaran* adalah proses di mana kita menemukan pengaturan kenop yang tepat untuk memaksa perilaku yang diinginkan dari model kita. Dengan kata lain, kita *melatih* model kita dengan data. Seperti yang ditunjukkan pada :numref:`fig_ml_loop`, proses pelatihan biasanya terlihat seperti berikut:
+Seperti yang mungkin Anda duga, jika kita hanya mengatur semua kenop secara acak,
+tidak mungkin model kita akan mengenali "Alexa",
+"Apricot", atau kata bahasa Inggris lainnya.
+Dalam pembelajaran mesin,
+*pembelajaran* adalah proses
+di mana kita menemukan pengaturan kenop yang tepat
+untuk memaksa perilaku yang diinginkan dari model kita.
+Dengan kata lain,
+kita *melatih* model kita dengan data.
+Seperti yang ditunjukkan dalam :numref:`fig_ml_loop`, proses pelatihan biasanya terlihat seperti berikut:
 
 1. Mulai dengan model yang diinisialisasi secara acak yang tidak dapat melakukan apa pun yang berguna.
-2. Ambil beberapa data Anda (misalnya, potongan audio dan label $\{\textrm{ya}, \textrm{tidak}\}$ yang sesuai).
-3. Sesuaikan kenop untuk membuat model bekerja lebih baik seperti yang dinilai pada contoh-contoh tersebut.
-4. Ulangi Langkah 2 dan 3 sampai modelnya hebat.
+2. Ambil beberapa data Anda (mis., potongan audio dan label $\{\text{ya}, \text{tidak}\}$ yang sesuai).
+3. Putar kenop untuk membuat model berkinerja lebih baik seperti yang dinilai pada contoh tersebut.
+4. Ulangi Langkah 2 dan 3 sampai modelnya luar biasa.
 
 ![Proses pelatihan yang khas.](../img/ml-loop.svg)
 :label:`fig_ml_loop`
 
-Untuk merangkum, daripada menulis kode untuk mengenali kata bangun, kita menulis program yang dapat *belajar* mengenali kata bangun jika disajikan dengan dataset berlabel yang besar. Anda dapat menganggap tindakan menentukan perilaku program dengan menyajikannya dengan dataset sebagai *pemrograman dengan data*. Artinya, kita dapat "memprogram" detektor kucing dengan menyediakan sistem pembelajaran mesin kita dengan banyak contoh kucing dan anjing. Dengan cara ini, detektor akhirnya akan belajar mengeluarkan angka positif yang sangat besar jika itu adalah kucing, angka negatif yang sangat besar jika itu adalah anjing, dan sesuatu yang mendekati nol jika tidak yakin.
-
-Ini hanya menggores permukaan dari apa yang dapat dilakukan pembelajaran mesin. Pembelajaran mendalam, yang akan kami jelaskan lebih detail nanti, hanyalah salah satu dari banyak metode populer untuk memecahkan masalah pembelajaran mesin.
-
+Untuk merangkum, daripada membuat pengenal kata bangun,
+kami membuat program yang dapat *belajar* untuk mengenali kata bangun,
+jika disajikan dengan dataset berlabel besar.
+Anda dapat menganggap tindakan menentukan perilaku program
+dengan menyajikannya dengan dataset sebagai *pemrograman dengan data*.
+Dengan kata lain, kita dapat "memprogram" detektor kucing
+dengan memberikan sistem pembelajaran mesin kita
+banyak contoh kucing dan anjing.
+Dengan cara ini, detektor pada akhirnya akan belajar untuk mengeluarkan
+angka positif yang sangat besar jika itu adalah kucing,
+angka negatif yang sangat besar jika itu adalah anjing,
+dan sesuatu yang lebih dekat ke nol jika tidak yakin.
+Ini baru permulaan dari apa yang dapat dilakukan oleh pembelajaran mesin.
+Pembelajaran mendalam, yang akan kami jelaskan lebih rinci nanti,
+hanyalah salah satu dari banyak metode populer
+untuk memecahkan masalah pembelajaran mesin.
 
 
 ## Komponen Utama
 
-Dalam contoh kata bangun kita, kami menggambarkan dataset yang terdiri dari potongan audio dan label biner, dan memberikan gambaran umum tentang bagaimana kita dapat melatih model untuk mendekati pemetaan dari potongan-potongan tersebut ke klasifikasi. Jenis masalah ini, di mana kita mencoba memprediksi label yang tidak diketahui berdasarkan input yang diketahui dengan menggunakan dataset yang terdiri dari contoh-contoh dengan label yang diketahui, disebut *pembelajaran terawasi* (supervised learning). Ini hanyalah salah satu dari banyak jenis masalah pembelajaran mesin. Sebelum kita mengeksplorasi jenis lainnya, kami ingin memberikan penjelasan lebih lanjut tentang beberapa komponen inti yang akan terus kita temui, apa pun jenis masalah pembelajaran mesin yang kita tangani:
+Dalam contoh kata bangun kami, kami menggambarkan dataset
+yang terdiri dari potongan audio dan label biner,
+dan kami memberikan gambaran bagaimana kami mungkin melatih
+model untuk mendekati pemetaan dari potongan ke klasifikasi.
+Jenis masalah ini,
+di mana kita mencoba memprediksi label yang tidak diketahui yang ditunjuk
+berdasarkan input yang diketahui
+diberikan dataset yang terdiri dari contoh
+yang labelnya diketahui,
+disebut *pembelajaran terawasi*.
+Ini hanya salah satu dari banyak jenis masalah pembelajaran mesin.
+Sebelum kita menjelajahi varietas lain,
+kami ingin memberikan lebih banyak cahaya
+pada beberapa komponen inti yang akan mengikuti kita,
+tidak peduli jenis masalah pembelajaran mesin apa yang kita tangani:
 
 1. *Data* yang dapat kita pelajari.
-2. *Model* tentang bagaimana mengubah data.
-3. *Fungsi objektif* yang mengukur seberapa baik (atau buruk) model tersebut bekerja.
-4. *Algoritma* untuk menyesuaikan parameter model guna mengoptimalkan fungsi objektif.
+2. Sebuah *model* bagaimana mengubah data.
+3. Sebuah *fungsi objektif* yang mengukur seberapa baik (atau buruk) model tersebut.
+4. Sebuah *algoritma* untuk menyesuaikan parameter model untuk mengoptimalkan fungsi objektif.
 
 ### Data
 
-Mungkin tidak perlu dikatakan bahwa Anda tidak dapat melakukan ilmu data tanpa data. Kita bisa saja menghabiskan ratusan halaman untuk merenungkan apa sebenarnya *data* itu, tetapi untuk saat ini, kita akan fokus pada sifat-sifat utama dari dataset yang akan kita perhatikan. Secara umum, kita berurusan dengan kumpulan contoh. Agar dapat bekerja dengan data secara berguna, kita biasanya perlu menghasilkan representasi numerik yang sesuai. Setiap *contoh* (atau *titik data*, *instance data*, *sampel*) biasanya terdiri dari serangkaian atribut yang disebut *fitur* (kadang-kadang disebut *kovariat* atau *input*), berdasarkan fitur-fitur ini model harus membuat prediksinya. Dalam masalah pembelajaran terawasi, tujuan kita adalah memprediksi nilai dari atribut khusus, yang disebut *label* (atau *target*), yang bukan bagian dari input model.
+Mungkin sudah jelas bahwa Anda tidak dapat melakukan ilmu data tanpa data.
+Kita bisa kehilangan ratusan halaman merenungkan apa sebenarnya data *adalah*,
+tapi untuk saat ini, kami akan fokus pada properti kunci
+dari dataset yang akan kami khawatirkan.
+Umumnya, kami prihatin dengan kumpulan contoh.
+Untuk bekerja dengan data secara berguna, kita biasanya
+perlu membuat representasi numerik yang sesuai.
+Setiap *contoh* (atau *titik data*, *instansi data*, *sampel*)
+biasanya terdiri dari satu set atribut
+yang disebut *fitur* (kadang disebut *covariates* atau *inputs*),
+berdasarkan itu model harus membuat prediksinya.
+Dalam masalah pembelajaran terawasi,
+tujuan kita adalah memprediksi nilai atribut khusus,
+yang disebut *label* (atau *target*),
+yang tidak menjadi bagian dari input model.
+
+Jika kita bekerja dengan data gambar,
+setiap contoh mungkin terdiri dari sebuah
+fotografi individu (fiturnya)
+dan angka yang menunjukkan kategori
+di mana fotografi itu termasuk (labelnya).
+Fotografi akan diwakili secara numerik
+sebagai tiga kisi nilai numerik yang mewakili
+kecerahan cahaya merah, hijau, dan biru
+di setiap lokasi piksel.
+Misalnya, sebuah fotografi warna $200\times 200$ piksel
+akan terdiri dari $200\times200\times3=120000$ nilai numerik.
 
 
-Jika kita bekerja dengan data gambar, setiap contoh mungkin terdiri dari sebuah foto individu (*fitur-fitur*) dan sebuah angka yang menunjukkan kategori foto tersebut (*label*). Foto tersebut direpresentasikan secara numerik sebagai tiga grid nilai numerik yang mewakili kecerahan cahaya merah, hijau, dan biru pada setiap lokasi piksel. Sebagai contoh, foto berwarna dengan ukuran $200\times 200$ piksel akan terdiri dari $200\times200\times3=120000$ nilai numerik.
+Sebagai alternatif, kita mungkin bekerja dengan data rekam medis elektronik
+dan menghadapi tugas memprediksi kemungkinan
+seorang pasien akan bertahan hidup dalam 30 hari ke depan.
+Di sini, fitur-fitur kita mungkin terdiri dari koleksi
+atribut yang mudah tersedia
+dan pengukuran yang sering dicatat,
+termasuk usia, tanda vital, komorbiditas,
+obat-obatan saat ini, dan prosedur terbaru.
+Label yang tersedia untuk pelatihan adalah nilai biner
+yang menunjukkan apakah setiap pasien dalam data historis
+bertahan hidup dalam jendela 30 hari.
 
-Sebaliknya, kita mungkin bekerja dengan data rekam medis elektronik dan menghadapi tugas untuk memprediksi kemungkinan bahwa seorang pasien akan bertahan hidup selama 30 hari ke depan. Dalam hal ini, fitur-fitur kita mungkin terdiri dari kumpulan atribut yang tersedia secara umum dan pengukuran yang sering direkam, termasuk usia, tanda-tanda vital, komorbiditas, obat yang sedang dikonsumsi, dan prosedur yang baru-baru ini dilakukan. Label yang tersedia untuk pelatihan adalah nilai biner yang menunjukkan apakah setiap pasien dalam data historis bertahan hidup dalam jangka waktu 30 hari tersebut.
+Dalam kasus seperti ini, ketika setiap contoh dicirikan
+oleh jumlah fitur numerik yang sama,
+kita mengatakan bahwa input adalah vektor dengan panjang tetap
+dan kita menyebut panjang (konstan) dari vektor tersebut
+sebagai *dimensi* dari data.
+Seperti yang dapat Anda bayangkan, input dengan panjang tetap dapat menjadi nyaman,
+memberikan kita satu komplikasi lebih sedikit untuk dikhawatirkan.
+Namun, tidak semua data dapat dengan mudah
+direpresentasikan sebagai vektor dengan panjang tetap.
+Meskipun kita mungkin mengharapkan gambar mikroskop berasal dari peralatan standar,
+kita tidak dapat mengharapkan gambar yang diambil dari internet semua memiliki resolusi atau bentuk yang sama.
+Untuk gambar, kita mungkin mempertimbangkan
+memotongnya menjadi ukuran standar,
+tetapi strategi ini hanya bisa membantu sampai batas tertentu.
+Kita berisiko kehilangan informasi pada bagian yang dipotong.
+Selain itu, data teks bahkan lebih keras kepala dalam menolak representasi dengan panjang tetap.
+Pertimbangkan ulasan pelanggan yang ditinggalkan
+di situs e-commerce seperti Amazon, IMDb, dan TripAdvisor.
+Beberapa pendek: "itu buruk!".
+Yang lainnya bertele-tele berhalaman-halaman.
+Salah satu keunggulan utama pembelajaran mendalam dibandingkan dengan metode tradisional
+adalah kemampuan model modern untuk menangani data dengan panjang yang bervariasi dengan lebih anggun.
 
-Dalam kasus seperti ini, ketika setiap contoh dicirikan oleh jumlah fitur numerik yang sama, kita menyebut input tersebut sebagai vektor dengan panjang tetap dan kita menyebut panjang (konstan) dari vektor tersebut sebagai *dimensi* dari data. Seperti yang dapat Anda bayangkan, input dengan panjang tetap dapat menjadi nyaman, memberikan kita satu komplikasi lebih sedikit untuk dikhawatirkan. Namun, tidak semua data dapat dengan mudah direpresentasikan sebagai vektor dengan panjang tetap. Meskipun kita mungkin mengharapkan gambar mikroskop berasal dari peralatan standar, kita tidak dapat mengharapkan gambar yang diambil dari internet semua memiliki resolusi atau bentuk yang sama. Untuk gambar, kita mungkin mempertimbangkan untuk memotongnya menjadi ukuran standar, tetapi strategi ini hanya bisa membantu sampai batas tertentu. Kita berisiko kehilangan informasi pada bagian yang dipotong. Selain itu, data teks bahkan lebih keras kepala dalam menolak representasi dengan panjang tetap. Pertimbangkan ulasan pelanggan yang ditinggalkan di situs e-commerce seperti Amazon, IMDb, dan TripAdvisor. Beberapa di antaranya pendek: "itu buruk!". Sementara yang lain bertele-tele berhalaman-halaman. Salah satu keunggulan utama pembelajaran mendalam dibandingkan dengan metode tradisional adalah kemampuan model modern untuk menangani data dengan panjang yang bervariasi (*varying-length data*) dengan lebih anggun.
+Secara umum, semakin banyak data yang kita miliki, semakin mudah pekerjaan kita.
+Ketika kita memiliki lebih banyak data, kita dapat melatih model yang lebih kuat
+dan mengandalkan asumsi yang sudah ada lebih sedikit.
+Perubahan rezim dari data kecil ke data besar
+merupakan kontributor utama bagi keberhasilan pembelajaran mendalam modern.
+Untuk menggarisbawahi poin ini, banyak
+model paling menarik dalam pembelajaran mendalam
+tidak akan berfungsi tanpa dataset besar.
+Beberapa mungkin berfungsi dalam rezim data kecil,
+tetapi tidak lebih baik dari pendekatan tradisional.
 
-### Check-Point Translate!!
-
-Generally, the more data we have, the easier our job becomes.
-When we have more data, we can train more powerful models
-and rely less heavily on preconceived assumptions.
-The regime change from (comparatively) small to big data
-is a major contributor to the success of modern deep learning.
-To drive the point home, many of
-the most exciting models in deep learning
-do not work without large datasets.
-Some others might work in the small data regime,
-but are no better than traditional approaches.
-
-Finally, it is not enough to have lots of data
-and to process it cleverly.
-We need the *right* data.
-If the data is full of mistakes,
-or if the chosen features are not predictive
-of the target quantity of interest,
-learning is going to fail.
-The situation is captured well by the cliché:
-*garbage in, garbage out*.
-Moreover, poor predictive performance
-is not the only potential consequence.
-In sensitive applications of machine learning,
-like predictive policing, resume screening,
-and risk models used for lending,
-we must be especially alert
-to the consequences of garbage data.
-One commonly occurring failure mode concerns datasets
-where some groups of people are unrepresented
-in the training data.
-Imagine applying a skin cancer recognition system
-that had never seen black skin before.
-Failure can also occur when the data
-does not only under-represent some groups
-but reflects societal prejudices.
-For example, if past hiring decisions
-are used to train a predictive model
-that will be used to screen resumes
-then machine learning models could inadvertently
-capture and automate historical injustices.
-Note that this can all happen without the data scientist
-actively conspiring, or even being aware.
-
-
-### Models
-
-Most machine learning involves transforming the data in some sense.
-We might want to build a system that ingests photos and predicts smiley-ness.
-Alternatively,
-we might want to ingest a set of sensor readings
-and predict how normal vs. anomalous the readings are.
-By *model*, we denote the computational machinery for ingesting data
-of one type,
-and spitting out predictions of a possibly different type.
-In particular, we are interested in *statistical models*
-that can be estimated from data.
-While simple models are perfectly capable of addressing
-appropriately simple problems,
-the problems
-that we focus on in this book stretch the limits of classical methods.
-Deep learning is differentiated from classical approaches
-principally by the set of powerful models that it focuses on.
-These models consist of many successive transformations of the data
-that are chained together top to bottom, thus the name *deep learning*.
-On our way to discussing deep models,
-we will also discuss some more traditional methods.
-
-### Objective Functions
-
-Earlier, we introduced machine learning as learning from experience.
-By *learning* here,
-we mean improving at some task over time.
-But who is to say what constitutes an improvement?
-You might imagine that we could propose updating our model,
-and some people might disagree on whether our proposal
-constituted an improvement or not.
-
-In order to develop a formal mathematical system of learning machines,
-we need to have formal measures of how good (or bad) our models are.
-In machine learning, and optimization more generally,
-we call these *objective functions*.
-By convention, we usually define objective functions
-so that lower is better.
-This is merely a convention.
-You can take any function
-for which higher is better, and turn it into a new function
-that is qualitatively identical but for which lower is better
-by flipping the sign.
-Because we choose lower to be better, these functions are sometimes called
-*loss functions*.
-
-When trying to predict numerical values,
-the most common loss function is *squared error*,
-i.e., the square of the difference between
-the prediction and the ground truth target.
-For classification, the most common objective
-is to minimize error rate,
-i.e., the fraction of examples on which
-our predictions disagree with the ground truth.
-Some objectives (e.g., squared error) are easy to optimize,
-while others (e.g., error rate) are difficult to optimize directly,
-owing to non-differentiability or other complications.
-In these cases, it is common instead to optimize a *surrogate objective*.
-
-During optimization, we think of the loss
-as a function of the model's parameters,
-and treat the training dataset as a constant.
-We learn
-the best values of our model's parameters
-by minimizing the loss incurred on a set
-consisting of some number of examples collected for training.
-However, doing well on the training data
-does not guarantee that we will do well on unseen data.
-So we will typically want to split the available data into two partitions:
-the *training dataset* (or *training set*), for learning model parameters;
-and the *test dataset* (or *test set*), which is held out for evaluation.
-At the end of the day, we typically report
-how our models perform on both partitions.
-You could think of training performance
-as analogous to the scores that a student achieves
-on the practice exams used to prepare for some real final exam.
-Even if the results are encouraging,
-that does not guarantee success on the final exam.
-Over the course of studying, the student
-might begin to memorize the practice questions,
-appearing to master the topic but faltering
-when faced with previously unseen questions
-on the actual final exam.
-When a model performs well on the training set
-but fails to generalize to unseen data,
-we say that it is *overfitting* to the training data.
+Akhirnya, memiliki banyak data saja tidak cukup
+dan memprosesnya dengan cerdas.
+Kita memerlukan data yang *tepat*.
+Jika data penuh dengan kesalahan,
+atau jika fitur yang dipilih tidak prediktif
+terhadap kuantitas target yang diminati,
+pembelajaran akan gagal.
+Situasi ini dengan baik dijelaskan oleh klise:
+*sampah masuk, sampah keluar*.
+Lebih lanjut, kinerja prediktif yang buruk
+bukan satu-satunya konsekuensi potensial.
+Dalam aplikasi pembelajaran mesin yang sensitif,
+seperti polisi prediktif, penyaringan resume,
+dan model risiko yang digunakan untuk peminjaman,
+kita harus sangat waspada
+terhadap konsekuensi dari data sampah.
+Salah satu mode kegagalan yang sering terjadi adalah dataset
+di mana beberapa kelompok orang tidak terwakili
+dalam data pelatihan.
+Bayangkan menerapkan sistem pengenalan kanker kulit
+yang belum pernah melihat kulit hitam sebelumnya.
+Kegagalan juga dapat terjadi ketika data
+tidak hanya kurang mewakili beberapa kelompok
+tetapi mencerminkan prasangka masyarakat.
+Misalnya, jika keputusan perekrutan masa lalu
+digunakan untuk melatih model prediktif
+yang akan digunakan untuk menyaring resume
+maka model pembelajaran mesin dapat secara tidak sengaja
+menangkap dan mengotomatiskan ketidakadilan historis.
+Perlu dicatat bahwa ini semua dapat terjadi tanpa ilmuwan data
+secara aktif berkonspirasi, atau bahkan menyadari.
 
 
-### Optimization Algorithms
+### Model
 
-Once we have got some data source and representation,
-a model, and a well-defined objective function,
-we need an algorithm capable of searching
-for the best possible parameters for minimizing the loss function.
-Popular optimization algorithms for deep learning
-are based on an approach called *gradient descent*.
-In brief, at each step, this method
-checks to see, for each parameter,
-how that training set loss would change
-if you perturbed that parameter by just a small amount.
-It would then update the parameter
-in the direction that lowers the loss.
+Sebagian besar pembelajaran mesin melibatkan transformasi data dalam beberapa cara.
+Kita mungkin ingin membangun sistem yang mengolah foto dan memprediksi tingkat senyum.
+Sebagai alternatif,
+kita mungkin ingin mengolah sekumpulan pembacaan sensor
+dan memprediksi seberapa normal atau anomali pembacaan tersebut.
+Dengan *model*, kami menunjuk perangkat keras komputasi untuk mengonsumsi data
+dari satu jenis,
+dan mengeluarkan prediksi dari jenis yang mungkin berbeda.
+Khususnya, kami tertarik pada *model statistik*
+yang dapat diestimasi dari data.
+Sementara model sederhana sangat mampu mengatasi
+masalah yang sederhana secara tepat,
+masalah yang kami fokuskan dalam buku ini menguji batas metode klasik.
+Pembelajaran mendalam berbeda dari pendekatan klasik
+terutama melalui kumpulan model kuat yang menjadi fokusnya.
+Model-model ini terdiri dari banyak transformasi data berturut-turut
+yang dihubungkan dari atas ke bawah, oleh karena itu dinamakan *pembelajaran mendalam*.
+Dalam perjalanan kami mendiskusikan model-model mendalam,
+kami juga akan membahas beberapa metode tradisional.
+
+### Fungsi Objektif
+
+Sebelumnya, kami memperkenalkan pembelajaran mesin sebagai pembelajaran dari pengalaman.
+Dengan *pembelajaran* di sini,
+kami maksudkan peningkatan dalam suatu tugas dari waktu ke waktu.
+Tapi, siapa yang bisa menentukan apa yang merupakan peningkatan?
+Anda mungkin membayangkan bahwa kita bisa mengusulkan pembaruan model kita,
+dan beberapa orang mungkin tidak setuju apakah usulan kita
+merupakan peningkatan atau tidak.
+
+Untuk mengembangkan sistem matematis formal dari mesin pembelajaran,
+kita perlu memiliki ukuran formal seberapa baik (atau buruk) model kita.
+Dalam pembelajaran mesin, dan optimasi pada umumnya,
+kita menyebut ini *fungsi objektif*.
+Secara konvensi, kita biasanya mendefinisikan fungsi objektif
+sehingga lebih rendah adalah lebih baik.
+Ini hanya sebuah konvensi.
+Anda dapat mengambil fungsi apa pun
+yang lebih tinggi adalah lebih baik, dan mengubahnya menjadi fungsi baru
+yang secara kualitatif identik tetapi yang lebih rendah adalah lebih baik
+dengan membalik tanda.
+Karena kita memilih lebih rendah adalah lebih baik, fungsi-fungsi ini terkadang disebut
+*fungsi *loss**.
+
+Ketika mencoba memprediksi nilai numerik,
+fungsi *loss* yang paling umum adalah *kesalahan kuadrat*,
+yaitu, kuadrat dari perbedaan antara
+prediksi dan target kebenaran dasar.
+Untuk klasifikasi, tujuan yang paling umum
+adalah meminimalkan tingkat kesalahan,
+yaitu, fraksi contoh di mana
+prediksi kita tidak setuju dengan kebenaran dasar.
+Beberapa tujuan (mis., kesalahan kuadrat) mudah dioptimalkan,
+sedangkan yang lain (mis., tingkat kesalahan) sulit dioptimalkan secara langsung,
+karena ketidakdiferensialan atau komplikasi lain.
+Dalam kasus ini, umumnya lebih umum untuk mengoptimalkan *tujuan pengganti*.
+
+Selama optimasi, kita menganggap *loss*
+sebagai fungsi dari parameter model,
+dan menganggap dataset pelatihan sebagai konstan.
+Kita belajar
+nilai terbaik dari parameter model kita
+dengan meminimalkan *loss* yang ditimbulkan pada satu set
+yang terdiri dari beberapa jumlah contoh yang dikumpulkan untuk pelatihan.
+Namun, berkinerja baik pada data pelatihan
+tidak menjamin bahwa kita akan berkinerja baik pada data yang belum terlihat.
+Jadi, kita biasanya ingin membagi data yang tersedia menjadi dua partisi:
+*dataset pelatihan* (atau *set pelatihan*), untuk belajar parameter model;
+dan *dataset tes* (atau *set tes*), yang ditahan untuk evaluasi.
+Pada akhir hari, kita biasanya melaporkan
+bagaimana kinerja model kita pada kedua partisi.
+Anda bisa menganggap kinerja pelatihan
+sebagai analogi dengan skor yang dicapai seorang siswa
+pada ujian latihan yang digunakan untuk mempersiapkan ujian akhir yang sebenarnya.
+Meskipun hasilnya mendorong,
+itu tidak menjamin kesuksesan pada ujian akhir.
+Selama belajar, siswa
+mungkin mulai menghafal pertanyaan latihan,
+tampak menguasai topik tetapi gagal
+ketika dihadapkan dengan pertanyaan yang belum pernah dilihat sebelumnya
+pada ujian akhir yang sebenarnya.
+Ketika model berkinerja baik pada set pelatihan
+tetapi gagal untuk digeneralisasi ke data yang belum terlihat,
+kita mengatakan bahwa itu *overfitting* ke data pelatihan.
 
 
-## Kinds of Machine Learning Problems
+### Algoritma Optimasi
 
-The wake word problem in our motivating example
-is just one among many
-that machine learning can tackle.
-To motivate the reader further
-and provide us with some common language
-that will follow us throughout the book,
-we now provide a broad overview of the landscape
-of machine learning problems.
+Setelah kita memiliki sumber data dan representasi,
+model, dan fungsi objektif yang jelas,
+kita memerlukan algoritma yang mampu mencari
+parameter terbaik untuk meminimalkan *fungsi *loss**.
+Algoritma optimasi populer untuk pembelajaran mendalam
+berbasis pada pendekatan yang disebut *turunan gradien*.
+Secara singkat, pada setiap langkah, metode ini
+memeriksa, untuk setiap parameter,
+bagaimana *loss* set pelatihan akan berubah
+jika Anda mengganggu parameter tersebut hanya dengan jumlah kecil.
+Kemudian akan memperbarui parameter
+dalam arah yang menurunkan *loss*.
+
+## Jenis Masalah Pembelajaran Mesin
+
+Masalah kata aktif dalam contoh motivasi kita
+hanyalah salah satu dari banyak
+yang dapat ditangani oleh pembelajaran mesin.
+Untuk memotivasi pembaca lebih lanjut
+dan memberikan kita beberapa bahasa umum
+yang akan mengikuti kita sepanjang buku,
+kami sekarang menyediakan gambaran luas tentang lanskap
+masalah pembelajaran mesin.
+
+
 
 ### Supervised Learning
 
-Supervised learning describes tasks
-where we are given a dataset
-containing both features and labels
-and 
-asked to produce a model that predicts the labels when
-given input features.
-Each feature--label pair is called an example.
-Sometimes, when the context is clear,
-we may use the term *examples*
-to refer to a collection of inputs,
-even when the corresponding labels are unknown.
-The supervision comes into play
-because, for choosing the parameters,
-we (the supervisors) provide the model
-with a dataset consisting of labeled examples.
-In probabilistic terms, we typically are interested in estimating
-the conditional probability of a label given input features.
-While it is just one among several paradigms,
-supervised learning accounts for the majority of successful
-applications of machine learning in industry.
-Partly that is because many important tasks
-can be described crisply as estimating the probability
-of something unknown given a particular set of available data:
+Pembelajaran terawasi (Supervised Learning) menggambarkan tugas-tugas
+di mana kita diberi dataset
+yang mengandung fitur dan label
+dan diminta untuk menghasilkan model yang memprediksi label ketika
+diberikan fitur input.
+Setiap pasangan fitur--label disebut contoh.
+Kadang-kadang, ketika konteksnya jelas,
+kita mungkin menggunakan istilah *contoh-contoh*
+untuk merujuk pada kumpulan input,
+bahkan ketika label yang sesuai tidak diketahui.
+Supervisi terjadi
+karena, untuk memilih parameter,
+kami (para supervisor) menyediakan model
+dengan dataset yang terdiri dari contoh berlabel.
+Dalam istilah probabilistik, kita biasanya tertarik untuk memperkirakan
+probabilitas bersyarat dari label yang diberikan fitur input.
+Meskipun hanya salah satu di antara beberapa paradigma,
+pembelajaran terawasi menyumbang mayoritas
+aplikasi pembelajaran mesin yang sukses di industri.
+Sebagian itu karena banyak tugas penting
+dapat dijelaskan secara tajam sebagai memperkirakan probabilitas
+sesuatu yang tidak diketahui berdasarkan satu set data yang tersedia:
 
-* Predict cancer vs. not cancer, given a computer tomography image.
-* Predict the correct translation in French, given a sentence in English.
-* Predict the price of a stock next month based on this month's financial reporting data.
+* Prediksi kanker vs. tidak kanker, diberikan gambar tomografi komputer.
+* Prediksi terjemahan yang benar dalam bahasa Prancis, diberikan sebuah kalimat dalam bahasa Inggris.
+* Prediksi harga saham bulan depan berdasarkan data pelaporan keuangan bulan ini.
 
-While all supervised learning problems
-are captured by the simple description
-"predicting the labels given input features",
-supervised learning itself can take diverse forms
-and require tons of modeling decisions,
-depending on (among other considerations)
-the type, size, and quantity of the inputs and outputs.
-For example, we use different models
-for processing sequences of arbitrary lengths
-and fixed-length vector representations.
-We will visit many of these problems
-in depth throughout this book.
+Meskipun semua masalah pembelajaran terawasi
+dijelaskan oleh deskripsi sederhana
+"memprediksi label yang diberikan fitur input",
+pembelajaran terawasi itu sendiri dapat mengambil bentuk yang beragam
+dan memerlukan banyak keputusan pemodelan,
+tergantung pada (diantara pertimbangan lain)
+jenis, ukuran, dan jumlah input dan output.
+Misalnya, kita menggunakan model yang berbeda
+untuk memproses urutan dengan panjang yang berubah-ubah
+dan representasi vektor dengan panjang tetap.
+Kami akan mengunjungi banyak masalah ini
+secara mendalam sepanjang buku ini.
 
-Informally, the learning process looks something like the following.
-First, grab a big collection of examples for which the features are known
-and select from them a random subset,
-acquiring the ground truth labels for each.
-Sometimes these labels might be available data that have already been collected
-(e.g., did a patient die within the following year?)
-and other times we might need to employ human annotators to label the data,
-(e.g., assigning images to categories).
-Together, these inputs and corresponding labels comprise the training set.
-We feed the training dataset into a supervised learning algorithm,
-a function that takes as input a dataset
-and outputs another function: the learned model.
-Finally, we can feed previously unseen inputs to the learned model,
-using its outputs as predictions of the corresponding label.
-The full process is drawn in :numref:`fig_supervised_learning`.
+Secara informal, proses pembelajaran terlihat seperti berikut.
+Pertama, ambil kumpulan besar contoh di mana fiturnya diketahui
+dan pilih dari mereka subset acak,
+memperoleh label kebenaran dasar untuk masing-masing.
+Terkadang label ini mungkin adalah data yang sudah dikumpulkan
+(mis., apakah pasien meninggal dalam tahun berikutnya?)
+dan lain kali kita mungkin perlu mempekerjakan penilai manusia untuk melabeli data,
+(mis., menetapkan gambar ke kategori).
+Bersama-sama, input ini dan label yang sesuai membentuk set pelatihan.
+Kami memberi dataset pelatihan ke algoritma pembelajaran terawasi,
+fungsi yang mengambil dataset sebagai input
+dan mengeluarkan fungsi lain: model yang dipelajari.
+Akhirnya, kita dapat memberi input yang sebelumnya tidak terlihat ke model yang dipelajari,
+menggunakan outputnya sebagai prediksi label yang sesuai.
+Proses lengkap digambarkan di :numref:`fig_supervised_learning`.
 
-![Supervised learning.](../img/supervised-learning.svg)
+![Pembelajaran terawasi.](../img/supervised-learning.svg)
 :label:`fig_supervised_learning`
 
-#### Regression
 
-Perhaps the simplest supervised learning task
-to wrap your head around is *regression*.
-Consider, for example, a set of data harvested
-from a database of home sales.
-We might construct a table,
-in which each row corresponds to a different house,
-and each column corresponds to some relevant attribute,
-such as the square footage of a house,
-the number of bedrooms, the number of bathrooms,
-and the number of minutes (walking) to the center of town.
-In this dataset, each example would be a specific house,
-and the corresponding feature vector would be one row in the table.
-If you live in New York or San Francisco,
-and you are not the CEO of Amazon, Google, Microsoft, or Facebook,
-the (sq. footage, no. of bedrooms, no. of bathrooms, walking distance)
-feature vector for your home might look something like: $[600, 1, 1, 60]$.
-However, if you live in Pittsburgh, it might look more like $[3000, 4, 3, 10]$.
-Fixed-length feature vectors like this are essential
-for most classic machine learning algorithms.
+#### Regresi
 
-What makes a problem a regression is actually
-the form of the target.
-Say that you are in the market for a new home.
-You might want to estimate the fair market value of a house,
-given some features such as above.
-The data here might consist of historical home listings
-and the labels might be the observed sales prices.
-When labels take on arbitrary numerical values
-(even within some interval),
-we call this a *regression* problem.
-The goal is to produce a model whose predictions
-closely approximate the actual label values.
+Mungkin tugas pembelajaran terawasi yang paling sederhana
+untuk dipahami adalah *regresi*.
+Sebagai contoh, pertimbangkan serangkaian data yang dikumpulkan
+dari basis data penjualan rumah.
+Kita mungkin membuat sebuah tabel,
+di mana setiap baris sesuai dengan rumah yang berbeda,
+dan setiap kolom sesuai dengan beberapa atribut yang relevan,
+seperti luas lantai rumah,
+jumlah kamar tidur, jumlah kamar mandi,
+dan jumlah menit (berjalan kaki) ke pusat kota.
+Dalam dataset ini, setiap contoh akan menjadi rumah tertentu,
+dan vektor fitur yang sesuai akan menjadi satu baris dalam tabel.
+Jika Anda tinggal di New York atau San Francisco,
+dan Anda bukan CEO Amazon, Google, Microsoft, atau Facebook,
+vektor fitur (luas lantai, no. kamar tidur, no. kamar mandi, jarak berjalan kaki)
+untuk rumah Anda mungkin terlihat seperti: $[600, 1, 1, 60]$.
+Namun, jika Anda tinggal di Pittsburgh, itu mungkin terlihat lebih seperti $[3000, 4, 3, 10]$.
+Vektor fitur dengan panjang tetap seperti ini penting
+untuk sebagian besar algoritma pembelajaran mesin klasik.
+
+Apa yang membuat suatu masalah menjadi regresi sebenarnya
+adalah bentuk target.
+Katakanlah Anda sedang mencari rumah baru.
+Anda mungkin ingin memperkirakan nilai pasar yang wajar dari sebuah rumah,
+dengan beberapa fitur seperti di atas.
+Data di sini mungkin terdiri dari daftar rumah historis
+dan labelnya mungkin adalah harga jual yang diamati.
+Ketika label mengambil nilai numerik sembarang
+(meskipun dalam beberapa interval),
+kita menyebut ini sebagai masalah *regresi*.
+Tujuannya adalah untuk menghasilkan model yang prediksinya
+mendekati nilai label sebenarnya dengan cermat.
+
+Banyak masalah praktis dengan mudah digambarkan sebagai masalah regresi.
+Memprediksi peringkat yang akan diberikan pengguna kepada sebuah film
+dapat dianggap sebagai masalah regresi
+dan jika Anda merancang algoritma hebat
+untuk mencapai prestasi ini pada tahun 2009,
+Anda mungkin telah memenangkan [hadiah 1 juta dolar dari Netflix](https://en.wikipedia.org/wiki/Netflix_Prize).
+Memprediksi lama tinggal pasien di rumah sakit
+juga merupakan masalah regresi.
+Aturan praktis yang baik adalah bahwa setiap masalah *berapa banyak?* atau *berapa lama?*
+kemungkinan besar adalah regresi. Misalnya:
+
+* Berapa jam operasi ini akan berlangsung?
+* Berapa banyak hujan yang akan turun di kota ini dalam enam jam ke depan?
+
+Bahkan jika Anda belum pernah bekerja dengan pembelajaran mesin sebelumnya,
+Anda mungkin telah secara informal menyelesaikan masalah regresi.
+Bayangkan, misalnya, Anda telah memperbaiki saluran pembuangan
+dan kontraktor Anda menghabiskan 3 jam
+menghilangkan kotoran dari pipa pembuangan Anda.
+Kemudian mereka mengirimkan tagihan sebesar 350 dolar.
+Sekarang bayangkan bahwa teman Anda mempekerjakan kontraktor yang sama selama 2 jam
+dan menerima tagihan sebesar 250 dolar.
+Jika seseorang kemudian bertanya kepada Anda berapa banyak yang diharapkan
+pada tagihan penghapusan kotoran mendatang mereka
+Anda mungkin membuat beberapa asumsi yang masuk akal,
+seperti lebih banyak jam bekerja menghasilkan lebih banyak dolar.
+Anda mungkin juga berasumsi bahwa ada biaya dasar
+dan kemudian kontraktor mengenakan biaya per jam.
+Jika asumsi ini benar, maka dengan dua contoh data ini,
+Anda sudah bisa mengidentifikasi struktur harga kontraktor:
+100 dolar per jam ditambah 50 dolar untuk muncul di rumah Anda.
+Jika Anda mengikuti itu, maka Anda sudah memahami
+ide dasar di balik regresi *linier*.
+
+Dalam hal ini, kita bisa menghasilkan parameter
+yang tepat sesuai dengan harga kontraktor.
+Terkadang ini tidak mungkin,
+mis., jika beberapa variasi
+muncul dari faktor di luar dua fitur Anda.
+Dalam kasus ini, kita akan mencoba belajar model
+yang meminimalkan jarak antara prediksi kita dan nilai yang diamati.
+Di sebagian besar bab kita, kita akan fokus pada
+meminimalkan fungsi *loss* kesalahan kuadrat.
+Seperti yang akan kita lihat nanti, *loss* ini sesuai dengan asumsi
+bahwa data kita terkontaminasi oleh noise Gaussian.
 
 
-Lots of practical problems are easily described as regression problems.
-Predicting the rating that a user will assign to a movie
-can be thought of as a regression problem
-and if you designed a great algorithm
-to accomplish this feat in 2009,
-you might have won the [1-million-dollar Netflix prize](https://en.wikipedia.org/wiki/Netflix_Prize).
-Predicting the length of stay for patients in the hospital
-is also a regression problem.
-A good rule of thumb is that any *how much?* or *how many?* problem
-is likely to be regression. For example:
+#### Klasifikasi
 
-* How many hours will this surgery take?
-* How much rainfall will this town have in the next six hours?
+Meskipun model regresi sangat baik
+untuk menjawab pertanyaan *berapa banyak?*,
+banyak masalah tidak cocok nyaman dalam template ini.
+Pertimbangkan, misalnya, sebuah bank yang ingin
+mengembangkan fitur pemindaian cek untuk aplikasi selulernya.
+Idealnya, pelanggan hanya perlu mengambil foto cek
+dan aplikasi secara otomatis akan mengenali teks dari gambar tersebut.
+Dengan asumsi bahwa kita memiliki kemampuan
+untuk memisahkan potongan gambar
+yang sesuai dengan setiap karakter tulisan tangan,
+maka tugas utama yang tersisa adalah
+menentukan karakter mana di antara sekumpulan karakter yang diketahui
+yang digambarkan di setiap potongan gambar tersebut.
+Jenis masalah *yang mana?* ini disebut *klasifikasi*
+dan memerlukan seperangkat alat yang berbeda
+dari yang digunakan untuk regresi,
+meskipun banyak teknik dapat dibawa.
 
+Dalam *klasifikasi*, kita ingin model kita melihat fitur,
+misalnya, nilai piksel dalam gambar,
+dan kemudian memprediksi ke *kategori*
+(kadang-kadang disebut *kelas*)
+di antara beberapa set opsi diskrit,
+contoh tersebut termasuk.
+Untuk angka-angka tulisan tangan, kita mungkin memiliki sepuluh kelas,
+yang sesuai dengan angka 0 hingga 9.
+Bentuk klasifikasi yang paling sederhana adalah ketika hanya ada dua kelas,
+masalah yang kita sebut *klasifikasi biner*.
+Misalnya, dataset kita bisa terdiri dari gambar hewan
+dan label kita mungkin kelas $\textrm{\{kucing, anjing\}}$.
+Sementara dalam regresi kita mencari regresor untuk mengeluarkan nilai numerik,
+dalam klasifikasi kita mencari pengklasifikasi,
+yang keluarannya adalah penugasan kelas yang diprediksi.
 
-Even if you have never worked with machine learning before,
-you have probably worked through a regression problem informally.
-Imagine, for example, that you had your drains repaired
-and that your contractor spent 3 hours
-removing gunk from your sewage pipes.
-Then they sent you a bill of 350 dollars.
-Now imagine that your friend hired the same contractor for 2 hours
-and received a bill of 250 dollars.
-If someone then asked you how much to expect
-on their upcoming gunk-removal invoice
-you might make some reasonable assumptions,
-such as more hours worked costs more dollars.
-You might also assume that there is some base charge
-and that the contractor then charges per hour.
-If these assumptions held true, then given these two data examples,
-you could already identify the contractor's pricing structure:
-100 dollars per hour plus 50 dollars to show up at your house.
-If you followed that much, then you already understand
-the high-level idea behind *linear* regression.
+Karena alasan yang akan kita bahas saat buku ini menjadi lebih teknis,
+bisa sulit untuk mengoptimalkan model yang hanya dapat mengeluarkan
+penugasan kategori *tegas*,
+misalnya, "kucing" atau "anjing".
+Dalam kasus ini, biasanya jauh lebih mudah untuk menyatakan
+model kita dalam bahasa probabilitas.
+Diberikan fitur dari sebuah contoh,
+model kita menetapkan probabilitas
+untuk setiap kelas yang mungkin.
+Kembali ke contoh klasifikasi hewan kita
+di mana kelasnya adalah $\textrm{\{kucing, anjing\}}$,
+seorang pengklasifikasi mungkin melihat gambar dan mengeluarkan probabilitas
+bahwa gambar tersebut adalah kucing sebesar 0.9.
+Kita dapat menginterpretasikan angka ini dengan mengatakan bahwa pengklasifikasi
+90\% yakin bahwa gambar tersebut menggambarkan kucing.
+Besarnya probabilitas untuk kelas yang diprediksi
+menyampaikan gagasan tentang ketidakpastian.
+Ini bukan satu-satunya yang tersedia
+dan kita akan membahas yang lain dalam bab yang membahas topik yang lebih lanjut.
 
-In this case, we could produce the parameters
-that exactly matched the contractor's prices.
-Sometimes this is not possible,
-e.g., if some of the variation
-arises from factors beyond your two features.
-In these cases, we will try to learn models
-that minimize the distance between our predictions and the observed values.
-In most of our chapters, we will focus on
-minimizing the squared error loss function.
-As we will see later, this loss corresponds to the assumption
-that our data were corrupted by Gaussian noise.
+Ketika kita memiliki lebih dari dua kelas yang mungkin,
+kita menyebut masalah tersebut *klasifikasi multikelas*.
+Contoh umum termasuk pengenalan karakter tulisan tangan $\textrm{\{0, 1, 2, ... 9, a, b, c, ...\}}$.
+Sementara kita menyerang masalah regresi dengan mencoba
+meminimalkan fungsi *loss* kesalahan kuadrat,
+fungsi *loss* umum untuk masalah klasifikasi disebut *entropi silang*,
+yang namanya akan dijelaskan
+ketika kita memperkenalkan teori informasi di bab selanjutnya.
 
-#### Classification
+Perhatikan bahwa kelas yang paling mungkin bukanlah
+yang akan Anda gunakan untuk keputusan Anda.
+Anggap bahwa Anda menemukan jamur cantik di halaman belakang Anda
+seperti yang ditunjukkan di :numref:`fig_death_cap`.
 
-While regression models are great
-for addressing *how many?* questions,
-lots of problems do not fit comfortably in this template.
-Consider, for example, a bank that wants
-to develop a check scanning feature for its mobile app.
-Ideally, the customer would simply snap a photo of a check
-and the app would automatically recognize the text from the image.
-Assuming that we had some ability
-to segment out image patches
-corresponding to each handwritten character,
-then the primary remaining task would be
-to determine which character among some known set
-is depicted in each image patch.
-These kinds of *which one?* problems are called *classification*
-and require a different set of tools
-from those used for regression,
-although many techniques will carry over.
-
-In *classification*, we want our model to look at features,
-e.g., the pixel values in an image,
-and then predict to which *category*
-(sometimes called a *class*)
-among some discrete set of options,
-an example belongs.
-For handwritten digits, we might have ten classes,
-corresponding to the digits 0 through 9.
-The simplest form of classification is when there are only two classes,
-a problem which we call *binary classification*.
-For example, our dataset could consist of images of animals
-and our labels  might be the classes $\textrm{\{cat, dog\}}$.
-Whereas in regression we sought a regressor to output a numerical value,
-in classification we seek a classifier,
-whose output is the predicted class assignment.
-
-For reasons that we will get into as the book gets more technical,
-it can be difficult to optimize a model that can only output
-a *firm* categorical assignment,
-e.g., either "cat" or "dog".
-In these cases, it is usually much easier to express
-our model in the language of probabilities.
-Given features of an example,
-our model assigns a probability
-to each possible class.
-Returning to our animal classification example
-where the classes are $\textrm{\{cat, dog\}}$,
-a classifier might see an image and output the probability
-that the image is a cat as 0.9.
-We can interpret this number by saying that the classifier
-is 90\% sure that the image depicts a cat.
-The magnitude of the probability for the predicted class
-conveys a notion of uncertainty.
-It is not the only one available
-and we will discuss others in chapters dealing with more advanced topics.
-
-When we have more than two possible classes,
-we call the problem *multiclass classification*.
-Common examples include handwritten character recognition
-$\textrm{\{0, 1, 2, ... 9, a, b, c, ...\}}$.
-While we attacked regression problems by trying
-to minimize the squared error loss function,
-the common loss function for classification problems is called *cross-entropy*,
-whose name will be demystified
-when we introduce information theory in later chapters.
-
-Note that the most likely class is not necessarily
-the one that you are going to use for your decision.
-Assume that you find a beautiful mushroom in your backyard
-as shown in :numref:`fig_death_cap`.
-
-![Death cap---do not eat!](../img/death-cap.jpg)
+![Death cap---jangan dimakan!](../img/death-cap.jpg)
 :width:`200px`
 :label:`fig_death_cap`
 
-Now, assume that you built a classifier and trained it
-to predict whether a mushroom is poisonous based on a photograph.
-Say our poison-detection classifier outputs
-that the probability that
-:numref:`fig_death_cap` shows a death cap is 0.2.
-In other words, the classifier is 80\% sure
-that our mushroom is not a death cap.
-Still, you would have to be a fool to eat it.
-That is because the certain benefit of a delicious dinner
-is not worth a 20\% risk of dying from it.
-In other words, the effect of the uncertain risk
-outweighs the benefit by far.
-Thus, in order to make a decision about whether to eat the mushroom,
-we need to compute the expected detriment
-associated with each action
-which depends both on the likely outcomes
-and the benefits or harms associated with each.
-In this case, the detriment incurred
-by eating the mushroom
-might be $0.2 \times \infty + 0.8 \times 0 = \infty$,
-whereas the loss of discarding it
-is $0.2 \times 0 + 0.8 \times 1 = 0.8$.
-Our caution was justified:
-as any mycologist would tell us,
-the mushroom in :numref:`fig_death_cap`
-is actually a death cap.
+Sekarang, anggap Anda membangun pengklasifikasi dan melatihnya
+untuk memprediksi apakah jamur beracun berdasarkan foto.
+Katakanlah pengklasifikasi pendeteksi racun kita mengeluarkan
+bahwa kemungkinan :numref:`fig_death_cap` menunjukkan tutup kematian adalah 0.2.
+Dengan kata lain, pengklasifikasi 80\% yakin
+bahwa jamur kita bukan tutup kematian.
+Namun, Anda harus bodoh untuk memakannya.
+Itu karena manfaat makan malam yang lezat
+tidak sebanding dengan risiko 20\% mati darinya.
+Dengan kata lain, efek dari risiko yang tidak pasti
+jauh lebih besar daripada manfaatnya.
+Jadi, untuk membuat keputusan tentang apakah akan memakan jamur itu,
+kita perlu menghitung kerugian yang diharapkan
+yang terkait dengan setiap tindakan
+yang bergantung pada hasil yang mungkin
+dan manfaat atau kerugian yang terkait dengan masing-masing.
+Dalam hal ini, kerugian yang diderita
+dengan memakan jamur itu
+mungkin adalah $0.2 \times \infty + 0.8 \times 0 = \infty$,
+sedangkan *loss* dari membuangnya
+adalah $0.2 \times 0 + 0.8 \times 1 = 0.8$.
+Kewaspadaan kita dibenarkan:
+seperti yang akan dikatakan oleh ahli mikologi kepada kita,
+jamur di :numref:`fig_death_cap`
+sebenarnya adalah tutup kematian.
 
-Classification can get much more complicated than just
-binary or multiclass classification.
-For instance, there are some variants of classification
-addressing hierarchically structured classes.
-In such cases not all errors are equal---if
-we must err, we might prefer to misclassify
-to a related class rather than a distant class.
-Usually, this is referred to as *hierarchical classification*.
-For inspiration, you might think of [Linnaeus](https://en.wikipedia.org/wiki/Carl_Linnaeus),
-who organized fauna in a hierarchy.
+Klasifikasi bisa jauh lebih rumit daripada hanya
+klasifikasi biner atau multikelas.
+Misalnya, ada beberapa varian klasifikasi
+yang menangani kelas yang terstruktur secara hierarkis.
+Dalam kasus seperti itu tidak semua kesalahan sama---jika
+kita harus salah, kita mungkin lebih memilih untuk salah klasifikasi
+ke kelas yang terkait daripada kelas yang jauh.
+Biasanya, ini disebut sebagai *klasifikasi hierarkis*.
+Untuk inspirasi, Anda mungkin memikirkan [Linnaeus](https://en.wikipedia.org/wiki/Carl_Linnaeus),
+yang mengatur fauna dalam hierarki.
 
-In the case of animal classification,
-it might not be so bad to mistake
-a poodle for a schnauzer,
-but our model would pay a huge penalty
-if it confused a poodle with a dinosaur.
-Which hierarchy is relevant might depend
-on how you plan to use the model.
-For example, rattlesnakes and garter snakes
-might be close on the phylogenetic tree,
-but mistaking a rattler for a garter could have fatal consequences.
+Dalam kasus klasifikasi hewan,
+mungkin tidak terlalu buruk untuk salah mengira
+pudel sebagai schnauzer,
+tapi model kita akan mendapat hukuman besar
+jika salah mengira pudel dengan dinosaurus.
+Hierarki mana yang relevan mungkin bergantung
+pada bagaimana Anda berencana menggunakan model.
+Misalnya, ular derik dan ular pita
+mungkin dekat pada pohon filogenetik,
+tapi salah mengira derik untuk pita bisa berakibat fatal.
 
-#### Tagging
 
-Some classification problems fit neatly
-into the binary or multiclass classification setups.
-For example, we could train a normal binary classifier
-to distinguish cats from dogs.
-Given the current state of computer vision,
-we can do this easily, with off-the-shelf tools.
-Nonetheless, no matter how accurate our model gets,
-we might find ourselves in trouble when the classifier
-encounters an image of the *Town Musicians of Bremen*,
-a popular German fairy tale featuring four animals
+#### Penandaan (*Tagging*)
+
+Beberapa masalah klasifikasi dengan rapi masuk
+ke dalam pengaturan klasifikasi biner atau multikelas.
+Misalnya, kita bisa melatih pengklasifikasi biner normal
+untuk membedakan kucing dan anjing.
+Dengan keadaan saat ini dari visi komputer,
+kita dapat melakukan ini dengan mudah, dengan alat yang tersedia.
+Namun, tidak peduli seberapa akurat model kita,
+kita mungkin menemukan masalah ketika pengklasifikasi
+menemukan gambar dari *Town Musicians of Bremen*,
+dongeng Jerman populer yang menampilkan empat hewan
 (:numref:`fig_stackedanimals`).
 
-![A donkey, a dog, a cat, and a rooster.](../img/stackedanimals.png)
+![Seekor keledai, anjing, kucing, dan ayam jago.](../img/stackedanimals.png)
 :width:`300px`
 :label:`fig_stackedanimals`
 
-As you can see, the photo features a cat,
-a rooster, a dog, and a donkey,
-with some trees in the background.
-If we anticipate encountering such images,
-multiclass classification might not be
-the right problem formulation.
-Instead, we might want to give the model the option of
-saying the image depicts a cat, a dog, a donkey,
-*and* a rooster.
+Seperti yang Anda lihat, foto menampilkan kucing,
+ayam jago, anjing, dan keledai,
+dengan beberapa pohon di latar belakang.
+Jika kita mengantisipasi menemui gambar seperti ini,
+klasifikasi multikelas mungkin bukan
+formulasi masalah yang tepat.
+Sebagai gantinya, kita mungkin ingin memberi model opsi
+untuk mengatakan gambar menggambarkan kucing, anjing, keledai,
+*dan* ayam jago.
 
-The problem of learning to predict classes that are
-not mutually exclusive is called *multi-label classification*.
-Auto-tagging problems are typically best described
-in terms of multi-label classification.
-Think of the tags people might apply
-to posts on a technical blog,
-e.g., "machine learning", "technology", "gadgets",
-"programming languages", "Linux", "cloud computing", "AWS".
-A typical article might have 5--10 tags applied.
-Typically, tags will exhibit some correlation structure.
-Posts about "cloud computing" are likely to mention "AWS"
-and posts about "machine learning" are likely to mention "GPUs".
+Masalah belajar untuk memprediksi kelas yang
+tidak saling eksklusif disebut *klasifikasi multi-label*.
+Masalah penandaan otomatis biasanya paling baik dijelaskan
+dalam istilah klasifikasi multi-label.
+Pikirkan tentang tag yang mungkin diterapkan orang
+ke posting di blog teknis,
+misalnya, "pembelajaran mesin", "teknologi", "gadget",
+"bahasa pemrograman", "Linux", "komputasi awan", "AWS".
+Artikel tipikal mungkin memiliki 5–10 tag yang diterapkan.
+Biasanya, tag akan menunjukkan beberapa struktur korelasi.
+Posting tentang "komputasi awan" kemungkinan akan menyebutkan "AWS"
+dan posting tentang "pembelajaran mesin" kemungkinan akan menyebutkan "GPU".
 
-Sometimes such tagging problems
-draw on enormous label sets.
-The National Library of Medicine
-employs many professional annotators
-who associate each article to be indexed in PubMed
-with a set of tags drawn from the
-Medical Subject Headings (MeSH) ontology,
-a collection of roughly 28,000 tags.
-Correctly tagging articles is important
-because it allows researchers to conduct
-exhaustive reviews of the literature.
-This is a time-consuming process and typically there is a one-year lag between archiving and tagging.
-Machine learning can provide provisional tags
-until each article has a proper manual review.
-Indeed, for several years, the BioASQ organization
-has [hosted competitions](http://bioasq.org/)
-for this task.
+Terkadang masalah penandaan tersebut
+menggunakan set label yang sangat besar.
+Perpustakaan Kedokteran Nasional
+mempekerjakan banyak penanda profesional
+yang mengaitkan setiap artikel yang akan diindeks di PubMed
+dengan satu set tag yang diambil dari
+ontologi Medical Subject Headings (MeSH),
+koleksi sekitar 28,000 tag.
+Penandaan artikel dengan benar penting
+karena memungkinkan peneliti untuk melakukan
+tinjauan menyeluruh dari literatur.
+Ini adalah proses yang memakan waktu dan biasanya ada keterlambatan satu tahun antara pengarsipan dan penandaan.
+Pembelajaran mesin dapat menyediakan tag sementara
+sampai setiap artikel memiliki tinjauan manual yang tepat.
+Memang, selama beberapa tahun, organisasi BioASQ
+telah [mengadakan kompetisi](http://bioasq.org/)
+untuk tugas ini.
 
-#### Search
+#### Pencarian (Search)
 
-In the field of information retrieval,
-we often impose ranks on sets of items.
-Take web search for example.
-The goal is less to determine *whether*
-a particular page is relevant for a query, 
-but rather which, among a set of relevant results,
-should be shown most prominently
-to a particular user.
-One way of doing this might be
-to first assign a score
-to every element in the set
-and then to retrieve the top-rated elements.
+Di bidang pengambilan informasi,
+kita sering memberi peringkat pada kumpulan item.
+Ambil contoh pencarian web.
+Tujuannya kurang untuk menentukan *apakah*
+sebuah halaman tertentu relevan untuk sebuah kueri,
+melainkan mana, di antara sekumpulan hasil yang relevan,
+seharusnya ditampilkan paling menonjol
+kepada pengguna tertentu.
+Salah satu cara melakukan ini mungkin
+dengan pertama menetapkan skor
+ke setiap elemen dalam kumpulan
+dan kemudian mengambil elemen-elemen dengan peringkat teratas.
 [PageRank](https://en.wikipedia.org/wiki/PageRank),
-the original secret sauce behind the Google search engine,
-was an early example of such a scoring system.
-Weirdly, the scoring provided by PageRank
-did not depend on the actual query.
-Instead, they relied on a simple relevance filter
-to identify the set of relevant candidates
-and then used PageRank to prioritize
-the more authoritative pages.
-Nowadays, search engines use machine learning and behavioral models
-to obtain query-dependent relevance scores.
-There are entire academic conferences devoted to this subject.
+rahasia di balik mesin pencari Google pada awalnya,
+adalah contoh awal dari sistem penilaian seperti ini.
+Anehnya, skor yang diberikan oleh PageRank
+tidak tergantung pada kueri aktual.
+Sebaliknya, mereka mengandalkan filter relevansi sederhana
+untuk mengidentifikasi kumpulan kandidat yang relevan
+dan kemudian menggunakan PageRank untuk memprioritaskan
+halaman yang lebih berwibawa.
+Saat ini, mesin pencari menggunakan pembelajaran mesin dan model perilaku
+untuk mendapatkan skor relevansi yang bergantung pada kueri.
+Ada konferensi akademik yang sepenuhnya didedikasikan untuk topik ini.
 
-#### Recommender Systems
+#### Sistem Rekomendasi
 :label:`subsec_recommender_systems`
 
-Recommender systems are another problem setting
-that is related to search and ranking.
-The problems are similar insofar as the goal
-is to display a set of items relevant to the user.
-The main difference is the emphasis on *personalization*
-to specific users in the context of recommender systems.
-For instance, for movie recommendations,
-the results page for a science fiction fan
-and the results page
-for a connoisseur of Peter Sellers comedies
-might differ significantly.
-Similar problems pop up in other recommendation settings,
-e.g., for retail products, music, and news recommendation.
+Sistem rekomendasi adalah pengaturan masalah lain
+yang terkait dengan pencarian dan peringkat.
+Masalahnya serupa karena tujuannya
+adalah untuk menampilkan sekumpulan item yang relevan untuk pengguna.
+Perbedaan utamanya adalah penekanan pada *personalisasi*
+kepada pengguna tertentu dalam konteks sistem rekomendasi.
+Misalnya, untuk rekomendasi film,
+halaman hasil untuk penggemar fiksi ilmiah
+dan halaman hasil
+untuk penggemar komedi Peter Sellers
+mungkin sangat berbeda.
+Masalah serupa muncul dalam pengaturan rekomendasi lainnya,
+misalnya, untuk produk ritel, musik, dan rekomendasi berita.
 
-In some cases, customers provide explicit feedback,
-communicating how much they liked a particular product
-(e.g., the product ratings and reviews
-on Amazon, IMDb, or Goodreads).
-In other cases, they provide implicit feedback,
-e.g., by skipping titles on a playlist,
-which might indicate 
-dissatisfaction or maybe just
-indicate
-that the song was inappropriate in context.
-In the simplest formulations,
-these systems are trained
-to estimate some score,
-such as an expected star rating
-or the probability that a given user
-will purchase a particular item.
+Dalam beberapa kasus, pelanggan memberikan umpan balik eksplisit,
+menyampaikan seberapa banyak mereka menyukai produk tertentu
+(mis., peringkat dan ulasan produk
+di Amazon, IMDb, atau Goodreads).
+Dalam kasus lain, mereka memberikan umpan balik implisit,
+misalnya, dengan melewatkan judul di daftar putar,
+yang mungkin menunjukkan 
+ketidakpuasan atau mungkin hanya
+menunjukkan
+bahwa lagu tersebut tidak tepat dalam konteks.
+Dalam formulasi paling sederhana,
+sistem ini dilatih
+untuk memperkirakan beberapa skor,
+seperti peringkat bintang yang diharapkan
+atau probabilitas bahwa pengguna tertentu
+akan membeli item tertentu.
 
-Given such a model, for any given user,
-we could retrieve the set of objects with the largest scores,
-which could then be recommended to the user.
-Production systems are considerably more advanced
-and take detailed user activity and item characteristics
-into account when computing such scores.
-:numref:`fig_deeplearning_amazon` displays the deep learning books
-recommended by Amazon based on personalization algorithms
-tuned to capture Aston's preferences.
+Diberikan model seperti itu, untuk pengguna mana pun,
+kita dapat mengambil kumpulan objek dengan skor tertinggi,
+yang kemudian dapat direkomendasikan kepada pengguna.
+Sistem produksi jauh lebih canggih
+dan mempertimbangkan aktivitas pengguna rinci dan karakteristik item
+saat menghitung skor tersebut.
+:numref:`fig_deeplearning_amazon` menampilkan buku-buku pembelajaran mendalam
+yang direkomendasikan oleh Amazon berdasarkan algoritma personalisasi
+yang disesuaikan dengan preferensi Aston.
 
-![Deep learning books recommended by Amazon.](../img/deeplearning-amazon.jpg)
+![Buku-buku pembelajaran mendalam yang direkomendasikan oleh Amazon.](../img/deeplearning-amazon.jpg)
 :label:`fig_deeplearning_amazon`
 
-Despite their tremendous economic value,
-recommender systems
-naively built on top of predictive models
-suffer some serious conceptual flaws.
-To start, we only observe *censored feedback*:
-users preferentially rate movies
-that they feel strongly about.
-For example, on a five-point scale,
-you might notice that items receive
-many one- and five-star ratings
-but that there are conspicuously few three-star ratings.
-Moreover, current purchase habits are often a result
-of the recommendation algorithm currently in place,
-but learning algorithms do not always take this detail into account.
-Thus it is possible for feedback loops to form
-where a recommender system preferentially pushes an item
-that is then taken to be better (due to greater purchases)
-and in turn is recommended even more frequently.
-Many of these problems---about
-how to deal with censoring,
-incentives, and feedback loops---are important open research questions.
+Meskipun memiliki nilai ekonomi yang sangat besar,
+sistem rekomendasi
+yang naif dibangun di atas model prediktif
+menderita beberapa kekurangan konseptual serius.
+Untuk memulai, kita hanya mengamati *umpan balik tersensor*:
+pengguna lebih suka menilai film
+yang mereka rasakan kuat tentangnya.
+Misalnya, pada skala lima poin,
+Anda mungkin memperhatikan bahwa item menerima
+banyak peringkat satu dan lima bintang
+tetapi ada sedikit peringkat tiga bintang yang mencolok.
+Selain itu, kebiasaan pembelian saat ini sering merupakan hasil
+dari algoritma rekomendasi yang saat ini ada,
+tetapi algoritma pembelajaran tidak selalu memperhitungkan detail ini.
+Dengan demikian, dimungkinkan untuk membentuk loop umpan balik
+di mana sistem rekomendasi secara preferensial mendorong suatu item
+yang kemudian dianggap lebih baik (karena pembelian yang lebih besar)
+dan pada gilirannya direkomendasikan lebih sering.
+Banyak dari masalah ini—tentang
+bagaimana menangani sensor, insentif, dan loop umpan balik—adalah pertanyaan penelitian terbuka yang penting.
 
-#### Sequence Learning
 
-So far, we have looked at problems where we have
-some fixed number of inputs and produce a fixed number of outputs.
-For example, we considered predicting house prices
-given a fixed set of features:
-square footage, number of bedrooms,
-number of bathrooms, and the transit time to downtown.
-We also discussed mapping from an image (of fixed dimension)
-to the predicted probabilities that it belongs
-to each among a fixed number of classes
-and predicting star ratings associated with purchases
-based on the user ID and product ID alone.
-In these cases, once our model is trained,
-after each test example is fed into our model,
-it is immediately forgotten.
-We assumed that successive observations were independent
-and thus there was no need to hold on to this context.
+#### Pembelajaran Urutan (*Sequence Learning*)
 
-But how should we deal with video snippets?
-In this case, each snippet might consist of a different number of frames.
-And our guess of what is going on in each frame might be much stronger
-if we take into account the previous or succeeding frames.
-The same goes for language.
-For example, one popular deep learning problem is machine translation:
-the task of ingesting sentences in some source language
-and predicting their translations in another language.
+Sejauh ini, kita telah melihat masalah di mana kita memiliki
+jumlah input tetap dan menghasilkan jumlah output tetap.
+Misalnya, kita mempertimbangkan prediksi harga rumah
+dengan mengingat satu set fitur tetap:
+luas lantai, jumlah kamar tidur,
+jumlah kamar mandi, dan waktu tempuh ke pusat kota.
+Kita juga membahas pemetaan dari gambar (dengan dimensi tetap)
+ke probabilitas prediksi bahwa gambar tersebut termasuk
+ke dalam salah satu dari sejumlah kelas tetap
+dan memprediksi peringkat bintang yang terkait dengan pembelian
+berdasarkan ID pengguna dan ID produk saja.
+Dalam kasus ini, setelah model kita dilatih,
+setelah setiap contoh uji dimasukkan ke dalam model kita,
+itu segera dilupakan.
+Kita mengasumsikan bahwa pengamatan berturut-turut adalah independen
+dan dengan demikian tidak perlu menyimpan konteks ini.
 
-Such problems also occur in medicine.
-We might want a model to monitor patients in the intensive care unit
-and to fire off alerts whenever their risk of dying in the next 24 hours
-exceeds some threshold.
-Here, we would not throw away everything
-that we know about the patient history every hour,
-because we might not want to make predictions based only
-on the most recent measurements.
+Tapi bagaimana kita harus menangani potongan video?
+Dalam kasus ini, setiap potongan mungkin terdiri dari jumlah bingkai yang berbeda.
+Dan tebakan kita tentang apa yang terjadi di setiap bingkai mungkin jauh lebih kuat
+jika kita memperhitungkan bingkai sebelumnya atau berikutnya.
+Hal yang sama berlaku untuk bahasa.
+Misalnya, salah satu masalah pembelajaran mendalam yang populer adalah penerjemahan mesin:
+tugas mengonsumsi kalimat dalam beberapa bahasa sumber
+dan memprediksi terjemahan mereka dalam bahasa lain.
 
-Questions like these are among the most
-exciting applications of machine learning
-and they are instances of *sequence learning*.
-They require a model either to ingest sequences of inputs
-or to emit sequences of outputs (or both).
-Specifically, *sequence-to-sequence learning* considers problems
-where both inputs and outputs consist of variable-length sequences.
-Examples include machine translation
-and speech-to-text transcription.
-While it is impossible to consider
-all types of sequence transformations,
-the following special cases are worth mentioning.
+Masalah seperti ini juga terjadi dalam kedokteran.
+Kita mungkin ingin model untuk memantau pasien di unit perawatan intensif
+dan mengirimkan peringatan kapan pun risiko mereka meninggal dalam 24 jam ke depan
+melebihi ambang batas tertentu.
+Di sini, kita tidak akan membuang semua
+yang kita ketahui tentang riwayat pasien setiap jam,
+karena kita mungkin tidak ingin membuat prediksi hanya
+berdasarkan pengukuran terbaru.
 
-**Tagging and Parsing**.
-This involves annotating a text sequence with attributes.
-Here, the inputs and outputs are *aligned*,
-i.e., they are of the same number
-and occur in a corresponding order.
-For instance, in *part-of-speech (PoS) tagging*,
-we annotate every word in a sentence
-with the corresponding part of speech,
-i.e., "noun" or "direct object".
-Alternatively, we might want to know
-which groups of contiguous words refer to named entities,
-like *people*, *places*, or *organizations*.
-In the cartoonishly simple example below,
-we might just want to indicate whether or not any word in the sentence is part of a named entity (tagged as "Ent").
+Pertanyaan-pertanyaan seperti ini adalah di antara aplikasi pembelajaran mesin
+yang paling menarik dan mereka adalah contoh *pembelajaran urutan*.
+Mereka membutuhkan model untuk mengonsumsi urutan input
+atau mengeluarkan urutan output (atau keduanya).
+Secara khusus, *pembelajaran urutan-ke-urutan* mempertimbangkan masalah
+di mana baik input maupun output terdiri dari urutan dengan panjang variabel.
+Contoh termasuk penerjemahan mesin
+dan transkripsi teks ke teks.
+Meskipun tidak mungkin untuk mempertimbangkan
+semua jenis transformasi urutan,
+kasus-kasus khusus berikut patut disebutkan.
+
+**Penandaan dan Penguraian (*tagging* dan *parsing*)**.
+Ini melibatkan anotasi urutan teks dengan atribut.
+Di sini, input dan output adalah *sejajar*,
+yaitu, mereka memiliki jumlah yang sama
+dan terjadi dalam urutan yang sesuai.
+Misalnya, dalam *penandaan bagian ucapan (PoS tagging)*,
+kita menganotasi setiap kata dalam sebuah kalimat
+dengan bagian ucapan yang sesuai,
+yaitu, "kata benda" atau "obyek langsung".
+Atau, kita mungkin ingin tahu
+kelompok kata berurutan mana yang merujuk pada entitas bernama,
+seperti *orang*, *tempat*, atau *organisasi*.
+Dalam contoh sederhana berikut ini,
+kita mungkin hanya ingin menunjukkan apakah kata dalam kalimat adalah bagian dari entitas bernama (ditandai sebagai "Ent").
+
 
 ```text
-Tom has dinner in Washington with Sally
+Tom makan malam di Washington dengan Sally
 Ent  -    -    -     Ent      -    Ent
 ```
 
 
-**Automatic Speech Recognition**.
-With speech recognition, the input sequence
-is an audio recording of a speaker (:numref:`fig_speech`),
-and the output is a transcript of what the speaker said.
-The challenge is that there are many more audio frames
-(sound is typically sampled at 8kHz or 16kHz)
-than text, i.e., there is no 1:1 correspondence between audio and text,
-since thousands of samples may
-correspond to a single spoken word.
-These are sequence-to-sequence learning problems,
-where the output is much shorter than the input.
-While humans are remarkably good at recognizing speech,
-even from low-quality audio,
-getting computers to perform the same feat
-is a formidable challenge.
+**Pengenalan Suara Otomatis**.
+Dalam pengenalan suara, urutan masukan
+adalah rekaman audio dari seorang pembicara (:numref:`fig_speech`),
+dan keluarannya adalah transkrip dari apa yang dikatakan pembicara tersebut.
+Tantangannya adalah ada lebih banyak bingkai audio
+(suara biasanya diambil pada 8kHz atau 16kHz)
+dibandingkan teks, yaitu, tidak ada korespondensi 1:1 antara audio dan teks,
+karena ribuan sampel mungkin
+berkorespondensi dengan satu kata yang diucapkan.
+Ini adalah masalah pembelajaran urutan-ke-urutan,
+di mana keluarannya jauh lebih pendek dari masukannya.
+Meskipun manusia sangat pandai mengenali ucapan,
+bahkan dari audio berkualitas rendah,
+membuat komputer melakukan hal yang sama
+adalah tantangan yang besar.
 
-![`-D-e-e-p- L-ea-r-ni-ng-` in an audio recording.](../img/speech.png)
+![`-D-e-e-p- L-ea-r-ni-ng-` dalam rekaman audio.](../img/speech.png)
 :width:`700px`
 :label:`fig_speech`
 
-**Text to Speech**.
-This is the inverse of automatic speech recognition.
-Here, the input is text and the output is an audio file.
-In this case, the output is much longer than the input.
+**Teks ke Suara**.
+Ini adalah kebalikan dari pengenalan suara otomatis.
+Di sini, masukannya adalah teks dan keluarannya adalah file audio.
+Dalam kasus ini, keluarannya jauh lebih panjang dari masukannya.
 
-**Machine Translation**.
-Unlike the case of speech recognition,
-where corresponding inputs and outputs
-occur in the same order,
-in machine translation,
-unaligned data poses a new challenge.
-Here the input and output sequences
-can have different lengths,
-and the corresponding regions
-of the respective sequences
-may appear in a different order.
-Consider the following illustrative example
-of the peculiar tendency of Germans
-to place the verbs at the end of sentences:
+**Penerjemahan Mesin**.
+Berbeda dengan kasus pengenalan suara,
+di mana masukan dan keluaran yang sesuai
+terjadi dalam urutan yang sama,
+dalam penerjemahan mesin,
+data yang tidak sejajar menimbulkan tantangan baru.
+Di sini urutan masukan dan keluaran
+dapat memiliki panjang yang berbeda,
+dan wilayah yang sesuai
+dari urutan masing-masing
+mungkin muncul dalam urutan yang berbeda.
+Pertimbangkan contoh ilustratif berikut
+tentang kecenderungan khas orang Jerman
+untuk menempatkan kata kerja di akhir kalimat:
+
 
 ```text
 German:           Haben Sie sich schon dieses grossartige Lehrwerk angeschaut?
@@ -808,268 +1040,265 @@ Such topics are active areas of research.
 
 ### Unsupervised and Self-Supervised Learning
 
-The previous examples focused on supervised learning,
-where we feed the model a giant dataset
-containing both the features and corresponding label values.
-You could think of the supervised learner as having
-an extremely specialized job and an extremely dictatorial boss.
-The boss stands over the learner's shoulder and tells them exactly what to do
-in every situation until they learn to map from situations to actions.
-Working for such a boss sounds pretty lame.
-On the other hand, pleasing such a boss is pretty easy.
-You just recognize the pattern as quickly as possible
-and imitate the boss's actions.
+Contoh sebelumnya berfokus pada pembelajaran terawasi,
+di mana kita memberi model dataset besar
+yang mengandung fitur dan nilai label yang sesuai.
+Anda bisa menganggap pembelajar terawasi memiliki
+pekerjaan yang sangat khusus dan bos yang sangat diktator.
+Bos berdiri di belakang pembelajar dan memberi tahu mereka persis apa yang harus dilakukan
+di setiap situasi sampai mereka belajar memetakan dari situasi ke tindakan.
+Bekerja untuk bos seperti itu terdengar cukup membosankan.
+Di sisi lain, menyenangkan bos seperti itu cukup mudah.
+Anda hanya perlu mengenali pola secepat mungkin
+dan meniru tindakan bos.
 
-Considering the opposite situation,
-it could be frustrating to work for a boss
-who has no idea what they want you to do.
-However, if you plan to be a data scientist,
-you had better get used to it.
-The boss might just hand you a giant dump of data
-and tell you to *do some data science with it!*
-This sounds vague because it is vague.
-We call this class of problems *unsupervised learning*,
-and the type and number of questions we can ask
-is limited only by our creativity.
-We will address unsupervised learning techniques
-in later chapters.
-To whet your appetite for now,
-we describe a few of the following questions you might ask.
+Memikirkan situasi yang berlawanan,
+bisa frustrasi bekerja untuk bos
+yang tidak tahu apa yang mereka inginkan dari Anda.
+Namun, jika Anda berencana menjadi ilmuwan data,
+Anda sebaiknya terbiasa dengan itu.
+Bos mungkin hanya memberikan Anda tumpukan data besar
+dan menyuruh Anda untuk *melakukan ilmu data dengan itu!*
+Ini terdengar samar karena memang samar.
+Kami menyebut kelas masalah ini sebagai *pembelajaran tanpa pengawasan*,
+dan jenis serta jumlah pertanyaan yang dapat kita ajukan
+hanya dibatasi oleh kreativitas kita.
+Kami akan membahas teknik pembelajaran tanpa pengawasan
+pada bab-bab selanjutnya.
+Untuk membangkitkan selera Anda sekarang,
+kami menggambarkan beberapa pertanyaan berikut yang mungkin Anda ajukan.
 
-* Can we find a small number of prototypes
-that accurately summarize the data?
-Given a set of photos, can we group them into landscape photos,
-pictures of dogs, babies, cats, and mountain peaks?
-Likewise, given a collection of users' browsing activities,
-can we group them into users with similar behavior?
-This problem is typically known as *clustering*.
-* Can we find a small number of parameters
-that accurately capture the relevant properties of the data?
-The trajectories of a ball are well described
-by velocity, diameter, and mass of the ball.
-Tailors have developed a small number of parameters
-that describe human body shape fairly accurately
-for the purpose of fitting clothes.
-These problems are referred to as *subspace estimation*.
-If the dependence is linear, it is called *principal component analysis*.
-* Is there a representation of (arbitrarily structured) objects
-in Euclidean space
-such that symbolic properties can be well matched?
-This can be used to describe entities and their relations,
-such as "Rome" $-$ "Italy" $+$ "France" $=$ "Paris".
-* Is there a description of the root causes
-of much of the data that we observe?
-For instance, if we have demographic data
-about house prices, pollution, crime, location,
-education, and salaries, can we discover
-how they are related simply based on empirical data?
-The fields concerned with *causality* and
-*probabilistic graphical models* tackle such questions.
-* Another important and exciting recent development in unsupervised learning
-is the advent of *deep generative models*.
-These models estimate the density of the data,
-either explicitly or *implicitly*.
-Once trained, we can use a generative model
-either to score examples according to how likely they are,
-or to sample synthetic examples from the learned distribution.
-Early deep learning breakthroughs in generative modeling
-came with the invention of *variational autoencoders* :cite:`Kingma.Welling.2014,rezende2014stochastic`
-and continued with the development of *generative adversarial networks* :cite:`Goodfellow.Pouget-Abadie.Mirza.ea.2014`.
-More recent advances include normalizing flows :cite:`dinh2014nice,dinh2017density` and
-diffusion models :cite:`sohl2015deep,song2019generative,ho2020denoising,song2021score`.
-
-
-
-A further development in unsupervised learning
-has been the rise of *self-supervised learning*,
-techniques that leverage some aspect of the unlabeled data
-to provide supervision.
-For text, we can train models
-to "fill in the blanks"
-by predicting randomly masked words
-using their surrounding words (contexts)
-in big corpora without any labeling effort :cite:`Devlin.Chang.Lee.ea.2018`!
-For images, we may train models
-to tell the relative position
-between two cropped regions
-of the same image :cite:`Doersch.Gupta.Efros.2015`,
-to predict an occluded part of an image
-based on the remaining portions of the image,
-or to predict whether two examples
-are perturbed versions of the same underlying image.
-Self-supervised models often learn representations
-that are subsequently leveraged
-by fine-tuning the resulting models
-on some downstream task of interest.
+* Bisakah kita menemukan sejumlah kecil prototipe
+yang merangkum data dengan akurat?
+Diberikan serangkaian foto, bisakah kita mengelompokkannya menjadi foto pemandangan,
+gambar anjing, bayi, kucing, dan puncak gunung?
+Demikian pula, diberikan kumpulan aktivitas penjelajahan pengguna,
+bisakah kita mengelompokkan mereka menjadi pengguna dengan perilaku serupa?
+Masalah ini biasanya dikenal sebagai *pengelompokan*.
+* Bisakah kita menemukan sejumlah kecil parameter
+yang secara akurat menangkap properti relevan dari data?
+Lintasan bola dijelaskan dengan baik
+oleh kecepatan, diameter, dan massa bola.
+Penjahit telah mengembangkan sejumlah kecil parameter
+yang menggambarkan bentuk tubuh manusia dengan cukup akurat
+untuk tujuan penyesuaian pakaian.
+Masalah ini disebut sebagai *estimasi subruang*.
+Jika ketergantungannya linier, disebut *analisis komponen utama*.
+* Apakah ada representasi objek (dengan struktur sembarang)
+dalam ruang Euklides
+sehingga properti simbolik dapat cocok dengan baik?
+Ini dapat digunakan untuk menggambarkan entitas dan hubungan mereka,
+seperti "Roma" $-$ "Italia" $+$ "Perancis" $=$ "Paris".
+* Apakah ada deskripsi tentang penyebab utama
+banyak data yang kita amati?
+Misalnya, jika kita memiliki data demografis
+tentang harga rumah, polusi, kejahatan, lokasi,
+pendidikan, dan gaji, bisakah kita menemukan
+bagaimana mereka saling terkait hanya berdasarkan data empiris?
+Bidang yang berhubungan dengan *kausalitas* dan
+*model grafik probabilistik* menangani pertanyaan semacam ini.
+* Perkembangan penting dan menarik terbaru dalam pembelajaran tanpa pengawasan
+adalah munculnya *model generatif mendalam*.
+Model-model ini memperkirakan kepadatan data,
+baik secara eksplisit atau *implisit*.
+Setelah dilatih, kita dapat menggunakan model generatif
+baik untuk menilai contoh berdasarkan seberapa mungkin mereka,
+atau untuk membuat contoh sintetis dari distribusi yang dipelajari.
+Terobosan pembelajaran mendalam awal dalam pemodelan generatif
+datang dengan penemuan *autoencoder variational* :cite:`Kingma.Welling.2014,rezende2014stochastic`
+dan dilanjutkan dengan pengembangan *jaringan adversarial generatif* :cite:`Goodfellow.Pouget-Abadie.Mirza.ea.2014`.
+Perkembangan terbaru termasuk aliran normalisasi :cite:`dinh2014nice,dinh2017density` dan
+model difusi :cite:`sohl2015deep,song2019generative,ho2020denoising,song2021score`.
 
 
-### Interacting with an Environment
+Perkembangan lebih lanjut dalam pembelajaran tanpa pengawasan
+telah menjadi munculnya *pembelajaran mandiri* (*self-supervised learning*),
+teknik yang memanfaatkan beberapa aspek dari data yang tidak berlabel
+untuk memberikan supervisi.
+Untuk teks, kita dapat melatih model
+untuk "mengisi kekosongan"
+dengan memprediksi kata-kata yang ditutup secara acak
+menggunakan kata-kata di sekitarnya (konteks)
+dalam korpus besar tanpa usaha pelabelan :cite:`Devlin.Chang.Lee.ea.2018`!
+Untuk gambar, kita mungkin melatih model
+untuk memberi tahu posisi relatif
+antara dua wilayah yang dipotong
+dari gambar yang sama :cite:`Doersch.Gupta.Efros.2015`,
+untuk memprediksi bagian gambar yang tertutup
+berdasarkan sisa bagian gambar,
+atau untuk memprediksi apakah dua contoh
+adalah versi terganggu dari gambar yang sama.
+Model mandiri sering kali mempelajari representasi
+yang selanjutnya dimanfaatkan
+dengan menyempurnakan model yang dihasilkan
+pada beberapa tugas hilir yang menarik.
 
-So far, we have not discussed where data actually comes from,
-or what actually happens when a machine learning model generates an output.
-That is because supervised learning and unsupervised learning
-do not address these issues in a very sophisticated way.
-In each case, we grab a big pile of data upfront,
-then set our pattern recognition machines in motion
-without ever interacting with the environment again.
-Because all the learning takes place
-after the algorithm is disconnected from the environment,
-this is sometimes called *offline learning*.
-For example, supervised learning assumes
-the simple interaction pattern
-depicted in :numref:`fig_data_collection`.
+### Berinteraksi dengan Lingkungan
+
+Sejauh ini, kita belum membahas darimana data sebenarnya berasal,
+atau apa yang sebenarnya terjadi ketika model pembelajaran mesin menghasilkan output.
+Hal ini karena pembelajaran terawasi dan pembelajaran tanpa pengawasan
+tidak menangani masalah ini secara canggih.
+Dalam setiap kasus, kita mengumpulkan tumpukan data besar di awal,
+kemudian menggerakkan mesin pengenalan pola kita
+tanpa berinteraksi lagi dengan lingkungan.
+Karena semua pembelajaran berlangsung
+setelah algoritma terputus dari lingkungan,
+ini terkadang disebut *pembelajaran offline*.
+Misalnya, pembelajaran terawasi mengasumsikan
+pola interaksi sederhana
+yang digambarkan di :numref:`fig_data_collection`.
+
 
 ![Collecting data for supervised learning from an environment.](../img/data-collection.svg)
 :label:`fig_data_collection`
 
-This simplicity of offline learning has its charms.
-The upside is that we can worry
-about pattern recognition in isolation,
-with no concern about complications arising
-from interactions with a dynamic environment.
-But this problem formulation is limiting.
-If you grew up reading Asimov's Robot novels,
-then you probably picture artificially intelligent agents
-capable not only of making predictions,
-but also of taking actions in the world.
-We want to think about intelligent *agents*,
-not just predictive models.
-This means that we need to think about choosing *actions*,
-not just making predictions.
-In contrast to mere predictions,
-actions actually impact the environment.
-If we want to train an intelligent agent,
-we must account for the way its actions might
-impact the future observations of the agent, and so offline learning is inappropriate.
+Kesederhanaan pembelajaran offline memiliki daya tariknya sendiri.
+Keuntungannya adalah kita dapat memfokuskan diri
+pada pengenalan pola secara terisolasi,
+tanpa perlu khawatir tentang komplikasi yang muncul
+dari interaksi dengan lingkungan yang dinamis.
+Namun, formulasi masalah ini memiliki keterbatasan.
+Jika Anda tumbuh besar dengan membaca novel Robot karya Asimov,
+maka Anda mungkin membayangkan agen cerdas buatan
+yang tidak hanya mampu membuat prediksi,
+tetapi juga mengambil tindakan di dunia nyata.
+Kita ingin memikirkan tentang agen *cerdas*,
+bukan hanya model prediktif.
+Ini berarti kita perlu memikirkan memilih *tindakan*,
+bukan hanya membuat prediksi.
+Berbeda dengan sekadar prediksi,
+tindakan sebenarnya memengaruhi lingkungan.
+Jika kita ingin melatih agen cerdas,
+kita harus memperhitungkan bagaimana tindakan mereka mungkin
+mempengaruhi pengamatan masa depan agen, sehingga pembelajaran offline tidak sesuai.
 
-Considering the interaction with an environment
-opens a whole set of new modeling questions.
-The following are just a few examples.
+Memikirkan interaksi dengan lingkungan
+membuka serangkaian pertanyaan pemodelan baru.
+Berikut adalah hanya beberapa contoh.
 
-* Does the environment remember what we did previously?
-* Does the environment want to help us, e.g., a user reading text into a speech recognizer?
-* Does the environment want to beat us, e.g., spammers adapting their emails to evade spam filters?
-* Does the environment have shifting dynamics? For example, would future data always resemble the past or would the patterns change over time, either naturally or in response to our automated tools?
+* Apakah lingkungan mengingat apa yang kita lakukan sebelumnya?
+* Apakah lingkungan ingin membantu kita, misalnya, pengguna yang membacakan teks ke pengenal suara?
+* Apakah lingkungan ingin mengalahkan kita, misalnya, spammer yang menyesuaikan email mereka untuk menghindari filter spam?
+* Apakah lingkungan memiliki dinamika yang berubah-ubah? Sebagai contoh, apakah data masa depan akan selalu menyerupai masa lalu atau apakah pola akan berubah dari waktu ke waktu, baik secara alami atau sebagai respons terhadap alat otomatis kita?
 
-These questions raise the problem of *distribution shift*,
-where training and test data are different.
-An example of this, that many of us may have met, is when taking exams written by a lecturer,
-while the homework was composed by their teaching assistants.
-Next, we briefly describe reinforcement learning,
-a rich framework for posing learning problems in which
-an agent interacts with an environment.
-
+Pertanyaan-pertanyaan ini menimbulkan masalah *pergeseran distribusi*,
+di mana data pelatihan dan pengujian berbeda.
+Salah satu contoh ini, yang mungkin banyak dari kita temui, adalah ketika mengikuti ujian yang disusun oleh dosen,
+sedangkan pekerjaan rumah disusun oleh asisten pengajar mereka.
+Selanjutnya, kita akan mendeskripsikan secara singkat tentang pembelajaran penguatan,
+kerangka kerja yang kaya untuk memformulasikan masalah pembelajaran di mana
+agen berinteraksi dengan lingkungan.
 
 ### Reinforcement Learning
 
-If you are interested in using machine learning
-to develop an agent that interacts with an environment
-and takes actions, then you are probably going to wind up
-focusing on *reinforcement learning*.
-This might include applications to robotics,
-to dialogue systems,
-and even to developing artificial intelligence (AI)
-for video games.
-*Deep reinforcement learning*, which applies
-deep learning to reinforcement learning problems,
-has surged in popularity.
-The breakthrough deep Q-network, that beat humans
-at Atari games using only the visual input :cite:`mnih2015human`,
-and the AlphaGo program, which dethroned the world champion
-at the board game Go :cite:`Silver.Huang.Maddison.ea.2016`,
-are two prominent examples.
+Jika Anda tertarik menggunakan pembelajaran mesin
+untuk mengembangkan agen yang berinteraksi dengan lingkungan
+dan melakukan tindakan, maka Anda kemungkinan akan berfokus pada *pembelajaran penguatan*.
+Ini mungkin termasuk aplikasi untuk robotika,
+sistem dialog,
+dan bahkan pengembangan kecerdasan buatan (AI)
+untuk video game.
+*Pembelajaran penguatan mendalam*, yang menerapkan
+pembelajaran mendalam pada masalah pembelajaran penguatan,
+telah meningkat popularitasnya.
+Jaringan Q mendalam yang mengalahkan manusia
+dalam permainan Atari hanya menggunakan input visual :cite:`mnih2015human`,
+dan program AlphaGo, yang menurunkan juara dunia
+di permainan papan Go :cite:`Silver.Huang.Maddison.ea.2016`,
+adalah dua contoh terkenal.
 
-Reinforcement learning gives a very general statement of a problem
-in which an agent interacts with an environment over a series of time steps.
-At each time step, the agent receives some *observation*
-from the environment and must choose an *action*
-that is subsequently transmitted back to the environment
-via some mechanism (sometimes called an *actuator*), when, after each loop, 
-the agent receives a reward from the environment.
-This process is illustrated in :numref:`fig_rl-environment`.
-The agent then receives a subsequent observation,
-and chooses a subsequent action, and so on.
-The behavior of a reinforcement learning agent is governed by a *policy*.
-In brief, a *policy* is just a function that maps
-from observations of the environment to actions.
-The goal of reinforcement learning is to produce good policies.
+Pembelajaran penguatan memberikan pernyataan masalah yang sangat umum
+di mana agen berinteraksi dengan lingkungan selama serangkaian langkah waktu.
+Pada setiap langkah waktu, agen menerima beberapa *pengamatan*
+dari lingkungan dan harus memilih sebuah *tindakan*
+yang selanjutnya dikirim kembali ke lingkungan
+melalui suatu mekanisme (kadang-kadang disebut *aktuator*), ketika, setelah setiap putaran,
+agen menerima imbalan dari lingkungan.
+Proses ini diilustrasikan dalam :numref:`fig_rl-environment`.
+Kemudian agen menerima pengamatan selanjutnya,
+dan memilih tindakan berikutnya, dan seterusnya.
+Perilaku agen pembelajaran penguatan diatur oleh *kebijakan*.
+Secara singkat, *kebijakan* hanyalah fungsi yang memetakan
+dari pengamatan lingkungan ke tindakan.
+Tujuan dari pembelajaran penguatan adalah untuk menghasilkan kebijakan yang baik.
 
-![The interaction between reinforcement learning and an environment.](../img/rl-environment.svg)
+![Interaksi antara pembelajaran penguatan dan lingkungan.](../img/rl-environment.svg)
 :label:`fig_rl-environment`
 
-It is hard to overstate the generality
-of the reinforcement learning framework.
-For example, supervised learning
-can be recast as reinforcement learning.
-Say we had a classification problem.
-We could create a reinforcement learning agent
-with one action corresponding to each class.
-We could then create an environment which gave a reward
-that was exactly equal to the loss function
-from the original supervised learning problem.
+Sulit untuk melebih-lebihkan keumuman
+kerangka kerja pembelajaran penguatan.
+Sebagai contoh, pembelajaran terawasi
+dapat diubah menjadi pembelajaran penguatan.
+Katakan kita memiliki masalah klasifikasi.
+Kita dapat membuat agen pembelajaran penguatan
+dengan satu tindakan yang sesuai dengan setiap kelas.
+Kemudian kita dapat membuat lingkungan yang memberikan imbalan
+yang persis sama dengan fungsi *kerugian*
+dari masalah pembelajaran terawasi asli.
 
-Further, reinforcement learning
-can also address many problems
-that supervised learning cannot.
-For example, in supervised learning,
-we always expect that the training input
-comes associated with the correct label.
-But in reinforcement learning,
-we do not assume that, for each observation
-the environment tells us the optimal action.
-In general, we just get some reward.
-Moreover, the environment may not even tell us
-which actions led to the reward.
+Lebih lanjut, pembelajaran penguatan
+juga dapat menangani banyak masalah
+yang tidak dapat diatasi oleh pembelajaran terawasi.
+Sebagai contoh, dalam pembelajaran terawasi,
+kita selalu mengharapkan bahwa input pelatihan
+datang bersama dengan label yang benar.
+Tetapi dalam pembelajaran penguatan,
+kita tidak mengasumsikan bahwa, untuk setiap pengamatan
+lingkungan memberi tahu kita tindakan optimal.
+Secara umum, kita hanya mendapatkan beberapa imbalan.
+Lebih jauh lagi, lingkungan mungkin bahkan tidak memberi tahu kita
+tindakan mana yang menyebabkan imbalan.
 
-Consider the game of chess.
-The only real reward signal comes at the end of the game
-when we either win, earning a reward of, say, $1$,
-or when we lose, receiving a reward of, say, $-1$.
-So reinforcement learners must deal
-with the *credit assignment* problem:
-determining which actions to credit or blame for an outcome.
-The same goes for an employee
-who gets a promotion on October 11.
-That promotion likely reflects a number
-of well-chosen actions over the previous year.
-Getting promoted in the future requires figuring out
-which actions along the way led to the earlier promotions.
+Pertimbangkan permainan catur.
+Sinyal imbalan nyata hanya datang di akhir permainan
+ketika kita menang, mendapatkan imbalan, katakanlah, $1$,
+atau ketika kita kalah, menerima imbalan sebesar, katakanlah, $-1$.
+Jadi pembelajar penguatan harus berurusan
+dengan masalah *penugasan kredit*:
+menentukan tindakan mana yang harus dikreditkan atau disalahkan untuk hasil akhir.
+Hal yang sama berlaku untuk karyawan
+yang mendapat promosi pada 11 Oktober.
+Promosi tersebut kemungkinan mencerminkan sejumlah
+tindakan yang dipilih dengan baik selama tahun sebelumnya.
+Mendapatkan promosi di masa depan memerlukan memahami
+tindakan mana di sepanjang jalan yang menyebabkan promosi sebelumnya.
 
-Reinforcement learners may also have to deal
-with the problem of partial observability.
-That is, the current observation might not
-tell you everything about your current state.
-Say your cleaning robot found itself trapped
-in one of many identical closets in your house.
-Rescuing the robot involves inferring
-its precise location which might require considering earlier observations prior to it entering the closet.
+Pembelajar penguatan juga mungkin harus berurusan
+dengan masalah pengamatan parsial.
+Yaitu, pengamatan saat ini mungkin tidak
+memberitahu Anda segalanya tentang keadaan Anda saat ini.
+Katakanlah robot pembersih Anda menemukan dirinya terjebak
+di salah satu dari banyak lemari yang identik di rumah Anda.
+Menyelamatkan robot melibatkan mengetahui
+lokasi tepatnya yang mungkin memerlukan mempertimbangkan pengamatan sebelumnya sebelum masuk ke lemari.
 
-Finally, at any given point, reinforcement learners
-might know of one good policy,
-but there might be many other better policies
-that the agent has never tried.
-The reinforcement learner must constantly choose
-whether to *exploit* the best (currently) known strategy as a policy,
-or to *explore* the space of strategies,
-potentially giving up some short-term reward
-in exchange for knowledge.
+Akhirnya, pada titik tertentu, pembelajar penguatan
+mungkin tahu satu kebijakan yang baik,
+tetapi mungkin ada banyak kebijakan lain yang lebih baik
+yang belum pernah dicoba oleh agen.
+Pembelajar penguatan harus terus memilih
+apakah akan *menggunakan* strategi terbaik yang saat ini diketahui sebagai kebijakan,
+atau untuk *menjelajahi* ruang strategi,
+berpotensi menyerahkan beberapa imbalan jangka pendek
+sebagai tukar menukar pengetahuan.
 
-The general reinforcement learning problem
-has a very general setting.
-Actions affect subsequent observations.
-Rewards are only observed when they correspond to the chosen actions.
-The environment may be either fully or partially observed.
-Accounting for all this complexity at once may be asking too much.
-Moreover, not every practical problem exhibits all this complexity.
-As a result, researchers have studied a number of
-special cases of reinforcement learning problems.
+Masalah pembelajaran penguatan umum
+memiliki pengaturan yang sangat umum.
+Tindakan mempengaruhi pengamatan selanjutnya.
+Imbalan hanya diamati ketika mereka sesuai dengan tindakan yang dipilih.
+Lingkungan mungkin diamati secara penuh atau sebagian.
+Mengatasi semua kompleksitas ini sekaligus mungkin terlalu berlebihan.
+Selain itu, tidak setiap masalah praktis menunjukkan semua kompleksitas ini.
+Akibatnya, para peneliti telah mempelajari sejumlah
+kasus khusus dari masalah pembelajaran penguatan.
 
-When the environment is fully observed,
-we call the reinforcement learning problem a *Markov decision process*.
-When the state does not depend on the previous actions,
-we call it a *contextual bandit problem*.
-When there is no state, just a set of available actions
-with initially unknown rewards, we have the classic *multi-armed bandit problem*.
+Ketika lingkungan sepenuhnya diamati,
+kita menyebut masalah pembelajaran penguatan sebagai *proses keputusan Markov* (Markov decision process).
+Ketika keadaan tidak tergantung pada tindakan sebelumnya,
+kita menyebutnya sebagai *contextual bandit problem*.
+Ketika tidak ada keadaan, hanya sekumpulan tindakan yang tersedia
+dengan imbalan yang awalnya tidak diketahui, kita memiliki masalah klasik *multi-armed bandit problem*.
 
 ## Roots
 
