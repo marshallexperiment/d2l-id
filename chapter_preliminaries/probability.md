@@ -3,79 +3,78 @@
 tab.interact_select(['mxnet', 'pytorch', 'tensorflow', 'jax'])
 ```
 
-# Probability and Statistics
+# Probabilitas dan Statistika
 :label:`sec_prob`
 
-One way or another,
-machine learning is all about uncertainty.
-In supervised learning, we want to predict
-something unknown (the *target*)
-given something known (the *features*).
-Depending on our objective,
-we might attempt to predict
-the most likely value of the target.
-Or we might predict the value with the smallest
-expected distance from the target.
-And sometimes we wish not only
-to predict a specific value
-but to *quantify our uncertainty*.
-For example, given some features
-describing a patient,
-we might want to know *how likely* they are
-to suffer a heart attack in the next year.
-In unsupervised learning,
-we often care about uncertainty.
-To determine whether a set of measurements are anomalous,
-it helps to know how likely one is
-to observe values in a population of interest.
-Furthermore, in reinforcement learning,
-we wish to develop agents
-that act intelligently in various environments.
-This requires reasoning about
-how an environment might be expected to change
-and what rewards one might expect to encounter
-in response to each of the available actions.
+Dalam satu atau lain cara,
+machine learning selalu berkaitan dengan ketidakpastian.
+Dalam pembelajaran terawasi (*supervised learning*), kita ingin memprediksi
+sesuatu yang tidak diketahui (disebut *target*)
+dengan menggunakan sesuatu yang diketahui (disebut *fitur*).
+Bergantung pada tujuan kita,
+kita mungkin mencoba memprediksi
+nilai target yang paling mungkin.
+Atau kita mungkin memprediksi nilai dengan jarak yang diharapkan terkecil dari target.
+Dan terkadang kita tidak hanya ingin
+memprediksi nilai tertentu
+tetapi juga *mengukur ketidakpastian* kita.
+Misalnya, diberikan beberapa fitur
+yang menggambarkan seorang pasien,
+kita mungkin ingin mengetahui *seberapa besar kemungkinan*
+mereka mengalami serangan jantung dalam setahun ke depan.
+Dalam pembelajaran tanpa pengawasan (*unsupervised learning*),
+kita sering peduli terhadap ketidakpastian.
+Untuk menentukan apakah serangkaian pengukuran adalah anomali,
+sangat membantu jika kita mengetahui seberapa besar kemungkinan
+mengamati nilai-nilai dalam populasi yang menjadi perhatian.
+Selain itu, dalam reinforcement learning,
+kita ingin mengembangkan agen
+yang bertindak secara cerdas di berbagai lingkungan.
+Ini memerlukan pemikiran tentang
+bagaimana lingkungan mungkin diharapkan berubah
+dan hadiah (*reward*) apa yang mungkin diharapkan sebagai respons
+terhadap setiap tindakan yang tersedia.
 
-*Probability* is the mathematical field
-concerned with reasoning under uncertainty.
-Given a probabilistic model of some process,
-we can reason about the likelihood of various events.
-The use of probabilities to describe
-the frequencies of repeatable events
-(like coin tosses)
-is fairly uncontroversial.
-In fact, *frequentist* scholars adhere
-to an interpretation of probability
-that applies *only* to such repeatable events.
-By contrast *Bayesian* scholars
-use the language of probability more broadly
-to formalize reasoning under uncertainty.
-Bayesian probability is characterized
-by two unique features:
-(i) assigning degrees of belief
-to non-repeatable events,
-e.g., what is the *probability*
-that a dam will collapse?;
-and (ii) subjectivity. While Bayesian
-probability provides unambiguous rules
-for how one should update their beliefs
-in light of new evidence,
-it allows for different individuals
-to start off with different *prior* beliefs.
-*Statistics* helps us to reason backwards,
-starting off with collection and organization of data
-and backing out to what inferences
-we might draw about the process
-that generated the data.
-Whenever we analyze a dataset, hunting for patterns
-that we hope might characterize a broader population,
-we are employing statistical thinking.
-Many courses, majors, theses, careers, departments,
-companies, and institutions have been devoted
-to the study of probability and statistics.
-While this section only scratches the surface,
-we will provide the foundation
-that you need to begin building models.
+*Probabilitas* adalah bidang matematika
+yang berkaitan dengan pemikiran dalam ketidakpastian.
+Diberikan sebuah model probabilistik dari suatu proses,
+kita dapat berpikir tentang kemungkinan berbagai peristiwa.
+Penggunaan probabilitas untuk menggambarkan
+frekuensi dari kejadian yang dapat diulang
+(seperti lemparan koin)
+cukup tidak kontroversial.
+Faktanya, ahli *frekuentis* berpegang teguh
+pada interpretasi probabilitas
+yang hanya berlaku pada kejadian-kejadian yang dapat diulang.
+Sebaliknya, ahli *Bayesian*
+menggunakan bahasa probabilitas lebih luas
+untuk memformalkan pemikiran dalam ketidakpastian.
+Probabilitas Bayesian ditandai
+oleh dua fitur unik:
+(i) memberikan derajat keyakinan
+terhadap peristiwa yang tidak dapat diulang,
+misalnya, berapa *probabilitas*
+sebuah bendungan akan runtuh?;
+dan (ii) subjektivitas. Probabilitas Bayesian
+menyediakan aturan yang tidak ambigu
+tentang bagaimana seseorang harus memperbarui keyakinan mereka
+dalam cahaya bukti baru,
+namun memungkinkan setiap individu
+untuk memulai dengan keyakinan *prior* yang berbeda.
+*Statistika* membantu kita berpikir mundur,
+dimulai dengan pengumpulan dan pengorganisasian data
+hingga kesimpulan apa yang mungkin bisa kita tarik
+tentang proses yang menghasilkan data tersebut.
+Setiap kali kita menganalisis sebuah dataset, mencari pola
+yang kita harap dapat menggambarkan populasi yang lebih luas,
+kita sedang menerapkan pemikiran statistik.
+Banyak kursus, jurusan, tesis, karier, departemen,
+perusahaan, dan institusi telah didedikasikan
+untuk mempelajari probabilitas dan statistika.
+Meskipun bagian ini hanya menggores permukaan,
+kita akan memberikan dasar
+yang Anda butuhkan untuk mulai membangun model.
+
 
 ```{.python .input}
 %%tab mxnet
@@ -115,101 +114,101 @@ from jax import numpy as jnp
 import numpy as np
 ```
 
-## A Simple Example: Tossing Coins
+## Contoh Sederhana: Melempar Koin
 
-Imagine that we plan to toss a coin
-and want to quantify how likely
-we are to see heads (vs. tails).
-If the coin is *fair*,
-then both outcomes
-(heads and tails),
-are equally likely.
-Moreover if we plan to toss the coin $n$ times
-then the fraction of heads
-that we *expect* to see
-should exactly match
-the *expected* fraction of tails.
-One intuitive way to see this
-is by symmetry:
-for every possible outcome
-with $n_\textrm{h}$ heads and $n_\textrm{t} = (n - n_\textrm{h})$ tails,
-there is an equally likely outcome
-with $n_\textrm{t}$ heads and $n_\textrm{h}$ tails.
-Note that this is only possible
-if on average we expect to see
-$1/2$ of tosses come up heads
-and $1/2$ come up tails.
-Of course, if you conduct this experiment
-many times with $n=1000000$ tosses each,
-you might never see a trial
-where $n_\textrm{h} = n_\textrm{t}$ exactly.
+Bayangkan bahwa kita berencana untuk melempar sebuah koin
+dan ingin mengukur seberapa besar kemungkinan
+kita melihat sisi kepala (dibandingkan sisi ekor).
+Jika koin tersebut *adil*,
+maka kedua hasilnya
+(kepala dan ekor),
+sama-sama mungkin terjadi.
+Lebih jauh lagi, jika kita berencana melempar koin sebanyak $n$ kali,
+maka fraksi dari sisi kepala
+yang kita *harapkan* untuk dilihat
+harus tepat sesuai
+dengan fraksi *harapan* dari sisi ekor.
+Salah satu cara intuitif untuk melihat hal ini
+adalah melalui simetri:
+untuk setiap kemungkinan hasil
+dengan $n_\textrm{h}$ kepala dan $n_\textrm{t} = (n - n_\textrm{h})$ ekor,
+ada kemungkinan hasil yang sama
+dengan $n_\textrm{t}$ kepala dan $n_\textrm{h}$ ekor.
+Perhatikan bahwa hal ini hanya mungkin terjadi
+jika rata-rata kita mengharapkan
+$1/2$ dari lemparan menunjukkan kepala
+dan $1/2$ menunjukkan ekor.
+Tentu saja, jika Anda melakukan percobaan ini
+banyak kali dengan $n=1000000$ lemparan setiap kali,
+Anda mungkin tidak pernah melihat percobaan
+di mana $n_\textrm{h} = n_\textrm{t}$ tepat sama.
 
+Secara formal, nilai $1/2$ ini disebut *probabilitas*
+dan di sini ini mencerminkan kepastian bahwa
+setiap lemparan koin memiliki kemungkinan menunjukkan sisi kepala.
+Probabilitas memberikan skor antara $0$ dan $1$
+pada hasil yang diinginkan, yang disebut *peristiwa*.
+Di sini peristiwa yang diinginkan adalah $\textrm{kepala}$
+dan kita menyebut probabilitas yang sesuai sebagai $P(\textrm{kepala})$.
+Probabilitas $1$ menunjukkan kepastian mutlak
+(bayangkan koin yang memiliki kedua sisinya kepala)
+dan probabilitas $0$ menunjukkan kemustahilan
+(misalnya, jika kedua sisinya adalah ekor).
+Frekuensi $n_\textrm{h}/n$ dan $n_\textrm{t}/n$ bukanlah probabilitas
+melainkan *statistik*.
+Probabilitas adalah kuantitas *teoretis*
+yang mendasari proses penghasil data.
+Di sini, probabilitas $1/2$
+adalah sifat dari koin itu sendiri.
+Sebaliknya, statistik adalah kuantitas *empiris*
+yang dihitung sebagai fungsi dari data yang diamati.
+Ketertarikan kita pada kuantitas probabilistik dan statistik
+sangat terkait erat.
+Kita sering merancang statistik khusus yang disebut *penduga* (*estimators*)
+yang, diberikan suatu dataset, menghasilkan *takrifan* (*estimates*)
+dari parameter model seperti probabilitas.
+Selain itu, ketika penduga-penduga tersebut memenuhi
+sebuah sifat yang disebut *konsistensi*,
+takrifan kita akan konvergen
+ke probabilitas yang sesuai.
+Dengan demikian, probabilitas yang disimpulkan ini
+memberitahu kita tentang kemungkinan sifat statistik
+dari data dari populasi yang sama
+yang mungkin akan kita temui di masa mendatang.
 
-Formally, the quantity $1/2$ is called a *probability*
-and here it captures the certainty with which
-any given toss will come up heads.
-Probabilities assign scores between $0$ and $1$
-to outcomes of interest, called *events*.
-Here the event of interest is $\textrm{heads}$
-and we denote the corresponding probability $P(\textrm{heads})$.
-A probability of $1$ indicates absolute certainty
-(imagine a trick coin where both sides were heads)
-and a probability of $0$ indicates impossibility
-(e.g., if both sides were tails).
-The frequencies $n_\textrm{h}/n$ and $n_\textrm{t}/n$ are not probabilities
-but rather *statistics*.
-Probabilities are *theoretical* quantities
-that underly the data generating process.
-Here, the probability $1/2$
-is a property of the coin itself.
-By contrast, statistics are *empirical* quantities
-that are computed as functions of the observed data.
-Our interests in probabilistic and statistical quantities
-are inextricably intertwined.
-We often design special statistics called *estimators*
-that, given a dataset, produce *estimates*
-of model parameters such as probabilities.
-Moreover, when those estimators satisfy
-a nice property called *consistency*,
-our estimates will converge
-to the corresponding probability.
-In turn, these inferred probabilities
-tell about the likely statistical properties
-of data from the same population
-that we might encounter in the future.
+Misalkan kita menemukan koin asli
+yang mana kita tidak mengetahui
+nilai sebenarnya dari $P(\textrm{kepala})$.
+Untuk menyelidiki nilai ini
+dengan metode statistik,
+kita perlu (i) mengumpulkan beberapa data;
+dan (ii) merancang sebuah penduga.
+Pengumpulan data di sini cukup mudah;
+kita dapat melempar koin berkali-kali
+dan mencatat semua hasilnya.
+Secara formal, mengambil realisasi
+dari beberapa proses acak yang mendasarinya
+disebut *sampling*.
+Seperti yang mungkin sudah Anda duga,
+salah satu penduga alami
+adalah rasio
+antara jumlah *kepala* yang diamati
+dan total jumlah lemparan.
 
-Suppose that we stumbled upon a real coin
-for which we did not know
-the true $P(\textrm{heads})$.
-To investigate this quantity
-with statistical methods,
-we need to (i) collect some data;
-and (ii) design an estimator.
-Data acquisition here is easy;
-we can toss the coin many times
-and record all the outcomes.
-Formally, drawing realizations
-from some underlying random process
-is called *sampling*.
-As you might have guessed,
-one natural estimator
-is the ratio of
-the number of observed *heads*
-to the total number of tosses.
+Sekarang, misalkan koin tersebut sebenarnya adil,
+yaitu $P(\textrm{kepala}) = 0.5$.
+Untuk mensimulasikan lemparan koin yang adil,
+kita dapat menggunakan generator bilangan acak apa pun.
+Ada beberapa cara mudah untuk mengambil sampel
+dari suatu peristiwa dengan probabilitas $0.5$.
+Sebagai contoh, `random.random` dari Python
+menghasilkan angka dalam interval $[0,1]$
+di mana probabilitas berada
+dalam sub-interval $[a, b] \subset [0,1]$
+sama dengan $b-a$.
+Dengan demikian, kita dapat memperoleh `0` dan `1` dengan probabilitas `0.5` masing-masing
+dengan menguji apakah angka float yang dihasilkan lebih besar dari `0.5`:
 
-Now, suppose that the coin was in fact fair,
-i.e., $P(\textrm{heads}) = 0.5$.
-To simulate tosses of a fair coin,
-we can invoke any random number generator.
-There are some easy ways to draw samples
-of an event with probability $0.5$.
-For example Python's `random.random`
-yields numbers in the interval $[0,1]$
-where the probability of lying
-in any sub-interval $[a, b] \subset [0,1]$
-is equal to $b-a$.
-Thus we can get out `0` and `1` with probability `0.5` each
-by testing whether the returned float number is greater than `0.5`:
 
 ```{.python .input}
 %%tab all
@@ -219,26 +218,26 @@ tails = num_tosses - heads
 print("heads, tails: ", [heads, tails])
 ```
 
-More generally, we can simulate multiple draws
-from any variable with a finite number
-of possible outcomes
-(like the toss of a coin or roll of a die)
-by calling the multinomial function,
-setting the first argument
-to the number of draws
-and the second as a list of probabilities
-associated with each of the possible outcomes.
-To simulate ten tosses of a fair coin,
-we assign probability vector `[0.5, 0.5]`,
-interpreting index 0 as heads
-and index 1 as tails.
-The function returns a vector
-with length equal to the number
-of possible outcomes (here, 2),
-where the first component tells us
-the number of occurrences of heads
-and the second component tells us
-the number of occurrences of tails.
+Secara lebih umum, kita dapat mensimulasikan beberapa pengambilan sampel
+dari variabel apa pun dengan sejumlah hasil yang terbatas
+(seperti lemparan koin atau lemparan dadu)
+dengan memanggil fungsi *multinomial*,
+dengan argumen pertama
+sebagai jumlah pengambilan sampel
+dan argumen kedua sebagai daftar probabilitas
+yang terkait dengan masing-masing hasil yang mungkin.
+Untuk mensimulasikan sepuluh kali lemparan koin yang adil,
+kita menetapkan vektor probabilitas `[0.5, 0.5]`,
+dengan menginterpretasikan indeks 0 sebagai kepala
+dan indeks 1 sebagai ekor.
+Fungsi tersebut mengembalikan sebuah vektor
+dengan panjang yang sama dengan jumlah
+hasil yang mungkin (dalam hal ini, 2),
+di mana komponen pertama memberi tahu kita
+jumlah kejadian kepala
+dan komponen kedua memberi tahu kita
+jumlah kejadian ekor.
+
 
 ```{.python .input}
 %%tab mxnet
@@ -265,16 +264,17 @@ fair_probs = [0.5, 0.5]
 np.random.multinomial(100, fair_probs)
 ```
 
-Each time you run this sampling process,
-you will receive a new random value
-that may differ from the previous outcome.
-Dividing by the number of tosses
-gives us the *frequency*
-of each outcome in our data.
-Note that these frequencies,
-just like the probabilities
-that they are intended
-to estimate, sum to $1$.
+Setiap kali Anda menjalankan proses pengambilan sampel ini,
+Anda akan menerima nilai acak baru
+yang mungkin berbeda dari hasil sebelumnya.
+Membagi dengan jumlah lemparan
+memberikan kita *frekuensi*
+dari setiap hasil dalam data kita.
+Perhatikan bahwa frekuensi ini,
+sama seperti probabilitas
+yang mereka dimaksudkan untuk
+ditaksir, jumlahnya adalah $1$.
+
 
 ```{.python .input}
 %%tab mxnet
@@ -295,17 +295,18 @@ tfd.Multinomial(100, fair_probs).sample() / 100
 %%tab jax
 np.random.multinomial(100, fair_probs) / 100
 ```
+Di sini, meskipun koin yang kita simulasikan adalah adil
+(kita sendiri yang menetapkan probabilitas `[0.5, 0.5]`),
+jumlah kepala dan ekor mungkin tidak identik.
+Hal ini karena kita hanya mengambil sampel dalam jumlah yang relatif kecil.
+Jika kita tidak melakukan simulasi sendiri,
+dan hanya melihat hasilnya,
+bagaimana kita bisa tahu apakah koin tersebut sedikit tidak adil
+atau apakah kemungkinan penyimpangan dari $1/2$ itu
+hanya sebuah artefak dari ukuran sampel yang kecil?
+Mari kita lihat apa yang terjadi ketika kita mensimulasikan 10.000 kali lemparan.
 
-Here, even though our simulated coin is fair
-(we ourselves set the probabilities `[0.5, 0.5]`),
-the counts of heads and tails may not be identical.
-That is because we only drew a relatively small number of samples.
-If we did not implement the simulation ourselves,
-and only saw the outcome,
-how would we know if the coin were slightly unfair
-or if the possible deviation from $1/2$ was
-just an artifact of the small sample size?
-Let's see what happens when we simulate 10,000 tosses.
+
 
 ```{.python .input}
 %%tab mxnet
@@ -331,20 +332,21 @@ counts = np.random.multinomial(10000, fair_probs).astype(np.float32)
 counts / 10000
 ```
 
-In general, for averages of repeated events (like coin tosses),
-as the number of repetitions grows,
-our estimates are guaranteed to converge
-to the true underlying probabilities.
-The mathematical formulation of this phenomenon
-is called the *law of large numbers*
-and the *central limit theorem*
-tells us that in many situations,
-as the sample size $n$ grows,
-these errors should go down
-at a rate of $(1/\sqrt{n})$.
-Let's get some more intuition by studying
-how our estimate evolves as we grow
-the number of tosses from 1 to 10,000.
+Secara umum, untuk rata-rata dari kejadian yang berulang (seperti lemparan koin),
+ketika jumlah pengulangan meningkat,
+takrifan kita dijamin akan konvergen
+ke probabilitas sebenarnya yang mendasarinya.
+Formulasi matematis dari fenomena ini
+disebut *hukum bilangan besar* (*law of large numbers*)
+dan *teorema limit pusat* (*central limit theorem*)
+yang mengatakan bahwa dalam banyak situasi,
+ketika ukuran sampel $n$ meningkat,
+kesalahan-kesalahan ini seharusnya berkurang
+dengan laju $(1/\sqrt{n})$.
+Mari kita dapatkan lebih banyak intuisi dengan mempelajari
+bagaimana takrifan kita berkembang ketika kita meningkatkan
+jumlah lemparan dari 1 hingga 10.000.
+
 
 ```{.python .input}
 %%tab pytorch
@@ -395,399 +397,389 @@ d2l.plt.gca().set_ylabel('Estimated probability')
 d2l.plt.legend();
 ```
 
-Each solid curve corresponds to one of the two values of the coin
-and gives our estimated probability that the coin turns up that value
-after each group of experiments.
-The dashed black line gives the true underlying probability.
-As we get more data by conducting more experiments,
-the curves converge towards the true probability.
-You might already begin to see the shape
-of some of the more advanced questions
-that preoccupy statisticians:
-How quickly does this convergence happen?
-If we had already tested many coins
-manufactured at the same plant,
-how might we incorporate this information?
+Setiap kurva solid sesuai dengan salah satu dari dua nilai pada koin
+dan memberikan taksiran probabilitas kita bahwa koin menunjukkan nilai tersebut
+setelah setiap kelompok percobaan.
+Garis putus-putus hitam menunjukkan probabilitas sebenarnya yang mendasarinya.
+Saat kita mendapatkan lebih banyak data dengan melakukan lebih banyak percobaan,
+kurva-kurva tersebut semakin konvergen menuju probabilitas sebenarnya.
+Anda mungkin sudah mulai melihat bentuk
+beberapa pertanyaan yang lebih maju
+yang menjadi perhatian para ahli statistika:
+Seberapa cepat konvergensi ini terjadi?
+Jika kita telah menguji banyak koin
+yang diproduksi di pabrik yang sama,
+bagaimana kita dapat menggabungkan informasi ini?
 
-##  A More Formal Treatment
+## Perlakuan yang Lebih Formal
 
-We have already gotten pretty far: posing
-a probabilistic model,
-generating synthetic data,
-running a statistical estimator,
-empirically assessing convergence,
-and reporting error metrics (checking the deviation).
-However, to go much further,
-we will need to be more precise.
+Kita sudah cukup jauh: mengajukan
+model probabilistik,
+menghasilkan data sintetis,
+menjalankan penduga statistik,
+menilai konvergensi secara empiris,
+dan melaporkan metrik kesalahan (memeriksa penyimpangan).
+Namun, untuk melangkah lebih jauh,
+kita perlu lebih tepat.
 
+Ketika berurusan dengan keacakan,
+kita menyebut himpunan kemungkinan hasil $\mathcal{S}$
+dan menyebutnya sebagai *ruang sampel* atau *ruang hasil*.
+Di sini, setiap elemen adalah *hasil* yang mungkin berbeda.
+Dalam kasus melempar satu koin,
+$\mathcal{S} = \{\textrm{kepala}, \textrm{ekor}\}$.
+Untuk satu dadu, $\mathcal{S} = \{1, 2, 3, 4, 5, 6\}$.
+Saat melempar dua koin, kemungkinan hasilnya adalah
+$\{(\textrm{kepala}, \textrm{kepala}), (\textrm{kepala}, \textrm{ekor}), (\textrm{ekor}, \textrm{kepala}),  (\textrm{ekor}, \textrm{ekor})\}$.
+*Peristiwa* adalah bagian dari ruang sampel.
+Sebagai contoh, peristiwa "lemparan koin pertama menunjukkan kepala"
+sesuai dengan himpunan $\{(\textrm{kepala}, \textrm{kepala}), (\textrm{kepala}, \textrm{ekor})\}$.
+Setiap kali hasil $z$ dari percobaan acak memenuhi
+$z \in \mathcal{A}$, maka peristiwa $\mathcal{A}$ telah terjadi.
+Untuk satu lemparan dadu, kita dapat mendefinisikan peristiwa
+"melihat angka $5$" ($\mathcal{A} = \{5\}$)
+dan "melihat angka ganjil" ($\mathcal{B} = \{1, 3, 5\}$).
+Dalam kasus ini, jika hasil dadu adalah $5$,
+kita akan mengatakan bahwa baik $\mathcal{A}$ maupun $\mathcal{B}$ terjadi.
+Di sisi lain, jika $z = 3$,
+maka $\mathcal{A}$ tidak terjadi
+tetapi $\mathcal{B}$ terjadi.
 
-When dealing with randomness,
-we denote the set of possible outcomes $\mathcal{S}$
-and call it the *sample space* or *outcome space*.
-Here, each element is a distinct possible *outcome*.
-In the case of rolling a single coin,
-$\mathcal{S} = \{\textrm{heads}, \textrm{tails}\}$.
-For a single die, $\mathcal{S} = \{1, 2, 3, 4, 5, 6\}$.
-When flipping two coins, possible outcomes are
-$\{(\textrm{heads}, \textrm{heads}), (\textrm{heads}, \textrm{tails}), (\textrm{tails}, \textrm{heads}),  (\textrm{tails}, \textrm{tails})\}$.
-*Events* are subsets of the sample space.
-For instance, the event "the first coin toss comes up heads"
-corresponds to the set $\{(\textrm{heads}, \textrm{heads}), (\textrm{heads}, \textrm{tails})\}$.
-Whenever the outcome $z$ of a random experiment satisfies
-$z \in \mathcal{A}$, then event $\mathcal{A}$ has occurred.
-For a single roll of a die, we could define the events
-"seeing a $5$" ($\mathcal{A} = \{5\}$)
-and "seeing an odd number"  ($\mathcal{B} = \{1, 3, 5\}$).
-In this case, if the die came up $5$,
-we would say that both $\mathcal{A}$ and $\mathcal{B}$ occurred.
-On the other hand, if $z = 3$,
-then $\mathcal{A}$ did not occur
-but $\mathcal{B}$ did.
+Fungsi *probabilitas* memetakan peristiwa
+ke nilai riil ${P: \mathcal{A} \subseteq \mathcal{S} \rightarrow [0,1]}$.
+Probabilitas, yang dilambangkan dengan $P(\mathcal{A})$, dari suatu peristiwa $\mathcal{A}$
+dalam ruang sampel $\mathcal{S}$ yang diberikan,
+memiliki sifat-sifat sebagai berikut:
 
+* Probabilitas dari setiap peristiwa $\mathcal{A}$ adalah bilangan riil non-negatif, yaitu $P(\mathcal{A}) \geq 0$;
+* Probabilitas dari seluruh ruang sampel adalah $1$, yaitu $P(\mathcal{S}) = 1$;
+* Untuk setiap urutan peristiwa yang dapat dihitung $\mathcal{A}_1, \mathcal{A}_2, \ldots$ yang *saling eksklusif* (yaitu, $\mathcal{A}_i \cap \mathcal{A}_j = \emptyset$ untuk semua $i \neq j$), probabilitas bahwa salah satu dari mereka terjadi sama dengan jumlah dari probabilitas individu mereka, yaitu $P(\bigcup_{i=1}^{\infty} \mathcal{A}_i) = \sum_{i=1}^{\infty} P(\mathcal{A}_i)$.
 
-A *probability* function maps events
-onto real values ${P: \mathcal{A} \subseteq \mathcal{S} \rightarrow [0,1]}$.
-The probability, denoted $P(\mathcal{A})$, of an event $\mathcal{A}$
-in the given sample space $\mathcal{S}$,
-has the following properties:
-
-* The probability of any event $\mathcal{A}$ is a nonnegative real number, i.e., $P(\mathcal{A}) \geq 0$;
-* The probability of the entire sample space is $1$, i.e., $P(\mathcal{S}) = 1$;
-* For any countable sequence of events $\mathcal{A}_1, \mathcal{A}_2, \ldots$ that are *mutually exclusive* (i.e., $\mathcal{A}_i \cap \mathcal{A}_j = \emptyset$ for all $i \neq j$), the probability that any of them happens is equal to the sum of their individual probabilities, i.e., $P(\bigcup_{i=1}^{\infty} \mathcal{A}_i) = \sum_{i=1}^{\infty} P(\mathcal{A}_i)$.
-
-These axioms of probability theory,
-proposed by :citet:`Kolmogorov.1933`,
-can be applied to rapidly derive a number of important consequences.
-For instance, it follows immediately
-that the probability of any event $\mathcal{A}$
-*or* its complement $\mathcal{A}'$ occurring is 1
-(because $\mathcal{A} \cup \mathcal{A}' = \mathcal{S}$).
-We can also prove that $P(\emptyset) = 0$
-because $1 = P(\mathcal{S} \cup \mathcal{S}') = P(\mathcal{S} \cup \emptyset) = P(\mathcal{S}) + P(\emptyset) = 1 + P(\emptyset)$.
-Consequently, the probability of any event $\mathcal{A}$
-*and* its complement $\mathcal{A}'$ occurring simultaneously
-is $P(\mathcal{A} \cap \mathcal{A}') = 0$.
-Informally, this tells us that impossible events
-have zero probability of occurring.
+Aksioma-aksioma teori probabilitas ini,
+diusulkan oleh :citet:`Kolmogorov.1933`,
+dapat diterapkan untuk dengan cepat mendapatkan sejumlah konsekuensi penting.
+Misalnya, segera kita dapat melihat
+bahwa probabilitas dari setiap peristiwa $\mathcal{A}$
+*atau* komplemennya $\mathcal{A}'$ terjadi adalah 1
+(karena $\mathcal{A} \cup \mathcal{A}' = \mathcal{S}$).
+Kita juga dapat membuktikan bahwa $P(\emptyset) = 0$
+karena $1 = P(\mathcal{S} \cup \mathcal{S}') = P(\mathcal{S} \cup \emptyset) = P(\mathcal{S}) + P(\emptyset) = 1 + P(\emptyset)$.
+Akibatnya, probabilitas dari setiap peristiwa $\mathcal{A}$
+*dan* komplemennya $\mathcal{A}'$ terjadi secara bersamaan
+adalah $P(\mathcal{A} \cap \mathcal{A}') = 0$.
+Secara informal, ini memberi tahu kita bahwa peristiwa yang tidak mungkin
+memiliki probabilitas nol untuk terjadi.
 
 
+## Variabel Acak
 
-## Random Variables
+Ketika kita berbicara tentang peristiwa seperti hasil lemparan dadu
+yang menunjukkan angka ganjil atau lemparan koin pertama yang menunjukkan kepala,
+kita sedang mengacu pada ide *variabel acak*.
+Secara formal, variabel acak adalah pemetaan
+dari ruang sampel yang mendasari
+ke serangkaian nilai (yang mungkin banyak).
+Anda mungkin bertanya-tanya bagaimana variabel acak
+berbeda dari ruang sampel,
+karena keduanya adalah kumpulan hasil.
+Yang penting, variabel acak bisa jauh lebih kasar
+daripada ruang sampel mentah.
+Kita dapat mendefinisikan variabel acak biner seperti "lebih besar dari 0,5"
+bahkan ketika ruang sampel yang mendasarinya tak terbatas,
+misalnya, titik-titik pada segmen garis antara $0$ dan $1$.
+Selain itu, beberapa variabel acak
+dapat berbagi ruang sampel yang sama.
+Misalnya, "apakah alarm rumah saya berbunyi"
+dan "apakah rumah saya dibobol" adalah
+keduanya variabel acak biner
+yang berbagi ruang sampel yang mendasarinya.
+Akibatnya, mengetahui nilai yang diambil oleh satu variabel acak
+dapat memberi kita informasi tentang kemungkinan nilai dari variabel acak lainnya.
+Mengetahui bahwa alarm berbunyi,
+kita mungkin curiga bahwa rumah kemungkinan dibobol.
 
-When we spoke about events like the roll of a die
-coming up odds or the first coin toss coming up heads,
-we were invoking the idea of a *random variable*.
-Formally, random variables are mappings
-from an underlying sample space
-to a set of (possibly many) values.
-You might wonder how a random variable
-is different from the sample space,
-since both are collections of outcomes.
-Importantly, random variables can be much coarser
-than the raw sample space.
-We can define a binary random variable like "greater than 0.5"
-even when the underlying sample space is infinite,
-e.g., points on the line segment between $0$ and $1$.
-Additionally, multiple random variables
-can share the same underlying sample space.
-For example "whether my home alarm goes off"
-and "whether my house was burgled"
-are both binary random variables
-that share an underlying sample space.
-Consequently, knowing the value taken by one random variable
-can tell us something about the likely value of another random variable.
-Knowing that the alarm went off,
-we might suspect that the house was likely burgled.
+Setiap nilai yang diambil oleh variabel acak
+berkaitan dengan bagian dari ruang sampel yang mendasarinya.
+Jadi, kejadian di mana variabel acak $X$
+mengambil nilai $v$, yang dinyatakan dengan $X=v$, adalah sebuah *peristiwa*
+dan $P(X=v)$ menyatakan probabilitasnya.
+Kadang notasi ini bisa menjadi rumit,
+dan kita bisa menyederhanakan notasi ketika konteksnya jelas.
+Misalnya, kita mungkin menggunakan $P(X)$ untuk merujuk secara umum
+kepada *distribusi* $X$, yaitu,
+fungsi yang memberi tahu kita probabilitas
+bahwa $X$ mengambil nilai tertentu.
+Terkadang kita menulis ekspresi
+seperti $P(X,Y) = P(X) P(Y)$,
+sebagai singkatan untuk menyatakan
+pernyataan yang benar untuk semua nilai
+yang dapat diambil oleh variabel acak $X$ dan $Y$, yaitu,
+untuk semua $i,j$, berlaku bahwa $P(X=i \textrm{ dan } Y=j) = P(X=i)P(Y=j)$.
+Kadang kita juga menyederhanakan notasi dengan menulis
+$P(v)$ ketika variabel acak sudah jelas dari konteksnya.
+Karena peristiwa dalam teori probabilitas adalah kumpulan hasil dari ruang sampel,
+kita dapat menentukan rentang nilai yang dapat diambil oleh variabel acak.
+Misalnya, $P(1 \leq X \leq 3)$ menyatakan probabilitas peristiwa $\{1 \leq X \leq 3\}$.
 
-
-Every value taken by a random variable corresponds
-to a subset of the underlying sample space.
-Thus the occurrence where the random variable $X$
-takes value $v$, denoted by $X=v$, is an *event*
-and $P(X=v)$ denotes its probability.
-Sometimes this notation can get clunky,
-and we can abuse notation when the context is clear.
-For example, we might use $P(X)$ to refer broadly
-to the *distribution* of $X$, i.e.,
-the function that tells us the probability
-that $X$ takes any given value.
-Other times we write expressions
-like $P(X,Y) = P(X) P(Y)$,
-as a shorthand to express a statement
-that is true for all of the values
-that the random variables $X$ and $Y$ can take, i.e.,
-for all $i,j$ it holds that $P(X=i \textrm{ and } Y=j) = P(X=i)P(Y=j)$.
-Other times, we abuse notation by writing
-$P(v)$ when the random variable is clear from the context.
-Since an event in probability theory is a set of outcomes from the sample space,
-we can specify a range of values for a random variable to take.
-For example, $P(1 \leq X \leq 3)$ denotes the probability of the event $\{1 \leq X \leq 3\}$.
-
-
-Note that there is a subtle difference
-between *discrete* random variables,
-like flips of a coin or tosses of a die,
-and *continuous* ones,
-like the weight and the height of a person
-sampled at random from the population.
-In this case we seldom really care about
-someone's exact height.
-Moreover, if we took precise enough measurements,
-we would find that no two people on the planet
-have the exact same height.
-In fact, with fine enough measurements,
-you would never have the same height
-when you wake up and when you go to sleep.
-There is little point in asking about
-the exact probability that someone
-is 1.801392782910287192 meters tall.
-Instead, we typically care more about being able to say
-whether someone's height falls into a given interval,
-say between 1.79 and 1.81 meters.
-In these cases we work with probability *densities*.
-The height of exactly 1.80 meters
-has no probability, but nonzero density.
-To work out the probability assigned to an interval,
-we must take an *integral* of the density
-over that interval.
-
-## Multiple Random Variables
-
-You might have noticed that we could not even
-make it through the previous section without
-making statements involving interactions
-among multiple random variables
-(recall that $P(X,Y) = P(X) P(Y)$).
-Most of machine learning
-is concerned with such relationships.
-Here, the sample space would be
-the population of interest,
-say customers who transact with a business,
-photographs on the Internet,
-or proteins known to biologists.
-Each random variable would represent
-the (unknown) value of a different attribute.
-Whenever we sample an individual from the population,
-we observe a realization of each of the random variables.
-Because the values taken by random variables
-correspond to subsets of the sample space
-that could be overlapping, partially overlapping,
-or entirely disjoint,
-knowing the value taken by one random variable
-can cause us to update our beliefs
-about which values of another random variable are likely.
-If a patient walks into a hospital
-and we observe that they
-are having trouble breathing
-and have lost their sense of smell,
-then we believe that they are more likely
-to have COVID-19 than we might
-if they had no trouble breathing
-and a perfectly ordinary sense of smell.
+Perhatikan bahwa terdapat perbedaan halus
+antara variabel acak *diskrit*,
+seperti lemparan koin atau lemparan dadu,
+dan variabel acak *kontinu*,
+seperti berat badan dan tinggi badan seseorang
+yang diambil secara acak dari populasi.
+Dalam hal ini kita jarang benar-benar peduli
+tentang tinggi badan seseorang yang persis.
+Selain itu, jika kita melakukan pengukuran yang cukup tepat,
+kita akan menemukan bahwa tidak ada dua orang di dunia ini
+yang memiliki tinggi badan yang benar-benar sama.
+Faktanya, dengan pengukuran yang sangat tepat,
+Anda tidak akan pernah memiliki tinggi badan yang sama
+saat Anda bangun tidur dan saat Anda pergi tidur.
+Tidak ada gunanya bertanya tentang
+probabilitas persis seseorang
+berukuran 1.801392782910287192 meter.
+Sebagai gantinya, kita biasanya lebih peduli
+dengan dapat mengatakan apakah tinggi badan seseorang
+berada dalam suatu interval tertentu,
+misalnya antara 1,79 dan 1,81 meter.
+Dalam kasus ini, kita bekerja dengan *densitas* probabilitas.
+Tinggi badan yang persis 1,80 meter
+tidak memiliki probabilitas, tetapi memiliki densitas yang tidak nol.
+Untuk mengetahui probabilitas yang diberikan pada suatu interval,
+kita harus mengambil *integral* dari densitas tersebut
+pada interval tersebut.
 
 
-When working with multiple random variables,
-we can construct events corresponding
-to every combination of values
-that the variables can jointly take.
-The probability function that assigns
-probabilities to each of these combinations
-(e.g. $A=a$ and $B=b$)
-is called the *joint probability* function
-and simply returns the probability assigned
-to the intersection of the corresponding subsets
-of the sample space.
-The *joint probability* assigned to the event
-where random variables $A$ and $B$
-take values $a$ and $b$, respectively,
-is denoted $P(A = a, B = b)$,
-where the comma indicates "and".
-Note that for any values $a$ and $b$,
-it follows that
+## Beberapa Variabel Acak
 
-$$P(A=a, B=b) \leq P(A=a) \textrm{ and } P(A=a, B=b) \leq P(B = b),$$
+Anda mungkin memperhatikan bahwa kita bahkan tidak dapat
+melewati bagian sebelumnya tanpa
+membuat pernyataan yang melibatkan interaksi
+di antara beberapa variabel acak
+(ingat bahwa $P(X,Y) = P(X) P(Y)$).
+Sebagian besar machine learning
+berkaitan dengan hubungan semacam itu.
+Di sini, ruang sampel bisa berupa
+populasi yang menjadi perhatian,
+misalnya pelanggan yang bertransaksi dengan bisnis,
+foto-foto di Internet,
+atau protein yang dikenal oleh para ahli biologi.
+Setiap variabel acak akan mewakili
+(nilai yang tidak diketahui) dari atribut yang berbeda.
+Setiap kali kita mengambil sampel individu dari populasi,
+kita mengamati realisasi dari masing-masing variabel acak.
+Karena nilai-nilai yang diambil oleh variabel acak
+berkaitan dengan bagian-bagian dari ruang sampel
+yang bisa tumpang tindih, sebagian tumpang tindih,
+atau sepenuhnya tidak tumpang tindih,
+mengetahui nilai yang diambil oleh satu variabel acak
+dapat menyebabkan kita memperbarui keyakinan kita
+tentang nilai apa yang mungkin diambil oleh variabel acak lainnya.
+Jika seorang pasien masuk ke rumah sakit
+dan kita mengamati bahwa mereka
+mengalami kesulitan bernapas
+dan kehilangan indera penciuman,
+maka kita percaya bahwa mereka lebih mungkin
+mengalami COVID-19 dibandingkan jika
+mereka tidak memiliki masalah pernapasan
+dan memiliki indera penciuman yang normal.
 
-since for $A=a$ and $B=b$ to happen,
-$A=a$ has to happen *and* $B=b$ also has to happen.
-Interestingly, the joint probability
-tells us all that we can know about these
-random variables in a probabilistic sense,
-and can be used to derive many other
-useful quantities, including recovering the
-individual distributions $P(A)$ and $P(B)$.
-To recover $P(A=a)$ we simply sum up
-$P(A=a, B=v)$ over all values $v$
-that the random variable $B$ can take:
+Ketika bekerja dengan beberapa variabel acak,
+kita dapat membentuk peristiwa yang sesuai
+dengan setiap kombinasi nilai
+yang dapat diambil oleh variabel-variabel tersebut secara bersama-sama.
+Fungsi probabilitas yang menetapkan
+probabilitas untuk setiap kombinasi ini
+(misalnya $A=a$ dan $B=b$)
+disebut sebagai *probabilitas gabungan* (*joint probability*)
+dan hanya mengembalikan probabilitas yang diberikan
+untuk perpotongan dari bagian-bagian yang sesuai
+dari ruang sampel.
+*Probabilitas gabungan* yang diberikan kepada peristiwa
+di mana variabel acak $A$ dan $B$
+masing-masing mengambil nilai $a$ dan $b$,
+dinotasikan dengan $P(A = a, B = b)$,
+di mana koma menunjukkan "dan".
+Perhatikan bahwa untuk setiap nilai $a$ dan $b$,
+berlaku bahwa
+
+$$P(A=a, B=b) \leq P(A=a) \textrm{ dan } P(A=a, B=b) \leq P(B = b),$$
+
+karena agar $A=a$ dan $B=b$ terjadi,
+$A=a$ harus terjadi *dan* $B=b$ juga harus terjadi.
+Menariknya, probabilitas gabungan
+memberi tahu kita semua yang dapat kita ketahui tentang
+variabel acak ini dalam pengertian probabilistik,
+dan dapat digunakan untuk memperoleh banyak kuantitas lain
+yang berguna, termasuk mendapatkan kembali
+distribusi individual $P(A)$ dan $P(B)$.
+Untuk mendapatkan kembali $P(A=a)$ kita cukup menjumlahkan
+$P(A=a, B=v)$ di atas semua nilai $v$
+yang dapat diambil oleh variabel acak $B$:
 $P(A=a) = \sum_v P(A=a, B=v)$.
 
-
-The ratio $\frac{P(A=a, B=b)}{P(A=a)} \leq 1$
-turns out to be extremely important.
-It is called the *conditional probability*,
-and is denoted via the "$\mid$" symbol:
+Rasio $\frac{P(A=a, B=b)}{P(A=a)} \leq 1$
+ternyata sangat penting.
+Rasio ini disebut *probabilitas bersyarat* (*conditional probability*),
+dan dinyatakan dengan simbol "$\mid$":
 
 $$P(B=b \mid A=a) = P(A=a,B=b)/P(A=a).$$
 
-It tells us the new probability
-associated with the event $B=b$,
-once we condition on the fact $A=a$ took place.
-We can think of this conditional probability
-as restricting attention only to the subset
-of the sample space associated with $A=a$
-and then renormalizing so that
-all probabilities sum to 1.
-Conditional probabilities
-are in fact just ordinary probabilities
-and thus respect all of the axioms,
-as long as we condition all terms
-on the same event and thus
-restrict attention to the same sample space.
-For instance, for disjoint events
-$\mathcal{B}$ and $\mathcal{B}'$, we have that
+Ini memberi tahu kita probabilitas baru
+yang terkait dengan peristiwa $B=b$,
+setelah kita mensyaratkan bahwa $A=a$ terjadi.
+Kita dapat memandang probabilitas bersyarat ini
+sebagai membatasi perhatian hanya pada bagian
+ruang sampel yang terkait dengan $A=a$
+dan kemudian menormalisasi kembali sehingga
+semua probabilitas berjumlah 1.
+Probabilitas bersyarat
+pada dasarnya adalah probabilitas biasa
+dan dengan demikian memenuhi semua aksioma,
+selama kita mensyaratkan semua istilah
+pada peristiwa yang sama dan dengan demikian
+membatasi perhatian pada ruang sampel yang sama.
+Misalnya, untuk peristiwa yang saling lepas
+$\mathcal{B}$ dan $\mathcal{B}'$, kita memiliki bahwa
 $P(\mathcal{B} \cup \mathcal{B}' \mid A = a) = P(\mathcal{B} \mid A = a) + P(\mathcal{B}' \mid A = a)$.
 
 
-Using the definition of conditional probabilities,
-we can derive the famous result called *Bayes' theorem*.
-By construction, we have that $P(A, B) = P(B\mid A) P(A)$
-and $P(A, B) = P(A\mid B) P(B)$.
-Combining both equations yields
-$P(B\mid A) P(A) = P(A\mid B) P(B)$ and hence
+
+Dengan menggunakan definisi probabilitas bersyarat,
+kita dapat menurunkan hasil terkenal yang disebut *teorema Bayes*.
+Secara konstruksi, kita memiliki $P(A, B) = P(B\mid A) P(A)$
+dan $P(A, B) = P(A\mid B) P(B)$.
+Menggabungkan kedua persamaan menghasilkan
+$P(B\mid A) P(A) = P(A\mid B) P(B)$ dan oleh karena itu
 
 $$P(A \mid B) = \frac{P(B\mid A) P(A)}{P(B)}.$$
 
-
-
-
-
-
-This simple equation has profound implications because
-it allows us to reverse the order of conditioning.
-If we know how to estimate $P(B\mid A)$, $P(A)$, and $P(B)$,
-then we can estimate $P(A\mid B)$.
-We often find it easier to estimate one term directly
-but not the other and Bayes' theorem can come to the rescue here.
-For instance, if we know the prevalence of symptoms for a given disease,
-and the overall prevalences of the disease and symptoms, respectively,
-we can determine how likely someone is
-to have the disease based on their symptoms.
-In some cases we might not have direct access to $P(B)$,
-such as the prevalence of symptoms.
-In this case a simplified version of Bayes' theorem comes in handy:
+Persamaan sederhana ini memiliki implikasi yang mendalam karena
+memungkinkan kita untuk membalik urutan kondisional.
+Jika kita tahu cara memperkirakan $P(B\mid A)$, $P(A)$, dan $P(B)$,
+maka kita dapat memperkirakan $P(A\mid B)$.
+Kita sering kali lebih mudah memperkirakan satu istilah secara langsung
+tetapi tidak yang lainnya dan teorema Bayes dapat membantu di sini.
+Sebagai contoh, jika kita tahu prevalensi gejala untuk penyakit tertentu,
+dan prevalensi keseluruhan dari penyakit dan gejala masing-masing,
+kita dapat menentukan seberapa besar kemungkinan seseorang
+menderita penyakit tersebut berdasarkan gejalanya.
+Dalam beberapa kasus, kita mungkin tidak memiliki akses langsung ke $P(B)$,
+seperti prevalensi gejala.
+Dalam kasus ini, versi sederhana dari teorema Bayes dapat digunakan:
 
 $$P(A \mid B) \propto P(B \mid A) P(A).$$
 
-Since we know that $P(A \mid B)$ must be normalized to $1$, i.e., $\sum_a P(A=a \mid B) = 1$,
-we can use it to compute
+Karena kita tahu bahwa $P(A \mid B)$ harus dinormalisasi menjadi $1$, yaitu $\sum_a P(A=a \mid B) = 1$,
+kita dapat menggunakannya untuk menghitung
 
 $$P(A \mid B) = \frac{P(B \mid A) P(A)}{\sum_a P(B \mid A=a) P(A = a)}.$$
 
-In Bayesian statistics, we think of an observer
-as possessing some (subjective) prior beliefs
-about the plausibility of the available hypotheses
-encoded in the *prior* $P(H)$,
-and a *likelihood function* that says how likely
-one is to observe any value of the collected evidence
-for each of the hypotheses in the class $P(E \mid H)$.
-Bayes' theorem is then interpreted as telling us
-how to update the initial *prior* $P(H)$
-in light of the available evidence $E$
-to produce *posterior* beliefs
+Dalam statistika Bayesian, kita menganggap seorang pengamat
+memiliki beberapa keyakinan (subjektif) sebelumnya
+tentang kemungkinan dari hipotesis yang ada
+yang dikodekan dalam *prior* $P(H)$,
+dan *fungsi likelihood* yang menunjukkan seberapa besar kemungkinan
+kita mengamati nilai dari bukti yang dikumpulkan
+untuk setiap hipotesis dalam kelas $P(E \mid H)$.
+Teorema Bayes kemudian ditafsirkan sebagai memberi tahu kita
+bagaimana memperbarui *prior* awal $P(H)$
+dalam cahaya bukti yang ada $E$
+untuk menghasilkan keyakinan *posterior*
 $P(H \mid E) = \frac{P(E \mid H) P(H)}{P(E)}$.
-Informally, this can be stated as
-"posterior equals prior times likelihood, divided by the evidence".
-Now, because the evidence $P(E)$ is the same for all hypotheses,
-we can get away with simply normalizing over the hypotheses.
+Secara informal, ini dapat dinyatakan sebagai
+"posterior sama dengan prior kali likelihood, dibagi dengan bukti".
+Karena bukti $P(E)$ sama untuk semua hipotesis,
+kita cukup menormalisasi di antara hipotesis.
 
-Note that $\sum_a P(A=a \mid B) = 1$ also allows us to *marginalize* over random variables. That is, we can drop variables from a joint distribution such as $P(A, B)$. After all, we have that
+Perhatikan bahwa $\sum_a P(A=a \mid B) = 1$ juga memungkinkan kita untuk *marginalisasi* atas variabel acak. Artinya, kita dapat menghilangkan variabel dari distribusi gabungan seperti $P(A, B)$. Setelah semua, kita memiliki bahwa
 
 $$\sum_a P(B \mid A=a) P(A=a) = \sum_a P(B, A=a) = P(B).$$
 
-Independence is another fundamentally important concept
-that forms the backbone of
-many important ideas in statistics.
-In short, two variables are *independent*
-if conditioning on the value of $A$ does not
-cause any change to the probability distribution
-associated with $B$ and vice versa.
-More formally, independence, denoted $A \perp B$,
-requires that $P(A \mid B) = P(A)$ and, consequently,
-that $P(A,B) = P(A \mid B) P(B) = P(A) P(B)$.
-Independence is often an appropriate assumption.
-For example, if the random variable $A$
-represents the outcome from tossing one fair coin
-and the random variable $B$
-represents the outcome from tossing another,
-then knowing whether $A$ came up heads
-should not influence the probability
-of $B$ coming up heads.
+Independensi adalah konsep fundamental lainnya
+yang membentuk tulang punggung dari
+banyak ide penting dalam statistika.
+Singkatnya, dua variabel adalah *independen*
+jika mensyaratkan nilai $A$ tidak menyebabkan
+perubahan apa pun pada distribusi probabilitas
+yang terkait dengan $B$ dan sebaliknya.
+Secara formal, independensi, dilambangkan dengan $A \perp B$,
+mensyaratkan bahwa $P(A \mid B) = P(A)$ dan, akibatnya,
+bahwa $P(A,B) = P(A \mid B) P(B) = P(A) P(B)$.
+Independensi sering kali merupakan asumsi yang tepat.
+Misalnya, jika variabel acak $A$
+mewakili hasil dari lemparan satu koin adil
+dan variabel acak $B$
+mewakili hasil dari lemparan koin lainnya,
+maka mengetahui apakah $A$ menunjukkan kepala
+tidak akan mempengaruhi probabilitas
+$B$ menunjukkan kepala.
 
-
-Independence is especially useful when it holds among the successive
-draws of our data from some underlying distribution
-(allowing us to make strong statistical conclusions)
-or when it holds among various variables in our data,
-allowing us to work with simpler models
-that encode this independence structure.
-On the other hand, estimating the dependencies
-among random variables is often the very aim of learning.
-We care to estimate the probability of disease given symptoms
-specifically because we believe
-that diseases and symptoms are *not* independent.
-
-
-Note that because conditional probabilities are proper probabilities,
-the concepts of independence and dependence also apply to them.
-Two random variables $A$ and $B$ are *conditionally independent*
-given a third variable $C$ if and only if $P(A, B \mid C) = P(A \mid C)P(B \mid C)$.
-Interestingly, two variables can be independent in general
-but become dependent when conditioning on a third.
-This often occurs when the two random variables $A$ and $B$
-correspond to causes of some third variable $C$.
-For example, broken bones and lung cancer might be independent
-in the general population but if we condition on being in the hospital
-then we might find that broken bones are negatively correlated with lung cancer.
-That is because the broken bone *explains away* why some person is in the hospital
-and thus lowers the probability that they are hospitalized because of having lung cancer.
-
-
-And conversely, two dependent random variables
-can become independent upon conditioning on a third.
-This often happens when two otherwise unrelated events
-have a common cause.
-Shoe size and reading level are highly correlated
-among elementary school students,
-but this correlation disappears if we condition on age.
+Independensi sangat berguna ketika terjadi pada penarikan berturut-turut
+dari data kita dari beberapa distribusi yang mendasari
+(memungkinkan kita membuat kesimpulan statistik yang kuat)
+atau ketika terjadi di antara berbagai variabel dalam data kita,
+memungkinkan kita untuk bekerja dengan model yang lebih sederhana
+yang mengkodekan struktur independensi ini.
+Di sisi lain, memperkirakan ketergantungan
+di antara variabel acak sering kali menjadi tujuan utama dari pembelajaran.
+Kita peduli untuk memperkirakan probabilitas penyakit berdasarkan gejala
+terutama karena kita percaya
+bahwa penyakit dan gejala *tidak* independen.
 
 
 
-## An Example
+Perhatikan bahwa karena probabilitas bersyarat adalah probabilitas yang sebenarnya,
+konsep independensi dan ketergantungan juga berlaku untuk mereka.
+Dua variabel acak $A$ dan $B$ adalah *kondisional independen*
+diberikan variabel ketiga $C$ jika dan hanya jika $P(A, B \mid C) = P(A \mid C)P(B \mid C)$.
+Menariknya, dua variabel dapat independen secara umum
+tetapi menjadi bergantung ketika dikondisikan pada variabel ketiga.
+Hal ini sering terjadi ketika dua variabel acak $A$ dan $B$
+berkaitan dengan penyebab dari variabel ketiga $C$.
+Misalnya, patah tulang dan kanker paru-paru mungkin independen
+dalam populasi umum tetapi jika kita mensyaratkan bahwa orang tersebut berada di rumah sakit,
+maka kita mungkin menemukan bahwa patah tulang berkorelasi negatif dengan kanker paru-paru.
+Hal ini terjadi karena patah tulang *menjelaskan* mengapa seseorang berada di rumah sakit
+dan dengan demikian menurunkan probabilitas bahwa mereka dirawat di rumah sakit karena menderita kanker paru-paru.
+
+Sebaliknya, dua variabel acak yang bergantung
+dapat menjadi independen ketika dikondisikan pada variabel ketiga.
+Ini sering terjadi ketika dua kejadian yang tidak terkait satu sama lain
+memiliki penyebab yang sama.
+Ukuran sepatu dan tingkat membaca sangat berkorelasi
+di antara siswa sekolah dasar,
+tetapi korelasi ini menghilang jika kita mensyaratkan pada usia.
+
+
+
+## Sebuah Contoh
 :label:`subsec_probability_hiv_app`
 
-Let's put our skills to the test.
-Assume that a doctor administers an HIV test to a patient.
-This test is fairly accurate and fails only with 1% probability
-if the patient is healthy but reported as diseased,
-i.e., healthy patients test positive in 1% of cases.
-Moreover, it never fails to detect HIV if the patient actually has it.
-We use $D_1 \in \{0, 1\}$ to indicate the diagnosis
-($0$ if negative and $1$ if positive)
-and $H \in \{0, 1\}$ to denote the HIV status.
+Mari kita uji keterampilan kita.
+Misalkan seorang dokter memberikan tes HIV kepada seorang pasien.
+Tes ini cukup akurat dan hanya gagal dengan probabilitas 1%
+jika pasien sehat tetapi dilaporkan sakit,
+yaitu, pasien sehat diuji positif dalam 1% kasus.
+Selain itu, tes ini tidak pernah gagal mendeteksi HIV jika pasien benar-benar mengidapnya.
+Kita menggunakan $D_1 \in \{0, 1\}$ untuk menunjukkan diagnosis
+($0$ jika negatif dan $1$ jika positif)
+dan $H \in \{0, 1\}$ untuk menunjukkan status HIV.
 
-| Conditional probability | $H=1$ | $H=0$ |
+| Probabilitas Bersyarat | $H=1$ | $H=0$ |
 |:------------------------|------:|------:|
 | $P(D_1 = 1 \mid H)$        |     1 |  0.01 |
 | $P(D_1 = 0 \mid H)$        |     0 |  0.99 |
 
-Note that the column sums are all 1 (but the row sums do not),
-since they are conditional probabilities.
-Let's compute the probability of the patient having HIV
-if the test comes back positive, i.e., $P(H = 1 \mid D_1 = 1)$.
-Intuitively this is going to depend on how common the disease is,
-since it affects the number of false alarms.
-Assume that the population is fairly free of the disease, e.g., $P(H=1) = 0.0015$.
-To apply Bayes' theorem, we need to apply marginalization
-to determine
+Perhatikan bahwa jumlah dari setiap kolom adalah 1 (tetapi jumlah dari setiap baris tidak),
+karena mereka adalah probabilitas bersyarat.
+Mari kita hitung probabilitas pasien menderita HIV
+jika tesnya kembali positif, yaitu $P(H = 1 \mid D_1 = 1)$.
+Secara intuitif, ini akan bergantung pada seberapa umum penyakit tersebut,
+karena ini memengaruhi jumlah alarm palsu.
+Misalkan populasi cukup bebas dari penyakit ini, misalnya $P(H=1) = 0.0015$.
+Untuk menerapkan teorema Bayes, kita perlu menerapkan marginalisasi
+untuk menentukan
 
 $$\begin{aligned}
 P(D_1 = 1)
@@ -797,28 +789,28 @@ P(D_1 = 1)
 \end{aligned}
 $$
 
-This leads us to
+Ini membawa kita pada
 
 $$P(H = 1 \mid D_1 = 1) = \frac{P(D_1=1 \mid H=1) P(H=1)}{P(D_1=1)} = 0.1306.$$
 
-In other words, there is only a 13.06% chance
-that the patient actually has HIV,
-despite the test being pretty accurate.
-As we can see, probability can be counterintuitive.
-What should a patient do upon receiving such terrifying news?
-Likely, the patient would ask the physician
-to administer another test to get clarity.
-The second test has different characteristics
-and it is not as good as the first one.
+Dengan kata lain, hanya ada kemungkinan 13.06%
+bahwa pasien benar-benar menderita HIV,
+meskipun tes tersebut cukup akurat.
+Seperti yang kita lihat, probabilitas dapat menjadi tidak intuitif.
+Apa yang harus dilakukan seorang pasien setelah menerima kabar mengerikan ini?
+Kemungkinan besar, pasien akan meminta dokter
+untuk melakukan tes lain untuk mendapatkan kejelasan.
+Tes kedua memiliki karakteristik yang berbeda
+dan tidak sebaik tes pertama.
 
-| Conditional probability | $H=1$ | $H=0$ |
+| Probabilitas Bersyarat | $H=1$ | $H=0$ |
 |:------------------------|------:|------:|
 | $P(D_2 = 1 \mid H)$          |  0.98 |  0.03 |
 | $P(D_2 = 0 \mid H)$          |  0.02 |  0.97 |
 
-Unfortunately, the second test comes back positive, too.
-Let's calculate the requisite probabilities to invoke Bayes' theorem
-by assuming conditional independence:
+Sayangnya, tes kedua juga kembali positif.
+Mari kita hitung probabilitas yang diperlukan untuk menerapkan teorema Bayes
+dengan mengasumsikan independensi kondisional:
 
 $$\begin{aligned}
 P(D_1 = 1, D_2 = 1 \mid H = 0)
@@ -830,8 +822,8 @@ P(D_1 = 1, D_2 = 1 \mid H = 1)
 \end{aligned}
 $$
 
-Now we can apply marginalization to obtain the probability
-that both tests come back positive:
+Sekarang kita dapat menerapkan marginalisasi untuk mendapatkan probabilitas
+bahwa kedua tes tersebut kembali positif:
 
 $$\begin{aligned}
 &P(D_1 = 1, D_2 = 1)\\
@@ -841,149 +833,150 @@ $$\begin{aligned}
 \end{aligned}
 $$
 
-Finally, the probability of the patient having HIV given that both tests are positive is
+Akhirnya, probabilitas pasien menderita HIV dengan asumsi bahwa kedua tes positif adalah
 
 $$P(H = 1 \mid D_1 = 1, D_2 = 1)
 = \frac{P(D_1 = 1, D_2 = 1 \mid H=1) P(H=1)}{P(D_1 = 1, D_2 = 1)}
 = 0.8307.$$
 
-That is, the second test allowed us to gain much higher confidence that not all is well.
-Despite the second test being considerably less accurate than the first one,
-it still significantly improved our estimate.
-The assumption of both tests being conditionally independent of each other
-was crucial for our ability to generate a more accurate estimate.
-Take the extreme case where we run the same test twice.
-In this situation we would expect the same outcome both times,
-hence no additional insight is gained from running the same test again.
-The astute reader might have noticed that the diagnosis behaved
-like a classifier hiding in plain sight
-where our ability to decide whether a patient is healthy
-increases as we obtain more features (test outcomes).
 
+Artinya, tes kedua memungkinkan kita untuk mendapatkan keyakinan yang jauh lebih tinggi bahwa ada sesuatu yang salah.
+Meskipun tes kedua jauh kurang akurat dibandingkan tes pertama,
+namun tes tersebut masih secara signifikan meningkatkan estimasi kita.
+Asumsi bahwa kedua tes bersifat independen secara kondisional satu sama lain
+sangat penting bagi kemampuan kita untuk menghasilkan estimasi yang lebih akurat.
+Ambil contoh ekstrem di mana kita melakukan tes yang sama dua kali.
+Dalam situasi ini, kita akan mengharapkan hasil yang sama pada kedua kali,
+sehingga tidak ada wawasan tambahan yang diperoleh dari menjalankan tes yang sama lagi.
+Pembaca yang cermat mungkin memperhatikan bahwa diagnosis berperilaku
+seperti sebuah *classifier* yang terlihat jelas
+di mana kemampuan kita untuk memutuskan apakah seorang pasien sehat
+meningkat saat kita mendapatkan lebih banyak fitur (hasil tes).
 
-## Expectations
+## Ekspektasi
 
-Often, making decisions requires not just looking
-at the probabilities assigned to individual events
-but composing them together into useful aggregates
-that can provide us with guidance.
-For example, when random variables take continuous scalar values,
-we often care about knowing what value to expect *on average*.
-This quantity is formally called an *expectation*.
-If we are making investments,
-the first quantity of interest
-might be the return we can expect,
-averaging over all the possible outcomes
-(and weighting by the appropriate probabilities).
-For instance, say that with 50% probability,
-an investment might fail altogether,
-with 40% probability it might provide a 2$\times$ return,
-and with 10% probability it might provide a 10$\times$ return 10$\times$.
-To calculate the expected return,
-we sum over all returns, multiplying each
-by the probability that they will occur.
-This yields the expectation
+Seringkali, membuat keputusan memerlukan tidak hanya melihat
+pada probabilitas yang diberikan untuk setiap kejadian,
+tetapi juga menggabungkannya menjadi agregat yang berguna
+yang dapat memberikan kita panduan.
+Misalnya, ketika variabel acak mengambil nilai skalar kontinu,
+kita sering peduli untuk mengetahui nilai apa yang diharapkan *rata-rata*.
+Kuantitas ini secara formal disebut *ekspektasi*.
+Jika kita melakukan investasi,
+hal pertama yang menjadi perhatian
+mungkin adalah pengembalian yang bisa kita harapkan,
+dengan merata-ratakan semua hasil yang mungkin terjadi
+(dan memberi bobot dengan probabilitas yang sesuai).
+Misalnya, dengan probabilitas 50%,
+investasi bisa gagal total,
+dengan probabilitas 40% bisa memberikan pengembalian 2$\times$,
+dan dengan probabilitas 10% bisa memberikan pengembalian 10$\times$.
+Untuk menghitung pengembalian yang diharapkan,
+kita menjumlahkan semua pengembalian, mengalikan setiap pengembalian
+dengan probabilitas terjadinya.
+Ini menghasilkan ekspektasi
 $0.5 \cdot 0 + 0.4 \cdot 2 + 0.1 \cdot 10 = 1.8$.
-Hence the expected return is 1.8$\times$.
+Dengan demikian, pengembalian yang diharapkan adalah 1.8$\times$.
 
 
-In general, the *expectation* (or average)
-of the random variable $X$ is defined as
+Secara umum, *ekspektasi* (atau rata-rata)
+dari variabel acak $X$ didefinisikan sebagai
 
 $$E[X] = E_{x \sim P}[x] = \sum_{x} x P(X = x).$$
 
-Likewise, for densities we obtain $E[X] = \int x \;dp(x)$.
-Sometimes we are interested in the expected value
-of some function of $x$.
-We can calculate these expectations as
+Demikian pula, untuk densitas kita mendapatkan $E[X] = \int x \;dp(x)$.
+Kadang-kadang kita tertarik pada nilai ekspektasi
+dari beberapa fungsi $x$.
+Kita dapat menghitung ekspektasi ini sebagai
 
-$$E_{x \sim P}[f(x)] = \sum_x f(x) P(x) \textrm{ and } E_{x \sim P}[f(x)] = \int f(x) p(x) \;dx$$
+$$E_{x \sim P}[f(x)] = \sum_x f(x) P(x) \textrm{ dan } E_{x \sim P}[f(x)] = \int f(x) p(x) \;dx$$
 
-for discrete probabilities and densities, respectively.
-Returning to the investment example from above,
-$f$ might be the *utility* (happiness)
-associated with the return.
-Behavior economists have long noted
-that people associate greater disutility
-with losing money than the utility gained
-from earning one dollar relative to their baseline.
-Moreover, the value of money tends to be sub-linear.
-Possessing 100k dollars versus zero dollars
-can make the difference between paying the rent,
-eating well, and enjoying quality healthcare
-versus suffering through homelessness.
-On the other hand, the gains due to possessing
-200k versus 100k are less dramatic.
-Reasoning like this motivates the cliché
-that "the utility of money is logarithmic".
+untuk probabilitas diskrit dan densitas, masing-masing.
+Kembali ke contoh investasi di atas,
+$f$ mungkin merupakan *utilitas* (kebahagiaan)
+yang terkait dengan pengembalian.
+Ahli ekonomi perilaku telah lama mencatat
+bahwa orang mengaitkan ketidaknyamanan yang lebih besar
+dengan kehilangan uang daripada kegunaan yang diperoleh
+dari menghasilkan satu dolar relatif terhadap dasar mereka.
+Selain itu, nilai uang cenderung sub-linear.
+Memiliki uang 100 ribu dolar versus nol dolar
+dapat membuat perbedaan antara mampu membayar sewa,
+makan dengan baik, dan menikmati layanan kesehatan yang berkualitas
+dibandingkan dengan mengalami tunawisma.
+Di sisi lain, peningkatan karena memiliki
+200 ribu dolar dibandingkan 100 ribu dolar kurang dramatis.
+Pemikiran seperti ini memotivasi klise
+bahwa "utilitas uang adalah logaritmik".
 
+Jika utilitas yang terkait dengan kerugian total adalah $-1$,
+dan utilitas yang terkait dengan pengembalian $1$, $2$, dan $10$
+adalah $1$, $2$, dan $4$, masing-masing,
+maka kebahagiaan yang diharapkan dari investasi
+adalah $0.5 \cdot (-1) + 0.4 \cdot 2 + 0.1 \cdot 4 = 0.7$
+(kehilangan utilitas yang diharapkan sebesar 30%).
+Jika memang ini adalah fungsi utilitas Anda,
+mungkin yang terbaik adalah menyimpan uang di bank.
 
-If  the utility associated with a total loss were $-1$,
-and the utilities associated with returns of $1$, $2$, and $10$
-were $1$, $2$ and $4$, respectively,
-then the expected happiness of investing
-would be $0.5 \cdot (-1) + 0.4 \cdot 2 + 0.1 \cdot 4 = 0.7$
-(an expected loss of utility of 30%).
-If indeed this were your utility function,
-you might be best off keeping the money in the bank.
-
-For financial decisions,
-we might also want to measure
-how *risky* an investment is.
-Here, we care not just about the expected value
-but how much the actual values tend to *vary*
-relative to this value.
-Note that we cannot just take
-the expectation of the difference
-between the actual and expected values.
-This is because the expectation of a difference
-is the difference of the expectations,
-i.e., $E[X - E[X]] = E[X] - E[E[X]] = 0$.
-However, we can look at the expectation
-of any non-negative function of this difference.
-The *variance* of a random variable is calculated by looking
-at the expected value of the *squared* differences:
+Untuk keputusan finansial,
+kita mungkin juga ingin mengukur
+seberapa *berisiko* suatu investasi.
+Di sini, kita tidak hanya peduli pada nilai ekspektasi
+tetapi seberapa besar nilai yang sebenarnya cenderung *bervariasi*
+relatif terhadap nilai ini.
+Perhatikan bahwa kita tidak bisa hanya mengambil
+ekspektasi dari perbedaan antara
+nilai sebenarnya dan nilai ekspektasi.
+Ini karena ekspektasi dari suatu perbedaan
+adalah perbedaan dari ekspektasi,
+yaitu, $E[X - E[X]] = E[X] - E[E[X]] = 0$.
+Namun, kita dapat melihat ekspektasi
+dari fungsi apa pun yang tidak negatif dari perbedaan ini.
+*Varians* dari variabel acak dihitung dengan melihat
+nilai harapan dari perbedaan *kuadrat*:
 
 $$\textrm{Var}[X] = E\left[(X - E[X])^2\right] = E[X^2] - E[X]^2.$$
 
-Here the equality follows by expanding
+Persamaan di atas dihasilkan dengan memperluas
 $(X - E[X])^2 = X^2 - 2 X E[X] + E[X]^2$
-and taking expectations for each term.
-The square root of the variance is another
-useful quantity called the *standard deviation*.
-While this and the variance
-convey the same information (either can be calculated from the other),
-the standard deviation has the nice property
-that it is expressed in the same units
-as the original quantity represented
-by the random variable.
+dan mengambil ekspektasi untuk setiap suku.
+Akar kuadrat dari varians adalah kuantitas lain
+yang berguna yang disebut *simpangan baku*.
+Meskipun simpangan baku dan varians
+mengandung informasi yang sama (keduanya dapat dihitung satu sama lain),
+simpangan baku memiliki sifat yang baik
+yaitu diekspresikan dalam satuan yang sama
+dengan kuantitas asli yang diwakili
+oleh variabel acak.
 
-Lastly, the variance of a function
-of a random variable
-is defined analogously as
+Terakhir, varians dari fungsi
+dari suatu variabel acak
+didefinisikan secara analogi sebagai
 
 $$\textrm{Var}_{x \sim P}[f(x)] = E_{x \sim P}[f^2(x)] - E_{x \sim P}[f(x)]^2.$$
 
-Returning to our investment example,
-we can now compute the variance of the investment.
-It is given by $0.5 \cdot 0 + 0.4 \cdot 2^2 + 0.1 \cdot 10^2 - 1.8^2 = 8.36$.
-For all intents and purposes this is a risky investment.
-Note that by mathematical convention mean and variance
-are often referenced as $\mu$ and $\sigma^2$.
-This is particularly the case whenever we use it
-to parametrize a Gaussian distribution.
+Kembali ke contoh investasi kita,
+sekarang kita dapat menghitung varians dari investasi.
+Varians diberikan oleh $0.5 \cdot 0 + 0.4 \cdot 2^2 + 0.1 \cdot 10^2 - 1.8^2 = 8.36$.
+Untuk semua maksud dan tujuan, ini adalah investasi yang berisiko.
+Perhatikan bahwa secara konvensi matematis, rata-rata dan varians
+sering dirujuk sebagai $\mu$ dan $\sigma^2$.
+Hal ini terutama berlaku ketika kita menggunakannya
+untuk memparametrisasi distribusi Gaussian.
 
-In the same way as we introduced expectations
-and variance for *scalar* random variables,
-we can do so for vector-valued ones.
-Expectations are easy, since we can apply them elementwise.
-For instance, $\boldsymbol{\mu} \stackrel{\textrm{def}}{=} E_{\mathbf{x} \sim P}[\mathbf{x}]$
-has coordinates $\mu_i = E_{\mathbf{x} \sim P}[x_i]$.
-*Covariances* are more complicated.
-We define them by taking expectations of the *outer product*
-of the difference between random variables and their mean:
+Dengan cara yang sama saat kita memperkenalkan ekspektasi
+dan varians untuk variabel acak *skalar*,
+kita dapat melakukannya untuk variabel yang bernilai vektor.
+Ekspektasi mudah dilakukan, karena kita dapat menerapkannya pada setiap elemen.
+Misalnya, $\boldsymbol{\mu} \stackrel{\textrm{def}}{=} E_{\mathbf{x} \sim P}[\mathbf{x}]$
+memiliki koordinat $\mu_i = E_{\mathbf{x} \sim P}[x_i]$.
+*Covarians* lebih rumit.
+Kita mendefinisikannya dengan mengambil ekspektasi dari *produk luar*
+dari perbedaan antara variabel acak dan rata-ratanya:
 
 $$\boldsymbol{\Sigma} \stackrel{\textrm{def}}{=} \textrm{Cov}_{\mathbf{x} \sim P}[\mathbf{x}] = E_{\mathbf{x} \sim P}\left[(\mathbf{x} - \boldsymbol{\mu}) (\mathbf{x} - \boldsymbol{\mu})^\top\right].$$
+
+
 
 This matrix $\boldsymbol{\Sigma}$ is referred to as the covariance matrix.
 An easy way to see its effect is to consider some vector $\mathbf{v}$
