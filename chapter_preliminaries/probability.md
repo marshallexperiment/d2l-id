@@ -988,6 +988,7 @@ Dari situ, kita dapat menyimpulkan bahwa
 
 $$\mathbf{v}^\top \boldsymbol{\Sigma} \mathbf{v} = E_{\mathbf{x} \sim P}\left[\mathbf{v}^\top(\mathbf{x} - \boldsymbol{\mu}) (\mathbf{x} - \boldsymbol{\mu})^\top \mathbf{v}\right] = \textrm{Var}_{x \sim P}[\mathbf{v}^\top \mathbf{x}].$$
 
+
 Dengan demikian, $\boldsymbol{\Sigma}$ memungkinkan kita untuk menghitung varians
 untuk setiap fungsi linier dari $\mathbf{x}$
 hanya dengan perkalian matriks sederhana.
