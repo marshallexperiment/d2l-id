@@ -955,6 +955,9 @@ didefinisikan secara analogi sebagai
 
 $$\textrm{Var}_{x \sim P}[f(x)] = E_{x \sim P}[f^2(x)] - E_{x \sim P}[f(x)]^2.$$
 
+
+
+
 Kembali ke contoh investasi kita,
 sekarang kita dapat menghitung varians dari investasi.
 Varians diberikan oleh $0.5 \cdot 0 + 0.4 \cdot 2^2 + 0.1 \cdot 10^2 - 1.8^2 = 8.36$.
@@ -978,123 +981,122 @@ $$\boldsymbol{\Sigma} \stackrel{\textrm{def}}{=} \textrm{Cov}_{\mathbf{x} \sim P
 
 
 
-This matrix $\boldsymbol{\Sigma}$ is referred to as the covariance matrix.
-An easy way to see its effect is to consider some vector $\mathbf{v}$
-of the same size as $\mathbf{x}$.
-It follows that
+Matriks ini, $\boldsymbol{\Sigma}$, dikenal sebagai matriks kovarians.
+Cara mudah untuk melihat efeknya adalah dengan mempertimbangkan sebuah vektor $\mathbf{v}$
+yang ukurannya sama dengan $\mathbf{x}$.
+Dari situ, kita dapat menyimpulkan bahwa
 
 $$\mathbf{v}^\top \boldsymbol{\Sigma} \mathbf{v} = E_{\mathbf{x} \sim P}\left[\mathbf{v}^\top(\mathbf{x} - \boldsymbol{\mu}) (\mathbf{x} - \boldsymbol{\mu})^\top \mathbf{v}\right] = \textrm{Var}_{x \sim P}[\mathbf{v}^\top \mathbf{x}].$$
 
-As such, $\boldsymbol{\Sigma}$ allows us to compute the variance
-for any linear function of $\mathbf{x}$
-by a simple matrix multiplication.
-The off-diagonal elements tell us how correlated the coordinates are:
-a value of 0 means no correlation,
-where a larger positive value
-means that they are more strongly correlated.
-
-
-
-## Discussion
-
-In machine learning, there are many things to be uncertain about!
-We can be uncertain about the value of a label given an input.
-We can be uncertain about the estimated value of a parameter.
-We can even be uncertain about whether data arriving at deployment
-is even from the same distribution as the training data.
-
-By *aleatoric uncertainty*, we mean uncertainty
-that is intrinsic to the problem,
-and due to genuine randomness
-unaccounted for by the observed variables.
-By *epistemic uncertainty*, we mean uncertainty
-over a model's parameters, the sort of uncertainty
-that we can hope to reduce by collecting more data.
-We might have epistemic uncertainty
-concerning the probability
-that a coin turns up heads,
-but even once we know this probability,
-we are left with aleatoric uncertainty
-about the outcome of any future toss.
-No matter how long we watch someone tossing a fair coin,
-we will never be more or less than 50% certain
-that the next toss will come up heads.
-These terms come from mechanical modeling,
-(see e.g., :citet:`Der-Kiureghian.Ditlevsen.2009` for a review on this aspect of [uncertainty quantification](https://en.wikipedia.org/wiki/Uncertainty_quantification)).
-It is worth noting, however, that these terms constitute a slight abuse of language.
-The term *epistemic* refers to anything concerning *knowledge*
-and thus, in the philosophical sense, all uncertainty is epistemic.
-
-
-We saw that sampling data from some unknown probability distribution
-can provide us with information that can be used to estimate
-the parameters of the data generating distribution.
-That said, the rate at which this is possible can be quite slow.
-In our coin tossing example (and many others)
-we can do no better than to design estimators
-that converge at a rate of $1/\sqrt{n}$,
-where $n$ is the sample size (e.g., the number of tosses).
-This means that by going from 10 to 1000 observations (usually a very achievable task)
-we see a tenfold reduction of uncertainty,
-whereas the next 1000 observations help comparatively little,
-offering only a 1.41 times reduction.
-This is a persistent feature of machine learning:
-while there are often easy gains, it takes a very large amount of data,
-and often with it an enormous amount of computation, to make further gains.
-For an empirical review of this fact for large scale language models see :citet:`Revels.Lubin.Papamarkou.2016`.
-
-We also sharpened our language and tools for statistical modeling.
-In the process of that we learned about conditional probabilities
-and about one of the most important equations in statistics---Bayes' theorem.
-It is an effective tool for decoupling information conveyed by data
-through a likelihood term $P(B \mid A)$ that addresses
-how well observations $B$ match a choice of parameters $A$,
-and a prior probability $P(A)$ which governs how plausible
-a particular choice of $A$ was in the first place.
-In particular, we saw how this rule can be applied
-to assign probabilities to diagnoses,
-based on the efficacy of the test *and*
-the prevalence of the disease itself (i.e., our prior).
-
-Lastly, we introduced a first set of nontrivial questions
-about the effect of a specific probability distribution,
-namely expectations and variances.
-While there are many more than just linear and quadratic
-expectations for a probability distribution,
-these two already provide a good deal of knowledge
-about the possible behavior of the distribution.
-For instance, [Chebyshev's inequality](https://en.wikipedia.org/wiki/Chebyshev%27s_inequality)
-states that $P(|X - \mu| \geq k \sigma) \leq 1/k^2$,
-where $\mu$ is the expectation, $\sigma^2$ is the variance of the distribution,
-and $k > 1$ is a confidence parameter of our choosing.
-It tells us that draws from a distribution lie
-with at least 50% probability
-within a $[-\sqrt{2} \sigma, \sqrt{2} \sigma]$
-interval centered on the expectation.
+Dengan demikian, $\boldsymbol{\Sigma}$ memungkinkan kita untuk menghitung varians
+untuk setiap fungsi linier dari $\mathbf{x}$
+hanya dengan perkalian matriks sederhana.
+Elemen-elemen di luar diagonal menunjukkan seberapa berkorelasi koordinat-koordinat tersebut:
+nilai 0 berarti tidak ada korelasi,
+sedangkan nilai positif yang lebih besar
+berarti korelasi yang lebih kuat.
 
 
 
 
-## Exercises
+## Diskusi
 
-1. Give an example where observing more data can reduce the amount of uncertainty about the outcome to an arbitrarily low level.
-1. Give an example where observing more data will only reduce the amount of uncertainty up to a point and then no further. Explain why this is the case and where you expect this point to occur.
-1. We empirically demonstrated convergence to the mean for the toss of a coin. Calculate the variance of the estimate of the probability that we see a head after drawing $n$ samples.
-    1. How does the variance scale with the number of observations?
-    1. Use Chebyshev's inequality to bound the deviation from the expectation.
-    1. How does it relate to the central limit theorem?
-1. Assume that we draw $m$ samples $x_i$ from a probability distribution with zero mean and unit variance. Compute the averages $z_m \stackrel{\textrm{def}}{=} m^{-1} \sum_{i=1}^m x_i$. Can we apply Chebyshev's inequality for every $z_m$ independently? Why not?
-1. Given two events with probability $P(\mathcal{A})$ and $P(\mathcal{B})$, compute upper and lower bounds on $P(\mathcal{A} \cup \mathcal{B})$ and $P(\mathcal{A} \cap \mathcal{B})$. Hint: graph the situation using a [Venn diagram](https://en.wikipedia.org/wiki/Venn_diagram).
-1. Assume that we have a sequence of random variables, say $A$, $B$, and $C$, where $B$ only depends on $A$, and $C$ only depends on $B$, can you simplify the joint probability $P(A, B, C)$? Hint: this is a [Markov chain](https://en.wikipedia.org/wiki/Markov_chain).
-1. In :numref:`subsec_probability_hiv_app`, assume that the outcomes of the two tests are not independent. In particular assume that either test on its own has a false positive rate of 10% and a false negative rate of 1%. That is, assume that $P(D =1 \mid H=0) = 0.1$ and that $P(D = 0 \mid H=1) = 0.01$. Moreover, assume that for $H = 1$ (infected) the test outcomes are conditionally independent, i.e., that $P(D_1, D_2 \mid H=1) = P(D_1 \mid H=1) P(D_2 \mid H=1)$ but that for healthy patients the outcomes are coupled via $P(D_1 = D_2 = 1 \mid H=0) = 0.02$.
-    1. Work out the joint probability table for $D_1$ and $D_2$, given $H=0$ based on the information you have so far.
-    1. Derive the probability that the patient is diseased ($H=1$) after one test returns positive. You can assume the same baseline probability $P(H=1) = 0.0015$ as before.
-    1. Derive the probability that the patient is diseased ($H=1$) after both tests return positive.
-1. Assume that you are an asset manager for an investment bank and you have a choice of stocks $s_i$ to invest in. Your portfolio needs to add up to $1$ with weights $\alpha_i$ for each stock. The stocks have an average return $\boldsymbol{\mu} = E_{\mathbf{s} \sim P}[\mathbf{s}]$ and covariance $\boldsymbol{\Sigma} = \textrm{Cov}_{\mathbf{s} \sim P}[\mathbf{s}]$.
-    1. Compute the expected return for a given portfolio $\boldsymbol{\alpha}$.
-    1. If you wanted to maximize the return of the portfolio, how should you choose your investment?
-    1. Compute the *variance* of the portfolio.
-    1. Formulate an optimization problem of maximizing the return while keeping the variance constrained to an upper bound. This is the Nobel-Prize winning [Markovitz portfolio](https://en.wikipedia.org/wiki/Markowitz_model) :cite:`Mangram.2013`. To solve it you will need a quadratic programming solver, something way beyond the scope of this book.
+Dalam machine learning, ada banyak hal yang bisa kita ragu-ragukan!
+Kita bisa merasa tidak pasti tentang nilai label yang diberikan sebuah input.
+Kita bisa tidak pasti tentang nilai estimasi dari sebuah parameter.
+Bahkan, kita bisa ragu apakah data yang tiba saat penerapan
+berasal dari distribusi yang sama dengan data pelatihan.
+
+Dengan *ketidakpastian aleatorik* (*aleatoric uncertainty*), kita merujuk pada ketidakpastian
+yang melekat pada masalah tersebut, yang disebabkan oleh keacakan sejati
+yang tidak dapat dijelaskan oleh variabel yang diamati.
+Dengan *ketidakpastian epistemik* (*epistemic uncertainty*), kita merujuk pada ketidakpastian
+terhadap parameter model, jenis ketidakpastian yang dapat kita harapkan untuk berkurang
+dengan mengumpulkan lebih banyak data.
+Kita mungkin memiliki ketidakpastian epistemik
+tentang probabilitas sebuah koin menunjukkan sisi kepala,
+tetapi bahkan setelah mengetahui probabilitas ini,
+kita masih memiliki ketidakpastian aleatorik
+tentang hasil lemparan di masa depan.
+Tidak peduli seberapa lama kita mengamati seseorang melempar koin yang adil,
+kita tidak akan pernah lebih atau kurang dari 50% yakin
+bahwa lemparan berikutnya akan menunjukkan sisi kepala.
+Istilah-istilah ini berasal dari pemodelan mekanis
+(lihat misalnya, :citet:`Der-Kiureghian.Ditlevsen.2009` untuk ulasan tentang aspek [kuantifikasi ketidakpastian](https://en.wikipedia.org/wiki/Uncertainty_quantification)).
+Namun, perlu dicatat bahwa istilah-istilah ini merupakan penyederhanaan bahasa.
+Istilah *epistemik* mengacu pada segala sesuatu yang berkaitan dengan *pengetahuan*
+dan, dalam arti filosofis, semua ketidakpastian adalah epistemik.
+
+Kita melihat bahwa pengambilan sampel data dari distribusi probabilitas yang tidak diketahui
+dapat memberi kita informasi yang dapat digunakan untuk mengestimasi
+parameter dari distribusi pembangkit data.
+Namun demikian, laju di mana hal ini dimungkinkan bisa cukup lambat.
+Dalam contoh lemparan koin kita (dan banyak kasus lainnya)
+kita tidak bisa lebih baik daripada merancang estimator
+yang berkonvergen pada laju $1/\sqrt{n}$,
+di mana $n$ adalah ukuran sampel (misalnya, jumlah lemparan).
+Ini berarti bahwa dengan meningkat dari 10 menjadi 1000 observasi (biasanya tugas yang sangat mungkin tercapai)
+kita melihat pengurangan ketidakpastian sepuluh kali lipat,
+sementara 1000 observasi berikutnya relatif membantu sedikit,
+hanya menawarkan pengurangan sebesar 1,41 kali.
+Ini adalah fitur persisten dalam machine learning:
+meskipun ada perolehan yang mudah di awal, membutuhkan sangat banyak data,
+dan sering kali membutuhkan komputasi yang besar, untuk memperoleh perbaikan lebih lanjut.
+Untuk tinjauan empiris fakta ini pada model bahasa berskala besar, lihat :citet:`Revels.Lubin.Papamarkou.2016`.
+
+Kita juga memperjelas bahasa dan alat kita untuk pemodelan statistik.
+Dalam proses itu, kita mempelajari tentang probabilitas bersyarat
+dan tentang salah satu persamaan terpenting dalam statistik---teorema Bayes.
+Ini adalah alat yang efektif untuk memisahkan informasi yang disampaikan oleh data
+melalui sebuah istilah likelihood $P(B \mid A)$ yang menunjukkan
+seberapa baik observasi $B$ sesuai dengan pilihan parameter $A$,
+dan probabilitas prior $P(A)$ yang mengatur seberapa mungkin
+sebuah pilihan $A$ sejak awal.
+Secara khusus, kita melihat bagaimana aturan ini dapat diterapkan
+untuk menetapkan probabilitas pada diagnosis,
+berdasarkan efektivitas tes *dan*
+prevalensi penyakit itu sendiri (yaitu, prior kita).
+
+Terakhir, kita memperkenalkan serangkaian pertanyaan nontrivial pertama
+tentang efek dari distribusi probabilitas tertentu,
+yaitu ekspektasi dan varians.
+Meskipun ada banyak ekspektasi lainnya selain yang linear dan kuadratik
+untuk distribusi probabilitas, dua ekspektasi ini saja sudah memberikan
+banyak wawasan tentang kemungkinan perilaku distribusi tersebut.
+Sebagai contoh, [ketaksamaan Chebyshev](https://en.wikipedia.org/wiki/Chebyshev%27s_inequality)
+menyatakan bahwa $P(|X - \mu| \geq k \sigma) \leq 1/k^2$,
+di mana $\mu$ adalah ekspektasi, $\sigma^2$ adalah varians dari distribusi,
+dan $k > 1$ adalah parameter kepercayaan yang kita pilih.
+Ini menunjukkan bahwa nilai yang diambil dari suatu distribusi berada
+dengan probabilitas minimal 50%
+dalam interval $[-\sqrt{2} \sigma, \sqrt{2} \sigma]$
+yang berpusat pada ekspektasi.
+
+
+## Latihan
+
+1. Berikan contoh di mana mengamati lebih banyak data dapat mengurangi ketidakpastian tentang hasil hingga ke tingkat yang sangat rendah.
+2. Berikan contoh di mana mengamati lebih banyak data hanya akan mengurangi jumlah ketidakpastian hingga batas tertentu dan kemudian tidak akan berkurang lebih jauh. Jelaskan mengapa hal ini terjadi dan di mana Anda memperkirakan batas ini terjadi.
+3. Kita telah menunjukkan secara empiris konvergensi menuju nilai rata-rata dalam lemparan koin. Hitung varians dari estimasi probabilitas bahwa kita melihat sisi kepala setelah mengambil $n$ sampel.
+    1. Bagaimana skala varians dengan jumlah pengamatan?
+    2. Gunakan ketaksamaan Chebyshev untuk membatasi deviasi dari ekspektasi.
+    3. Bagaimana hubungannya dengan teorema limit pusat?
+4. Asumsikan bahwa kita mengambil $m$ sampel $x_i$ dari distribusi probabilitas dengan nilai rata-rata nol dan varians satu. Hitung rata-rata $z_m \stackrel{\textrm{def}}{=} m^{-1} \sum_{i=1}^m x_i$. Bisakah kita menerapkan ketaksamaan Chebyshev untuk setiap $z_m$ secara independen? Mengapa tidak?
+5. Diberikan dua peristiwa dengan probabilitas $P(\mathcal{A})$ dan $P(\mathcal{B})$, hitung batas atas dan batas bawah untuk $P(\mathcal{A} \cup \mathcal{B})$ dan $P(\mathcal{A} \cap \mathcal{B})$. Petunjuk: gambarkan situasi menggunakan [diagram Venn](https://en.wikipedia.org/wiki/Venn_diagram).
+6. Asumsikan bahwa kita memiliki urutan variabel acak, misalnya $A$, $B$, dan $C$, di mana $B$ hanya bergantung pada $A$, dan $C$ hanya bergantung pada $B$. Bisakah Anda menyederhanakan probabilitas gabungan $P(A, B, C)$? Petunjuk: ini adalah [rantai Markov](https://en.wikipedia.org/wiki/Markov_chain).
+7. Dalam :numref:`subsec_probability_hiv_app`, asumsikan bahwa hasil dari kedua tes tidak independen. Secara khusus, asumsikan bahwa masing-masing tes memiliki tingkat positif palsu sebesar 10% dan tingkat negatif palsu sebesar 1%. Artinya, asumsikan bahwa $P(D =1 \mid H=0) = 0.1$ dan bahwa $P(D = 0 \mid H=1) = 0.01$. Selain itu, asumsikan bahwa untuk $H = 1$ (terinfeksi) hasil tes bersifat independen secara kondisional, yaitu, $P(D_1, D_2 \mid H=1) = P(D_1 \mid H=1) P(D_2 \mid H=1)$, tetapi untuk pasien sehat hasilnya terkait melalui $P(D_1 = D_2 = 1 \mid H=0) = 0.02$.
+    1. Susun tabel probabilitas gabungan untuk $D_1$ dan $D_2$, mengingat $H=0$ berdasarkan informasi yang Anda miliki sejauh ini.
+    2. Turunkan probabilitas bahwa pasien terinfeksi ($H=1$) setelah satu tes kembali positif. Anda dapat mengasumsikan probabilitas dasar yang sama $P(H=1) = 0.0015$ seperti sebelumnya.
+    3. Turunkan probabilitas bahwa pasien terinfeksi ($H=1$) setelah kedua tes kembali positif.
+8. Asumsikan bahwa Anda adalah seorang manajer aset untuk sebuah bank investasi dan Anda memiliki pilihan saham $s_i$ untuk diinvestasikan. Portofolio Anda harus berjumlah $1$ dengan bobot $\alpha_i$ untuk setiap saham. Saham-saham tersebut memiliki rata-rata pengembalian $\boldsymbol{\mu} = E_{\mathbf{s} \sim P}[\mathbf{s}]$ dan kovarians $\boldsymbol{\Sigma} = \textrm{Cov}_{\mathbf{s} \sim P}[\mathbf{s}]$.
+    1. Hitung pengembalian yang diharapkan untuk portofolio tertentu $\boldsymbol{\alpha}$.
+    2. Jika Anda ingin memaksimalkan pengembalian portofolio, bagaimana Anda harus memilih investasi Anda?
+    3. Hitung *varians* dari portofolio.
+    4. Formulasikan masalah optimisasi untuk memaksimalkan pengembalian dengan mempertahankan varians di bawah batas atas. Ini adalah model [portofolio Markovitz](https://en.wikipedia.org/wiki/Markowitz_model) pemenang Hadiah Nobel :cite:`Mangram.2013`. Untuk menyelesaikannya, Anda memerlukan penyelesai pemrograman kuadratik, yang berada di luar cakupan buku ini.
+
+
+
+
 
 :begin_tab:`mxnet`
 [Discussions](https://discuss.d2l.ai/t/36)
