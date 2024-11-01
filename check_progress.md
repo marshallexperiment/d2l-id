@@ -20,7 +20,7 @@
 
 # 2 - chapter_preliminaries
 
-- [ ] ./chapter_preliminaries/probability.md
+- [x] ./chapter_preliminaries/probability.md
 - [ ] ./chapter_preliminaries/ndarray.md
 - [ ] ./chapter_preliminaries/autograd.md
 - [ ] ./chapter_preliminaries/lookup-api.md
