@@ -3,64 +3,65 @@
 tab.interact_select(['mxnet', 'pytorch', 'tensorflow', 'jax'])
 ```
 
-# Data Manipulation
+# Manipulasi Data
 :label:`sec_ndarray`
 
-In order to get anything done, 
-we need some way to store and manipulate data.
-Generally, there are two important things 
-we need to do with data: 
-(i) acquire them; 
-and (ii) process them once they are inside the computer. 
-There is no point in acquiring data 
-without some way to store it, 
-so to start, let's get our hands dirty
-with $n$-dimensional arrays, 
-which we also call *tensors*.
-If you already know the NumPy 
-scientific computing package, 
-this will be a breeze.
-For all modern deep learning frameworks,
-the *tensor class* (`ndarray` in MXNet, 
-`Tensor` in PyTorch and TensorFlow) 
-resembles NumPy's `ndarray`,
-with a few killer features added.
-First, the tensor class
-supports automatic differentiation.
-Second, it leverages GPUs
-to accelerate numerical computation,
-whereas NumPy only runs on CPUs.
-These properties make neural networks
-both easy to code and fast to run.
+Untuk melakukan apa pun, 
+kita memerlukan cara untuk menyimpan dan memanipulasi data.
+Secara umum, ada dua hal penting 
+yang perlu kita lakukan dengan data: 
+(i) memperolehnya; 
+dan (ii) memprosesnya setelah berada di dalam komputer. 
+Tidak ada gunanya mengumpulkan data 
+tanpa cara untuk menyimpannya, 
+jadi untuk memulai, mari kita bekerja langsung
+dengan array berdimensi $n$, 
+yang juga kita sebut *tensor*.
+Jika Anda sudah mengetahui paket komputasi ilmiah NumPy, 
+ini akan terasa mudah.
+Untuk semua framework deep learning modern,
+*kelas tensor* (`ndarray` di MXNet, 
+`Tensor` di PyTorch dan TensorFlow) 
+mirip dengan `ndarray` di NumPy,
+dengan beberapa fitur unggulan tambahan.
+Pertama, kelas tensor
+mendukung diferensiasi otomatis.
+Kedua, kelas ini memanfaatkan GPU
+untuk mempercepat perhitungan numerik,
+sedangkan NumPy hanya berjalan di CPU.
+Sifat-sifat ini membuat jaringan saraf 
+mudah dikodekan dan cepat dijalankan.
 
 
 
-## Getting Started
+## Memulai
 
 :begin_tab:`mxnet`
-To start, we import the `np` (`numpy`) and
-`npx` (`numpy_extension`) modules from MXNet.
-Here, the `np` module includes 
-functions supported by NumPy,
-while the `npx` module contains a set of extensions
-developed to empower deep learning 
-within a NumPy-like environment.
-When using tensors, we almost always 
-invoke the `set_np` function:
-this is for compatibility of tensor processing 
-by other components of MXNet.
+Untuk memulai, kita mengimpor modul `np` (`numpy`) dan
+`npx` (`numpy_extension`) dari MXNet.
+Di sini, modul `np` mencakup 
+fungsi-fungsi yang didukung oleh NumPy,
+sementara modul `npx` berisi serangkaian ekstensi
+yang dikembangkan untuk mendukung deep learning 
+dalam lingkungan yang mirip dengan NumPy.
+Saat menggunakan tensor, kita hampir selalu 
+memanggil fungsi `set_np`:
+ini untuk kompatibilitas pemrosesan tensor 
+oleh komponen lain dari MXNet.
 :end_tab:
 
 :begin_tab:`pytorch`
-(**To start, we import the PyTorch library.
-Note that the package name is `torch`.**)
+(**Untuk memulai, kita mengimpor pustaka PyTorch.
+Perhatikan bahwa nama paketnya adalah `torch`.**)
 :end_tab:
 
 :begin_tab:`tensorflow`
-To start, we import `tensorflow`. 
-For brevity, practitioners 
-often assign the alias `tf`.
+Untuk memulai, kita mengimpor `tensorflow`. 
+Untuk singkatnya, praktisi 
+sering menggunakan alias `tf`.
 :end_tab:
+
+
 
 ```{.python .input}
 %%tab mxnet
@@ -83,55 +84,55 @@ import tensorflow as tf
 import jax
 from jax import numpy as jnp
 ```
-
-[**A tensor represents a (possibly multidimensional) array of numerical values.**]
-In the one-dimensional case, i.e., when only one axis is needed for the data,
-a tensor is called a *vector*.
-With two axes, a tensor is called a *matrix*.
-With $k > 2$ axes, we drop the specialized names
-and just refer to the object as a $k^\textrm{th}$-*order tensor*.
+[**Sebuah tensor merepresentasikan array nilai numerik (mungkin berdimensi banyak).**]
+Dalam kasus satu dimensi, yaitu ketika hanya diperlukan satu sumbu untuk data,
+tensor disebut sebagai *vektor*.
+Dengan dua sumbu, tensor disebut sebagai *matriks*.
+Untuk $k > 2$ sumbu, kita tidak menggunakan nama khusus
+dan cukup menyebut objek tersebut sebagai *tensor orde ke-*$k^\textrm{th}$.
 
 :begin_tab:`mxnet`
-MXNet provides a variety of functions 
-for creating new tensors 
-prepopulated with values. 
-For example, by invoking `arange(n)`,
-we can create a vector of evenly spaced values,
-starting at 0 (included) 
-and ending at `n` (not included).
-By default, the interval size is $1$.
-Unless otherwise specified, 
-new tensors are stored in main memory 
-and designated for CPU-based computation.
+MXNet menyediakan berbagai fungsi 
+untuk membuat tensor baru 
+yang sudah diisi dengan nilai. 
+Misalnya, dengan memanggil `arange(n)`,
+kita dapat membuat vektor dengan nilai-nilai yang berjarak merata,
+dimulai dari 0 (termasuk) 
+dan berakhir di `n` (tidak termasuk).
+Secara default, ukuran interval adalah $1$.
+Kecuali ditentukan lain, 
+tensor baru disimpan di memori utama 
+dan ditujukan untuk komputasi berbasis CPU.
 :end_tab:
 
 :begin_tab:`pytorch`
-PyTorch provides a variety of functions 
-for creating new tensors 
-prepopulated with values. 
-For example, by invoking `arange(n)`,
-we can create a vector of evenly spaced values,
-starting at 0 (included) 
-and ending at `n` (not included).
-By default, the interval size is $1$.
-Unless otherwise specified, 
-new tensors are stored in main memory 
-and designated for CPU-based computation.
+PyTorch menyediakan berbagai fungsi 
+untuk membuat tensor baru 
+yang sudah diisi dengan nilai. 
+Misalnya, dengan memanggil `arange(n)`,
+kita dapat membuat vektor dengan nilai-nilai yang berjarak merata,
+dimulai dari 0 (termasuk) 
+dan berakhir di `n` (tidak termasuk).
+Secara default, ukuran interval adalah $1$.
+Kecuali ditentukan lain, 
+tensor baru disimpan di memori utama 
+dan ditujukan untuk komputasi berbasis CPU.
 :end_tab:
 
 :begin_tab:`tensorflow`
-TensorFlow provides a variety of functions 
-for creating new tensors 
-prepopulated with values. 
-For example, by invoking `range(n)`,
-we can create a vector of evenly spaced values,
-starting at 0 (included) 
-and ending at `n` (not included).
-By default, the interval size is $1$.
-Unless otherwise specified, 
-new tensors are stored in main memory 
-and designated for CPU-based computation.
+TensorFlow menyediakan berbagai fungsi 
+untuk membuat tensor baru 
+yang sudah diisi dengan nilai. 
+Misalnya, dengan memanggil `range(n)`,
+kita dapat membuat vektor dengan nilai-nilai yang berjarak merata,
+dimulai dari 0 (termasuk) 
+dan berakhir di `n` (tidak termasuk).
+Secara default, ukuran interval adalah $1$.
+Kecuali ditentukan lain, 
+tensor baru disimpan di memori utama 
+dan ditujukan untuk komputasi berbasis CPU.
 :end_tab:
+
 
 ```{.python .input}
 %%tab mxnet
@@ -158,28 +159,29 @@ x
 ```
 
 :begin_tab:`mxnet`
-Each of these values is called
-an *element* of the tensor.
-The tensor `x` contains 12 elements.
-We can inspect the total number of elements 
-in a tensor via its `size` attribute.
+Setiap nilai ini disebut
+sebagai *elemen* dari tensor.
+Tensor `x` mengandung 12 elemen.
+Kita dapat memeriksa jumlah total elemen 
+dalam sebuah tensor melalui atribut `size`.
 :end_tab:
 
 :begin_tab:`pytorch`
-Each of these values is called
-an *element* of the tensor.
-The tensor `x` contains 12 elements.
-We can inspect the total number of elements 
-in a tensor via its `numel` method.
+Setiap nilai ini disebut
+sebagai *elemen* dari tensor.
+Tensor `x` mengandung 12 elemen.
+Kita dapat memeriksa jumlah total elemen 
+dalam sebuah tensor melalui metode `numel`.
 :end_tab:
 
 :begin_tab:`tensorflow`
-Each of these values is called
-an *element* of the tensor.
-The tensor `x` contains 12 elements.
-We can inspect the total number of elements 
-in a tensor via the `size` function.
+Setiap nilai ini disebut
+sebagai *elemen* dari tensor.
+Tensor `x` mengandung 12 elemen.
+Kita dapat memeriksa jumlah total elemen 
+dalam sebuah tensor melalui fungsi `size`.
 :end_tab:
+
 
 ```{.python .input}
 %%tab mxnet, jax
@@ -196,28 +198,29 @@ x.numel()
 tf.size(x)
 ```
 
-(**We can access a tensor's *shape***) 
-(the length along each axis)
-by inspecting its `shape` attribute.
-Because we are dealing with a vector here,
-the `shape` contains just a single element
-and is identical to the size.
+(**Kita dapat mengakses *shape* tensor**) 
+(panjang di sepanjang setiap sumbu)
+dengan memeriksa atribut `shape`-nya.
+Karena kita sedang berurusan dengan vektor di sini,
+`shape` hanya berisi satu elemen
+dan identik dengan ukuran.
+
 
 ```{.python .input}
 %%tab all
 x.shape
 ```
 
-We can [**change the shape of a tensor
-without altering its size or values**],
-by invoking `reshape`.
-For example, we can transform 
-our vector `x` whose shape is (12,) 
-to a matrix `X`  with shape (3, 4).
-This new tensor retains all elements
-but reconfigures them into a matrix.
-Notice that the elements of our vector
-are laid out one row at a time and thus
+Kita dapat [**mengubah bentuk dari sebuah tensor
+tanpa mengubah ukuran atau nilainya**]
+dengan memanggil `reshape`.
+Misalnya, kita dapat mengubah 
+vektor `x` kita yang memiliki bentuk (12,) 
+menjadi matriks `X` dengan bentuk (3, 4).
+Tensor baru ini mempertahankan semua elemen
+tetapi mengonfigurasinya kembali menjadi matriks.
+Perhatikan bahwa elemen-elemen dari vektor kita
+diletakkan satu baris pada satu waktu sehingga
 `x[3] == X[0, 3]`.
 
 ```{.python .input}
@@ -232,23 +235,24 @@ X = tf.reshape(x, (3, 4))
 X
 ```
 
-Note that specifying every shape component
-to `reshape` is redundant.
-Because we already know our tensor's size,
-we can work out one component of the shape given the rest.
-For example, given a tensor of size $n$
-and target shape ($h$, $w$),
-we know that $w = n/h$.
-To automatically infer one component of the shape,
-we can place a `-1` for the shape component
-that should be inferred automatically.
-In our case, instead of calling `x.reshape(3, 4)`,
-we could have equivalently called `x.reshape(-1, 4)` or `x.reshape(3, -1)`.
+Perhatikan bahwa menentukan setiap komponen bentuk
+untuk `reshape` sebenarnya tidak perlu.
+Karena kita sudah mengetahui ukuran tensor kita,
+kita dapat menghitung satu komponen bentuk dengan mengetahui komponen lainnya.
+Misalnya, diberikan sebuah tensor dengan ukuran $n$
+dan bentuk target ($h$, $w$),
+kita tahu bahwa $w = n/h$.
+Untuk secara otomatis menentukan satu komponen bentuk,
+kita dapat memasukkan `-1` pada komponen bentuk
+yang seharusnya diisi secara otomatis.
+Dalam kasus kita, alih-alih memanggil `x.reshape(3, 4)`,
+kita dapat memanggil `x.reshape(-1, 4)` atau `x.reshape(3, -1)`.
 
-Practitioners often need to work with tensors
-initialized to contain all 0s or 1s.
-[**We can construct a tensor with all elements set to 0**] (~~or one~~)
-and a shape of (2, 3, 4) via the `zeros` function.
+Praktisi sering kali perlu bekerja dengan tensor
+yang diinisialisasi untuk berisi semua 0 atau 1.
+[**Kita dapat membuat tensor dengan semua elemen diatur ke 0**] (~~atau satu~~)
+dan dengan bentuk (2, 3, 4) melalui fungsi `zeros`.
+
 
 ```{.python .input}
 %%tab mxnet
@@ -270,8 +274,9 @@ tf.zeros((2, 3, 4))
 jnp.zeros((2, 3, 4))
 ```
 
-Similarly, we can create a tensor 
-with all 1s by invoking `ones`.
+Demikian pula, kita dapat membuat tensor 
+dengan semua elemen 1 dengan memanggil `ones`.
+
 
 ```{.python .input}
 %%tab mxnet
@@ -293,15 +298,16 @@ tf.ones((2, 3, 4))
 jnp.ones((2, 3, 4))
 ```
 
-We often wish to 
-[**sample each element randomly (and independently)**] 
-from a given probability distribution.
-For example, the parameters of neural networks
-are often initialized randomly.
-The following snippet creates a tensor 
-with elements drawn from 
-a standard Gaussian (normal) distribution
-with mean 0 and standard deviation 1.
+Kita sering ingin 
+[**mengambil sampel setiap elemen secara acak (dan independen)**] 
+dari distribusi probabilitas tertentu.
+Misalnya, parameter dari jaringan saraf
+sering kali diinisialisasi secara acak.
+Potongan kode berikut membuat sebuah tensor 
+dengan elemen-elemen yang diambil dari 
+distribusi Gaussian standar (normal)
+dengan rata-rata 0 dan deviasi standar 1.
+
 
 ```{.python .input}
 %%tab mxnet
@@ -326,13 +332,14 @@ tf.random.normal(shape=[3, 4])
 jax.random.normal(jax.random.PRNGKey(0), (3, 4))
 ```
 
-Finally, we can construct tensors by
-[**supplying the exact values for each element**] 
-by supplying (possibly nested) Python list(s) 
-containing numerical literals.
-Here, we construct a matrix with a list of lists,
-where the outermost list corresponds to axis 0,
-and the inner list corresponds to axis 1.
+Terakhir, kita dapat membuat tensor dengan
+[**menyediakan nilai pasti untuk setiap elemen**] 
+dengan memberikan (mungkin berupa daftar bertingkat) list Python 
+yang berisi nilai-nilai numerik.
+Di sini, kita membuat sebuah matriks dengan daftar daftar,
+di mana daftar terluar sesuai dengan sumbu 0,
+dan daftar dalam sesuai dengan sumbu 1.
+
 
 ```{.python .input}
 %%tab mxnet
@@ -354,43 +361,44 @@ tf.constant([[2, 1, 4, 3], [1, 2, 3, 4], [4, 3, 2, 1]])
 jnp.array([[2, 1, 4, 3], [1, 2, 3, 4], [4, 3, 2, 1]])
 ```
 
-## Indexing and Slicing
+## Indexing dan Slicing
 
-As with  Python lists,
-we can access tensor elements 
-by indexing (starting with 0).
-To access an element based on its position
-relative to the end of the list,
-we can use negative indexing.
-Finally, we can access whole ranges of indices 
-via slicing (e.g., `X[start:stop]`), 
-where the returned value includes 
-the first index (`start`) *but not the last* (`stop`).
-Finally, when only one index (or slice)
-is specified for a $k^\textrm{th}$-order tensor,
-it is applied along axis 0.
-Thus, in the following code,
-[**`[-1]` selects the last row and `[1:3]`
-selects the second and third rows**].
+Seperti pada list Python,
+kita dapat mengakses elemen tensor 
+dengan melakukan indexing (dimulai dari 0).
+Untuk mengakses elemen berdasarkan posisinya
+relatif terhadap akhir list,
+kita dapat menggunakan indexing negatif.
+Akhirnya, kita dapat mengakses rentang indeks secara keseluruhan 
+melalui slicing (misalnya, `X[start:stop]`), 
+di mana nilai yang dikembalikan mencakup 
+indeks pertama (`start`) *tetapi tidak yang terakhir* (`stop`).
+Terakhir, ketika hanya satu indeks (atau slice)
+ditentukan untuk tensor orde ke-$k$,
+indeks tersebut diterapkan pada sumbu 0.
+Jadi, dalam kode berikut,
+[**`[-1]` memilih baris terakhir dan `[1:3]`
+memilih baris kedua dan ketiga**].
+
 
 ```{.python .input}
 %%tab all
 X[-1], X[1:3]
 ```
-
 :begin_tab:`mxnet, pytorch`
-Beyond reading them, (**we can also *write* elements of a matrix by specifying indices.**)
+Selain membaca elemen, (**kita juga dapat *menulis* elemen dari sebuah matriks dengan menentukan indeks.**)
 :end_tab:
 
 :begin_tab:`tensorflow`
-`Tensors` in TensorFlow are immutable, and cannot be assigned to.
-`Variables` in TensorFlow are mutable containers of state that support
-assignments. Keep in mind that gradients in TensorFlow do not flow backwards
-through `Variable` assignments.
+`Tensors` dalam TensorFlow bersifat immutable, dan tidak dapat diberikan nilai langsung.
+`Variables` dalam TensorFlow adalah kontainer mutable yang mendukung
+penugasan nilai. Ingat bahwa gradien dalam TensorFlow tidak mengalir mundur
+melalui penugasan `Variable`.
 
-Beyond assigning a value to the entire `Variable`, we can write elements of a
-`Variable` by specifying indices.
+Selain menetapkan nilai ke seluruh `Variable`, kita dapat menulis elemen dari
+`Variable` dengan menentukan indeks.
 :end_tab:
+
 
 ```{.python .input}
 %%tab mxnet, pytorch
@@ -414,15 +422,16 @@ X_new_1 = X.at[1, 2].set(17)
 X_new_1
 ```
 
-If we want [**to assign multiple elements the same value,
-we apply the indexing on the left-hand side 
-of the assignment operation.**]
-For instance, `[:2, :]`  accesses 
-the first and second rows,
-where `:` takes all the elements along axis 1 (column).
-While we discussed indexing for matrices,
-this also works for vectors
-and for tensors of more than two dimensions.
+Jika kita ingin [**menetapkan nilai yang sama untuk beberapa elemen,
+kita menerapkan indexing pada sisi kiri 
+dari operasi penugasan.**]
+Misalnya, `[:2, :]` mengakses 
+baris pertama dan kedua,
+di mana `:` mengambil semua elemen di sepanjang sumbu 1 (kolom).
+Meskipun kita membahas indexing untuk matriks,
+ini juga berlaku untuk vektor
+dan untuk tensor dengan lebih dari dua dimensi.
+
 
 ```{.python .input}
 %%tab mxnet, pytorch
@@ -443,30 +452,31 @@ X_new_2 = X_new_1.at[:2, :].set(12)
 X_new_2
 ```
 
-## Operations
+## Operasi
 
-Now that we know how to construct tensors
-and how to read from and write to their elements,
-we can begin to manipulate them
-with various mathematical operations.
-Among the most useful of these 
-are the *elementwise* operations.
-These apply a standard scalar operation
-to each element of a tensor.
-For functions that take two tensors as inputs,
-elementwise operations apply some standard binary operator
-on each pair of corresponding elements.
-We can create an elementwise function 
-from any function that maps 
-from a scalar to a scalar.
+Sekarang kita tahu cara membangun tensor
+dan cara membaca serta menulis elemen-elemennya,
+kita bisa mulai memanipulasinya
+dengan berbagai operasi matematika.
+Di antara yang paling berguna 
+adalah operasi *elementwise*.
+Operasi ini menerapkan operasi skalar standar
+pada setiap elemen dari sebuah tensor.
+Untuk fungsi yang menerima dua tensor sebagai masukan,
+operasi elementwise menerapkan beberapa operator biner standar
+pada setiap pasangan elemen yang sesuai.
+Kita dapat membuat fungsi elementwise 
+dari fungsi apa pun yang memetakan 
+dari skalar ke skalar.
 
-In mathematical notation, we denote such
-*unary* scalar operators (taking one input)
-by the signature 
+Dalam notasi matematika, kita menyebut
+operator skalar *unary* (menerima satu input)
+dengan tanda 
 $f: \mathbb{R} \rightarrow \mathbb{R}$.
-This just means that the function maps
-from any real number onto some other real number.
-Most standard operators, including unary ones like $e^x$, can be applied elementwise.
+Ini berarti fungsi tersebut memetakan
+dari setiap bilangan riil ke bilangan riil lainnya.
+Sebagian besar operator standar, termasuk operator unary seperti $e^x$, dapat diterapkan secara elementwise.
+
 
 ```{.python .input}
 %%tab mxnet
@@ -488,28 +498,29 @@ tf.exp(x)
 jnp.exp(x)
 ```
 
-Likewise, we denote *binary* scalar operators,
-which map pairs of real numbers
-to a (single) real number
-via the signature 
+Demikian pula, kita menyebut operator skalar *binary*,
+yang memetakan pasangan bilangan riil
+ke satu bilangan riil
+dengan tanda 
 $f: \mathbb{R}, \mathbb{R} \rightarrow \mathbb{R}$.
-Given any two vectors $\mathbf{u}$ 
-and $\mathbf{v}$ *of the same shape*,
-and a binary operator $f$, we can produce a vector
+Diberikan dua vektor $\mathbf{u}$ 
+dan $\mathbf{v}$ *dengan bentuk yang sama*,
+dan operator binary $f$, kita dapat menghasilkan vektor
 $\mathbf{c} = F(\mathbf{u},\mathbf{v})$
-by setting $c_i \gets f(u_i, v_i)$ for all $i$,
-where $c_i, u_i$, and $v_i$ are the $i^\textrm{th}$ elements
-of vectors $\mathbf{c}, \mathbf{u}$, and $\mathbf{v}$.
-Here, we produced the vector-valued
+dengan menetapkan $c_i \gets f(u_i, v_i)$ untuk semua $i$,
+di mana $c_i, u_i$, dan $v_i$ adalah elemen ke- $i$,
+dari vektor $\mathbf{c}, \mathbf{u}$, dan $\mathbf{v}$.
+Di sini, kita menghasilkan $F$ yang bernilai vektor
 $F: \mathbb{R}^d, \mathbb{R}^d \rightarrow \mathbb{R}^d$
-by *lifting* the scalar function
-to an elementwise vector operation.
-The common standard arithmetic operators
-for addition (`+`), subtraction (`-`), 
-multiplication (`*`), division (`/`), 
-and exponentiation (`**`)
-have all been *lifted* to elementwise operations
-for identically-shaped tensors of arbitrary shape.
+dengan *mengangkat* fungsi skalar
+menjadi operasi vektor elementwise.
+Operator aritmetika standar umum
+untuk penjumlahan (`+`), pengurangan (`-`), 
+perkalian (`*`), pembagian (`/`), 
+dan perpangkatan (`**`)
+semuanya telah *diangkat* menjadi operasi aritmatika
+untuk tensor yang identik bentuknya dengan bentuk sembarang.
+
 
 ```{.python .input}
 %%tab mxnet
@@ -539,23 +550,24 @@ y = jnp.array([2, 2, 2, 2])
 x + y, x - y, x * y, x / y, x ** y
 ```
 
-In addition to elementwise computations,
-we can also perform linear algebraic operations,
-such as dot products and matrix multiplications.
-We will elaborate on these
-in :numref:`sec_linear-algebra`.
+Selain perhitungan elementwise,
+kita juga dapat melakukan operasi aljabar linear,
+seperti perkalian dot dan perkalian matriks.
+Kita akan menjelaskan ini lebih lanjut 
+pada :numref:`sec_linear-algebra`.
 
-We can also [***concatenate* multiple tensors,**]
-stacking them end-to-end to form a larger one.
-We just need to provide a list of tensors
-and tell the system along which axis to concatenate.
-The example below shows what happens when we concatenate
-two matrices along rows (axis 0)
-instead of columns (axis 1).
-We can see that the first output's axis-0 length ($6$)
-is the sum of the two input tensors' axis-0 lengths ($3 + 3$);
-while the second output's axis-1 length ($8$)
-is the sum of the two input tensors' axis-1 lengths ($4 + 4$).
+Kita juga dapat [***menggabungkan* beberapa tensor,**]
+dengan menumpuknya ujung ke ujung untuk membentuk tensor yang lebih besar.
+Kita hanya perlu memberikan daftar tensor
+dan memberi tahu sistem di sepanjang sumbu mana untuk menggabungkan.
+Contoh di bawah ini menunjukkan apa yang terjadi ketika kita menggabungkan
+dua matriks sepanjang baris (sumbu 0)
+bukan kolom (sumbu 1).
+Kita dapat melihat bahwa panjang sumbu-0 dari output pertama ($6$)
+adalah jumlah dari panjang sumbu-0 kedua tensor input ($3 + 3$);
+sementara panjang sumbu-1 dari output kedua ($8$)
+adalah jumlah dari panjang sumbu-1 kedua tensor input ($4 + 4$).
+
 
 ```{.python .input}
 %%tab mxnet
@@ -585,19 +597,20 @@ Y = jnp.array([[2.0, 1, 4, 3], [1, 2, 3, 4], [4, 3, 2, 1]])
 jnp.concatenate((X, Y), axis=0), jnp.concatenate((X, Y), axis=1)
 ```
 
-Sometimes, we want to 
-[**construct a binary tensor via *logical statements*.**]
-Take `X == Y` as an example.
-For each position `i, j`, if `X[i, j]` and `Y[i, j]` are equal, 
-then the corresponding entry in the result takes value `1`,
-otherwise it takes value `0`.
+Terkadang, kita ingin 
+[**membuat tensor biner melalui *pernyataan logika*.**]
+Ambil contoh `X == Y`.
+Untuk setiap posisi `i, j`, jika `X[i, j]` dan `Y[i, j]` sama, 
+maka entri yang sesuai dalam hasil akan bernilai `1`,
+jika tidak, maka bernilai `0`.
+
 
 ```{.python .input}
 %%tab all
 X == Y
 ```
 
-[**Summing all the elements in the tensor**] yields a tensor with only one element.
+[**Menjumlahkan semua elemen dalam tensor**] menghasilkan tensor dengan hanya satu elemen.
 
 ```{.python .input}
 %%tab mxnet, pytorch, jax
@@ -612,21 +625,22 @@ tf.reduce_sum(X)
 ## Broadcasting
 :label:`subsec_broadcasting`
 
-By now, you know how to perform 
-elementwise binary operations
-on two tensors of the same shape. 
-Under certain conditions,
-even when shapes differ, 
-we can still [**perform elementwise binary operations
-by invoking the *broadcasting mechanism*.**]
-Broadcasting works according to 
-the following two-step procedure:
-(i) expand one or both arrays
-by copying elements along axes with length 1
-so that after this transformation,
-the two tensors have the same shape;
-(ii) perform an elementwise operation
-on the resulting arrays.
+Saat ini, Anda sudah tahu cara melakukan 
+operasi biner elementwise 
+pada dua tensor dengan bentuk yang sama. 
+Dalam kondisi tertentu,
+bahkan ketika bentuknya berbeda, 
+kita masih bisa [**melakukan operasi biner elementwise
+dengan menggunakan *mekanisme broadcasting*.**]
+Broadcasting bekerja sesuai dengan 
+prosedur dua langkah berikut:
+(i) memperluas satu atau kedua array
+dengan menyalin elemen di sepanjang sumbu dengan panjang 1
+sehingga setelah transformasi ini,
+kedua tensor memiliki bentuk yang sama;
+(ii) melakukan operasi elementwise
+pada array yang dihasilkan.
+
 
 ```{.python .input}
 %%tab mxnet
@@ -656,34 +670,34 @@ b = jnp.arange(2).reshape((1, 2))
 a, b
 ```
 
-Since `a` and `b` are $3\times1$ 
-and $1\times2$ matrices, respectively,
-their shapes do not match up.
-Broadcasting produces a larger $3\times2$ matrix 
-by replicating matrix `a` along the columns
-and matrix `b` along the rows
-before adding them elementwise.
+Karena `a` dan `b` masing-masing adalah matriks $3\times1$ 
+dan $1\times2$, bentuknya tidak cocok.
+Broadcasting menghasilkan matriks $3\times2$ yang lebih besar 
+dengan mereplikasi matriks `a` di sepanjang kolom
+dan matriks `b` di sepanjang baris
+sebelum menambahkannya secara elementwise.
+
 
 ```{.python .input}
 %%tab all
 a + b
 ```
 
-## Saving Memory
+## Menghemat Memori
 
-[**Running operations can cause new memory to be
-allocated to host results.**]
-For example, if we write `Y = X + Y`,
-we dereference the tensor that `Y` used to point to
-and instead point `Y` at the newly allocated memory.
-We can demonstrate this issue with Python's `id()` function,
-which gives us the exact address 
-of the referenced object in memory.
-Note that after we run `Y = Y + X`,
-`id(Y)` points to a different location.
-That is because Python first evaluates `Y + X`,
-allocating new memory for the result 
-and then points `Y` to this new location in memory.
+[**Menjalankan operasi dapat menyebabkan memori baru dialokasikan untuk menyimpan hasil.**]
+Misalnya, jika kita menulis `Y = X + Y`,
+kita menghapus referensi tensor yang sebelumnya ditunjuk oleh `Y`
+dan kemudian menunjuk `Y` ke memori yang baru dialokasikan.
+Kita dapat mendemonstrasikan masalah ini dengan fungsi `id()` dalam Python,
+yang memberikan kita alamat pasti 
+dari objek yang direferensikan dalam memori.
+Perhatikan bahwa setelah kita menjalankan `Y = Y + X`,
+`id(Y)` menunjuk ke lokasi yang berbeda.
+Ini terjadi karena Python pertama-tama mengevaluasi `Y + X`,
+mengalokasikan memori baru untuk hasilnya 
+dan kemudian menunjuk `Y` ke lokasi baru ini dalam memori.
+
 
 ```{.python .input}
 %%tab all
@@ -692,41 +706,42 @@ Y = Y + X
 id(Y) == before
 ```
 
-This might be undesirable for two reasons.
-First, we do not want to run around
-allocating memory unnecessarily all the time.
-In machine learning, we often have
-hundreds of megabytes of parameters
-and update all of them multiple times per second.
-Whenever possible, we want to perform these updates *in place*.
-Second, we might point at the 
-same parameters from multiple variables.
-If we do not update in place, 
-we must be careful to update all of these references,
-lest we spring a memory leak 
-or inadvertently refer to stale parameters.
+Ini mungkin tidak diinginkan karena dua alasan.
+Pertama, kita tidak ingin terus-menerus
+mengalokasikan memori secara tidak perlu.
+Dalam machine learning, kita sering memiliki
+ratusan megabyte parameter
+dan memperbarui semuanya beberapa kali per detik.
+Jika memungkinkan, kita ingin melakukan pembaruan ini *di tempat*.
+Kedua, kita mungkin menunjuk 
+parameter yang sama dari beberapa variabel.
+Jika kita tidak memperbarui di tempat, 
+kita harus berhati-hati untuk memperbarui semua referensi ini,
+agar kita tidak mengalami kebocoran memori 
+atau secara tidak sengaja merujuk ke parameter yang sudah usang.
 
 :begin_tab:`mxnet, pytorch`
-Fortunately, (**performing in-place operations**) is easy.
-We can assign the result of an operation
-to a previously allocated array `Y`
-by using slice notation: `Y[:] = <expression>`.
-To illustrate this concept, 
-we overwrite the values of tensor `Z`,
-after initializing it, using `zeros_like`,
-to have the same shape as `Y`.
+Untungnya, (**melakukan operasi di tempat**) cukup mudah.
+Kita dapat menetapkan hasil dari suatu operasi
+ke array `Y` yang telah dialokasikan sebelumnya
+dengan menggunakan notasi slice: `Y[:] = <expression>`.
+Untuk mengilustrasikan konsep ini, 
+kita menimpa nilai tensor `Z`,
+setelah menginisialisasinya dengan `zeros_like`,
+agar memiliki bentuk yang sama dengan `Y`.
 :end_tab:
 
 :begin_tab:`tensorflow`
-`Variables` are mutable containers of state in TensorFlow. They provide
-a way to store your model parameters.
-We can assign the result of an operation
-to a `Variable` with `assign`.
-To illustrate this concept, 
-we overwrite the values of `Variable` `Z`
-after initializing it, using `zeros_like`,
-to have the same shape as `Y`.
+`Variables` adalah kontainer mutable dari state dalam TensorFlow. Mereka menyediakan
+cara untuk menyimpan parameter model Anda.
+Kita dapat menetapkan hasil dari suatu operasi
+ke sebuah `Variable` dengan `assign`.
+Untuk mengilustrasikan konsep ini, 
+kita menimpa nilai `Variable` `Z`
+setelah menginisialisasinya dengan `zeros_like`,
+agar memiliki bentuk yang sama dengan `Y`.
 :end_tab:
+
 
 ```{.python .input}
 %%tab mxnet
@@ -758,27 +773,28 @@ print('id(Z):', id(Z))
 ```
 
 :begin_tab:`mxnet, pytorch`
-[**If the value of `X` is not reused in subsequent computations,
-we can also use `X[:] = X + Y` or `X += Y`
-to reduce the memory overhead of the operation.**]
+[**Jika nilai `X` tidak digunakan kembali dalam perhitungan selanjutnya,
+kita juga dapat menggunakan `X[:] = X + Y` atau `X += Y`
+untuk mengurangi overhead memori dari operasi tersebut.**]
 :end_tab:
 
 :begin_tab:`tensorflow`
-Even once you store state persistently in a `Variable`, 
-you may want to reduce your memory usage further by avoiding excess
-allocations for tensors that are not your model parameters.
-Because TensorFlow `Tensors` are immutable 
-and gradients do not flow through `Variable` assignments, 
-TensorFlow does not provide an explicit way to run
-an individual operation in-place.
+Bahkan setelah Anda menyimpan state secara permanen dalam sebuah `Variable`, 
+Anda mungkin ingin mengurangi penggunaan memori lebih lanjut dengan menghindari alokasi berlebihan
+untuk tensor yang bukan parameter model Anda.
+Karena `Tensors` dalam TensorFlow bersifat immutable 
+dan gradien tidak mengalir melalui penugasan `Variable`, 
+TensorFlow tidak menyediakan cara eksplisit untuk menjalankan
+sebuah operasi secara langsung di tempat.
 
-However, TensorFlow provides the `tf.function` decorator 
-to wrap computation inside of a TensorFlow graph 
-that gets compiled and optimized before running.
-This allows TensorFlow to prune unused values, 
-and to reuse prior allocations that are no longer needed. 
-This minimizes the memory overhead of TensorFlow computations.
+Namun, TensorFlow menyediakan decorator `tf.function` 
+untuk membungkus perhitungan di dalam graf TensorFlow 
+yang dikompilasi dan dioptimalkan sebelum dijalankan.
+Ini memungkinkan TensorFlow untuk menghapus nilai yang tidak digunakan, 
+dan menggunakan kembali alokasi sebelumnya yang tidak lagi dibutuhkan. 
+Ini meminimalkan overhead memori dari perhitungan TensorFlow.
 :end_tab:
+
 
 ```{.python .input}
 %%tab mxnet, pytorch
@@ -791,8 +807,8 @@ id(X) == before
 %%tab tensorflow
 @tf.function
 def computation(X, Y):
-    Z = tf.zeros_like(Y)  # This unused value will be pruned out
-    A = X + Y  # Allocations will be reused when no longer needed
+    Z = tf.zeros_like(Y)  # Nilai yang tidak digunakan ini akan dihapus
+    A = X + Y  # Alokasi akan digunakan kembali ketika tidak lagi diperlukan
     B = A + Y
     C = B + Y
     return C + Y
@@ -800,26 +816,27 @@ def computation(X, Y):
 computation(X, Y)
 ```
 
-## Conversion to Other Python Objects
+## Konversi ke Objek Python Lain
 
 :begin_tab:`mxnet, tensorflow`
-[**Converting to a NumPy tensor (`ndarray`)**], or vice versa, is easy.
-The converted result does not share memory.
-This minor inconvenience is actually quite important:
-when you perform operations on the CPU or on GPUs,
-you do not want to halt computation, waiting to see
-whether the NumPy package of Python 
-might want to be doing something else
-with the same chunk of memory.
+[**Mengonversi ke tensor NumPy (`ndarray`)**], atau sebaliknya, sangat mudah.
+Hasil konversi tidak berbagi memori.
+Ketidaknyamanan kecil ini sebenarnya cukup penting:
+saat Anda melakukan operasi di CPU atau GPU,
+Anda tidak ingin menghentikan perhitungan sambil menunggu
+apakah paket NumPy dari Python 
+mungkin ingin melakukan sesuatu dengan
+bagian memori yang sama.
 :end_tab:
 
 :begin_tab:`pytorch`
-[**Converting to a NumPy tensor (`ndarray`)**], or vice versa, is easy.
-The torch tensor and NumPy array 
-will share their underlying memory, 
-and changing one through an in-place operation 
-will also change the other.
+[**Mengonversi ke tensor NumPy (`ndarray`)**], atau sebaliknya, sangat mudah.
+Tensor torch dan array NumPy 
+akan berbagi memori dasar mereka, 
+dan mengubah salah satunya melalui operasi di tempat 
+juga akan mengubah yang lainnya.
 :end_tab:
+
 
 ```{.python .input}
 %%tab mxnet
@@ -849,8 +866,9 @@ B = jax.device_put(A)
 type(A), type(B)
 ```
 
-To (**convert a size-1 tensor to a Python scalar**),
-we can invoke the `item` function or Python's built-in functions.
+Untuk (**mengonversi tensor berukuran 1 menjadi skalar Python**),
+kita dapat memanggil fungsi `item` atau menggunakan fungsi bawaan Python.
+
 
 ```{.python .input}
 %%tab mxnet
@@ -876,29 +894,29 @@ a = jnp.array([3.5])
 a, a.item(), float(a), int(a)
 ```
 
-## Summary
+## Ringkasan
 
-The tensor class is the main interface for storing and manipulating data in deep learning libraries.
-Tensors provide a variety of functionalities including construction routines; indexing and slicing; basic mathematics operations; broadcasting; memory-efficient assignment; and conversion to and from other Python objects.
+Kelas tensor adalah antarmuka utama untuk menyimpan dan memanipulasi data dalam pustaka deep learning.
+Tensor menyediakan berbagai fungsionalitas termasuk rutinitas konstruksi; indexing dan slicing; operasi matematika dasar; broadcasting; penugasan yang efisien dalam hal memori; serta konversi ke dan dari objek Python lainnya.
 
+## Latihan
 
-## Exercises
-
-1. Run the code in this section. Change the conditional statement `X == Y` to `X < Y` or `X > Y`, and then see what kind of tensor you can get.
-1. Replace the two tensors that operate by element in the broadcasting mechanism with other shapes, e.g., 3-dimensional tensors. Is the result the same as expected?
+1. Jalankan kode dalam bagian ini. Ubah pernyataan kondisional `X == Y` menjadi `X < Y` atau `X > Y`, lalu lihat jenis tensor apa yang dapat Anda peroleh.
+2. Ganti dua tensor yang dioperasikan secara elementwise dalam mekanisme broadcasting dengan bentuk lain, misalnya, tensor 3 dimensi. Apakah hasilnya sesuai dengan yang diharapkan?
 
 :begin_tab:`mxnet`
-[Discussions](https://discuss.d2l.ai/t/26)
+[Diskusi](https://discuss.d2l.ai/t/26)
 :end_tab:
 
 :begin_tab:`pytorch`
-[Discussions](https://discuss.d2l.ai/t/27)
+[Diskusi](https://discuss.d2l.ai/t/27)
 :end_tab:
 
 :begin_tab:`tensorflow`
-[Discussions](https://discuss.d2l.ai/t/187)
+[Diskusi](https://discuss.d2l.ai/t/187)
 :end_tab:
 
 :begin_tab:`jax`
-[Discussions](https://discuss.d2l.ai/t/17966)
+[Diskusi](https://discuss.d2l.ai/t/17966)
 :end_tab:
+
