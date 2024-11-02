@@ -22,7 +22,7 @@
 
 - [x] ./chapter_preliminaries/probability.md
 - [x] ./chapter_preliminaries/ndarray.md
-- [ ] ./chapter_preliminaries/autograd.md
+- [x] ./chapter_preliminaries/autograd.md
 - [ ] ./chapter_preliminaries/lookup-api.md
 - [ ] ./chapter_preliminaries/pandas.md
 - [ ] ./chapter_preliminaries/index.md
