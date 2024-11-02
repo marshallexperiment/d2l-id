@@ -2,32 +2,33 @@
 %load_ext d2lbook.tab
 tab.interact_select(['mxnet', 'pytorch', 'tensorflow', 'jax'])
 ```
-
-# Documentation
+# Dokumentasi
 :begin_tab:`mxnet`
-While we cannot possibly introduce every single MXNet function and class 
-(and the information might become outdated quickly), 
-the [API documentation](https://mxnet.apache.org/versions/1.8.0/api) 
-and additional [tutorials](https://mxnet.apache.org/versions/1.8.0/api/python/docs/tutorials/) and examples 
-provide such documentation. 
-This section provides some guidance for how to explore the MXNet API.
+Meskipun tidak mungkin bagi kami untuk memperkenalkan setiap fungsi dan kelas MXNet 
+(dan informasinya mungkin cepat usang), 
+[dokumentasi API](https://mxnet.apache.org/versions/1.8.0/api) 
+dan [tutorial tambahan](https://mxnet.apache.org/versions/1.8.0/api/python/docs/tutorials/) serta contoh 
+menyediakan dokumentasi semacam itu. 
+Bagian ini memberikan panduan tentang cara menjelajahi API MXNet.
 :end_tab:
 
 :begin_tab:`pytorch`
-While we cannot possibly introduce every single PyTorch function and class 
-(and the information might become outdated quickly), 
-the [API documentation](https://pytorch.org/docs/stable/index.html) and additional [tutorials](https://pytorch.org/tutorials/beginner/basics/intro.html) and examples 
-provide such documentation.
-This section provides some guidance for how to explore the PyTorch API.
+Meskipun tidak mungkin bagi kami untuk memperkenalkan setiap fungsi dan kelas PyTorch 
+(dan informasinya mungkin cepat usang), 
+[dokumentasi API](https://pytorch.org/docs/stable/index.html) dan [tutorial tambahan](https://pytorch.org/tutorials/beginner/basics/intro.html) serta contoh 
+menyediakan dokumentasi semacam itu.
+Bagian ini memberikan panduan tentang cara menjelajahi API PyTorch.
 :end_tab:
 
 :begin_tab:`tensorflow`
-While we cannot possibly introduce every single TensorFlow function and class 
-(and the information might become outdated quickly), 
-the [API documentation](https://www.tensorflow.org/api_docs) and additional [tutorials](https://www.tensorflow.org/tutorials) and examples 
-provide such documentation. 
-This section provides some guidance for how to explore the TensorFlow API.
+Meskipun tidak mungkin bagi kami untuk memperkenalkan setiap fungsi dan kelas TensorFlow 
+(dan informasinya mungkin cepat usang), 
+[dokumentasi API](https://www.tensorflow.org/api_docs) dan [tutorial tambahan](https://www.tensorflow.org/tutorials) serta contoh 
+menyediakan dokumentasi semacam itu. 
+Bagian ini memberikan panduan tentang cara menjelajahi API TensorFlow.
 :end_tab:
+
+
 
 ```{.python .input}
 %%tab mxnet
@@ -49,11 +50,12 @@ import tensorflow as tf
 import jax
 ```
 
-## Functions and Classes in a Module
+## Fungsi dan Kelas dalam Modul
 
-To know which functions and classes can be called in a module,
-we invoke the `dir` function. For instance, we can
-(**query all properties in the module for generating random numbers**):
+Untuk mengetahui fungsi dan kelas apa saja yang dapat dipanggil dalam sebuah modul,
+kita memanggil fungsi `dir`. Misalnya, kita dapat
+(**menanyakan semua properti dalam modul untuk menghasilkan bilangan acak**):
+
 
 ```{.python .input  n=1}
 %%tab mxnet
@@ -75,19 +77,20 @@ print(dir(tf.random))
 print(dir(jax.random))
 ```
 
-Generally, we can ignore functions that start and end with `__` (special objects in Python) 
-or functions that start with a single `_`(usually internal functions). 
-Based on the remaining function or attribute names, 
-we might hazard a guess that this module offers 
-various methods for generating random numbers, 
-including sampling from the uniform distribution (`uniform`), 
-normal distribution (`normal`), and multinomial distribution (`multinomial`).
+Secara umum, kita dapat mengabaikan fungsi-fungsi yang diawali dan diakhiri dengan `__` (objek khusus dalam Python) 
+atau fungsi yang dimulai dengan satu `_` (biasanya fungsi internal). 
+Berdasarkan nama fungsi atau atribut yang tersisa, 
+kita bisa menebak bahwa modul ini menawarkan 
+berbagai metode untuk menghasilkan bilangan acak, 
+termasuk pengambilan sampel dari distribusi uniform (`uniform`), 
+distribusi normal (`normal`), dan distribusi multinomial (`multinomial`).
 
-## Specific Functions and Classes
+## Fungsi dan Kelas Khusus
 
-For specific instructions on how to use a given function or class,
-we can invoke the  `help` function. As an example, let's
-[**explore the usage instructions for tensors' `ones` function**].
+Untuk instruksi khusus tentang cara menggunakan suatu fungsi atau kelas tertentu,
+kita dapat memanggil fungsi `help`. Sebagai contoh, mari
+[**mengeksplorasi instruksi penggunaan untuk fungsi `ones` pada tensor**].
+
 
 ```{.python .input}
 %%tab mxnet
@@ -109,11 +112,12 @@ help(tf.ones)
 help(jax.numpy.ones)
 ```
 
-From the documentation, we can see that the `ones` function 
-creates a new tensor with the specified shape 
-and sets all the elements to the value of 1. 
-Whenever possible, you should (**run a quick test**) 
-to confirm your interpretation:
+Dari dokumentasi, kita dapat melihat bahwa fungsi `ones` 
+membuat tensor baru dengan bentuk yang ditentukan 
+dan mengatur semua elemennya ke nilai 1. 
+Sebisa mungkin, Anda sebaiknya (**menjalankan uji cepat**) 
+untuk mengonfirmasi interpretasi Anda:
+
 
 ```{.python .input}
 %%tab mxnet
@@ -135,34 +139,35 @@ tf.ones(4)
 jax.numpy.ones(4)
 ```
 
-In the Jupyter notebook, we can use `?` to display the document in another
-window. For example, `list?` will create content
-that is almost identical to `help(list)`,
-displaying it in a new browser window.
-In addition, if we use two question marks, such as `list??`,
-the Python code implementing the function will also be displayed.
+Di dalam Jupyter notebook, kita bisa menggunakan `?` untuk menampilkan dokumentasi di jendela lain. 
+Misalnya, `list?` akan menampilkan konten
+yang hampir identik dengan `help(list)`,
+dalam jendela browser baru.
+Selain itu, jika kita menggunakan dua tanda tanya, seperti `list??`,
+kode Python yang mengimplementasikan fungsi tersebut juga akan ditampilkan.
 
-The official documentation provides plenty of descriptions and examples that are beyond this book. 
-We emphasize important use cases 
-that will get you started quickly with practical problems, 
-rather than completeness of coverage. 
-We also encourage you to study the source code of the libraries 
-to see examples of high-quality implementations of production code. 
-By doing this you will become a better engineer 
-in addition to becoming a better scientist.
+Dokumentasi resmi menyediakan banyak deskripsi dan contoh yang lebih mendalam daripada buku ini. 
+Kami menekankan kasus penggunaan penting 
+yang akan membantu Anda memulai dengan cepat dalam menyelesaikan masalah praktis, 
+bukan memberikan cakupan secara menyeluruh. 
+Kami juga mendorong Anda untuk mempelajari kode sumber dari pustaka-pustaka ini 
+untuk melihat contoh implementasi berkualitas tinggi dari kode produksi. 
+Dengan melakukan ini, Anda tidak hanya akan menjadi insinyur yang lebih baik, 
+tetapi juga ilmuwan yang lebih baik.
 
 :begin_tab:`mxnet`
-[Discussions](https://discuss.d2l.ai/t/38)
+[Diskusi](https://discuss.d2l.ai/t/38)
 :end_tab:
 
 :begin_tab:`pytorch`
-[Discussions](https://discuss.d2l.ai/t/39)
+[Diskusi](https://discuss.d2l.ai/t/39)
 :end_tab:
 
 :begin_tab:`tensorflow`
-[Discussions](https://discuss.d2l.ai/t/199)
+[Diskusi](https://discuss.d2l.ai/t/199)
 :end_tab:
 
 :begin_tab:`jax`
-[Discussions](https://discuss.d2l.ai/t/17972)
+[Diskusi](https://discuss.d2l.ai/t/17972)
 :end_tab:
+
