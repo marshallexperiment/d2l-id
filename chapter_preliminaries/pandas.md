@@ -3,35 +3,36 @@
 tab.interact_select(['mxnet', 'pytorch', 'tensorflow', 'jax'])
 ```
 
-# Data Preprocessing
+# Preprocessing Data
 :label:`sec_pandas`
 
-So far, we have been working with synthetic data
-that arrived in ready-made tensors.
-However, to apply deep learning in the wild
-we must extract messy data 
-stored in arbitrary formats,
-and preprocess it to suit our needs.
-Fortunately, the *pandas* [library](https://pandas.pydata.org/) 
-can do much of the heavy lifting.
-This section, while no substitute 
-for a proper *pandas* [tutorial](https://pandas.pydata.org/pandas-docs/stable/user_guide/10min.html),
-will give you a crash course
-on some of the most common routines.
+Sejauh ini, kita telah bekerja dengan data sintetis
+yang disajikan dalam tensor siap pakai.
+Namun, untuk menerapkan deep learning di dunia nyata,
+kita harus mengekstrak data mentah
+yang disimpan dalam format arbitrer,
+dan memprosesnya sesuai kebutuhan kita.
+Untungnya, pustaka *pandas* [library](https://pandas.pydata.org/) 
+dapat menangani banyak dari pekerjaan ini.
+Bagian ini, meskipun bukan pengganti
+untuk *pandas* [tutorial](https://pandas.pydata.org/pandas-docs/stable/user_guide/10min.html) yang lengkap,
+akan memberi Anda kursus singkat
+tentang beberapa rutinitas yang paling umum digunakan.
 
-## Reading the Dataset
+## Membaca Dataset
 
-Comma-separated values (CSV) files are ubiquitous 
-for the storing of tabular (spreadsheet-like) data.
-In them, each line corresponds to one record
-and consists of several (comma-separated) fields, e.g.,
-"Albert Einstein,March 14 1879,Ulm,Federal polytechnic school,field of gravitational physics".
-To demonstrate how to load CSV files with `pandas`, 
-we (**create a CSV file below**) `../data/house_tiny.csv`. 
-This file represents a dataset of homes,
-where each row corresponds to a distinct home
-and the columns correspond to the number of rooms (`NumRooms`),
-the roof type (`RoofType`), and the price (`Price`).
+File comma-separated values (CSV) sangat umum digunakan 
+untuk penyimpanan data tabular (seperti spreadsheet).
+Di dalamnya, setiap baris sesuai dengan satu catatan
+dan terdiri dari beberapa kolom (dipisahkan koma), misalnya,
+"Albert Einstein,14 Maret 1879,Ulm,Sekolah politeknik federal,bidang fisika gravitasi".
+Untuk mendemonstrasikan cara memuat file CSV dengan `pandas`, 
+kita (**membuat file CSV di bawah**) `../data/house_tiny.csv`. 
+File ini merepresentasikan dataset rumah,
+di mana setiap baris mewakili rumah yang berbeda
+dan kolom-kolomnya merepresentasikan jumlah kamar (`NumRooms`),
+jenis atap (`RoofType`), dan harga (`Price`).
+
 
 ```{.python .input}
 %%tab all
