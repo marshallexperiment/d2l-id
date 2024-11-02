@@ -21,7 +21,7 @@
 # 2 - chapter_preliminaries
 
 - [x] ./chapter_preliminaries/probability.md
-- [ ] ./chapter_preliminaries/ndarray.md
+- [x] ./chapter_preliminaries/ndarray.md
 - [ ] ./chapter_preliminaries/autograd.md
 - [ ] ./chapter_preliminaries/lookup-api.md
 - [ ] ./chapter_preliminaries/pandas.md
