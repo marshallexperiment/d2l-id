@@ -3,46 +3,47 @@
 tab.interact_select(['mxnet', 'pytorch', 'tensorflow', 'jax'])
 ```
 
-# Automatic Differentiation
+# Differensiasi Otomatis
 :label:`sec_autograd`
 
-Recall from :numref:`sec_calculus` 
-that calculating derivatives is the crucial step
-in all the optimization algorithms
-that we will use to train deep networks.
-While the calculations are straightforward,
-working them out by hand can be tedious and error-prone, 
-and these issues only grow
-as our models become more complex.
+Ingat kembali dari :numref:`sec_calculus` 
+bahwa menghitung turunan adalah langkah penting
+dalam semua algoritma optimisasi
+yang akan kita gunakan untuk melatih jaringan dalam (*Deep Net*).
+Meskipun perhitungannya cukup sederhana,
+melakukan perhitungan secara manual bisa membosankan dan rentan kesalahan, 
+dan masalah ini hanya akan bertambah
+seiring meningkatnya kompleksitas model kita.
 
-Fortunately all modern deep learning frameworks
-take this work off our plates
-by offering *automatic differentiation*
-(often shortened to *autograd*). 
-As we pass data through each successive function,
-the framework builds a *computational graph* 
-that tracks how each value depends on others.
-To calculate derivatives, 
-automatic differentiation 
-works backwards through this graph
-applying the chain rule. 
-The computational algorithm for applying the chain rule
-in this fashion is called *backpropagation*.
+Untungnya, semua framework deep learning modern
+membebaskan kita dari pekerjaan ini
+dengan menawarkan *diferensiasi otomatis*
+(yang sering disingkat sebagai *autograd*). 
+Saat kita mengalirkan data melalui setiap fungsi berturut-turut,
+framework tersebut membangun sebuah *graf komputasi* 
+yang melacak bagaimana setiap nilai bergantung pada nilai lainnya.
+Untuk menghitung turunan, 
+diferensiasi otomatis 
+bekerja mundur melalui graf ini
+menerapkan aturan rantai. 
+Algoritma komputasi untuk menerapkan aturan rantai
+dengan cara ini disebut *backpropagation*.
 
-While autograd libraries have become
-a hot concern over the past decade,
-they have a long history. 
-In fact the earliest references to autograd
-date back over half of a century :cite:`Wengert.1964`.
-The core ideas behind modern backpropagation
-date to a PhD thesis from 1980 :cite:`Speelpenning.1980`
-and were further developed in the late 1980s :cite:`Griewank.1989`.
-While backpropagation has become the default method 
-for computing gradients, it is not the only option. 
-For instance, the Julia programming language employs 
-forward propagation :cite:`Revels.Lubin.Papamarkou.2016`. 
-Before exploring methods, 
-let's first master the autograd package.
+Meskipun perpustakaan autograd menjadi
+perhatian penting selama satu dekade terakhir,
+mereka memiliki sejarah panjang. 
+Faktanya, referensi paling awal mengenai autograd
+berkisar lebih dari setengah abad yang lalu :cite:`Wengert.1964`.
+Ide inti di balik backpropagation modern
+berasal dari tesis PhD pada tahun 1980 :cite:`Speelpenning.1980`
+dan dikembangkan lebih lanjut pada akhir 1980-an :cite:`Griewank.1989`.
+Meskipun backpropagation telah menjadi metode default 
+untuk menghitung gradien, ini bukan satu-satunya pilihan. 
+Sebagai contoh, bahasa pemrograman Julia menggunakan 
+propagasi maju :cite:`Revels.Lubin.Papamarkou.2016`. 
+Sebelum menjelajahi metode-metode ini, 
+mari kita pelajari terlebih dahulu paket autograd.
+
 
 ```{.python .input}
 %%tab mxnet
@@ -65,13 +66,13 @@ import tensorflow as tf
 from jax import numpy as jnp
 ```
 
-## A Simple Function
+## Fungsi Sederhana
 
-Let's assume that we are interested
-in (**differentiating the function
+Misalkan kita tertarik untuk (**mendiferensiasi fungsi
 $y = 2\mathbf{x}^{\top}\mathbf{x}$
-with respect to the column vector $\mathbf{x}$.**)
-To start, we assign `x` an initial value.
+terhadap vektor kolom $\mathbf{x}$.**)
+Untuk memulai, kita menetapkan nilai awal untuk `x`.
+
 
 ```{.python .input  n=1}
 %%tab mxnet
@@ -98,36 +99,35 @@ x
 ```
 
 :begin_tab:`mxnet, pytorch, tensorflow`
-[**Before we calculate the gradient
-of $y$ with respect to $\mathbf{x}$,
-we need a place to store it.**]
-In general, we avoid allocating new memory
-every time we take a derivative 
-because deep learning requires 
-successively computing derivatives
-with respect to the same parameters
-a great many times,
-and we might risk running out of memory.
-Note that the gradient of a scalar-valued function
-with respect to a vector $\mathbf{x}$
-is vector-valued with 
-the same shape as $\mathbf{x}$.
+[**Sebelum kita menghitung gradien
+dari $y$ terhadap $\mathbf{x}$,
+kita perlu menyediakan tempat untuk menyimpannya.**]
+Secara umum, kita menghindari alokasi memori baru
+setiap kali kita mengambil turunan 
+karena deep learning membutuhkan 
+perhitungan turunan berturut-turut
+terhadap parameter yang sama berkali-kali,
+dan ini bisa berisiko menyebabkan kehabisan memori.
+Perhatikan bahwa gradien dari fungsi bernilai skalar
+terhadap vektor $\mathbf{x}$
+bernilai vektor dengan 
+bentuk yang sama dengan $\mathbf{x}$.
 :end_tab:
 
 ```{.python .input  n=8}
 %%tab mxnet
-# We allocate memory for a tensor's gradient by invoking `attach_grad`
+# Kita menyediakan memori untuk gradien tensor dengan memanggil `attach_grad`
 x.attach_grad()
-# After we calculate a gradient taken with respect to `x`, we will be able to
-# access it via the `grad` attribute, whose values are initialized with 0s
+# Setelah kita menghitung gradien yang diambil terhadap `x`, kita akan dapat
+# mengaksesnya melalui atribut `grad`, yang nilainya diinisialisasi dengan 0
 x.grad
 ```
 
 ```{.python .input  n=9}
 %%tab pytorch
-# Can also create x = torch.arange(4.0, requires_grad=True)
+# Dapat juga membuat x = torch.arange(4.0, requires_grad=True)
 x.requires_grad_(True)
-x.grad  # The gradient is None by default
+x.grad  # Gradien awalnya `None` secara default
 ```
 
 ```{.python .input}
@@ -139,7 +139,7 @@ x = tf.Variable(x)
 
 ```{.python .input  n=10}
 %%tab mxnet
-# Our code is inside an `autograd.record` scope to build the computational
+# Kode kita berada dalam scope `autograd.record` untuk membangun graf komputasi
 # graph
 with autograd.record():
     y = 2 * np.dot(x, x)
@@ -154,7 +154,7 @@ y
 
 ```{.python .input}
 %%tab tensorflow
-# Record all computations onto a tape
+# Merekam semua perhitungan ke dalam sebuah tape
 with tf.GradientTape() as t:
     y = 2 * tf.tensordot(x, x, axes=1)
 y
@@ -167,32 +167,33 @@ y(x)
 ```
 
 :begin_tab:`mxnet`
-[**We can now take the gradient of `y`
-with respect to `x`**] by calling 
-its `backward` method.
-Next, we can access the gradient 
-via `x`'s `grad` attribute.
+[**Sekarang kita dapat mengambil gradien dari `y`
+terhadap `x`**] dengan memanggil 
+metode `backward`-nya.
+Selanjutnya, kita dapat mengakses gradien 
+melalui atribut `grad` milik `x`.
 :end_tab:
 
 :begin_tab:`pytorch`
-[**We can now take the gradient of `y`
-with respect to `x`**] by calling 
-its `backward` method.
-Next, we can access the gradient 
-via `x`'s `grad` attribute.
+[**Sekarang kita dapat mengambil gradien dari `y`
+terhadap `x`**] dengan memanggil 
+metode `backward`-nya.
+Selanjutnya, kita dapat mengakses gradien 
+melalui atribut `grad` milik `x`.
 :end_tab:
 
 :begin_tab:`tensorflow`
-[**We can now calculate the gradient of `y`
-with respect to `x`**] by calling 
-the `gradient` method.
+[**Sekarang kita dapat menghitung gradien dari `y`
+terhadap `x`**] dengan memanggil 
+metode `gradient`.
 :end_tab:
 
 :begin_tab:`jax`
-[**We can now take the gradient of `y`
-with respect to `x`**] by passing through the
-`grad` transform.
+[**Sekarang kita dapat mengambil gradien dari `y`
+terhadap `x`**] dengan meneruskan melalui 
+transformasi `grad`.
 :end_tab:
+
 
 ```{.python .input}
 %%tab mxnet
@@ -221,10 +222,11 @@ x_grad = grad(y)(x)
 x_grad
 ```
 
-(**We already know that the gradient of the function $y = 2\mathbf{x}^{\top}\mathbf{x}$
-with respect to $\mathbf{x}$ should be $4\mathbf{x}$.**)
-We can now verify that the automatic gradient computation
-and the expected result are identical.
+(**Kita sudah tahu bahwa gradien dari fungsi $y = 2\mathbf{x}^{\top}\mathbf{x}$
+terhadap $\mathbf{x}$ seharusnya adalah $4\mathbf{x}$.**)
+Sekarang kita dapat memverifikasi bahwa perhitungan gradien otomatis
+dan hasil yang diharapkan identik.
+
 
 ```{.python .input  n=13}
 %%tab mxnet
@@ -247,48 +249,49 @@ x_grad == 4 * x
 ```
 
 :begin_tab:`mxnet`
-[**Now let's calculate 
-another function of `x`
-and take its gradient.**] 
-Note that MXNet resets the gradient buffer 
-whenever we record a new gradient. 
+[**Sekarang mari kita hitung 
+fungsi lain dari `x`
+dan ambil gradiennya.**] 
+Perhatikan bahwa MXNet mereset buffer gradien 
+setiap kali kita merekam gradien baru.
 :end_tab:
 
 :begin_tab:`pytorch`
-[**Now let's calculate 
-another function of `x`
-and take its gradient.**]
-Note that PyTorch does not automatically 
-reset the gradient buffer 
-when we record a new gradient. 
-Instead, the new gradient
-is added to the already-stored gradient.
-This behavior comes in handy
-when we want to optimize the sum 
-of multiple objective functions.
-To reset the gradient buffer,
-we can call `x.grad.zero_()` as follows:
+[**Sekarang mari kita hitung 
+fungsi lain dari `x`
+dan ambil gradiennya.**]
+Perhatikan bahwa PyTorch tidak secara otomatis 
+mereset buffer gradien 
+ketika kita merekam gradien baru. 
+Sebaliknya, gradien baru
+ditambahkan ke gradien yang sudah disimpan.
+Perilaku ini berguna
+saat kita ingin mengoptimalkan jumlah 
+dari beberapa fungsi objektif.
+Untuk mereset buffer gradien,
+kita dapat memanggil `x.grad.zero_()` seperti berikut:
 :end_tab:
 
 :begin_tab:`tensorflow`
-[**Now let's calculate 
-another function of `x`
-and take its gradient.**]
-Note that TensorFlow resets the gradient buffer 
-whenever we record a new gradient. 
+[**Sekarang mari kita hitung 
+fungsi lain dari `x`
+dan ambil gradiennya.**]
+Perhatikan bahwa TensorFlow mereset buffer gradien 
+setiap kali kita merekam gradien baru.
 :end_tab:
+
 
 ```{.python .input}
 %%tab mxnet
 with autograd.record():
     y = x.sum()
 y.backward()
-x.grad  # Overwritten by the newly calculated gradient
+x.grad  # Ditimpa oleh gradien yang baru dihitung
 ```
 
 ```{.python .input  n=20}
 %%tab pytorch
-x.grad.zero_()  # Reset the gradient
+x.grad.zero_()  # Me-reset gradien nya
 y = x.sum()
 y.backward()
 x.grad
@@ -298,7 +301,7 @@ x.grad
 %%tab tensorflow
 with tf.GradientTape() as t:
     y = tf.reduce_sum(x)
-t.gradient(y, x)  # Overwritten by the newly calculated gradient
+t.gradient(y, x)  # Ditimpa oleh gradien yang baru dihitung
 ```
 
 ```{.python .input}
@@ -306,67 +309,64 @@ t.gradient(y, x)  # Overwritten by the newly calculated gradient
 y = lambda x: x.sum()
 grad(y)(x)
 ```
+## Backward untuk Variabel Non-Skalar
 
-## Backward for Non-Scalar Variables
+Ketika `y` adalah sebuah vektor, 
+representasi paling alami 
+dari turunan `y`
+terhadap vektor `x` 
+adalah sebuah matriks yang disebut *Jacobian*
+yang berisi turunan parsial
+dari setiap komponen `y` 
+terhadap setiap komponen `x`.
+Demikian pula, untuk `y` dan `x` yang lebih tinggi order-nya,
+hasil diferensiasi dapat berupa tensor dengan order yang lebih tinggi lagi.
 
-When `y` is a vector, 
-the most natural representation 
-of the derivative of  `y`
-with respect to a vector `x` 
-is a matrix called the *Jacobian*
-that contains the partial derivatives
-of each component of `y` 
-with respect to each component of `x`.
-Likewise, for higher-order `y` and `x`,
-the result of differentiation could be an even higher-order tensor.
-
-While Jacobians do show up in some
-advanced machine learning techniques,
-more commonly we want to sum up 
-the gradients of each component of `y`
-with respect to the full vector `x`,
-yielding a vector of the same shape as `x`.
-For example, we often have a vector 
-representing the value of our loss function
-calculated separately for each example among
-a *batch* of training examples.
-Here, we just want to (**sum up the gradients
-computed individually for each example**).
+Meskipun Jacobian muncul dalam beberapa
+teknik machine learning tingkat lanjut,
+lebih umum kita ingin menjumlahkan 
+gradien dari setiap komponen `y`
+terhadap vektor penuh `x`,
+sehingga menghasilkan vektor dengan bentuk yang sama dengan `x`.
+Misalnya, kita sering memiliki sebuah vektor 
+yang merepresentasikan nilai fungsi loss kita
+yang dihitung secara terpisah untuk setiap contoh dalam
+sebuah *batch* dari contoh pelatihan.
+Di sini, kita hanya ingin (**menjumlahkan gradien
+yang dihitung secara individual untuk setiap contoh**).
 
 :begin_tab:`mxnet`
-MXNet handles this problem by reducing all tensors to scalars 
-by summing before computing a gradient. 
-In other words, rather than returning the Jacobian 
+MXNet menangani masalah ini dengan mereduksi semua tensor menjadi skalar 
+dengan menjumlahkan sebelum menghitung gradien. 
+Dengan kata lain, alih-alih mengembalikan Jacobian 
 $\partial_{\mathbf{x}} \mathbf{y}$,
-it returns the gradient of the sum
+ia mengembalikan gradien dari jumlah
 $\partial_{\mathbf{x}} \sum_i y_i$. 
 :end_tab:
 
 :begin_tab:`pytorch`
-Because deep learning frameworks vary 
-in how they interpret gradients of
-non-scalar tensors,
-PyTorch takes some steps to avoid confusion.
-Invoking `backward` on a non-scalar elicits an error 
-unless we tell PyTorch how to reduce the object to a scalar. 
-More formally, we need to provide some vector $\mathbf{v}$ 
-such that `backward` will compute 
+Karena framework deep learning berbeda-beda 
+dalam cara mereka menafsirkan gradien dari
+tensor non-skalar,
+PyTorch mengambil beberapa langkah untuk menghindari kebingungan.
+Memanggil `backward` pada tensor non-skalar akan menimbulkan error 
+kecuali kita memberi tahu PyTorch cara mereduksi objek menjadi skalar. 
+Secara lebih formal, kita perlu menyediakan beberapa vektor $\mathbf{v}$ 
+sehingga `backward` akan menghitung 
 $\mathbf{v}^\top \partial_{\mathbf{x}} \mathbf{y}$ 
-rather than $\partial_{\mathbf{x}} \mathbf{y}$. 
-This next part may be confusing,
-but for reasons that will become clear later, 
-this argument (representing $\mathbf{v}$) is named `gradient`. 
-For a more detailed description, see Yang Zhang's 
-[Medium post](https://zhang-yang.medium.com/the-gradient-argument-in-pytorchs-backward-function-explained-by-examples-68f266950c29). 
+alih-alih $\partial_{\mathbf{x}} \mathbf{y}$. 
+Bagian berikut mungkin membingungkan,
+tetapi untuk alasan yang akan menjadi jelas nanti, 
+argumen ini (yang merepresentasikan $\mathbf{v}$) dinamai `gradient`. 
+Untuk deskripsi lebih rinci, lihat 
+[postingan Medium Yang Zhang](https://zhang-yang.medium.com/the-gradient-argument-in-pytorchs-backward-function-explained-by-examples-68f266950c29). 
 :end_tab:
 
 :begin_tab:`tensorflow`
-By default, TensorFlow returns the gradient of the sum.
-In other words, rather than returning 
-the Jacobian $\partial_{\mathbf{x}} \mathbf{y}$,
-it returns the gradient of the sum
-$\partial_{\mathbf{x}} \sum_i y_i$. 
-:end_tab:
+Secara default, TensorFlow mengembalikan gradien dari jumlahnya.
+Dengan kata lain, alih-alih mengembalikan 
+Jacobian $\partial_{\mathbf{x
+
 
 ```{.python .input}
 %%tab mxnet
@@ -398,30 +398,30 @@ y = lambda x: x * x
 grad(lambda x: y(x).sum())(x)
 ```
 
-## Detaching Computation
+## Memisahkan Perhitungan
 
-Sometimes, we wish to [**move some calculations
-outside of the recorded computational graph.**]
-For example, say that we use the input 
-to create some auxiliary intermediate terms 
-for which we do not want to compute a gradient. 
-In this case, we need to *detach* 
-the respective computational graph
-from the final result. 
-The following toy example makes this clearer: 
-suppose we have `z = x * y` and `y = x * x` 
-but we want to focus on the *direct* influence of `x` on `z` 
-rather than the influence conveyed via `y`. 
-In this case, we can create a new variable `u`
-that takes the same value as `y` 
-but whose *provenance* (how it was created)
-has been wiped out.
-Thus `u` has no ancestors in the graph
-and gradients do not flow through `u` to `x`.
-For example, taking the gradient of `z = x * u`
-will yield the result `u`,
-(not `3 * x * x` as you might have 
-expected since `z = x * x * x`).
+Kadang-kadang, kita ingin [**memindahkan beberapa perhitungan
+di luar graf komputasi yang direkam.**]
+Misalnya, kita menggunakan input 
+untuk membuat beberapa istilah antara yang bersifat tambahan 
+dan kita tidak ingin menghitung gradien untuknya. 
+Dalam kasus ini, kita perlu *memisahkan* 
+graf komputasi yang terkait dari hasil akhir. 
+Contoh sederhana berikut akan memperjelas hal ini: 
+misalkan kita memiliki `z = x * y` dan `y = x * x`, 
+tetapi kita ingin fokus pada pengaruh *langsung* dari `x` terhadap `z` 
+alih-alih pengaruh yang disalurkan melalui `y`. 
+Dalam kasus ini, kita dapat membuat variabel baru `u`
+yang memiliki nilai yang sama dengan `y` 
+tetapi *asal-usulnya* (bagaimana itu dibuat)
+telah dihapus.
+Dengan demikian, `u` tidak memiliki nenek moyang dalam graf
+dan gradien tidak mengalir melalui `u` ke `x`.
+Sebagai contoh, menghitung gradien dari `z = x * u`
+akan menghasilkan nilai `u`,
+(bukan `3 * x * x` seperti yang mungkin Anda 
+perkirakan karena `z = x * x * x`).
+
 
 ```{.python .input}
 %%tab mxnet
@@ -446,8 +446,8 @@ x.grad == u
 
 ```{.python .input}
 %%tab tensorflow
-# Set persistent=True to preserve the compute graph. 
-# This lets us run t.gradient more than once
+# Setel persistent=True untuk mempertahankan graf komputasi. 
+# Ini memungkinkan kita menjalankan t.gradient lebih dari sekali
 with tf.GradientTape(persistent=True) as t:
     y = x * x
     u = tf.stop_gradient(y)
@@ -462,19 +462,19 @@ x_grad == u
 import jax
 
 y = lambda x: x * x
-# jax.lax primitives are Python wrappers around XLA operations
+# Primitif jax.lax adalah pembungkus Python untuk operasi XLA
 u = jax.lax.stop_gradient(y(x))
 z = lambda x: u * x
 
 grad(lambda x: z(x).sum())(x) == y(x)
 ```
 
-Note that while this procedure
-detaches `y`'s ancestors
-from the graph leading to `z`, 
-the computational graph leading to `y` 
-persists and thus we can calculate
-the gradient of `y` with respect to `x`.
+Perhatikan bahwa meskipun prosedur ini
+memisahkan nenek moyang `y`
+dari graf yang mengarah ke `z`, 
+graf komputasi yang mengarah ke `y` 
+tetap ada, sehingga kita masih dapat menghitung
+gradien `y` terhadap `x`.
 
 ```{.python .input}
 %%tab mxnet
@@ -499,22 +499,23 @@ t.gradient(y, x) == 2 * x
 grad(lambda x: y(x).sum())(x) == 2 * x
 ```
 
-## Gradients and Python Control Flow
+## Gradien dan Alur Kendali Python
 
-So far we reviewed cases where the path from input to output 
-was well defined via a function such as `z = x * x * x`.
-Programming offers us a lot more freedom in how we compute results. 
-For instance, we can make them depend on auxiliary variables 
-or condition choices on intermediate results. 
-One benefit of using automatic differentiation
-is that [**even if**] building the computational graph of 
-(**a function required passing through a maze of Python control flow**)
-(e.g., conditionals, loops, and arbitrary function calls),
-(**we can still calculate the gradient of the resulting variable.**)
-To illustrate this, consider the following code snippet where 
-the number of iterations of the `while` loop
-and the evaluation of the `if` statement
-both depend on the value of the input `a`.
+Sejauh ini, kita telah meninjau kasus-kasus di mana jalur dari input ke output 
+didefinisikan dengan baik melalui sebuah fungsi seperti `z = x * x * x`.
+Pemrograman menawarkan kita lebih banyak kebebasan dalam cara kita menghitung hasil. 
+Sebagai contoh, kita dapat membuatnya bergantung pada variabel tambahan 
+atau memilih kondisi berdasarkan hasil antara. 
+Salah satu keuntungan menggunakan diferensiasi otomatis
+adalah bahwa [**bahkan jika**] membangun graf komputasi dari 
+(**suatu fungsi memerlukan pengaturan melalui labirin alur kendali Python**)
+(misalnya, pernyataan kondisional, loop, dan pemanggilan fungsi acak),
+(**kita masih dapat menghitung gradien dari variabel yang dihasilkan.**)
+Untuk menggambarkan hal ini, pertimbangkan potongan kode berikut di mana 
+jumlah iterasi dari loop `while`
+dan evaluasi dari pernyataan `if`
+keduanya bergantung pada nilai dari input `a`.
+
 
 ```{.python .input}
 %%tab mxnet
@@ -568,14 +569,15 @@ def f(a):
     return c
 ```
 
-Below, we call this function, passing in a random value, as input.
-Since the input is a random variable, 
-we do not know what form 
-the computational graph will take.
-However, whenever we execute `f(a)` 
-on a specific input, we realize 
-a specific computational graph
-and can subsequently run `backward`.
+Di bawah ini, kita memanggil fungsi ini dengan memberikan nilai acak sebagai input.
+Karena input adalah variabel acak, 
+kita tidak tahu bentuk apa 
+yang akan diambil oleh graf komputasi.
+Namun, setiap kali kita menjalankan `f(a)` 
+dengan input tertentu, kita mewujudkan 
+graf komputasi tertentu
+dan dapat menjalankan `backward` setelahnya.
+
 
 ```{.python .input}
 %%tab mxnet
@@ -610,13 +612,14 @@ d = f(a)
 d_grad = grad(f)(a)
 ```
 
-Even though our function `f` is, for demonstration purposes, a bit contrived,
-its dependence on the input is quite simple: 
-it is a *linear* function of `a` 
-with piecewise defined scale. 
-As such, `f(a) / a` is a vector of constant entries 
-and, moreover, `f(a) / a` needs to match 
-the gradient of `f(a)` with respect to `a`.
+Meskipun fungsi kita `f`, untuk tujuan demonstrasi, sedikit dibuat-buat,
+ketergantungannya pada input cukup sederhana: 
+fungsi ini adalah fungsi *linier* dari `a` 
+dengan skala yang ditentukan secara sepotong-sepotong. 
+Dengan demikian, `f(a) / a` adalah vektor dengan entri konstan 
+dan, selain itu, `f(a) / a` harus sesuai 
+dengan gradien dari `f(a)` terhadap `a`.
+
 
 ```{.python .input}
 %%tab mxnet
@@ -638,60 +641,60 @@ d_grad == d / a
 d_grad == d / a
 ```
 
-Dynamic control flow is very common in deep learning. 
-For instance, when processing text, the computational graph
-depends on the length of the input. 
-In these cases, automatic differentiation 
-becomes vital for statistical modeling 
-since it is impossible to compute the gradient *a priori*. 
+Alur kendali dinamis sangat umum dalam deep learning. 
+Misalnya, saat memproses teks, graf komputasi 
+bergantung pada panjang input. 
+Dalam kasus ini, diferensiasi otomatis 
+menjadi sangat penting untuk pemodelan statistik 
+karena mustahil menghitung gradien *a priori*. 
 
-## Discussion
+## Diskusi
 
-You have now gotten a taste of the power of automatic differentiation. 
-The development of libraries for calculating derivatives
-both automatically and efficiently 
-has been a massive productivity booster
-for deep learning practitioners,
-liberating them so they can focus on less menial.
-Moreover, autograd lets us design massive models
-for which pen and paper gradient computations 
-would be prohibitively time consuming.
-Interestingly, while we use autograd to *optimize* models
-(in a statistical sense)
-the *optimization* of autograd libraries themselves
-(in a computational sense)
-is a rich subject
-of vital interest to framework designers.
-Here, tools from compilers and graph manipulation 
-are leveraged to compute results 
-in the most expedient and memory-efficient manner. 
+Anda kini telah mendapatkan gambaran tentang kekuatan dari diferensiasi otomatis. 
+Pengembangan pustaka untuk menghitung turunan 
+baik secara otomatis maupun efisien 
+telah menjadi pendorong produktivitas besar 
+bagi para praktisi deep learning,
+membebaskan mereka untuk dapat lebih fokus pada aspek-aspek yang tidak repetitif.
+Selain itu, autograd memungkinkan kita merancang model besar 
+yang perhitungan gradiennya dengan tangan 
+akan sangat memakan waktu.
+Menariknya, meskipun kita menggunakan autograd untuk *mengoptimalkan* model 
+(dalam arti statistik),
+*optimalisasi* pustaka autograd itu sendiri 
+(dalam arti komputasional) 
+merupakan topik yang kaya 
+dan sangat penting bagi perancang framework.
+Di sini, alat-alat dari compiler dan manipulasi graf 
+dimanfaatkan untuk menghitung hasil 
+dengan cara yang paling cepat dan efisien dalam hal memori. 
 
-For now, try to remember these basics: (i) attach gradients to those variables with respect to which we desire derivatives; (ii) record the computation of the target value; (iii) execute the backpropagation function; and  (iv) access the resulting gradient.
+Untuk saat ini, cobalah mengingat konsep dasar berikut: (i) lampirkan gradien pada variabel-variabel terhadap mana kita ingin mencari turunan; (ii) rekam perhitungan dari nilai target; (iii) jalankan fungsi backpropagation; dan (iv) akses gradien yang dihasilkan.
 
 
-## Exercises
+## Latihan
 
-1. Why is the second derivative much more expensive to compute than the first derivative?
-1. After running the function for backpropagation, immediately run it again and see what happens. Investigate.
-1. In the control flow example where we calculate the derivative of `d` with respect to `a`, what would happen if we changed the variable `a` to a random vector or a matrix? At this point, the result of the calculation `f(a)` is no longer a scalar. What happens to the result? How do we analyze this?
-1. Let $f(x) = \sin(x)$. Plot the graph of $f$ and of its derivative $f'$. Do not exploit the fact that $f'(x) = \cos(x)$ but rather use automatic differentiation to get the result. 
-1. Let $f(x) = ((\log x^2) \cdot \sin x) + x^{-1}$. Write out a dependency graph tracing results from $x$ to $f(x)$. 
-1. Use the chain rule to compute the derivative $\frac{df}{dx}$ of the aforementioned function, placing each term on the dependency graph that you constructed previously. 
-1. Given the graph and the intermediate derivative results, you have a number of options when computing the gradient. Evaluate the result once starting from $x$ to $f$ and once from $f$ tracing back to $x$. The path from $x$ to $f$ is commonly known as *forward differentiation*, whereas the path from $f$ to $x$ is known as backward differentiation. 
-1. When might you want to use forward, and when backward, differentiation? Hint: consider the amount of intermediate data needed, the ability to parallelize steps, and the size of matrices and vectors involved. 
+1. Mengapa turunan kedua jauh lebih mahal untuk dihitung daripada turunan pertama?
+2. Setelah menjalankan fungsi untuk backpropagation, segera jalankan lagi dan lihat apa yang terjadi. Investigasi hasilnya.
+3. Dalam contoh alur kendali di mana kita menghitung turunan `d` terhadap `a`, apa yang akan terjadi jika kita mengganti variabel `a` dengan vektor acak atau matriks? Pada titik ini, hasil dari perhitungan `f(a)` tidak lagi menjadi skalar. Apa yang terjadi pada hasilnya? Bagaimana kita menganalisis ini?
+4. Misalkan $f(x) = \sin(x)$. Plot grafik dari $f$ dan turunannya $f'$. Jangan gunakan fakta bahwa $f'(x) = \cos(x)$, tetapi gunakan diferensiasi otomatis untuk mendapatkan hasilnya. 
+5. Misalkan $f(x) = ((\log x^2) \cdot \sin x) + x^{-1}$. Tuliskan graf dependensi yang melacak hasil dari $x$ ke $f(x)$. 
+6. Gunakan aturan rantai untuk menghitung turunan $\frac{df}{dx}$ dari fungsi yang disebutkan sebelumnya, dengan menempatkan setiap istilah pada graf dependensi yang telah Anda bangun sebelumnya. 
+7. Diberikan graf dan hasil turunan antara, Anda memiliki sejumlah opsi saat menghitung gradien. Evaluasi hasilnya sekali dari $x$ ke $f$ dan sekali dari $f$ menelusuri kembali ke $x$. Jalur dari $x$ ke $f$ umumnya dikenal sebagai *diferensiasi maju* (*forward differentiation*), sedangkan jalur dari $f$ ke $x$ dikenal sebagai diferensiasi mundur (*backward differentiation*).
+8. Kapan Anda ingin menggunakan diferensiasi maju dan kapan menggunakan diferensiasi mundur? Petunjuk: pertimbangkan jumlah data antara yang diperlukan, kemampuan untuk melakukan paralelisasi langkah-langkah, dan ukuran matriks serta vektor yang terlibat.
 
 :begin_tab:`mxnet`
-[Discussions](https://discuss.d2l.ai/t/34)
+[Diskusi](https://discuss.d2l.ai/t/34)
 :end_tab:
 
 :begin_tab:`pytorch`
-[Discussions](https://discuss.d2l.ai/t/35)
+[Diskusi](https://discuss.d2l.ai/t/35)
 :end_tab:
 
 :begin_tab:`tensorflow`
-[Discussions](https://discuss.d2l.ai/t/200)
+[Diskusi](https://discuss.d2l.ai/t/200)
 :end_tab:
 
 :begin_tab:`jax`
-[Discussions](https://discuss.d2l.ai/t/17970)
+[Diskusi](https://discuss.d2l.ai/t/17970)
 :end_tab:
