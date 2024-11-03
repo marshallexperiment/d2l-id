@@ -48,7 +48,8 @@ NA,NA,127500
 NA,NA,140000''')
 ```
 
-Now let's import `pandas` and load the dataset with `read_csv`.
+Sekarang mari kita impor `pandas` dan muat dataset menggunakan `read_csv`.
+
 
 ```{.python .input}
 %%tab all
@@ -58,44 +59,44 @@ data = pd.read_csv(data_file)
 print(data)
 ```
 
-## Data Preparation
+## Persiapan Data
 
-In supervised learning, we train models
-to predict a designated *target* value,
-given some set of *input* values. 
-Our first step in processing the dataset
-is to separate out columns corresponding
-to input versus target values. 
-We can select columns either by name or
-via integer-location based indexing (`iloc`).
+Dalam pembelajaran terawasi (supervised learning), kita melatih model
+untuk memprediksi nilai *target* yang ditentukan,
+dengan diberikan beberapa nilai *input*. 
+Langkah pertama dalam memproses dataset
+adalah memisahkan kolom yang sesuai
+untuk nilai input dan nilai target. 
+Kita dapat memilih kolom berdasarkan nama atau
+menggunakan pengindeksan berbasis integer-location (`iloc`).
 
-You might have noticed that `pandas` replaced
-all CSV entries with value `NA`
-with a special `NaN` (*not a number*) value. 
-This can also happen whenever an entry is empty,
-e.g., "3,,,270000".
-These are called *missing values* 
-and they are the "bed bugs" of data science,
-a persistent menace that you will confront
-throughout your career. 
-Depending upon the context, 
-missing values might be handled
-either via *imputation* or *deletion*.
-Imputation replaces missing values 
-with estimates of their values
-while deletion simply discards 
-either those rows or those columns
-that contain missing values. 
+Anda mungkin telah memperhatikan bahwa `pandas` menggantikan
+semua entri CSV dengan nilai `NA`
+dengan nilai khusus `NaN` (*not a number*). 
+Ini juga dapat terjadi setiap kali ada entri yang kosong,
+misalnya, "3,,,270000".
+Ini disebut sebagai *nilai yang hilang* 
+dan mereka adalah "kutu busuk" dalam ilmu data,
+sebuah ancaman yang terus-menerus Anda hadapi
+sepanjang karir Anda. 
+Bergantung pada konteksnya, 
+nilai yang hilang dapat ditangani
+baik melalui *imputasi* atau *penghapusan*.
+Imputasi menggantikan nilai yang hilang 
+dengan perkiraan nilai tersebut
+sementara penghapusan hanya membuang 
+baris atau kolom yang berisi nilai yang hilang. 
 
-Here are some common imputation heuristics.
-[**For categorical input fields, 
-we can treat `NaN` as a category.**]
-Since the `RoofType` column takes values `Slate` and `NaN`,
-`pandas` can convert this column 
-into two columns `RoofType_Slate` and `RoofType_nan`.
-A row whose roof type is `Slate` will set values 
-of `RoofType_Slate` and `RoofType_nan` to 1 and 0, respectively.
-The converse holds for a row with a missing `RoofType` value.
+Berikut beberapa heuristik imputasi umum.
+[**Untuk kolom input kategorikal, 
+kita dapat memperlakukan `NaN` sebagai sebuah kategori.**]
+Karena kolom `RoofType` memiliki nilai `Slate` dan `NaN`,
+`pandas` dapat mengonversi kolom ini 
+menjadi dua kolom `RoofType_Slate` dan `RoofType_nan`.
+Sebuah baris dengan jenis atap `Slate` akan mengatur nilai 
+`RoofType_Slate` dan `RoofType_nan` menjadi 1 dan 0, berturut-turut.
+Sebaliknya berlaku untuk baris dengan nilai `RoofType` yang hilang.
+
 
 ```{.python .input}
 %%tab all
@@ -104,21 +105,22 @@ inputs = pd.get_dummies(inputs, dummy_na=True)
 print(inputs)
 ```
 
-For missing numerical values, 
-one common heuristic is to 
-[**replace the `NaN` entries with 
-the mean value of the corresponding column**].
+Untuk nilai numerik yang hilang, 
+salah satu heuristik umum adalah 
+[**menggantikan entri `NaN` dengan 
+nilai rata-rata dari kolom yang sesuai**].
+
 
 ```{.python .input}
 %%tab all
 inputs = inputs.fillna(inputs.mean())
 print(inputs)
 ```
+## Konversi ke Format Tensor
 
-## Conversion to the Tensor Format
+Sekarang, [**semua entri dalam `inputs` dan `targets` adalah numerik,
+kita dapat memuatnya ke dalam tensor**] (ingat :numref:`sec_ndarray`).
 
-Now that [**all the entries in `inputs` and `targets` are numerical,
-we can load them into a tensor**] (recall :numref:`sec_ndarray`).
 
 ```{.python .input}
 %%tab mxnet
@@ -155,62 +157,63 @@ y = jnp.array(targets.to_numpy(dtype=float))
 X, y
 ```
 
-## Discussion
+## Diskusi
 
-You now know how to partition data columns, 
-impute missing variables, 
-and load `pandas` data into tensors. 
-In :numref:`sec_kaggle_house`, you will
-pick up some more data processing skills. 
-While this crash course kept things simple,
-data processing can get hairy.
-For example, rather than arriving in a single CSV file,
-our dataset might be spread across multiple files
-extracted from a relational database.
-For instance, in an e-commerce application,
-customer addresses might live in one table
-and purchase data in another.
-Moreover, practitioners face myriad data types
-beyond categorical and numeric, for example,
-text strings, images,
-audio data, and point clouds. 
-Oftentimes, advanced tools and efficient algorithms 
-are required in order to prevent data processing from becoming
-the biggest bottleneck in the machine learning pipeline. 
-These problems will arise when we get to 
-computer vision and natural language processing. 
-Finally, we must pay attention to data quality.
-Real-world datasets are often plagued 
-by outliers, faulty measurements from sensors, and recording errors, 
-which must be addressed before 
-feeding the data into any model. 
-Data visualization tools such as [seaborn](https://seaborn.pydata.org/), 
-[Bokeh](https://docs.bokeh.org/), or [matplotlib](https://matplotlib.org/)
-can help you to manually inspect the data 
-and develop intuitions about 
-the type of problems you may need to address.
+Anda sekarang tahu cara mempartisi kolom data, 
+mengisi variabel yang hilang, 
+dan memuat data `pandas` ke dalam tensor. 
+Di :numref:`sec_kaggle_house`, Anda akan 
+memperoleh lebih banyak keterampilan dalam pemrosesan data. 
+Meskipun kursus singkat ini sederhana,
+pemrosesan data bisa menjadi rumit.
+Misalnya, daripada datang dalam satu file CSV,
+dataset kita mungkin tersebar di beberapa file
+yang diambil dari database relasional.
+Misalnya, dalam aplikasi e-commerce,
+alamat pelanggan mungkin ada di satu tabel
+dan data pembelian di tabel lain.
+Selain itu, praktisi menghadapi beragam jenis data
+di luar kategori dan numerik, misalnya,
+string teks, gambar,
+data audio, dan point cloud. 
+Sering kali, alat-alat canggih dan algoritma yang efisien 
+diperlukan untuk mencegah pemrosesan data menjadi
+hambatan terbesar dalam alur kerja machine learning. 
+Masalah ini akan muncul saat kita sampai pada 
+visi komputer dan pemrosesan bahasa alami. 
+Akhirnya, kita harus memperhatikan kualitas data.
+Dataset dunia nyata sering kali memiliki 
+outlier, pengukuran sensor yang salah, dan kesalahan pencatatan, 
+yang harus ditangani sebelum 
+memasukkan data ke dalam model apa pun. 
+Alat visualisasi data seperti [seaborn](https://seaborn.pydata.org/), 
+[Bokeh](https://docs.bokeh.org/), atau [matplotlib](https://matplotlib.org/)
+dapat membantu Anda secara manual memeriksa data 
+dan mengembangkan intuisi tentang 
+jenis masalah yang mungkin perlu Anda atasi.
 
 
-## Exercises
+## Latihan
 
-1. Try loading datasets, e.g., Abalone from the [UCI Machine Learning Repository](https://archive.ics.uci.edu/ml/datasets) and inspect their properties. What fraction of them has missing values? What fraction of the variables is numerical, categorical, or text?
-1. Try indexing and selecting data columns by name rather than by column number. The pandas documentation on [indexing](https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html) has further details on how to do this.
-1. How large a dataset do you think you could load this way? What might be the limitations? Hint: consider the time to read the data, representation, processing, and memory footprint. Try this out on your laptop. What happens if you try it out on a server? 
-1. How would you deal with data that has a very large number of categories? What if the category labels are all unique? Should you include the latter?
-1. What alternatives to pandas can you think of? How about [loading NumPy tensors from a file](https://numpy.org/doc/stable/reference/generated/numpy.load.html)? Check out [Pillow](https://python-pillow.org/), the Python Imaging Library. 
+1. Cobalah memuat dataset, misalnya, Abalone dari [UCI Machine Learning Repository](https://archive.ics.uci.edu/ml/datasets) dan periksa propertinya. Berapa fraksi dari dataset tersebut yang memiliki nilai yang hilang? Berapa fraksi dari variabel yang bersifat numerik, kategorikal, atau teks?
+2. Cobalah mengindeks dan memilih kolom data berdasarkan nama daripada nomor kolom. Dokumentasi pandas tentang [indexing](https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html) memiliki detail lebih lanjut tentang cara melakukannya.
+3. Menurut Anda, seberapa besar dataset yang bisa Anda muat dengan cara ini? Apa keterbatasannya? Petunjuk: pertimbangkan waktu untuk membaca data, representasi, pemrosesan, dan jejak memori. Coba ini di laptop Anda. Apa yang terjadi jika Anda mencobanya di server?
+4. Bagaimana Anda menangani data yang memiliki sejumlah besar kategori? Bagaimana jika label kategori semuanya unik? Haruskah Anda menyertakan yang terakhir?
+5. Alternatif apa yang dapat Anda pikirkan selain pandas? Bagaimana dengan [memuat tensor NumPy dari file](https://numpy.org/doc/stable/reference/generated/numpy.load.html)? Lihat juga [Pillow](https://python-pillow.org/), Python Imaging Library.
 
 :begin_tab:`mxnet`
-[Discussions](https://discuss.d2l.ai/t/28)
+[Diskusi](https://discuss.d2l.ai/t/28)
 :end_tab:
 
 :begin_tab:`pytorch`
-[Discussions](https://discuss.d2l.ai/t/29)
+[Diskusi](https://discuss.d2l.ai/t/29)
 :end_tab:
 
 :begin_tab:`tensorflow`
-[Discussions](https://discuss.d2l.ai/t/195)
+[Diskusi](https://discuss.d2l.ai/t/195)
 :end_tab:
 
 :begin_tab:`jax`
-[Discussions](https://discuss.d2l.ai/t/17967)
+[Diskusi](https://discuss.d2l.ai/t/17967)
 :end_tab:
+
