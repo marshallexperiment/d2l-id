@@ -1,27 +1,28 @@
 #  Preliminaries
 :label:`chap_preliminaries`
 
-To prepare for your dive into deep learning,
-you will need a few survival skills:
-(i) techniques for storing and manipulating data;
-(ii) libraries for ingesting 
-and preprocessing data from a variety of sources;
-(iii) knowledge of the basic linear algebraic operations
-that we apply to high-dimensional data elements;
-(iv) just enough calculus to determine
-which direction to adjust each parameter
-in order to decrease the loss function;
-(v) the ability to automatically compute derivatives
-so that you can forget much of 
-the calculus you just learned;
-(vi) some basic fluency in probability,
-our primary language for reasoning under uncertainty;
-and (vii) some aptitude for finding answers 
-in the official documentation when you get stuck.
+Untuk mempersiapkan diri Anda dalam mempelajari deep learning,
+Anda akan membutuhkan beberapa keterampilan dasar:
+(i) teknik untuk menyimpan dan memanipulasi data;
+(ii) pustaka untuk mengimpor 
+dan memproses data dari berbagai sumber;
+(iii) pengetahuan tentang operasi aljabar linear dasar
+yang kita terapkan pada elemen data berdimensi tinggi;
+(iv) cukup pengetahuan kalkulus untuk menentukan
+arah mana yang harus diambil untuk mengatur setiap parameter
+agar mengurangi fungsi loss;
+(v) kemampuan untuk menghitung turunan secara otomatis
+sehingga Anda bisa melupakan sebagian besar 
+kalkulus yang baru saja Anda pelajari;
+(vi) sedikit kefasihan dalam probabilitas,
+bahasa utama kita untuk berpikir dalam ketidakpastian;
+dan (vii) kemampuan untuk mencari jawaban 
+dalam dokumentasi resmi ketika Anda mengalami kebuntuan.
 
-In short, this chapter provides a rapid introduction 
-to the basics that you will need to follow 
-*most* of the technical content in this book.
+Singkatnya, bab ini memberikan pengenalan cepat 
+tentang dasar-dasar yang Anda perlukan untuk mengikuti 
+*sebagian besar* konten teknis dalam buku ini.
+
 
 ```toc
 :maxdepth: 2
