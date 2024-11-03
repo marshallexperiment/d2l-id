@@ -26,7 +26,7 @@
 - [x] ./chapter_preliminaries/lookup-api.md
 - [x] ./chapter_preliminaries/pandas.md
 - [x] ./chapter_preliminaries/index.md
-- [ ] ./chapter_preliminaries/linear-algebra.md
+- [x] ./chapter_preliminaries/linear-algebra.md
 - [ ] ./chapter_preliminaries/calculus.md
 
 # 3 - chapter_linear-networks
