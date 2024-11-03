@@ -25,7 +25,7 @@
 - [x] ./chapter_preliminaries/autograd.md
 - [x] ./chapter_preliminaries/lookup-api.md
 - [x] ./chapter_preliminaries/pandas.md
-- [ ] ./chapter_preliminaries/index.md
+- [x] ./chapter_preliminaries/index.md
 - [ ] ./chapter_preliminaries/linear-algebra.md
 - [ ] ./chapter_preliminaries/calculus.md
 
