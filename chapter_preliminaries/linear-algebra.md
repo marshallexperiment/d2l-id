@@ -3,18 +3,21 @@
 tab.interact_select(['mxnet', 'pytorch', 'tensorflow', 'jax'])
 ```
 
-# Linear Algebra
+
+
+# Aljabar Linear
 :label:`sec_linear-algebra`
 
-By now, we can load datasets into tensors
-and manipulate these tensors
-with basic mathematical operations.
-To start building sophisticated models,
-we will also need a few tools from linear algebra.
-This section offers a gentle introduction
-to the most essential concepts,
-starting from scalar arithmetic
-and ramping up to matrix multiplication.
+Sejauh ini, kita sudah bisa memuat dataset ke dalam tensor
+dan memanipulasi tensor tersebut
+dengan operasi matematika dasar.
+Untuk mulai membangun model yang lebih canggih,
+kita juga memerlukan beberapa alat dari aljabar linear.
+Bagian ini memberikan pengenalan ringan
+tentang konsep-konsep yang paling penting,
+dimulai dari aritmatika skalar
+hingga ke perkalian matriks.
+
 
 ```{.python .input}
 %%tab mxnet
@@ -37,43 +40,42 @@ import tensorflow as tf
 from jax import numpy as jnp
 ```
 
-## Scalars
+## Skalar
 
+Sebagian besar matematika sehari-hari
+terdiri dari memanipulasi
+angka satu per satu.
+Secara formal, kita menyebut nilai-nilai ini sebagai *skalar*.
+Misalnya, suhu di Palo Alto
+adalah 72 derajat Fahrenheit.
+Jika Anda ingin mengonversi suhu ke Celsius,
+Anda akan menghitung ekspresi
+$c = \frac{5}{9}(f - 32)$, dengan menetapkan $f$ ke 72.
+Dalam persamaan ini, nilai
+$5$, $9$, dan $32$ adalah skalar konstan.
+Variabel $c$ dan $f$
+umumnya merepresentasikan skalar yang tidak diketahui.
 
-Most everyday mathematics
-consists of manipulating
-numbers one at a time.
-Formally, we call these values *scalars*.
-For example, the temperature in Palo Alto
-is a balmy $72$ degrees Fahrenheit.
-If you wanted to convert the temperature to Celsius
-you would evaluate the expression
-$c = \frac{5}{9}(f - 32)$, setting $f$ to $72$.
-In this equation, the values
-$5$, $9$, and $32$ are constant scalars.
-The variables $c$ and $f$
-in general represent unknown scalars.
+Kita menandai skalar
+dengan huruf kecil biasa
+(misalnya, $x$, $y$, dan $z$)
+dan ruang dari semua skalar
+*bernilai real* (kontinu) dengan $\mathbb{R}$.
+Untuk kemudahan, kita akan melewatkan
+definisi yang ketat tentang *ruang*:
+ingat saja bahwa ekspresi $x \in \mathbb{R}$
+adalah cara formal untuk menyatakan bahwa $x$ adalah skalar bernilai real.
+Simbol $\in$ (dibaca "di dalam")
+menyatakan keanggotaan dalam suatu himpunan.
+Sebagai contoh, $x, y \in \{0, 1\}$
+menunjukkan bahwa $x$ dan $y$ adalah variabel
+yang hanya dapat mengambil nilai $0$ atau $1$.
 
-We denote scalars
-by ordinary lower-cased letters
-(e.g., $x$, $y$, and $z$)
-and the space of all (continuous)
-*real-valued* scalars by $\mathbb{R}$.
-For expedience, we will skip past
-rigorous definitions of *spaces*:
-just remember that the expression $x \in \mathbb{R}$
-is a formal way to say that $x$ is a real-valued scalar.
-The symbol $\in$ (pronounced "in")
-denotes membership in a set.
-For example, $x, y \in \{0, 1\}$
-indicates that $x$ and $y$ are variables
-that can only take values $0$ or $1$.
-
-(**Scalars are implemented as tensors
-that contain only one element.**)
-Below, we assign two scalars
-and perform the familiar addition, multiplication,
-division, and exponentiation operations.
+(**Skalar diimplementasikan sebagai tensor
+yang hanya berisi satu elemen.**)
+Di bawah ini, kita menetapkan dua skalar
+dan melakukan operasi penjumlahan, perkalian,
+pembagian, dan perpangkatan yang sudah dikenal.
 
 ```{.python .input}
 %%tab mxnet
@@ -107,37 +109,38 @@ y = jnp.array(2.0)
 x + y, x * y, x / y, x**y
 ```
 
-## Vectors
+## Vektor
 
-For current purposes, [**you can think of a vector as a fixed-length array of scalars.**]
-As with their code counterparts,
-we call these scalars the *elements* of the vector
-(synonyms include *entries* and *components*).
-When vectors represent examples from real-world datasets,
-their values hold some real-world significance.
-For example, if we were training a model to predict
-the risk of a loan defaulting,
-we might associate each applicant with a vector
-whose components correspond to quantities
-like their income, length of employment,
-or number of previous defaults.
-If we were studying the risk of heart attack,
-each vector might represent a patient
-and its components might correspond to
-their most recent vital signs, cholesterol levels,
-minutes of exercise per day, etc.
-We denote vectors by bold lowercase letters,
-(e.g., $\mathbf{x}$, $\mathbf{y}$, and $\mathbf{z}$).
+Untuk saat ini, [**Anda dapat menganggap vektor sebagai array berdimensi tetap yang terdiri dari skalar.**]
+Seperti pada padanan kode mereka,
+kita menyebut skalar-skalar ini sebagai *elemen* vektor
+(sinonim lainnya adalah *entri* dan *komponen*).
+Ketika vektor merepresentasikan contoh dari dataset dunia nyata,
+nilai-nilainya memiliki arti penting dalam konteks dunia nyata.
+Misalnya, jika kita melatih model untuk memprediksi
+risiko gagal bayar pinjaman,
+kita mungkin mengaitkan setiap pemohon dengan sebuah vektor
+yang komponennya sesuai dengan nilai-nilai
+seperti pendapatan mereka, lama bekerja,
+atau jumlah gagal bayar sebelumnya.
+Jika kita mempelajari risiko serangan jantung,
+setiap vektor mungkin mewakili seorang pasien
+dan komponennya mungkin sesuai dengan
+tanda vital terbaru mereka, kadar kolesterol,
+menit latihan per hari, dll.
+Kita menandai vektor dengan huruf kecil tebal,
+(misalnya, $\mathbf{x}$, $\mathbf{y}$, dan $\mathbf{z}$).
 
-Vectors are implemented as $1^{\textrm{st}}$-order tensors.
-In general, such tensors can have arbitrary lengths,
-subject to memory limitations. Caution: in Python, as in most programming languages, vector indices start at $0$, also known as *zero-based indexing*, whereas in linear algebra subscripts begin at $1$ (one-based indexing).
+Vektor diimplementasikan sebagai tensor berdimensi pertama ($1^{\textrm{st}}$-order).
+Secara umum, tensor seperti ini dapat memiliki panjang sebarang,
+tergantung pada batasan memori. Catatan: dalam Python, seperti dalam sebagian besar bahasa pemrograman, indeks vektor dimulai dari $0$, yang juga dikenal sebagai *zero-based indexing*, sedangkan dalam aljabar linear subskrip dimulai dari $1$ (one-based indexing).
 
 ```{.python .input}
 %%tab mxnet
 x = np.arange(3)
 x
 ```
+
 
 ```{.python .input}
 %%tab pytorch
@@ -157,82 +160,89 @@ x = jnp.arange(3)
 x
 ```
 
-We can refer to an element of a vector by using a subscript.
-For example, $x_2$ denotes the second element of $\mathbf{x}$.
-Since $x_2$ is a scalar, we do not bold it.
-By default, we visualize vectors
-by stacking their elements vertically:
+Kita dapat merujuk ke elemen suatu vektor dengan menggunakan subskrip.
+Misalnya, $x_2$ menunjukkan elemen kedua dari $\mathbf{x}$.
+Karena $x_2$ adalah skalar, kita tidak mencetaknya dengan huruf tebal.
+Secara default, kita memvisualisasikan vektor
+dengan menumpuk elemennya secara vertikal:
 
 $$\mathbf{x} =\begin{bmatrix}x_{1}  \\ \vdots  \\x_{n}\end{bmatrix}.$$
 :eqlabel:`eq_vec_def`
 
-Here $x_1, \ldots, x_n$ are elements of the vector.
-Later on, we will distinguish between such *column vectors*
-and *row vectors* whose elements are stacked horizontally.
-Recall that [**we access a tensor's elements via indexing.**]
+Di sini $x_1, \ldots, x_n$ adalah elemen-elemen dari vektor tersebut.
+Nantinya, kita akan membedakan antara *vektor kolom* seperti ini
+dan *vektor baris* yang elemennya ditumpuk secara horizontal.
+Ingat bahwa [**kita mengakses elemen-elemen tensor melalui indexing.**]
+
 
 ```{.python .input}
 %%tab all
 x[2]
 ```
 
-To indicate that a vector contains $n$ elements,
-we write $\mathbf{x} \in \mathbb{R}^n$.
-Formally, we call $n$ the *dimensionality* of the vector.
-[**In code, this corresponds to the tensor's length**],
-accessible via Python's built-in `len` function.
+Untuk menunjukkan bahwa sebuah vektor berisi $n$ elemen,
+kita menuliskan $\mathbf{x} \in \mathbb{R}^n$.
+Secara formal, kita menyebut $n$ sebagai *dimensi* dari vektor.
+[**Dalam kode, ini sesuai dengan panjang tensor**],
+yang dapat diakses melalui fungsi bawaan `len` dalam Python.
+
 
 ```{.python .input}
 %%tab all
 len(x)
 ```
 
-We can also access the length via the `shape` attribute.
-The shape is a tuple that indicates a tensor's length along each axis.
-(**Tensors with just one axis have shapes with just one element.**)
+Kita juga dapat mengakses panjang melalui atribut `shape`.
+`Shape` adalah sebuah tuple yang menunjukkan panjang tensor di setiap sumbu.
+(**Tensor dengan hanya satu sumbu memiliki shape dengan hanya satu elemen.**)
+
 
 ```{.python .input}
 %%tab all
 x.shape
 ```
 
-Oftentimes, the word "dimension" gets overloaded
-to mean both the number of axes
-and the length along a particular axis.
-To avoid this confusion,
-we use *order* to refer to the number of axes
-and *dimensionality* exclusively to refer
-to the number of components.
+Seringkali, kata "dimensi" memiliki dua makna, yaitu 
+jumlah sumbu (axes) dan panjang sepanjang sumbu tertentu.
+Untuk menghindari kebingungan ini,
+kita menggunakan istilah *order* untuk merujuk pada jumlah sumbu
+dan *dimensi* secara eksklusif untuk merujuk 
+pada jumlah komponen.
 
 
-## Matrices
+## Matriks
 
-Just as scalars are $0^{\textrm{th}}$-order tensors
-and vectors are $1^{\textrm{st}}$-order tensors,
-matrices are $2^{\textrm{nd}}$-order tensors.
-We denote matrices by bold capital letters
-(e.g., $\mathbf{X}$, $\mathbf{Y}$, and $\mathbf{Z}$),
-and represent them in code by tensors with two axes.
-The expression $\mathbf{A} \in \mathbb{R}^{m \times n}$
-indicates that a matrix $\mathbf{A}$
-contains $m \times n$ real-valued scalars,
-arranged as $m$ rows and $n$ columns.
-When $m = n$, we say that a matrix is *square*.
-Visually, we can illustrate any matrix as a table.
-To refer to an individual element,
-we subscript both the row and column indices, e.g.,
-$a_{ij}$ is the value that belongs to $\mathbf{A}$'s
-$i^{\textrm{th}}$ row and $j^{\textrm{th}}$ column:
+Seperti halnya skalar adalah tensor berorde ke-0 ($0^{\textrm{th}}$-order)
+dan vektor adalah tensor berorde pertama ($1^{\textrm{st}}$-order),
+maka matriks adalah tensor berorde kedua ($2^{\textrm{nd}}$-order).
+Kita menandai matriks dengan huruf kapital tebal
+(misalnya, $\mathbf{X}$, $\mathbf{Y}$, dan $\mathbf{Z}$),
+dan merepresentasikannya dalam kode sebagai tensor dengan dua sumbu.
+Ekspresi $\mathbf{A} \in \mathbb{R}^{m \times n}$
+menunjukkan bahwa matriks $\mathbf{A}$
+berisi $m \times n$ skalar bernilai real,
+yang disusun dalam $m$ baris dan $n$ kolom.
+Ketika $m = n$, kita mengatakan bahwa matriks tersebut adalah *persegi*.
+Secara visual, kita dapat menggambarkan matriks sebagai sebuah tabel.
+Untuk merujuk pada elemen individu,
+kita menggunakan subskrip pada indeks baris dan kolom, misalnya,
+$a_{ij}$ adalah nilai yang termasuk dalam baris ke-$i$ dan kolom ke-$j$ dari $\mathbf{A}$:
 
-$$\mathbf{A}=\begin{bmatrix} a_{11} & a_{12} & \cdots & a_{1n} \\ a_{21} & a_{22} & \cdots & a_{2n} \\ \vdots & \vdots & \ddots & \vdots \\ a_{m1} & a_{m2} & \cdots & a_{mn} \\ \end{bmatrix}.$$
-:eqlabel:`eq_matrix_def`
+$$
+\mathbf{A} = \begin{bmatrix} 
+a_{11} & a_{12} & \cdots & a_{1n} \\ 
+a_{21} & a_{22} & \cdots & a_{2n} \\ 
+\vdots & \vdots & \ddots & \vdots \\ 
+a_{m1} & a_{m2} & \cdots & a_{mn} 
+\end{bmatrix}.
+$$:eqlabel:`eq_matrix_def`
 
+Dalam kode, kita merepresentasikan matriks $\mathbf{A} \in \mathbb{R}^{m \times n}$
+dengan tensor berorde kedua ($2^{\textrm{nd}}$-order) dengan bentuk ($m$, $n$).
+[**Kita dapat mengonversi tensor berukuran $m \times n$ yang sesuai
+menjadi matriks $m \times n**]
+dengan memberikan bentuk yang diinginkan pada `reshape`:
 
-In code, we represent a matrix $\mathbf{A} \in \mathbb{R}^{m \times n}$
-by a $2^{\textrm{nd}}$-order tensor with shape ($m$, $n$).
-[**We can convert any appropriately sized $m \times n$ tensor
-into an $m \times n$ matrix**]
-by passing the desired shape to `reshape`:
 
 ```{.python .input}
 %%tab mxnet
@@ -258,14 +268,14 @@ A = jnp.arange(6).reshape(3, 2)
 A
 ```
 
-Sometimes we want to flip the axes.
-When we exchange a matrix's rows and columns,
-the result is called its *transpose*.
-Formally, we signify a matrix $\mathbf{A}$'s transpose
-by $\mathbf{A}^\top$ and if $\mathbf{B} = \mathbf{A}^\top$,
-then $b_{ij} = a_{ji}$ for all $i$ and $j$.
-Thus, the transpose of an $m \times n$ matrix
-is an $n \times m$ matrix:
+Kadang-kadang kita ingin membalikkan sumbu.
+Ketika kita menukar baris dan kolom suatu matriks,
+hasilnya disebut sebagai *transpose* dari matriks tersebut.
+Secara formal, kita menandakan transpose matriks $\mathbf{A}$
+dengan $\mathbf{A}^\top$ dan jika $\mathbf{B} = \mathbf{A}^\top$,
+maka $b_{ij} = a_{ji}$ untuk semua $i$ dan $j$.
+Jadi, transpose dari matriks $m \times n$
+adalah matriks $n \times m$:
 
 $$
 \mathbf{A}^\top =
@@ -277,7 +287,8 @@ $$
 \end{bmatrix}.
 $$
 
-In code, we can access any (**matrix's transpose**) as follows:
+Dalam kode, kita dapat mengakses (**transpose dari matriks**) sebagai berikut:
+
 
 ```{.python .input}
 %%tab mxnet, pytorch, jax
@@ -289,10 +300,11 @@ A.T
 tf.transpose(A)
 ```
 
-[**Symmetric matrices are the subset of square matrices
-that are equal to their own transposes:
+[**Matriks simetris adalah subset dari matriks persegi
+yang sama dengan transposenya sendiri:
 $\mathbf{A} = \mathbf{A}^\top$.**]
-The following matrix is symmetric:
+Matriks berikut ini adalah simetris:
+
 
 ```{.python .input}
 %%tab mxnet
@@ -317,47 +329,46 @@ A == tf.transpose(A)
 A = jnp.array([[1, 2, 3], [2, 0, 4], [3, 4, 5]])
 A == A.T
 ```
-
-Matrices are useful for representing datasets.
-Typically, rows correspond to individual records
-and columns correspond to distinct attributes.
-
+Matriks sangat berguna untuk merepresentasikan dataset.
+Biasanya, baris merepresentasikan catatan individu
+dan kolom merepresentasikan atribut yang berbeda.
 
 
-## Tensors
+## Tensor
 
-While you can go far in your machine learning journey
-with only scalars, vectors, and matrices,
-eventually you may need to work with
-higher-order [**tensors**].
-Tensors (**give us a generic way of describing
-extensions to $n^{\textrm{th}}$-order arrays.**)
-We call software objects of the *tensor class* "tensors"
-precisely because they too can have arbitrary numbers of axes.
-While it may be confusing to use the word
-*tensor* for both the mathematical object
-and its realization in code,
-our meaning should usually be clear from context.
-We denote general tensors by capital letters
-with a special font face
-(e.g., $\mathsf{X}$, $\mathsf{Y}$, and $\mathsf{Z}$)
-and their indexing mechanism
-(e.g., $x_{ijk}$ and $[\mathsf{X}]_{1, 2i-1, 3}$)
-follows naturally from that of matrices.
+Meskipun Anda bisa melangkah jauh dalam perjalanan pembelajaran mesin Anda
+dengan hanya skalar, vektor, dan matriks,
+akhirnya Anda mungkin perlu bekerja dengan
+[**tensor**] berorde lebih tinggi.
+Tensor (**memberi kita cara generik untuk menggambarkan
+perluasan ke array berorde-$n^{\textrm{th}}$.**)
+Kami menyebut objek perangkat lunak dari *kelas tensor* sebagai "tensor"
+karena mereka juga dapat memiliki jumlah sumbu yang sebarang.
+Meskipun mungkin membingungkan menggunakan kata
+*tensor* baik untuk objek matematika
+maupun realisasinya dalam kode,
+maknanya biasanya jelas dari konteks.
+Kita menandai tensor umum dengan huruf kapital
+dengan gaya font khusus
+(misalnya, $\mathsf{X}$, $\mathsf{Y}$, dan $\mathsf{Z}$)
+dan mekanisme pengindeksannya
+(misalnya, $x_{ijk}$ dan $[\mathsf{X}]_{1, 2i-1, 3}$)
+secara alami mengikuti mekanisme pengindeksan matriks.
 
-Tensors will become more important
-when we start working with images.
-Each image arrives as a $3^{\textrm{rd}}$-order tensor
-with axes corresponding to the height, width, and *channel*.
-At each spatial location, the intensities
-of each color (red, green, and blue)
-are stacked along the channel.
-Furthermore, a collection of images is represented
-in code by a $4^{\textrm{th}}$-order tensor,
-where distinct images are indexed
-along the first axis.
-Higher-order tensors are constructed, as were vectors and matrices,
-by growing the number of shape components.
+Tensor akan menjadi lebih penting
+saat kita mulai bekerja dengan gambar.
+Setiap gambar muncul sebagai tensor berorde-3
+dengan sumbu yang sesuai dengan tinggi, lebar, dan *channel*.
+Pada setiap lokasi spasial, intensitas
+masing-masing warna (merah, hijau, dan biru)
+ditumpuk di sepanjang channel.
+Selanjutnya, kumpulan gambar direpresentasikan
+dalam kode sebagai tensor berorde-4,
+di mana gambar yang berbeda diindeks
+di sepanjang sumbu pertama.
+Tensor berorde lebih tinggi dibangun, seperti halnya vektor dan matriks,
+dengan menambah jumlah komponen shape.
+
 
 ```{.python .input}
 %%tab mxnet
@@ -379,14 +390,15 @@ tf.reshape(tf.range(24), (2, 3, 4))
 jnp.arange(24).reshape(2, 3, 4)
 ```
 
-## Basic Properties of Tensor Arithmetic
+## Properti Dasar Aritmatika Tensor
 
-Scalars, vectors, matrices,
-and higher-order tensors
-all have some handy properties.
-For example, elementwise operations
-produce outputs that have the
-same shape as their operands.
+Skalar, vektor, matriks,
+dan tensor berorde lebih tinggi
+semua memiliki beberapa properti yang berguna.
+Misalnya, operasi elemen demi elemen
+menghasilkan output yang memiliki
+shape yang sama dengan operannya.
+
 
 ```{.python .input}
 %%tab mxnet
@@ -416,10 +428,11 @@ B = A
 A, A + B
 ```
 
-The [**elementwise product of two matrices
-is called their *Hadamard product***] (denoted $\odot$).
-We can spell out the entries
-of the Hadamard product of two matrices
+
+[**Produk elemen demi elemen dari dua matriks
+disebut sebagai *produk Hadamard***] (dilambangkan dengan $\odot$).
+Kita dapat menuliskan entri-entri
+dari produk Hadamard dua matriks
 $\mathbf{A}, \mathbf{B} \in \mathbb{R}^{m \times n}$:
 
 
@@ -439,9 +452,10 @@ $$
 A * B
 ```
 
-[**Adding or multiplying a scalar and a tensor**] produces a result
-with the same shape as the original tensor.
-Here, each element of the tensor is added to (or multiplied by) the scalar.
+[**Menambahkan atau mengalikan skalar dan tensor**] menghasilkan hasil
+dengan shape yang sama seperti tensor aslinya.
+Di sini, setiap elemen tensor ditambahkan (atau dikalikan) dengan skalar.
+
 
 ```{.python .input}
 %%tab mxnet
@@ -471,12 +485,13 @@ X = jnp.arange(24).reshape(2, 3, 4)
 a + X, (a * X).shape
 ```
 
-## Reduction
+## Reduksi
 :label:`subsec_lin-alg-reduction`
 
-Often, we wish to calculate [**the sum of a tensor's elements.**]
-To express the sum of the elements in a vector $\mathbf{x}$ of length $n$,
-we write $\sum_{i=1}^n x_i$. There is a simple function for it:
+Seringkali, kita ingin menghitung [**jumlah dari elemen-elemen tensor.**]
+Untuk mengekspresikan jumlah elemen dalam vektor $\mathbf{x}$ dengan panjang $n$,
+kita menuliskannya sebagai $\sum_{i=1}^n x_i$. Ada fungsi sederhana untuk itu:
+
 
 ```{.python .input}
 %%tab mxnet
@@ -502,11 +517,12 @@ x = jnp.arange(3, dtype=jnp.float32)
 x, x.sum()
 ```
 
-To express [**sums over the elements of tensors of arbitrary shape**],
-we simply sum over all its axes.
-For example, the sum of the elements
-of an $m \times n$ matrix $\mathbf{A}$
-could be written $\sum_{i=1}^{m} \sum_{j=1}^{n} a_{ij}$.
+Untuk mengekspresikan [**jumlah elemen dari tensor dengan shape yang sebarang**],
+kita cukup menjumlahkan semua sumbunya.
+Misalnya, jumlah elemen
+dari matriks $m \times n$ $\mathbf{A}$
+dapat ditulis sebagai $\sum_{i=1}^{m} \sum_{j=1}^{n} a_{ij}$.
+
 
 ```{.python .input}
 %%tab mxnet, pytorch, jax
@@ -518,16 +534,17 @@ A.shape, A.sum()
 A.shape, tf.reduce_sum(A)
 ```
 
-By default, invoking the sum function
-*reduces* a tensor along all of its axes,
-eventually producing a scalar.
-Our libraries also allow us to [**specify the axes
-along which the tensor should be reduced.**]
-To sum over all elements along the rows (axis 0),
-we specify `axis=0` in `sum`.
-Since the input matrix reduces along axis 0
-to generate the output vector,
-this axis is missing from the shape of the output.
+Secara default, memanggil fungsi `sum`
+akan *mereduksi* tensor di sepanjang semua sumbunya,
+dan akhirnya menghasilkan sebuah skalar.
+Pustaka kita juga memungkinkan kita untuk [**menentukan sumbu
+yang ingin kita reduksi pada tensor.**]
+Untuk menjumlahkan semua elemen di sepanjang baris (sumbu 0),
+kita menentukan `axis=0` dalam `sum`.
+Karena matriks input direduksi di sepanjang sumbu 0
+untuk menghasilkan vektor output,
+sumbu ini tidak ada dalam shape output.
+
 
 ```{.python .input}
 %%tab mxnet, pytorch, jax
@@ -539,7 +556,8 @@ A.shape, A.sum(axis=0).shape
 A.shape, tf.reduce_sum(A, axis=0).shape
 ```
 
-Specifying `axis=1` will reduce the column dimension (axis 1) by summing up elements of all the columns.
+Menentukan `axis=1` akan mereduksi dimensi kolom (sumbu 1) dengan menjumlahkan elemen-elemen dari semua kolom.
+
 
 ```{.python .input}
 %%tab mxnet, pytorch, jax
@@ -551,8 +569,9 @@ A.shape, A.sum(axis=1).shape
 A.shape, tf.reduce_sum(A, axis=1).shape
 ```
 
-Reducing a matrix along both rows and columns via summation
-is equivalent to summing up all the elements of the matrix.
+Mereduksi matriks di sepanjang baris dan kolom melalui penjumlahan
+sama dengan menjumlahkan semua elemen dalam matriks.
+
 
 ```{.python .input}
 %%tab mxnet, pytorch, jax
@@ -564,12 +583,13 @@ A.sum(axis=[0, 1]) == A.sum()  # Same as A.sum()
 tf.reduce_sum(A, axis=[0, 1]), tf.reduce_sum(A)  # Same as tf.reduce_sum(A)
 ```
 
-[**A related quantity is the *mean*, also called the *average*.**]
-We calculate the mean by dividing the sum
-by the total number of elements.
-Because computing the mean is so common,
-it gets a dedicated library function
-that works analogously to `sum`.
+[**Kuantitas terkait adalah *mean*, yang juga disebut sebagai *rata-rata*.**]
+Kita menghitung mean dengan membagi jumlah
+dengan jumlah total elemen.
+Karena menghitung mean sangat umum dilakukan,
+maka ada fungsi pustaka khusus yang bekerja
+secara analog dengan `sum`.
+
 
 ```{.python .input}
 %%tab mxnet, jax
@@ -586,8 +606,9 @@ A.mean(), A.sum() / A.numel()
 tf.reduce_mean(A), tf.reduce_sum(A) / tf.size(A).numpy()
 ```
 
-Likewise, the function for calculating the mean
-can also reduce a tensor along specific axes.
+Demikian pula, fungsi untuk menghitung mean
+juga dapat mereduksi tensor di sepanjang sumbu tertentu.
+
 
 ```{.python .input}
 %%tab mxnet, pytorch, jax
@@ -599,12 +620,13 @@ A.mean(axis=0), A.sum(axis=0) / A.shape[0]
 tf.reduce_mean(A, axis=0), tf.reduce_sum(A, axis=0) / A.shape[0]
 ```
 
-## Non-Reduction Sum
+## Penjumlahan Tanpa Reduksi
 :label:`subsec_lin-alg-non-reduction`
 
-Sometimes it can be useful to [**keep the number of axes unchanged**]
-when invoking the function for calculating the sum or mean.
-This matters when we want to use the broadcast mechanism.
+Kadang-kadang berguna untuk [**mempertahankan jumlah sumbu tetap sama**]
+saat memanggil fungsi untuk menghitung jumlah atau mean.
+Ini penting saat kita ingin menggunakan mekanisme broadcasting.
+
 
 ```{.python .input}
 %%tab mxnet, pytorch, jax
@@ -618,18 +640,20 @@ sum_A = tf.reduce_sum(A, axis=1, keepdims=True)
 sum_A, sum_A.shape
 ```
 
-For instance, since `sum_A` keeps its two axes after summing each row,
-we can (**divide `A` by `sum_A` with broadcasting**)
-to create a matrix where each row sums up to $1$.
+Sebagai contoh, karena `sum_A` mempertahankan dua sumbunya setelah menjumlahkan setiap baris,
+kita bisa (**membagi `A` dengan `sum_A` menggunakan broadcasting**)
+untuk membuat matriks di mana setiap barisnya memiliki jumlah total $1$.
+
 
 ```{.python .input}
 %%tab all
 A / sum_A
 ```
 
-If we want to calculate [**the cumulative sum of elements of `A` along some axis**],
-say `axis=0` (row by row), we can call the `cumsum` function.
-By design, this function does not reduce the input tensor along any axis.
+Jika kita ingin menghitung [**jumlah kumulatif elemen-elemen dari `A` di sepanjang sumbu tertentu**],
+misalnya `axis=0` (baris demi baris), kita bisa memanggil fungsi `cumsum`.
+Secara desain, fungsi ini tidak mereduksi tensor input di sepanjang sumbu mana pun.
+
 
 ```{.python .input}
 %%tab mxnet, pytorch, jax
@@ -641,19 +665,20 @@ A.cumsum(axis=0)
 tf.cumsum(A, axis=0)
 ```
 
-## Dot Products
+## Produk Dot
 
-So far, we have only performed elementwise operations, sums, and averages.
-And if this was all we could do, linear algebra
-would not deserve its own section.
-Fortunately, this is where things get more interesting.
-One of the most fundamental operations is the dot product.
-Given two vectors $\mathbf{x}, \mathbf{y} \in \mathbb{R}^d$,
-their *dot product* $\mathbf{x}^\top \mathbf{y}$ (also known as *inner product*, $\langle \mathbf{x}, \mathbf{y}  \rangle$)
-is a sum over the products of the elements at the same position:
+Sejauh ini, kita hanya melakukan operasi elemen demi elemen, penjumlahan, dan rata-rata.
+Dan jika hanya itu yang bisa kita lakukan, aljabar linear
+tidak layak mendapatkan bagiannya sendiri.
+Untungnya, ini adalah bagian di mana hal-hal menjadi lebih menarik.
+Salah satu operasi paling mendasar adalah produk dot.
+Diberikan dua vektor $\mathbf{x}, \mathbf{y} \in \mathbb{R}^d$,
+*produk dot* mereka $\mathbf{x}^\top \mathbf{y}$ (juga dikenal sebagai *produk dalam*, $\langle \mathbf{x}, \mathbf{y}  \rangle$)
+adalah jumlah dari hasil kali elemen pada posisi yang sama:
 $\mathbf{x}^\top \mathbf{y} = \sum_{i=1}^{d} x_i y_i$.
 
-[~~The *dot product* of two vectors is a sum over the products of the elements at the same position~~]
+[~~*Produk dot* dari dua vektor adalah jumlah dari hasil kali elemen pada posisi yang sama~~]
+
 
 ```{.python .input}
 %%tab mxnet
@@ -679,8 +704,9 @@ y = jnp.ones(3, dtype = jnp.float32)
 x, y, jnp.dot(x, y)
 ```
 
-Equivalently, (**we can calculate the dot product of two vectors
-by performing an elementwise multiplication followed by a sum:**)
+Sebagai alternatif, (**kita dapat menghitung produk dot dari dua vektor
+dengan melakukan perkalian elemen demi elemen diikuti dengan penjumlahan:**)
+
 
 ```{.python .input}
 %%tab mxnet
@@ -702,29 +728,29 @@ tf.reduce_sum(x * y)
 jnp.sum(x * y)
 ```
 
-Dot products are useful in a wide range of contexts.
-For example, given some set of values,
-denoted by a vector $\mathbf{x}  \in \mathbb{R}^n$,
-and a set of weights, denoted by $\mathbf{w} \in \mathbb{R}^n$,
-the weighted sum of the values in $\mathbf{x}$
-according to the weights $\mathbf{w}$
-could be expressed as the dot product $\mathbf{x}^\top \mathbf{w}$.
-When the weights are nonnegative
-and sum to $1$, i.e., $\left(\sum_{i=1}^{n} {w_i} = 1\right)$,
-the dot product expresses a *weighted average*.
-After normalizing two vectors to have unit length,
-the dot products express the cosine of the angle between them.
-Later in this section, we will formally introduce this notion of *length*.
+Produk dot berguna dalam berbagai konteks.
+Misalnya, diberikan suatu set nilai,
+dilambangkan dengan vektor $\mathbf{x} \in \mathbb{R}^n$,
+dan sebuah set bobot, dilambangkan dengan $\mathbf{w} \in \mathbb{R}^n$,
+jumlah tertimbang dari nilai-nilai dalam $\mathbf{x}$
+sesuai dengan bobot $\mathbf{w}$
+dapat dinyatakan sebagai produk dot $\mathbf{x}^\top \mathbf{w}$.
+Ketika bobot-bobot bernilai non-negatif
+dan jumlahnya sama dengan $1$, yaitu, $\left(\sum_{i=1}^{n} {w_i} = 1\right)$,
+produk dot tersebut mengekspresikan *rata-rata tertimbang*.
+Setelah menormalkan dua vektor agar memiliki panjang unit,
+produk dot akan menunjukkan kosinus dari sudut di antara mereka.
+Nanti dalam bagian ini, kita akan secara formal memperkenalkan konsep *panjang* ini.
 
 
-## Matrix--Vector Products
+## Produk Matriks--Vektor
 
-Now that we know how to calculate dot products,
-we can begin to understand the *product*
-between an $m \times n$ matrix $\mathbf{A}$
-and an $n$-dimensional vector $\mathbf{x}$.
-To start off, we visualize our matrix
-in terms of its row vectors
+Sekarang setelah kita tahu cara menghitung produk dot,
+kita bisa mulai memahami *produk*
+antara matriks $m \times n$ $\mathbf{A}$
+dan vektor berdimensi $n$ $\mathbf{x}$.
+Sebagai langkah awal, kita bisa memvisualisasikan matriks kita
+dalam hal vektor-vektor barisnya
 
 $$\mathbf{A}=
 \begin{bmatrix}
@@ -734,13 +760,13 @@ $$\mathbf{A}=
 \mathbf{a}^\top_m \\
 \end{bmatrix},$$
 
-where each $\mathbf{a}^\top_{i} \in \mathbb{R}^n$
-is a row vector representing the $i^\textrm{th}$ row
-of the matrix $\mathbf{A}$.
+di mana setiap $\mathbf{a}^\top_{i} \in \mathbb{R}^n$
+adalah vektor baris yang merepresentasikan baris ke-$i$
+dari matriks $\mathbf{A}$.
 
-[**The matrix--vector product $\mathbf{A}\mathbf{x}$
-is simply a column vector of length $m$,
-whose $i^\textrm{th}$ element is the dot product
+[**Produk matriks--vektor $\mathbf{A}\mathbf{x}$
+hanyalah vektor kolom dengan panjang $m$,
+di mana elemen ke-$i$-nya adalah produk dot
 $\mathbf{a}^\top_i \mathbf{x}$:**]
 
 $$
@@ -759,48 +785,48 @@ $$
 \end{bmatrix}.
 $$
 
-We can think of multiplication with a matrix
+Kita bisa menganggap perkalian dengan matriks
 $\mathbf{A}\in \mathbb{R}^{m \times n}$
-as a transformation that projects vectors
-from $\mathbb{R}^{n}$ to $\mathbb{R}^{m}$.
-These transformations are remarkably useful.
-For example, we can represent rotations
-as multiplications by certain square matrices.
-Matrix--vector products also describe
-the key calculation involved in computing
-the outputs of each layer in a neural network
-given the outputs from the previous layer.
+sebagai sebuah transformasi yang memproyeksikan vektor-vektor
+dari $\mathbb{R}^{n}$ ke $\mathbb{R}^{m}$.
+Transformasi ini sangat berguna.
+Sebagai contoh, kita bisa merepresentasikan rotasi
+sebagai perkalian dengan matriks persegi tertentu.
+Produk matriks--vektor juga menggambarkan
+perhitungan kunci yang terlibat dalam menghitung
+output dari setiap lapisan dalam jaringan saraf
+diberikan output dari lapisan sebelumnya.
 
 :begin_tab:`mxnet`
-To express a matrix--vector product in code,
-we use the same `dot` function.
-The operation is inferred
-based on the type of the arguments.
-Note that the column dimension of `A`
-(its length along axis 1)
-must be the same as the dimension of `x` (its length).
+Untuk mengekspresikan produk matriks--vektor dalam kode,
+kita menggunakan fungsi `dot` yang sama.
+Operasi ini disimpulkan
+berdasarkan tipe argumennya.
+Perlu dicatat bahwa dimensi kolom `A`
+(panjang di sepanjang sumbu 1)
+harus sama dengan dimensi `x` (panjangnya).
 :end_tab:
 
 :begin_tab:`pytorch`
-To express a matrix--vector product in code,
-we use the `mv` function.
-Note that the column dimension of `A`
-(its length along axis 1)
-must be the same as the dimension of `x` (its length).
-Python has a convenience operator `@`
-that can execute both matrix--vector
-and matrix--matrix products
-(depending on its arguments).
-Thus we can write `A@x`.
+Untuk mengekspresikan produk matriks--vektor dalam kode,
+kita menggunakan fungsi `mv`.
+Perlu dicatat bahwa dimensi kolom `A`
+(panjang di sepanjang sumbu 1)
+harus sama dengan dimensi `x` (panjangnya).
+Python memiliki operator `@` yang nyaman
+untuk menjalankan produk matriks--vektor
+maupun matriks--matriks (tergantung pada argumennya).
+Sehingga kita bisa menulis `A@x`.
 :end_tab:
 
 :begin_tab:`tensorflow`
-To express a matrix--vector product in code,
-we use the `matvec` function.
-Note that the column dimension of `A`
-(its length along axis 1)
-must be the same as the dimension of `x` (its length).
+Untuk mengekspresikan produk matriks--vektor dalam kode,
+kita menggunakan fungsi `matvec`.
+Perlu dicatat bahwa dimensi kolom `A`
+(panjang di sepanjang sumbu 1)
+harus sama dengan dimensi `x` (panjangnya).
 :end_tab:
+
 
 ```{.python .input}
 %%tab mxnet
@@ -822,14 +848,14 @@ A.shape, x.shape, tf.linalg.matvec(A, x)
 A.shape, x.shape, jnp.matmul(A, x)
 ```
 
-## Matrix--Matrix Multiplication
+## Perkalian Matriks--Matriks
 
-Once you have gotten the hang of dot products and matrix--vector products,
-then *matrix--matrix multiplication* should be straightforward.
+Setelah Anda memahami produk dot dan produk matriks--vektor,
+maka *perkalian matriks--matriks* seharusnya cukup sederhana.
 
-Say that we have two matrices
+Misalkan kita memiliki dua matriks
 $\mathbf{A} \in \mathbb{R}^{n \times k}$
-and $\mathbf{B} \in \mathbb{R}^{k \times m}$:
+dan $\mathbf{B} \in \mathbb{R}^{k \times m}$:
 
 $$\mathbf{A}=\begin{bmatrix}
  a_{11} & a_{12} & \cdots & a_{1k} \\
@@ -845,12 +871,12 @@ $$\mathbf{A}=\begin{bmatrix}
 \end{bmatrix}.$$
 
 
-Let $\mathbf{a}^\top_{i} \in \mathbb{R}^k$ denote
-the row vector representing the $i^\textrm{th}$ row
-of the matrix $\mathbf{A}$
-and let $\mathbf{b}_{j} \in \mathbb{R}^k$ denote
-the column vector from the $j^\textrm{th}$ column
-of the matrix $\mathbf{B}$:
+Biarkan $\mathbf{a}^\top_{i} \in \mathbb{R}^k$ mewakili
+vektor baris yang mewakili baris ke-$i$
+dari matriks $\mathbf{A}$
+dan biarkan $\mathbf{b}_{j} \in \mathbb{R}^k$ mewakili
+vektor kolom dari kolom ke-$j$
+dari matriks $\mathbf{B}$:
 
 $$\mathbf{A}=
 \begin{bmatrix}
@@ -865,12 +891,12 @@ $$\mathbf{A}=
 $$
 
 
-To form the matrix product $\mathbf{C} \in \mathbb{R}^{n \times m}$,
-we simply compute each element $c_{ij}$
-as the dot product between
-the $i^{\textrm{th}}$ row of $\mathbf{A}$
-and the $j^{\textrm{th}}$ column of $\mathbf{B}$,
-i.e., $\mathbf{a}^\top_i \mathbf{b}_j$:
+Untuk membentuk hasil perkalian matriks $\mathbf{C} \in \mathbb{R}^{n \times m}$,
+kita cukup menghitung setiap elemen $c_{ij}$
+sebagai produk dot antara
+baris ke-$i$ dari $\mathbf{A}$
+dan kolom ke-$j$ dari $\mathbf{B}$,
+yaitu $\mathbf{a}^\top_i \mathbf{b}_j$:
 
 $$\mathbf{C} = \mathbf{AB} = \begin{bmatrix}
 \mathbf{a}^\top_{1} \\
@@ -889,16 +915,17 @@ $$\mathbf{C} = \mathbf{AB} = \begin{bmatrix}
 \end{bmatrix}.
 $$
 
-[**We can think of the matrix--matrix multiplication $\mathbf{AB}$
-as performing $m$ matrix--vector products
-or $m \times n$ dot products
-and stitching the results together
-to form an $n \times m$ matrix.**]
-In the following snippet,
-we perform matrix multiplication on `A` and `B`.
-Here, `A` is a matrix with two rows and three columns,
-and `B` is a matrix with three rows and four columns.
-After multiplication, we obtain a matrix with two rows and four columns.
+[**Kita dapat memandang perkalian matriks--matriks $\mathbf{AB}$
+sebagai melakukan $m$ produk matriks--vektor
+atau $m \times n$ produk dot
+dan menggabungkan hasilnya
+untuk membentuk matriks $n \times m$.**]
+Dalam cuplikan berikut,
+kita melakukan perkalian matriks pada `A` dan `B`.
+Di sini, `A` adalah matriks dengan dua baris dan tiga kolom,
+dan `B` adalah matriks dengan tiga baris dan empat kolom.
+Setelah perkalian, kita memperoleh matriks dengan dua baris dan empat kolom.
+
 
 ```{.python .input}
 %%tab mxnet
@@ -924,43 +951,44 @@ B = jnp.ones((3, 4))
 jnp.matmul(A, B)
 ```
 
-The term *matrix--matrix multiplication* is
-often simplified to *matrix multiplication*,
-and should not be confused with the Hadamard product.
+Istilah *perkalian matriks--matriks*
+sering disederhanakan menjadi *perkalian matriks*,
+dan seharusnya tidak disamakan dengan produk Hadamard.
 
 
-## Norms
+
+## Norma
 :label:`subsec_lin-algebra-norms`
 
-Some of the most useful operators in linear algebra are *norms*.
-Informally, the norm of a vector tells us how *big* it is.
-For instance, the $\ell_2$ norm measures
-the (Euclidean) length of a vector.
-Here, we are employing a notion of *size* that concerns the magnitude of a vector's components
-(not its dimensionality).
+Beberapa operator paling berguna dalam aljabar linear adalah *norma*.
+Secara informal, norma dari sebuah vektor menunjukkan seberapa *besar* vektor tersebut.
+Sebagai contoh, norma $\ell_2$ mengukur panjang (Euklidean) dari sebuah vektor.
+Di sini, kita menggunakan konsep *ukuran* yang berkaitan dengan besarnya komponen vektor
+(bukan dimensinya).
 
-A norm is a function $\| \cdot \|$ that maps a vector
-to a scalar and satisfies the following three properties:
+Norma adalah sebuah fungsi $\| \cdot \|$ yang memetakan sebuah vektor
+menjadi sebuah skalar dan memenuhi tiga properti berikut:
 
-1. Given any vector $\mathbf{x}$, if we scale (all elements of) the vector
-   by a scalar $\alpha \in \mathbb{R}$, its norm scales accordingly:
+1. Diberikan sebuah vektor $\mathbf{x}$, jika kita mengalikan (semua elemen) vektor
+   dengan skalar $\alpha \in \mathbb{R}$, maka normanya akan tereskalasi sesuai:
    $$\|\alpha \mathbf{x}\| = |\alpha| \|\mathbf{x}\|.$$
-2. For any vectors $\mathbf{x}$ and $\mathbf{y}$:
-   norms satisfy the triangle inequality:
+2. Untuk setiap vektor $\mathbf{x}$ dan $\mathbf{y}$:
+   norma memenuhi ketaksamaan segitiga:
    $$\|\mathbf{x} + \mathbf{y}\| \leq \|\mathbf{x}\| + \|\mathbf{y}\|.$$
-3. The norm of a vector is nonnegative and it only vanishes if the vector is zero:
-   $$\|\mathbf{x}\| > 0 \textrm{ for all } \mathbf{x} \neq 0.$$
+3. Norma dari sebuah vektor selalu non-negatif dan hanya bernilai nol jika vektor tersebut nol:
+   $$\|\mathbf{x}\| > 0 \textrm{ untuk semua } \mathbf{x} \neq 0.$$
 
-Many functions are valid norms and different norms
-encode different notions of size.
-The Euclidean norm that we all learned in elementary school geometry
-when calculating the hypotenuse of a right triangle
-is the square root of the sum of squares of a vector's elements.
-Formally, this is called [**the $\ell_2$ *norm***] and expressed as
+Banyak fungsi yang memenuhi kriteria norma dan norma yang berbeda
+menggambarkan konsep ukuran yang berbeda pula.
+Norma Euklidean yang kita pelajari dalam geometri sekolah dasar
+saat menghitung panjang hipotenusa segitiga siku-siku
+adalah akar kuadrat dari jumlah kuadrat elemen-elemen vektor.
+Secara formal, ini disebut sebagai [**norma $\ell_2$**] dan dinyatakan sebagai
 
 (**$$\|\mathbf{x}\|_2 = \sqrt{\sum_{i=1}^n x_i^2}.$$**)
 
-The method `norm` calculates the $\ell_2$ norm.
+Metode `norm` menghitung norma $\ell_2`.
+
 
 ```{.python .input}
 %%tab mxnet
@@ -986,17 +1014,18 @@ u = jnp.array([3.0, -4.0])
 jnp.linalg.norm(u)
 ```
 
-[**The $\ell_1$ norm**] is also common
-and the associated measure is called the Manhattan distance.
-By definition, the $\ell_1$ norm sums
-the absolute values of a vector's elements:
+[**Norma $\ell_1$**] juga umum digunakan
+dan ukuran terkaitnya disebut sebagai jarak Manhattan.
+Secara definisi, norma $\ell_1$ menjumlahkan
+nilai absolut dari elemen-elemen vektor:
 
 (**$$\|\mathbf{x}\|_1 = \sum_{i=1}^n \left|x_i \right|.$$**)
 
-Compared to the $\ell_2$ norm, it is less sensitive to outliers.
-To compute the $\ell_1$ norm,
-we compose the absolute value
-with the sum operation.
+Dibandingkan dengan norma $\ell_2$, norma ini kurang sensitif terhadap nilai pencilan.
+Untuk menghitung norma $\ell_1$,
+kita menggabungkan operasi nilai absolut
+dengan operasi penjumlahan.
+
 
 ```{.python .input}
 %%tab mxnet
@@ -1018,29 +1047,33 @@ tf.reduce_sum(tf.abs(u))
 jnp.linalg.norm(u, ord=1) # same as jnp.abs(u).sum()
 ```
 
-Both the $\ell_2$ and $\ell_1$ norms are special cases
-of the more general $\ell_p$ *norms*:
+Baik norma $\ell_2$ maupun $\ell_1$ adalah kasus khusus
+dari norma $\ell_p$ yang lebih umum:
 
-$$\|\mathbf{x}\|_p = \left(\sum_{i=1}^n \left|x_i \right|^p \right)^{1/p}.$$
+$$
+\|\mathbf{x}\|_{p} = \left( \sum_{i=1}^{n} |x_i|^p \right)^{1/p}.
+$$
 
-In the case of matrices, matters are more complicated.
-After all, matrices can be viewed both as collections of individual entries
-*and* as objects that operate on vectors and transform them into other vectors.
-For instance, we can ask by how much longer
-the matrix--vector product $\mathbf{X} \mathbf{v}$
-could be relative to $\mathbf{v}$.
-This line of thought leads to what is called the *spectral* norm.
-For now, we introduce [**the *Frobenius norm*,
-which is much easier to compute**] and defined as
-the square root of the sum of the squares
-of a matrix's elements:
 
-[**$$\|\mathbf{X}\|_\textrm{F} = \sqrt{\sum_{i=1}^m \sum_{j=1}^n x_{ij}^2}.$$**]
+Dalam kasus matriks, masalahnya menjadi lebih rumit.
+Bagaimanapun juga, matriks dapat dipandang baik sebagai kumpulan elemen individual
+*maupun* sebagai objek yang beroperasi pada vektor dan mengubahnya menjadi vektor lain.
+Sebagai contoh, kita dapat bertanya seberapa panjang
+produk matriks-vektor $\mathbf{X} \mathbf{v}$
+dibandingkan dengan $\mathbf{v}$.
+Pemikiran ini mengarah pada apa yang disebut sebagai norma *spektral*.
+Untuk sekarang, kita memperkenalkan [**norma *Frobenius*,
+yang jauh lebih mudah untuk dihitung**] dan didefinisikan sebagai
+akar kuadrat dari jumlah kuadrat elemen-elemen dalam matriks:
 
-The Frobenius norm behaves as if it were
-an $\ell_2$ norm of a matrix-shaped vector.
-Invoking the following function will calculate
-the Frobenius norm of a matrix.
+$$\|\mathbf{X}\|_{\textrm{F}} = \sqrt{\sum_{i=1}^m \sum_{j=1}^n x_{ij}^2}$$
+
+
+Norma Frobenius berperilaku seolah-olah
+sebagai norma $\ell_2$ dari vektor berbentuk matriks.
+Memanggil fungsi berikut akan menghitung
+norma Frobenius dari suatu matriks.
+
 
 ```{.python .input}
 %%tab mxnet
@@ -1062,98 +1095,97 @@ tf.norm(tf.ones((4, 9)))
 jnp.linalg.norm(jnp.ones((4, 9)))
 ```
 
-While we do not want to get too far ahead of ourselves,
-we already can plant some intuition about why these concepts are useful.
-In deep learning, we are often trying to solve optimization problems:
-*maximize* the probability assigned to observed data;
-*maximize* the revenue associated with a recommender model;
-*minimize* the distance between predictions
-and the ground truth observations;
-*minimize* the distance between representations
-of photos of the same person
-while *maximizing* the distance between representations
-of photos of different people.
-These distances, which constitute
-the objectives of deep learning algorithms,
-are often expressed as norms.
+Sementara kita tidak ingin terlalu jauh ke depan,
+kita sudah bisa menanamkan beberapa intuisi tentang mengapa konsep-konsep ini berguna.
+Dalam pembelajaran mendalam, kita sering mencoba menyelesaikan masalah optimasi:
+*maksimalkan* probabilitas yang diberikan kepada data yang diamati;
+*maksimalkan* pendapatan yang terkait dengan model rekomendasi;
+*minimalkan* jarak antara prediksi
+dan pengamatan kebenaran dasar;
+*minimalkan* jarak antara representasi
+foto dari orang yang sama
+sementara *memaksimalkan* jarak antara representasi
+foto dari orang yang berbeda.
+Jarak-jarak ini, yang membentuk
+tujuan algoritma pembelajaran mendalam,
+sering kali diekspresikan sebagai norma.
+
+## Diskusi
+
+Pada bagian ini, kita telah meninjau semua aljabar linier
+yang akan Anda butuhkan untuk memahami
+sebagian besar dari pembelajaran mendalam modern.
+Namun, masih ada banyak hal dalam aljabar linier
+dan banyak di antaranya berguna untuk pembelajaran mesin.
+Sebagai contoh, matriks dapat diuraikan menjadi faktor-faktor,
+dan uraian ini dapat mengungkapkan
+struktur dimensi rendah dalam dataset dunia nyata.
+Ada sub-bidang pembelajaran mesin yang berfokus
+pada penggunaan uraian matriks
+dan generalisasinya ke tensor berorde tinggi
+untuk menemukan struktur dalam dataset
+dan menyelesaikan masalah prediksi.
+Namun, buku ini berfokus pada pembelajaran mendalam.
+Dan kami yakin Anda akan lebih tertarik
+untuk belajar lebih banyak matematika
+setelah Anda mulai mengaplikasikan pembelajaran mesin
+pada dataset nyata.
+Jadi, sementara kami berhak
+untuk memperkenalkan lebih banyak matematika di kemudian hari,
+kami mengakhiri bagian ini di sini.
+
+Jika Anda ingin belajar lebih banyak aljabar linier,
+ada banyak buku dan sumber daya online yang sangat baik.
+Untuk kursus kilat yang lebih lanjut, pertimbangkan untuk melihat
+:citet:`Strang.1993`, :citet:`Kolter.2008`, dan :citet:`Petersen.Pedersen.ea.2008`.
+
+Sebagai rangkuman:
+
+* Skalar, vektor, matriks, dan tensor adalah
+  objek matematika dasar yang digunakan dalam aljabar linier
+  dan masing-masing memiliki sumbu 0, satu, dua, dan jumlah sumbu yang tidak terbatas.
+* Tensor dapat dipotong atau dikurangi di sepanjang sumbu yang ditentukan
+  melalui pengindeksan, atau operasi seperti `sum` dan `mean`.
+* Produk elemen-wise disebut produk Hadamard.
+  Sebaliknya, produk dot, produk matriks-vektor, dan produk matriks-matriks
+  bukan operasi elemen-wise dan umumnya menghasilkan objek
+  dengan bentuk yang berbeda dari operan.
+* Dibandingkan dengan produk Hadamard, produk matriks-matriks
+  membutuhkan waktu komputasi yang jauh lebih lama (waktu kubik daripada kuadrat).
+* Norma menangkap berbagai konsep ukuran dari vektor (atau matriks),
+  dan sering kali diterapkan pada perbedaan dua vektor
+  untuk mengukur jarak di antara mereka.
+* Norma vektor yang umum meliputi norma $\ell_1$ dan $\ell_2$,
+   dan norma matriks yang umum meliputi norma *spektral* dan *Frobenius*.
 
 
-## Discussion
+## Latihan
 
-In this section, we have reviewed all the linear algebra
-that you will need to understand
-a significant chunk of modern deep learning.
-There is a lot more to linear algebra, though,
-and much of it is useful for machine learning.
-For example, matrices can be decomposed into factors,
-and these decompositions can reveal
-low-dimensional structure in real-world datasets.
-There are entire subfields of machine learning
-that focus on using matrix decompositions
-and their generalizations to high-order tensors
-to discover structure in datasets
-and solve prediction problems.
-But this book focuses on deep learning.
-And we believe you will be more inclined
-to learn more mathematics
-once you have gotten your hands dirty
-applying machine learning to real datasets.
-So while we reserve the right
-to introduce more mathematics later on,
-we wrap up this section here.
-
-If you are eager to learn more linear algebra,
-there are many excellent books and online resources.
-For a more advanced crash course, consider checking out
-:citet:`Strang.1993`, :citet:`Kolter.2008`, and :citet:`Petersen.Pedersen.ea.2008`.
-
-To recap:
-
-* Scalars, vectors, matrices, and tensors are
-  the basic mathematical objects used in linear algebra
-  and have zero, one, two, and an arbitrary number of axes, respectively.
-* Tensors can be sliced or reduced along specified axes
-  via indexing, or operations such as `sum` and `mean`, respectively.
-* Elementwise products are called Hadamard products.
-  By contrast, dot products, matrix--vector products, and matrix--matrix products
-  are not elementwise operations and in general return objects
-  having shapes that are different from the the operands.
-* Compared to Hadamard products, matrix--matrix products
-  take considerably longer to compute (cubic rather than quadratic time).
-* Norms capture various notions of the magnitude of a vector (or matrix),
-  and are commonly applied to the difference of two vectors
-  to measure their distance apart.
-* Common vector norms include the $\ell_1$ and $\ell_2$ norms,
-   and common matrix norms include the *spectral* and *Frobenius* norms.
-
-
-## Exercises
-
-1. Prove that the transpose of the transpose of a matrix is the matrix itself: $(\mathbf{A}^\top)^\top = \mathbf{A}$.
-1. Given two matrices $\mathbf{A}$ and $\mathbf{B}$, show that sum and transposition commute: $\mathbf{A}^\top + \mathbf{B}^\top = (\mathbf{A} + \mathbf{B})^\top$.
-1. Given any square matrix $\mathbf{A}$, is $\mathbf{A} + \mathbf{A}^\top$ always symmetric? Can you prove the result by using only the results of the previous two exercises?
-1. We defined the tensor `X` of shape (2, 3, 4) in this section. What is the output of `len(X)`? Write your answer without implementing any code, then check your answer using code.
-1. For a tensor `X` of arbitrary shape, does `len(X)` always correspond to the length of a certain axis of `X`? What is that axis?
-1. Run `A / A.sum(axis=1)` and see what happens. Can you analyze the results?
-1. When traveling between two points in downtown Manhattan, what is the distance that you need to cover in terms of the coordinates, i.e., in terms of avenues and streets? Can you travel diagonally?
-1. Consider a tensor of shape (2, 3, 4). What are the shapes of the summation outputs along axes 0, 1, and 2?
-1. Feed a tensor with three or more axes to the `linalg.norm` function and observe its output. What does this function compute for tensors of arbitrary shape?
-1. Consider three large matrices, say $\mathbf{A} \in \mathbb{R}^{2^{10} \times 2^{16}}$, $\mathbf{B} \in \mathbb{R}^{2^{16} \times 2^{5}}$ and $\mathbf{C} \in \mathbb{R}^{2^{5} \times 2^{14}}$, initialized with Gaussian random variables. You want to compute the product $\mathbf{A} \mathbf{B} \mathbf{C}$. Is there any difference in memory footprint and speed, depending on whether you compute $(\mathbf{A} \mathbf{B}) \mathbf{C}$ or $\mathbf{A} (\mathbf{B} \mathbf{C})$? Why?
-1. Consider three large matrices, say $\mathbf{A} \in \mathbb{R}^{2^{10} \times 2^{16}}$, $\mathbf{B} \in \mathbb{R}^{2^{16} \times 2^{5}}$ and $\mathbf{C} \in \mathbb{R}^{2^{5} \times 2^{16}}$. Is there any difference in speed depending on whether you compute $\mathbf{A} \mathbf{B}$ or $\mathbf{A} \mathbf{C}^\top$? Why? What changes if you initialize $\mathbf{C} = \mathbf{B}^\top$ without cloning memory? Why?
-1. Consider three matrices, say $\mathbf{A}, \mathbf{B}, \mathbf{C} \in \mathbb{R}^{100 \times 200}$. Construct a tensor with three axes by stacking $[\mathbf{A}, \mathbf{B}, \mathbf{C}]$. What is the dimensionality? Slice out the second coordinate of the third axis to recover $\mathbf{B}$. Check that your answer is correct.
+1. Buktikan bahwa transpose dari transpose sebuah matriks adalah matriks itu sendiri: $(\mathbf{A}^\top)^\top = \mathbf{A}$.
+2. Diberikan dua matriks $\mathbf{A}$ dan $\mathbf{B}$, tunjukkan bahwa penjumlahan dan transpose bersifat komutatif: $\mathbf{A}^\top + \mathbf{B}^\top = (\mathbf{A} + \mathbf{B})^\top$.
+3. Diberikan matriks persegi $\mathbf{A}$, apakah $\mathbf{A} + \mathbf{A}^\top$ selalu simetris? Bisakah Anda membuktikan hasilnya dengan hanya menggunakan hasil dari dua latihan sebelumnya?
+4. Kami mendefinisikan tensor `X` dengan bentuk (2, 3, 4) pada bagian ini. Apa output dari `len(X)`? Tulis jawaban Anda tanpa mengimplementasikan kode, lalu periksa jawaban Anda dengan kode.
+5. Untuk tensor `X` dengan bentuk yang sewenang-wenang, apakah `len(X)` selalu sesuai dengan panjang sumbu tertentu dari `X`? Sumbu yang mana?
+6. Jalankan `A / A.sum(axis=1)` dan lihat apa yang terjadi. Bisakah Anda menganalisis hasilnya?
+7. Ketika bepergian antara dua titik di pusat kota Manhattan, apa jarak yang perlu Anda tempuh dalam hal koordinat, yaitu dalam hal avenue dan street? Bisakah Anda bepergian secara diagonal?
+8. Pertimbangkan tensor dengan bentuk (2, 3, 4). Apa bentuk output penjumlahan di sepanjang sumbu 0, 1, dan 2?
+9. Berikan tensor dengan tiga atau lebih sumbu ke fungsi `linalg.norm` dan amati outputnya. Apa yang dihitung fungsi ini untuk tensor dengan bentuk yang sewenang-wenang?
+10. Pertimbangkan tiga matriks besar, misalnya $\mathbf{A} \in \mathbb{R}^{2^{10} \times 2^{16}}$, $\mathbf{B} \in \mathbb{R}^{2^{16} \times 2^{5}}$ dan $\mathbf{C} \in \mathbb{R}^{2^{5} \times 2^{14}}$, yang diinisialisasi dengan variabel acak Gaussian. Anda ingin menghitung produk $\mathbf{A} \mathbf{B} \mathbf{C}$. Apakah ada perbedaan dalam penggunaan memori dan kecepatan, tergantung pada apakah Anda menghitung $(\mathbf{A} \mathbf{B}) \mathbf{C}$ atau $\mathbf{A} (\mathbf{B} \mathbf{C})$? Mengapa?
+11. Pertimbangkan tiga matriks besar, misalnya $\mathbf{A} \in \mathbb{R}^{2^{10} \times 2^{16}}$, $\mathbf{B} \in \mathbb{R}^{2^{16} \times 2^{5}}$ dan $\mathbf{C} \in \mathbb{R}^{2^{5} \times 2^{16}}$. Apakah ada perbedaan kecepatan tergantung pada apakah Anda menghitung $\mathbf{A} \mathbf{B}$ atau $\mathbf{A} \mathbf{C}^\top$? Mengapa? Apa yang berubah jika Anda menginisialisasi $\mathbf{C} = \mathbf{B}^\top$ tanpa menyalin memori? Mengapa?
+12. Pertimbangkan tiga matriks, misalnya $\mathbf{A}, \mathbf{B}, \mathbf{C} \in \mathbb{R}^{100 \times 200}$. Konstruksikan tensor dengan tiga sumbu dengan menyusun $[\mathbf{A}, \mathbf{B}, \mathbf{C}]$. Apa dimensi dari tensor tersebut? Potong koordinat kedua dari sumbu ketiga untuk mendapatkan kembali $\mathbf{B}$. Periksa bahwa jawaban Anda benar.
 
 :begin_tab:`mxnet`
-[Discussions](https://discuss.d2l.ai/t/30)
+[Diskusi](https://discuss.d2l.ai/t/30)
 :end_tab:
 
 :begin_tab:`pytorch`
-[Discussions](https://discuss.d2l.ai/t/31)
+[Diskusi](https://discuss.d2l.ai/t/31)
 :end_tab:
 
 :begin_tab:`tensorflow`
-[Discussions](https://discuss.d2l.ai/t/196)
+[Diskusi](https://discuss.d2l.ai/t/196)
 :end_tab:
 
 :begin_tab:`jax`
-[Discussions](https://discuss.d2l.ai/t/17968)
+[Diskusi](https://discuss.d2l.ai/t/17968)
 :end_tab:
