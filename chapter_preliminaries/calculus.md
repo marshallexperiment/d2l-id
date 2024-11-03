@@ -3,45 +3,46 @@
 tab.interact_select(['mxnet', 'pytorch', 'tensorflow', 'jax'])
 ```
 
-# Calculus
+# Kalkulus
 :label:`sec_calculus`
 
-For a long time, how to calculate 
-the area of a circle remained a mystery.
-Then, in Ancient Greece, the mathematician Archimedes
-came up with the clever idea 
-to inscribe a series of polygons 
-with increasing numbers of vertices
-on the inside of a circle
+Selama berabad-abad, cara menghitung 
+luas lingkaran tetap menjadi misteri.
+Kemudian, di Yunani Kuno, matematikawan Archimedes
+mendapat ide cerdik untuk
+menyusun serangkaian poligon
+dengan jumlah sisi yang meningkat
+di dalam lingkaran
 (:numref:`fig_circle_area`). 
-For a polygon with $n$ vertices,
-we obtain $n$ triangles.
-The height of each triangle approaches the radius $r$ 
-as we partition the circle more finely. 
-At the same time, its base approaches $2 \pi r/n$, 
-since the ratio between arc and secant approaches 1 
-for a large number of vertices. 
-Thus, the area of the polygon approaches
+Untuk poligon dengan $n$ titik sudut,
+kita mendapatkan $n$ segitiga.
+Tinggi setiap segitiga mendekati jari-jari $r$ 
+seiring dengan pembagian lingkaran yang semakin halus. 
+Pada saat yang sama, basisnya mendekati $2 \pi r/n$, 
+karena rasio antara busur dan sekutannya mendekati 1 
+untuk jumlah titik sudut yang besar. 
+Dengan demikian, luas poligon mendekati
 $n \cdot r \cdot \frac{1}{2} (2 \pi r/n) = \pi r^2$.
 
-![Finding the area of a circle as a limit procedure.](../img/polygon-circle.svg)
+![Menemukan luas lingkaran sebagai prosedur limit.](../img/polygon-circle.svg)
 :label:`fig_circle_area`
 
-This limiting procedure is at the root of both 
-*differential calculus* and *integral calculus*. 
-The former can tell us how to increase
-or decrease a function's value by
-manipulating its arguments. 
-This comes in handy for the *optimization problems*
-that we face in deep learning,
-where we repeatedly update our parameters 
-in order to decrease the loss function.
-Optimization addresses how to fit our models to training data,
-and calculus is its key prerequisite.
-However, do not forget that our ultimate goal
-is to perform well on *previously unseen* data.
-That problem is called *generalization*
-and will be a key focus of other chapters.
+Prosedur limit ini adalah dasar dari 
+*kalkulus diferensial* dan *kalkulus integral*. 
+Yang pertama dapat memberi tahu kita bagaimana cara 
+meningkatkan atau menurunkan nilai suatu fungsi 
+dengan memanipulasi argumennya. 
+Ini sangat berguna untuk *masalah optimisasi*
+yang kita hadapi dalam pembelajaran mendalam,
+di mana kita terus memperbarui parameter kita 
+untuk mengurangi fungsi kerugian (loss function).
+Optimisasi menangani bagaimana kita menyesuaikan model kita dengan data latih,
+dan kalkulus adalah prasyarat utamanya.
+Namun, jangan lupa bahwa tujuan utama kita
+adalah tampil baik pada data *yang sebelumnya tidak terlihat*.
+Masalah ini disebut *generalization*
+dan akan menjadi fokus utama dari beberapa bab lainnya.
+
 
 ```{.python .input}
 %%tab mxnet
@@ -76,53 +77,54 @@ from matplotlib_inline import backend_inline
 import numpy as np
 ```
 
-## Derivatives and Differentiation
+## Turunan dan Diferensiasi
 
-Put simply, a *derivative* is the rate of change
-in a function with respect to changes in its arguments.
-Derivatives can tell us how rapidly a loss function
-would increase or decrease were we 
-to *increase* or *decrease* each parameter
-by an infinitesimally small amount.
-Formally, for functions $f: \mathbb{R} \rightarrow \mathbb{R}$,
-that map from scalars to scalars,
-[**the *derivative* of $f$ at a point $x$ is defined as**]
+Secara sederhana, *turunan* adalah tingkat perubahan
+dalam suatu fungsi terhadap perubahan argumennya.
+Turunan dapat memberi tahu kita seberapa cepat fungsi kerugian
+akan meningkat atau menurun jika kita 
+*meningkatkan* atau *menurunkan* setiap parameter
+dengan jumlah yang sangat kecil.
+Secara formal, untuk fungsi $f: \mathbb{R} \rightarrow \mathbb{R}$,
+yang memetakan skalar ke skalar,
+[**turunan dari $f$ di titik $x$ didefinisikan sebagai**]
 
 (**$$f'(x) = \lim_{h \rightarrow 0} \frac{f(x+h) - f(x)}{h}.$$**)
 :eqlabel:`eq_derivative`
 
-This term on the right hand side is called a *limit* 
-and it tells us what happens 
-to the value of an expression
-as a specified variable 
-approaches a particular value.
-This limit tells us what 
-the ratio between a perturbation $h$
-and the change in the function value 
-$f(x + h) - f(x)$ converges to 
-as we shrink its size to zero.
+Istilah di sisi kanan disebut *limit* 
+dan ini memberi tahu kita apa yang terjadi 
+pada nilai suatu ekspresi
+saat variabel tertentu
+mendekati nilai tertentu.
+Limit ini memberi tahu kita apa 
+rasio antara gangguan $h$
+dan perubahan nilai fungsi 
+$f(x + h) - f(x)$ yang akan terjadi
+ketika kita mengurangi nilainya hingga nol.
 
-When $f'(x)$ exists, $f$ is said 
-to be *differentiable* at $x$;
-and when $f'(x)$ exists for all $x$
-on a set, e.g., the interval $[a,b]$, 
-we say that $f$ is differentiable on this set.
-Not all functions are differentiable,
-including many that we wish to optimize,
-such as accuracy and the area under the
-receiving operating characteristic (AUC).
-However, because computing the derivative of the loss 
-is a crucial step in nearly all 
-algorithms for training deep neural networks,
-we often optimize a differentiable *surrogate* instead.
+Ketika $f'(x)$ ada, maka $f$ dikatakan 
+*berturunan* di $x$;
+dan ketika $f'(x)$ ada untuk semua $x$
+pada suatu himpunan, misalnya pada interval $[a,b]$, 
+kita mengatakan bahwa $f$ dapat diturunkan pada himpunan ini.
+Tidak semua fungsi dapat diturunkan,
+termasuk banyak fungsi yang ingin kita optimalkan,
+seperti akurasi dan area di bawah
+kurva karakteristik penerima (AUC).
+Namun, karena menghitung turunan dari kerugian 
+adalah langkah penting di hampir semua 
+algoritma untuk melatih jaringan saraf mendalam,
+kita sering kali mengoptimalkan *surrogat* yang dapat diturunkan sebagai gantinya.
 
 
-We can interpret the derivative 
+Kita dapat menginterpretasikan turunan 
 $f'(x)$
-as the *instantaneous* rate of change 
-of $f(x)$ with respect to $x$.
-Let's develop some intuition with an example.
-(**Define $u = f(x) = 3x^2-4x$.**)
+sebagai tingkat perubahan *seketika* 
+dari $f(x)$ terhadap $x$.
+Mari kita kembangkan sedikit intuisi dengan sebuah contoh.
+(**Definisikan $u = f(x) = 3x^2-4x$.**)
+
 
 ```{.python .input}
 %%tab mxnet
@@ -148,11 +150,12 @@ def f(x):
     return 3 * x ** 2 - 4 * x
 ```
 
-[**Setting $x=1$, we see that $\frac{f(x+h) - f(x)}{h}$**] (**approaches $2$
-as $h$ approaches $0$.**)
-While this experiment lacks 
-the rigor of a mathematical proof,
-we can quickly see that indeed $f'(1) = 2$.
+[**Dengan mengatur $x=1$, kita melihat bahwa $\frac{f(x+h) - f(x)}{h}$**] (**mendekati $2$
+ketika $h$ mendekati $0$.**)
+Meskipun percobaan ini tidak memiliki 
+ketelitian seperti pembuktian matematis,
+kita dapat dengan cepat melihat bahwa memang $f'(1) = 2$.
+
 
 ```{.python .input}
 %%tab all
@@ -160,49 +163,50 @@ for h in 10.0**np.arange(-1, -6, -1):
     print(f'h={h:.5f}, numerical limit={(f(1+h)-f(1))/h:.5f}')
 ```
 
-There are several equivalent notational conventions for derivatives.
-Given $y = f(x)$, the following expressions are equivalent:
+Terdapat beberapa konvensi notasi yang setara untuk turunan.
+Diberikan $y = f(x)$, ekspresi berikut adalah setara:
 
 $$f'(x) = y' = \frac{dy}{dx} = \frac{df}{dx} = \frac{d}{dx} f(x) = Df(x) = D_x f(x),$$
 
-where the symbols $\frac{d}{dx}$ and $D$ are *differentiation operators*.
-Below, we present the derivatives of some common functions:
+di mana simbol $\frac{d}{dx}$ dan $D$ adalah *operator diferensiasi*.
+Berikut ini adalah turunan dari beberapa fungsi umum:
 
-$$\begin{aligned} \frac{d}{dx} C & = 0 && \textrm{for any constant $C$} \\ \frac{d}{dx} x^n & = n x^{n-1} && \textrm{for } n \neq 0 \\ \frac{d}{dx} e^x & = e^x \\ \frac{d}{dx} \ln x & = x^{-1}. \end{aligned}$$
+$$\begin{aligned} \frac{d}{dx} C & = 0 && \textrm{untuk konstanta apa pun $C$} \\ \frac{d}{dx} x^n & = n x^{n-1} && \textrm{untuk } n \neq 0 \\ \frac{d}{dx} e^x & = e^x \\ \frac{d}{dx} \ln x & = x^{-1}. \end{aligned}$$
 
-Functions composed from differentiable functions 
-are often themselves differentiable.
-The following rules come in handy 
-for working with compositions 
-of any differentiable functions 
-$f$ and $g$, and constant $C$.
+Fungsi yang dibentuk dari komposisi fungsi-fungsi yang dapat didiferensiasikan 
+seringkali juga dapat didiferensiasikan.
+Aturan-aturan berikut berguna 
+untuk bekerja dengan komposisi 
+fungsi-fungsi yang dapat didiferensiasikan 
+$f$ dan $g$, serta konstanta $C$.
 
-$$\begin{aligned} \frac{d}{dx} [C f(x)] & = C \frac{d}{dx} f(x) && \textrm{Constant multiple rule} \\ \frac{d}{dx} [f(x) + g(x)] & = \frac{d}{dx} f(x) + \frac{d}{dx} g(x) && \textrm{Sum rule} \\ \frac{d}{dx} [f(x) g(x)] & = f(x) \frac{d}{dx} g(x) + g(x) \frac{d}{dx} f(x) && \textrm{Product rule} \\ \frac{d}{dx} \frac{f(x)}{g(x)} & = \frac{g(x) \frac{d}{dx} f(x) - f(x) \frac{d}{dx} g(x)}{g^2(x)} && \textrm{Quotient rule} \end{aligned}$$
+$$\begin{aligned} \frac{d}{dx} [C f(x)] & = C \frac{d}{dx} f(x) && \textrm{Aturan perkalian konstanta} \\ \frac{d}{dx} [f(x) + g(x)] & = \frac{d}{dx} f(x) + \frac{d}{dx} g(x) && \textrm{Aturan penjumlahan} \\ \frac{d}{dx} [f(x) g(x)] & = f(x) \frac{d}{dx} g(x) + g(x) \frac{d}{dx} f(x) && \textrm{Aturan perkalian} \\ \frac{d}{dx} \frac{f(x)}{g(x)} & = \frac{g(x) \frac{d}{dx} f(x) - f(x) \frac{d}{dx} g(x)}{g^2(x)} && \textrm{Aturan pembagian} \end{aligned}$$
 
-Using this, we can apply the rules 
-to find the derivative of $3 x^2 - 4x$ via
+Dengan ini, kita dapat menerapkan aturan-aturan tersebut 
+untuk menemukan turunan dari $3 x^2 - 4x$ melalui
 
 $$\frac{d}{dx} [3 x^2 - 4x] = 3 \frac{d}{dx} x^2 - 4 \frac{d}{dx} x = 6x - 4.$$
 
-Plugging in $x = 1$ shows that, indeed, 
-the derivative equals $2$ at this location. 
-Note that derivatives tell us 
-the *slope* of a function 
-at a particular location.  
+Memasukkan $x = 1$ menunjukkan bahwa, benar,
+turunannya bernilai $2$ pada lokasi ini. 
+Perhatikan bahwa turunan memberi tahu kita 
+*kemiringan* suatu fungsi 
+pada lokasi tertentu.
 
-## Visualization Utilities
+## Utilitas Visualisasi
 
-[**We can visualize the slopes of functions using the `matplotlib` library**].
-We need to define a few functions. 
-As its name indicates, `use_svg_display` 
-tells `matplotlib` to output graphics 
-in SVG format for crisper images. 
-The comment `#@save` is a special modifier 
-that allows us to save any function, 
-class, or other code block to the `d2l` package 
-so that we can invoke it later 
-without repeating the code, 
-e.g., via `d2l.use_svg_display()`.
+[**Kita dapat memvisualisasikan kemiringan fungsi menggunakan pustaka `matplotlib`**].
+Kita perlu mendefinisikan beberapa fungsi.
+Seperti namanya, `use_svg_display` 
+memberi tahu `matplotlib` untuk menampilkan grafik 
+dalam format SVG untuk gambar yang lebih tajam.
+Komentar `#@save` adalah modifikasi khusus 
+yang memungkinkan kita menyimpan fungsi apa pun, 
+kelas, atau blok kode lainnya ke dalam paket `d2l` 
+sehingga kita dapat memanggilnya nanti 
+tanpa mengulangi kode, 
+misalnya, melalui `d2l.use_svg_display()`.
+
 
 ```{.python .input}
 %%tab all
@@ -211,9 +215,10 @@ def use_svg_display():  #@save
     backend_inline.set_matplotlib_formats('svg')
 ```
 
-Conveniently, we can set figure sizes with `set_figsize`. 
-Since the import statement `from matplotlib import pyplot as plt` 
-was marked via `#@save` in the `d2l` package, we can call `d2l.plt`.
+Dengan mudah, kita dapat mengatur ukuran gambar menggunakan `set_figsize`.
+Karena pernyataan impor `from matplotlib import pyplot as plt`
+ditandai dengan `#@save` dalam paket `d2l`, kita dapat memanggilnya melalui `d2l.plt`.
+
 
 ```{.python .input}
 %%tab all
@@ -223,15 +228,16 @@ def set_figsize(figsize=(3.5, 2.5)):  #@save
     d2l.plt.rcParams['figure.figsize'] = figsize
 ```
 
-The `set_axes` function can associate axes
-with properties, including labels, ranges,
-and scales.
+Fungsi `set_axes` dapat menghubungkan sumbu
+dengan properti, termasuk label, rentang,
+dan skala.
+
 
 ```{.python .input}
 %%tab all
 #@save
 def set_axes(axes, xlabel, ylabel, xlim, ylim, xscale, yscale, legend):
-    """Set the axes for matplotlib."""
+    """Mengatur sumbu untuk matplotlib."""
     axes.set_xlabel(xlabel), axes.set_ylabel(ylabel)
     axes.set_xscale(xscale), axes.set_yscale(yscale)
     axes.set_xlim(xlim),     axes.set_ylim(ylim)
@@ -240,10 +246,11 @@ def set_axes(axes, xlabel, ylabel, xlim, ylim, xscale, yscale, legend):
     axes.grid()
 ```
 
-With these three functions, we can define a `plot` function 
-to overlay multiple curves. 
-Much of the code here is just ensuring 
-that the sizes and shapes of inputs match.
+Dengan ketiga fungsi ini, kita bisa mendefinisikan fungsi `plot` 
+untuk menumpuk beberapa kurva. 
+Sebagian besar kode di sini hanya memastikan 
+bahwa ukuran dan bentuk input sesuai.
+
 
 ```{.python .input}
 %%tab all
@@ -274,8 +281,9 @@ def plot(X, Y=None, xlabel=None, ylabel=None, legend=[], xlim=None,
     set_axes(axes, xlabel, ylabel, xlim, ylim, xscale, yscale, legend)
 ```
 
-Now we can [**plot the function $u = f(x)$ and its tangent line $y = 2x - 3$ at $x=1$**],
-where the coefficient $2$ is the slope of the tangent line.
+Sekarang kita dapat [**memplot fungsi $u = f(x)$ dan garis singgungnya $y = 2x - 3$ pada $x=1$**],
+dengan koefisien $2$ sebagai kemiringan garis singgung.
+
 
 ```{.python .input}
 %%tab all
@@ -283,167 +291,164 @@ x = np.arange(0, 3, 0.1)
 plot(x, [f(x), 2 * x - 3], 'x', 'f(x)', legend=['f(x)', 'Tangent line (x=1)'])
 ```
 
-## Partial Derivatives and Gradients
+## Turunan Parsial dan Gradien
 :label:`subsec_calculus-grad`
 
-Thus far, we have been differentiating
-functions of just one variable.
-In deep learning, we also need to work
-with functions of *many* variables.
-We briefly introduce notions of the derivative
-that apply to such *multivariate* functions.
+Sejauh ini, kita telah mempelajari cara menurunkan
+fungsi yang hanya memiliki satu variabel.
+Dalam deep learning, kita juga perlu bekerja
+dengan fungsi yang memiliki *banyak* variabel.
+Di sini, kita akan memperkenalkan konsep turunan
+yang berlaku untuk fungsi *multivariat* semacam itu.
 
 
-Let $y = f(x_1, x_2, \ldots, x_n)$ be a function with $n$ variables. 
-The *partial derivative* of $y$ 
-with respect to its $i^\textrm{th}$ parameter $x_i$ is
+Misalkan $y = f(x_1, x_2, \ldots, x_n)$ adalah sebuah fungsi dengan $n$ variabel. 
+*Turunan parsial* dari $y$ 
+terhadap parameter ke-$i$ $x_i$ adalah
 
 $$ \frac{\partial y}{\partial x_i} = \lim_{h \rightarrow 0} \frac{f(x_1, \ldots, x_{i-1}, x_i+h, x_{i+1}, \ldots, x_n) - f(x_1, \ldots, x_i, \ldots, x_n)}{h}.$$
 
-
-To calculate $\frac{\partial y}{\partial x_i}$, 
-we can treat $x_1, \ldots, x_{i-1}, x_{i+1}, \ldots, x_n$ as constants 
-and calculate the derivative of $y$ with respect to $x_i$.
-The following notational conventions for partial derivatives 
-are all common and all mean the same thing:
+Untuk menghitung $\frac{\partial y}{\partial x_i}$, 
+kita dapat menganggap $x_1, \ldots, x_{i-1}, x_{i+1}, \ldots, x_n$ sebagai konstanta 
+dan menghitung turunan dari $y$ terhadap $x_i$.
+Notasi-notasi berikut untuk turunan parsial 
+sering digunakan dan memiliki arti yang sama:
 
 $$\frac{\partial y}{\partial x_i} = \frac{\partial f}{\partial x_i} = \partial_{x_i} f = \partial_i f = f_{x_i} = f_i = D_i f = D_{x_i} f.$$
 
-We can concatenate partial derivatives 
-of a multivariate function 
-with respect to all its variables 
-to obtain a vector that is called
-the *gradient* of the function.
-Suppose that the input of function 
+Kita dapat menggabungkan turunan parsial 
+dari fungsi multivariat 
+terhadap semua variabelnya 
+untuk mendapatkan vektor yang disebut
+*gradien* dari fungsi tersebut.
+Misalkan input dari fungsi 
 $f: \mathbb{R}^n \rightarrow \mathbb{R}$ 
-is an $n$-dimensional vector 
+adalah sebuah vektor berdimensi-$n$ 
 $\mathbf{x} = [x_1, x_2, \ldots, x_n]^\top$ 
-and the output is a scalar. 
-The gradient of the function $f$ 
-with respect to $\mathbf{x}$ 
-is a vector of $n$ partial derivatives:
+dan output-nya adalah sebuah skalar. 
+Gradien dari fungsi $f$ 
+terhadap $\mathbf{x}$ 
+adalah sebuah vektor dari $n$ turunan parsial:
 
 $$\nabla_{\mathbf{x}} f(\mathbf{x}) = \left[\partial_{x_1} f(\mathbf{x}), \partial_{x_2} f(\mathbf{x}), \ldots
 \partial_{x_n} f(\mathbf{x})\right]^\top.$$ 
 
-When there is no ambiguity,
+Jika tidak ada ambiguitas,
 $\nabla_{\mathbf{x}} f(\mathbf{x})$ 
-is typically replaced 
-by $\nabla f(\mathbf{x})$.
-The following rules come in handy 
-for differentiating multivariate functions:
+biasanya ditulis sebagai 
+$\nabla f(\mathbf{x})$.
+Berikut ini adalah beberapa aturan
+yang berguna untuk menurunkan fungsi multivariat:
 
-* For all $\mathbf{A} \in \mathbb{R}^{m \times n}$ we have $\nabla_{\mathbf{x}} \mathbf{A} \mathbf{x} = \mathbf{A}^\top$ and $\nabla_{\mathbf{x}} \mathbf{x}^\top \mathbf{A}  = \mathbf{A}$.
-* For square matrices $\mathbf{A} \in \mathbb{R}^{n \times n}$ we have that $\nabla_{\mathbf{x}} \mathbf{x}^\top \mathbf{A} \mathbf{x}  = (\mathbf{A} + \mathbf{A}^\top)\mathbf{x}$ and in particular
+* Untuk semua $\mathbf{A} \in \mathbb{R}^{m \times n}$ berlaku $\nabla_{\mathbf{x}} \mathbf{A} \mathbf{x} = \mathbf{A}^\top$ dan $\nabla_{\mathbf{x}} \mathbf{x}^\top \mathbf{A}  = \mathbf{A}$.
+* Untuk matriks persegi $\mathbf{A} \in \mathbb{R}^{n \times n}$ berlaku $\nabla_{\mathbf{x}} \mathbf{x}^\top \mathbf{A} \mathbf{x}  = (\mathbf{A} + \mathbf{A}^\top)\mathbf{x}$ dan khususnya
 $\nabla_{\mathbf{x}} \|\mathbf{x} \|^2 = \nabla_{\mathbf{x}} \mathbf{x}^\top \mathbf{x} = 2\mathbf{x}$.
 
-Similarly, for any matrix $\mathbf{X}$, 
-we have $\nabla_{\mathbf{X}} \|\mathbf{X} \|_\textrm{F}^2 = 2\mathbf{X}$. 
+Demikian pula, untuk setiap matriks $\mathbf{X}$, 
+berlaku $\nabla_{\mathbf{X}} \|\mathbf{X} \|_\textrm{F}^2 = 2\mathbf{X}$.
 
 
 
-## Chain Rule
 
-In deep learning, the gradients of concern
-are often difficult to calculate
-because we are working with 
-deeply nested functions 
-(of functions (of functions...)).
-Fortunately, the *chain rule* takes care of this. 
-Returning to functions of a single variable,
-suppose that $y = f(g(x))$
-and that the underlying functions 
-$y=f(u)$ and $u=g(x)$ 
-are both differentiable.
-The chain rule states that 
+## Aturan Rantai
 
+Dalam deep learning, gradien yang kita hitung
+sering kali sulit dihitung
+karena kita bekerja dengan fungsi 
+yang memiliki tingkat kedalaman yang dalam 
+(dalam fungsi (dalam fungsi ...)).
+Untungnya, *aturan rantai* menyelesaikan masalah ini. 
+Kembali ke fungsi dengan satu variabel,
+misalkan $y = f(g(x))$
+dan fungsi dasarnya 
+$y=f(u)$ dan $u=g(x)$ 
+keduanya terdiferensiasi.
+Aturan rantai menyatakan bahwa
 
 $$\frac{dy}{dx} = \frac{dy}{du} \frac{du}{dx}.$$
 
-
-
-Turning back to multivariate functions,
-suppose that $y = f(\mathbf{u})$ has variables
+Kembali ke fungsi multivariat,
+misalkan $y = f(\mathbf{u})$ memiliki variabel
 $u_1, u_2, \ldots, u_m$, 
-where each $u_i = g_i(\mathbf{x})$ 
-has variables $x_1, x_2, \ldots, x_n$,
-i.e.,  $\mathbf{u} = g(\mathbf{x})$.
-Then the chain rule states that
+di mana setiap $u_i = g_i(\mathbf{x})$ 
+memiliki variabel $x_1, x_2, \ldots, x_n$,
+yaitu, $\mathbf{u} = g(\mathbf{x})$.
+Maka aturan rantai menyatakan bahwa
 
-$$\frac{\partial y}{\partial x_{i}} = \frac{\partial y}{\partial u_{1}} \frac{\partial u_{1}}{\partial x_{i}} + \frac{\partial y}{\partial u_{2}} \frac{\partial u_{2}}{\partial x_{i}} + \ldots + \frac{\partial y}{\partial u_{m}} \frac{\partial u_{m}}{\partial x_{i}} \ \textrm{ and so } \ \nabla_{\mathbf{x}} y =  \mathbf{A} \nabla_{\mathbf{u}} y,$$
+$$\frac{\partial y}{\partial x_{i}} = \frac{\partial y}{\partial u_{1}} \frac{\partial u_{1}}{\partial x_{i}} + \frac{\partial y}{\partial u_{2}} \frac{\partial u_{2}}{\partial x_{i}} + \ldots + \frac{\partial y}{\partial u_{m}} \frac{\partial u_{m}}{\partial x_{i}} \ \textrm{ dan } \ \nabla_{\mathbf{x}} y =  \mathbf{A} \nabla_{\mathbf{u}} y,$$
 
-where $\mathbf{A} \in \mathbb{R}^{n \times m}$ is a *matrix*
-that contains the derivative of vector $\mathbf{u}$
-with respect to vector $\mathbf{x}$.
-Thus, evaluating the gradient requires 
-computing a vector--matrix product. 
-This is one of the key reasons why linear algebra 
-is such an integral building block 
-in building deep learning systems. 
+di mana $\mathbf{A} \in \mathbb{R}^{n \times m}$ adalah sebuah *matriks*
+yang mengandung turunan vektor $\mathbf{u}$
+terhadap vektor $\mathbf{x}$.
+Dengan demikian, evaluasi gradien memerlukan 
+menghitung hasil kali vektor-matriks. 
+Inilah salah satu alasan utama mengapa aljabar linear 
+merupakan komponen penting 
+dalam membangun sistem deep learning. 
 
 
+## Diskusi
 
-## Discussion
+Walaupun kita hanya menggoreskan permukaan dari topik yang mendalam ini,
+beberapa konsep utama sudah mulai terlihat:
+pertama, aturan komposisi untuk diferensiasi
+dapat diterapkan secara rutin, memungkinkan kita
+untuk menghitung gradien secara *otomatis*.
+Tugas ini tidak memerlukan kreativitas, sehingga 
+kita bisa fokus pada aspek lain yang lebih penting.
+Kedua, menghitung turunan fungsi yang menghasilkan vektor 
+memerlukan kita untuk mengalikan matriks ketika kita melacak 
+graf dependensi variabel dari output ke input. 
+Graf ini dilalui dalam arah *maju* 
+saat kita mengevaluasi fungsi 
+dan dalam arah *mundur* 
+saat kita menghitung gradien. 
+Bab selanjutnya akan memperkenalkan backpropagation,
+prosedur komputasi untuk menerapkan aturan rantai.
 
-While we have just scratched the surface of a deep topic,
-a number of concepts already come into focus: 
-first, the composition rules for differentiation
-can be applied routinely, enabling
-us to compute gradients *automatically*.
-This task requires no creativity and thus 
-we can focus our cognitive powers elsewhere.
-Second, computing the derivatives of vector-valued functions 
-requires us to multiply matrices as we trace 
-the dependency graph of variables from output to input. 
-In particular, this graph is traversed in a *forward* direction 
-when we evaluate a function 
-and in a *backwards* direction 
-when we compute gradients. 
-Later chapters will formally introduce backpropagation,
-a computational procedure for applying the chain rule.
+Dari sudut pandang optimasi, gradien memungkinkan kita 
+menentukan cara untuk mengubah parameter model
+untuk mengurangi loss,
+dan setiap langkah dalam algoritma optimasi 
+yang digunakan di sepanjang buku ini 
+akan memerlukan perhitungan gradien.
 
-From the viewpoint of optimization, gradients allow us 
-to determine how to move the parameters of a model
-in order to lower the loss,
-and each step of the optimization algorithms used 
-throughout this book will require calculating the gradient.
+## Latihan
 
-## Exercises
-
-1. So far we took the rules for derivatives for granted. 
-   Using the definition and limits prove the properties 
-   for (i) $f(x) = c$, (ii) $f(x) = x^n$, (iii) $f(x) = e^x$ and (iv) $f(x) = \log x$.
-1. In the same vein, prove the product, sum, and quotient rule from first principles. 
-1. Prove that the constant multiple rule follows as a special case of the product rule. 
-1. Calculate the derivative of $f(x) = x^x$. 
-1. What does it mean that $f'(x) = 0$ for some $x$? 
-   Give an example of a function $f$ 
-   and a location $x$ for which this might hold. 
-1. Plot the function $y = f(x) = x^3 - \frac{1}{x}$ 
-   and plot its tangent line at $x = 1$.
-1. Find the gradient of the function 
+1. Sejauh ini kita menganggap aturan turunan sebagai hal yang sudah ada. 
+   Menggunakan definisi dan limit, buktikan sifat-sifat 
+   untuk (i) $f(x) = c$, (ii) $f(x) = x^n$, (iii) $f(x) = e^x$ dan (iv) $f(x) = \log x$.
+2. Dengan cara yang sama, buktikan aturan perkalian, penjumlahan, dan pembagian dari prinsip dasar.
+3. Buktikan bahwa aturan perkalian konstanta adalah kasus khusus dari aturan perkalian.
+4. Hitung turunan dari $f(x) = x^x$. 
+5. Apa artinya jika $f'(x) = 0$ untuk beberapa $x$? 
+   Berikan contoh fungsi $f$ 
+   dan posisi $x$ di mana hal ini mungkin terjadi. 
+6. Gambarkan fungsi $y = f(x) = x^3 - \frac{1}{x}$ 
+   dan gambarkan garis singgungnya di $x = 1$.
+7. Temukan gradien dari fungsi 
    $f(\mathbf{x}) = 3x_1^2 + 5e^{x_2}$.
-1. What is the gradient of the function 
-   $f(\mathbf{x}) = \|\mathbf{x}\|_2$? What happens for $\mathbf{x} = \mathbf{0}$?
-1. Can you write out the chain rule for the case 
-   where $u = f(x, y, z)$ and $x = x(a, b)$, $y = y(a, b)$, and $z = z(a, b)$?
-1. Given a function $f(x)$ that is invertible, 
-   compute the derivative of its inverse $f^{-1}(x)$. 
-   Here we have that $f^{-1}(f(x)) = x$ and conversely $f(f^{-1}(y)) = y$. 
-   Hint: use these properties in your derivation. 
+8. Apa gradien dari fungsi 
+   $f(\mathbf{x}) = \|\mathbf{x}\|_2$? Apa yang terjadi jika $\mathbf{x} = \mathbf{0}$?
+9. Dapatkah Anda menuliskan aturan rantai untuk kasus 
+   di mana $u = f(x, y, z)$ dan $x = x(a, b)$, $y = y(a, b)$, dan $z = z(a, b)$?
+10. Diberikan sebuah fungsi $f(x)$ yang dapat dibalik, 
+   hitung turunan dari inversinya $f^{-1}(x)$. 
+   Di sini berlaku bahwa $f^{-1}(f(x)) = x$ dan sebaliknya $f(f^{-1}(y)) = y$. 
+   Petunjuk: gunakan properti ini dalam perhitungan Anda.
 
 :begin_tab:`mxnet`
-[Discussions](https://discuss.d2l.ai/t/32)
+[Diskusi](https://discuss.d2l.ai/t/32)
 :end_tab:
 
 :begin_tab:`pytorch`
-[Discussions](https://discuss.d2l.ai/t/33)
+[Diskusi](https://discuss.d2l.ai/t/33)
 :end_tab:
 
 :begin_tab:`tensorflow`
-[Discussions](https://discuss.d2l.ai/t/197)
+[Diskusi](https://discuss.d2l.ai/t/197)
 :end_tab:
 
 :begin_tab:`jax`
-[Discussions](https://discuss.d2l.ai/t/17969)
+[Diskusi](https://discuss.d2l.ai/t/17969)
 :end_tab:
