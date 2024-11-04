@@ -3,32 +3,32 @@
 tab.interact_select(['mxnet', 'pytorch', 'tensorflow', 'jax'])
 ```
 
-# Linear Regression
+# Regresi Linear
 :label:`sec_linear_regression`
 
-*Regression* problems pop up whenever we want to predict a numerical value.
-Common examples include predicting prices (of homes, stocks, etc.),
-predicting the length of stay (for patients in the hospital),
-forecasting demand (for retail sales), among numerous others.
-Not every prediction problem is one of classical regression.
-Later on, we will introduce classification problems,
-where the goal is to predict membership among a set of categories.
+Masalah *regresi* muncul ketika kita ingin memprediksi nilai numerik.
+Contoh umum termasuk memprediksi harga (rumah, saham, dll.),
+memperkirakan lama tinggal (pasien di rumah sakit),
+memperkirakan permintaan (penjualan ritel), dan banyak lagi.
+Tidak semua masalah prediksi adalah regresi klasik.
+Nantinya, kita akan memperkenalkan masalah klasifikasi,
+di mana tujuan adalah memprediksi keanggotaan dalam satu set kategori.
 
-As a running example, suppose that we wish
-to estimate the prices of houses (in dollars)
-based on their area (in square feet) and age (in years).
-To develop a model for predicting house prices,
-we need to get our hands on data,
-including the sales price, area, and age for each home.
-In the terminology of machine learning,
-the dataset is called a *training dataset* or *training set*,
-and each row (containing the data corresponding to one sale)
-is called an *example* (or *data point*, *instance*, *sample*).
-The thing we are trying to predict (price)
-is called a *label* (or *target*).
-The variables (age and area)
-upon which the predictions are based
-are called *features* (or *covariates*).
+Sebagai contoh berkelanjutan, misalkan kita ingin
+memperkirakan harga rumah (dalam dolar)
+berdasarkan luas (dalam kaki persegi) dan usia (dalam tahun).
+Untuk mengembangkan model prediksi harga rumah,
+kita memerlukan data,
+termasuk harga penjualan, luas, dan usia untuk setiap rumah.
+Dalam terminologi pembelajaran mesin,
+kumpulan data ini disebut *dataset pelatihan* atau *training set*,
+dan setiap baris (yang berisi data yang sesuai dengan satu penjualan)
+disebut sebagai *contoh* (atau *data point*, *instance*, *sample*).
+Hal yang ingin kita prediksi (harga)
+disebut *label* (atau *target*).
+Variabel-variabel (usia dan luas)
+yang menjadi dasar prediksi disebut *fitur* (atau *kovariat*).
+
 
 ```{.python .input}
 %%tab mxnet
@@ -68,366 +68,365 @@ import math
 import time
 ```
 
-## Basics
+## Dasar-Dasar
 
-*Linear regression* is both the simplest
-and most popular among the standard tools
-for tackling regression problems.
-Dating back to the dawn of the 19th century :cite:`Legendre.1805,Gauss.1809`,
-linear regression flows from a few simple assumptions.
-First, we assume that the relationship
-between features $\mathbf{x}$ and target $y$
-is approximately linear,
-i.e., that the conditional mean $E[Y \mid X=\mathbf{x}]$
-can be expressed as a weighted sum
-of the features $\mathbf{x}$.
-This setup allows that the target value
-may still deviate from its expected value
-on account of observation noise.
-Next, we can impose the assumption that any such noise
-is well behaved, following a Gaussian distribution.
-Typically, we will use $n$ to denote
-the number of examples in our dataset.
-We use superscripts to enumerate samples and targets,
-and subscripts to index coordinates.
-More concretely,
-$\mathbf{x}^{(i)}$ denotes the $i^{\textrm{th}}$ sample
-and $x_j^{(i)}$ denotes its $j^{\textrm{th}}$ coordinate.
+*Regresi linear* adalah alat paling sederhana
+dan paling populer di antara alat standar
+untuk mengatasi masalah regresi.
+Metode ini sudah ada sejak awal abad ke-19 :cite:`Legendre.1805,Gauss.1809`,
+dan berasal dari beberapa asumsi sederhana.
+Pertama, kita mengasumsikan bahwa hubungan
+antara fitur $\mathbf{x}$ dan target $y$
+adalah kira-kira linear,
+yaitu, mean kondisional $E[Y \mid X=\mathbf{x}]$
+dapat diekspresikan sebagai penjumlahan berbobot
+dari fitur $\mathbf{x}$.
+Pengaturan ini memungkinkan nilai target
+masih bisa menyimpang dari nilai ekspektasinya
+karena adanya noise pada pengamatan.
+Selanjutnya, kita bisa memberlakukan asumsi bahwa noise tersebut
+terdistribusi secara baik, mengikuti distribusi Gaussian.
+Biasanya, kita menggunakan $n$ untuk menyatakan
+jumlah contoh dalam dataset kita.
+Kita menggunakan superscript untuk mengenumerasi sampel dan target,
+dan subscript untuk mengindeks koordinat.
+Secara lebih konkret,
+$\mathbf{x}^{(i)}$ menyatakan sampel ke-$i$
+dan $x_j^{(i)}$ menyatakan koordinat ke-$j$ dari sampel tersebut.
 
 ### Model
 :label:`subsec_linear_model`
 
-At the heart of every solution is a model
-that describes how features can be transformed
-into an estimate of the target.
-The assumption of linearity means that
-the expected value of the target (price) can be expressed
-as a weighted sum of the features (area and age):
+Di inti dari setiap solusi adalah model
+yang menggambarkan bagaimana fitur dapat diubah
+menjadi estimasi target.
+Asumsi linearitas berarti bahwa
+nilai harapan dari target (harga) dapat diekspresikan
+sebagai penjumlahan berbobot dari fitur (luas dan usia):
 
-$$\textrm{price} = w_{\textrm{area}} \cdot \textrm{area} + w_{\textrm{age}} \cdot \textrm{age} + b.$$
+$$\textrm{harga} = w_{\textrm{luas}} \cdot \textrm{luas} + w_{\textrm{usia}} \cdot \textrm{usia} + b.$$
 :eqlabel:`eq_price-area`
 
-Here $w_{\textrm{area}}$ and $w_{\textrm{age}}$
-are called *weights*, and $b$ is called a *bias*
-(or *offset* or *intercept*).
-The weights determine the influence of each feature on our prediction.
-The bias determines the value of the estimate when all features are zero.
-Even though we will never see any newly-built homes with precisely zero area,
-we still need the bias because it allows us
-to express all linear functions of our features
-(rather than restricting us to lines that pass through the origin).
-Strictly speaking, :eqref:`eq_price-area` is an *affine transformation* of input features, which is characterized by a *linear transformation* of features via a weighted sum, combined with a *translation* via the added bias.
-Given a dataset, our goal is to choose
-the weights $\mathbf{w}$ and the bias $b$
-that, on average, make our model's predictions
-fit the true prices observed in the data as closely as possible.
+Di sini, $w_{\textrm{luas}}$ dan $w_{\textrm{usia}}$
+disebut *bobot*, dan $b$ disebut *bias*
+(atau *offset* atau *intercept*).
+Bobot menentukan pengaruh setiap fitur pada prediksi kita.
+Bias menentukan nilai estimasi ketika semua fitur bernilai nol.
+Meskipun kita tidak akan pernah menemukan rumah baru dengan luas tepat nol,
+kita masih membutuhkan bias karena memungkinkan kita
+untuk mengekspresikan semua fungsi linear dari fitur kita
+(tanpa membatasi kita pada garis yang melalui titik asal).
+Secara ketat, :eqref:`eq_price-area` adalah *transformasi afin* dari fitur input, yang dicirikan oleh *transformasi linear* dari fitur melalui penjumlahan berbobot, dikombinasikan dengan *translasi* melalui bias tambahan.
+Diberi sebuah dataset, tujuan kita adalah memilih
+bobot $\mathbf{w}$ dan bias $b$
+yang, secara rata-rata, membuat prediksi model kita
+mendekati harga sebenarnya yang diamati dalam data sebaik mungkin.
 
-
-In disciplines where it is common to focus
-on datasets with just a few features,
-explicitly expressing models long-form,
-as in :eqref:`eq_price-area`, is common.
-In machine learning, we usually work
-with high-dimensional datasets,
-where it is more convenient to employ
-compact linear algebra notation.
-When our inputs consist of $d$ features,
-we can assign each an index (between $1$ and $d$)
-and express our prediction $\hat{y}$
-(in general the "hat" symbol denotes an estimate) as
+Dalam disiplin yang biasa berfokus
+pada dataset dengan hanya beberapa fitur,
+mengekspresikan model dalam bentuk panjang,
+seperti pada :eqref:`eq_price-area`, adalah hal umum.
+Dalam pembelajaran mesin, kita biasanya bekerja
+dengan dataset berdimensi tinggi,
+sehingga lebih nyaman menggunakan notasi aljabar linear yang ringkas.
+Ketika input kita terdiri dari $d$ fitur,
+kita dapat memberi masing-masing indeks (antara $1$ dan $d$)
+dan mengekspresikan prediksi kita $\hat{y}$
+(secara umum, simbol "hat" menunjukkan estimasi) sebagai
 
 $$\hat{y} = w_1  x_1 + \cdots + w_d  x_d + b.$$
 
-Collecting all features into a vector $\mathbf{x} \in \mathbb{R}^d$
-and all weights into a vector $\mathbf{w} \in \mathbb{R}^d$,
-we can express our model compactly via the dot product
-between $\mathbf{w}$ and $\mathbf{x}$:
+Dengan mengumpulkan semua fitur ke dalam vektor $\mathbf{x} \in \mathbb{R}^d$
+dan semua bobot ke dalam vektor $\mathbf{w} \in \mathbb{R}^d$,
+kita dapat mengekspresikan model kita secara ringkas melalui dot product
+antara $\mathbf{w}$ dan $\mathbf{x}$:
 
 $$\hat{y} = \mathbf{w}^\top \mathbf{x} + b.$$
 :eqlabel:`eq_linreg-y`
 
-In :eqref:`eq_linreg-y`, the vector $\mathbf{x}$
-corresponds to the features of a single example.
-We will often find it convenient
-to refer to features of our entire dataset of $n$ examples
-via the *design matrix* $\mathbf{X} \in \mathbb{R}^{n \times d}$.
-Here, $\mathbf{X}$ contains one row for every example
-and one column for every feature.
-For a collection of features $\mathbf{X}$,
-the predictions $\hat{\mathbf{y}} \in \mathbb{R}^n$
-can be expressed via the matrix--vector product:
+Dalam :eqref:`eq_linreg-y`, vektor $\mathbf{x}$
+merupakan fitur dari satu contoh.
+Kita sering menemukan bahwa lebih nyaman
+merujuk pada fitur dari seluruh dataset berjumlah $n$ contoh
+melalui *design matrix* $\mathbf{X} \in \mathbb{R}^{n \times d}$.
+Di sini, $\mathbf{X}$ memiliki satu baris untuk setiap contoh
+dan satu kolom untuk setiap fitur.
+Untuk sekumpulan fitur $\mathbf{X}$,
+prediksi $\hat{\mathbf{y}} \in \mathbb{R}^n$
+dapat diekspresikan melalui perkalian matriks-vektor:
 
 $${\hat{\mathbf{y}}} = \mathbf{X} \mathbf{w} + b,$$
 :eqlabel:`eq_linreg-y-vec`
 
-where broadcasting (:numref:`subsec_broadcasting`) is applied during the summation.
-Given features of a training dataset $\mathbf{X}$
-and corresponding (known) labels $\mathbf{y}$,
-the goal of linear regression is to find
-the weight vector $\mathbf{w}$ and the bias term $b$
-such that, given features of a new data example
-sampled from the same distribution as $\mathbf{X}$,
-the new example's label will (in expectation)
-be predicted with the smallest error.
+dengan broadcasting (:numref:`subsec_broadcasting`) yang diterapkan selama penjumlahan.
+Diberi fitur dari dataset pelatihan $\mathbf{X}$
+dan label yang sesuai (diketahui) $\mathbf{y}$,
+tujuan regresi linear adalah menemukan
+vektor bobot $\mathbf{w}$ dan nilai bias $b$
+sehingga, dengan fitur dari contoh data baru
+yang diambil dari distribusi yang sama dengan $\mathbf{X}$,
+label dari contoh baru akan (dalam ekspektasi)
+dapat diprediksi dengan kesalahan terkecil.
 
-Even if we believe that the best model for
-predicting $y$ given $\mathbf{x}$ is linear,
-we would not expect to find a real-world dataset of $n$ examples where
-$y^{(i)}$ exactly equals $\mathbf{w}^\top \mathbf{x}^{(i)}+b$
-for all $1 \leq i \leq n$.
-For example, whatever instruments we use to observe
-the features $\mathbf{X}$ and labels $\mathbf{y}$, there might be a small amount of measurement error.
-Thus, even when we are confident
-that the underlying relationship is linear,
-we will incorporate a noise term to account for such errors.
+Meskipun kita percaya bahwa model terbaik untuk
+memprediksi $y$ diberi $\mathbf{x}$ adalah linear,
+kita tidak akan mengharapkan untuk menemukan dataset dunia nyata dengan $n$ contoh di mana
+$y^{(i)}$ persis sama dengan $\mathbf{w}^\top \mathbf{x}^{(i)}+b$
+untuk semua $1 \leq i \leq n$.
+Misalnya, alat apa pun yang kita gunakan untuk mengamati
+fitur $\mathbf{X}$ dan label $\mathbf{y}$, mungkin ada sedikit kesalahan pengukuran.
+Oleh karena itu, meskipun kita yakin
+bahwa hubungan dasarnya adalah linear,
+kita akan memasukkan istilah noise untuk memperhitungkan kesalahan semacam itu.
 
-Before we can go about searching for the best *parameters*
-(or *model parameters*) $\mathbf{w}$ and $b$,
-we will need two more things:
-(i) a measure of the quality of some given model;
-and (ii) a procedure for updating the model to improve its quality.
+Sebelum kita bisa mulai mencari *parameter* terbaik
+(atau *parameter model*) $\mathbf{w}$ dan $b$,
+kita membutuhkan dua hal lagi:
+(i) ukuran kualitas dari model tertentu;
+dan (ii) prosedur untuk memperbarui model untuk meningkatkan kualitasnya.
 
-### Loss Function
+### Fungsi Kerugian
 :label:`subsec_linear-regression-loss-function`
 
-Naturally, fitting our model to the data requires
-that we agree on some measure of *fitness*
-(or, equivalently, of *unfitness*).
-*Loss functions* quantify the distance
-between the *real* and *predicted* values of the target.
-The loss will usually be a nonnegative number
-where smaller values are better
-and perfect predictions incur a loss of 0.
-For regression problems, the most common loss function is the squared error.
-When our prediction for an example $i$ is $\hat{y}^{(i)}$
-and the corresponding true label is $y^{(i)}$,
-the *squared error* is given by:
+Secara alami, menyesuaikan model kita dengan data memerlukan
+kesepakatan tentang ukuran *kecocokan*
+(atau, secara ekuivalen, *ketidakcocokan*).
+*Fungsi kerugian* mengukur jarak
+antara nilai *sebenarnya* dan *prediksi* dari target.
+Kerugian biasanya berupa angka non-negatif
+di mana nilai yang lebih kecil lebih baik
+dan prediksi yang sempurna menghasilkan kerugian sebesar 0.
+Untuk masalah regresi, fungsi kerugian yang paling umum adalah kesalahan kuadrat.
+Ketika prediksi kita untuk contoh $i$ adalah $\hat{y}^{(i)}$
+dan label sebenarnya yang sesuai adalah $y^{(i)}$,
+*maka kesalahan kuadrat* diberikan oleh:
 
 $$l^{(i)}(\mathbf{w}, b) = \frac{1}{2} \left(\hat{y}^{(i)} - y^{(i)}\right)^2.$$
 :eqlabel:`eq_mse`
 
-The constant $\frac{1}{2}$ makes no real difference
-but proves to be notationally convenient,
-since it cancels out when we take the derivative of the loss.
-Because the training dataset is given to us,
-and thus is out of our control,
-the empirical error is only a function of the model parameters.
-In :numref:`fig_fit_linreg`, we visualize the fit of a linear regression model
-in a problem with one-dimensional inputs.
+Konstanta $\frac{1}{2}$ sebenarnya tidak memiliki pengaruh signifikan
+tetapi berguna secara notasi,
+karena akan hilang saat kita mengambil turunan dari kerugian.
+Karena dataset pelatihan sudah diberikan kepada kita,
+dan dengan demikian di luar kendali kita,
+kesalahan empiris hanya merupakan fungsi dari parameter model.
+Pada :numref:`fig_fit_linreg`, kita memvisualisasikan kecocokan model regresi linear
+dalam masalah dengan input satu dimensi.
 
-![Fitting a linear regression model to one-dimensional data.](../img/fit-linreg.svg)
+![Mencocokkan model regresi linear dengan data satu dimensi.](../img/fit-linreg.svg)
 :label:`fig_fit_linreg`
 
-Note that large differences between
-estimates $\hat{y}^{(i)}$ and targets $y^{(i)}$
-lead to even larger contributions to the loss,
-due to its quadratic form
-(this quadraticity can be a double-edge sword; while it encourages the model to avoid large errors
-it can also lead to excessive sensitivity to anomalous data).
-To measure the quality of a model on the entire dataset of $n$ examples,
-we simply average (or equivalently, sum)
-the losses on the training set:
+Perhatikan bahwa perbedaan besar antara
+estimasi $\hat{y}^{(i)}$ dan target $y^{(i)}$
+menyebabkan kontribusi yang lebih besar terhadap kerugian,
+karena bentuk kuadratnya
+(bentuk kuadrat ini bisa menjadi pedang bermata dua; meskipun mendorong model untuk menghindari kesalahan besar
+ini juga bisa menyebabkan sensitivitas berlebih terhadap data yang menyimpang).
+Untuk mengukur kualitas model pada seluruh dataset yang berjumlah $n$ contoh,
+kita cukup menghitung rata-rata (atau secara ekuivalen, jumlah)
+kerugian pada set pelatihan:
 
 $$L(\mathbf{w}, b) =\frac{1}{n}\sum_{i=1}^n l^{(i)}(\mathbf{w}, b) =\frac{1}{n} \sum_{i=1}^n \frac{1}{2}\left(\mathbf{w}^\top \mathbf{x}^{(i)} + b - y^{(i)}\right)^2.$$
 
-When training the model, we seek parameters ($\mathbf{w}^*, b^*$)
-that minimize the total loss across all training examples:
+Ketika melatih model, kita mencari parameter ($\mathbf{w}^*, b^*$)
+yang meminimalkan total kerugian pada seluruh contoh pelatihan:
 
 $$\mathbf{w}^*, b^* = \operatorname*{argmin}_{\mathbf{w}, b}\  L(\mathbf{w}, b).$$
 
-### Analytic Solution
+### Solusi Analitik
 
-Unlike most of the models that we will cover,
-linear regression presents us with
-a surprisingly easy optimization problem.
-In particular, we can find the optimal parameters
-(as assessed on the training data)
-analytically by applying a simple formula as follows.
-First, we can subsume the bias $b$ into the parameter $\mathbf{w}$
-by appending a column to the design matrix consisting of all 1s.
-Then our prediction problem is to minimize $\|\mathbf{y} - \mathbf{X}\mathbf{w}\|^2$.
-As long as the design matrix $\mathbf{X}$ has full rank
-(no feature is linearly dependent on the others),
-then there will be just one critical point on the loss surface
-and it corresponds to the minimum of the loss over the entire domain.
-Taking the derivative of the loss with respect to $\mathbf{w}$
-and setting it equal to zero yields:
+Tidak seperti sebagian besar model yang akan kita bahas,
+regresi linear memberikan kita
+masalah optimasi yang sangat mudah.
+Secara khusus, kita dapat menemukan parameter optimal
+(seperti yang dinilai pada data pelatihan)
+secara analitik dengan menerapkan rumus sederhana sebagai berikut.
+Pertama, kita dapat memasukkan bias $b$ ke dalam parameter $\mathbf{w}$
+dengan menambahkan kolom ke design matrix yang berisi semua nilai 1.
+Kemudian masalah prediksi kita adalah meminimalkan $\|\mathbf{y} - \mathbf{X}\mathbf{w}\|^2$.
+Selama design matrix $\mathbf{X}$ memiliki peringkat penuh
+(tidak ada fitur yang linier tergantung pada yang lain),
+maka akan ada hanya satu titik kritis pada permukaan kerugian
+dan titik tersebut sesuai dengan minimum kerugian pada seluruh domain.
+Mengambil turunan dari kerugian terhadap $\mathbf{w}$
+dan menyetarakannya dengan nol menghasilkan:
 
 $$\begin{aligned}
     \partial_{\mathbf{w}} \|\mathbf{y} - \mathbf{X}\mathbf{w}\|^2 =
     2 \mathbf{X}^\top (\mathbf{X} \mathbf{w} - \mathbf{y}) = 0
-    \textrm{ and hence }
+    \textrm{ dan karena itu }
     \mathbf{X}^\top \mathbf{y} = \mathbf{X}^\top \mathbf{X} \mathbf{w}.
 \end{aligned}$$
 
-Solving for $\mathbf{w}$ provides us with the optimal solution
-for the optimization problem.
-Note that this solution 
+Menyelesaikan untuk $\mathbf{w}$ memberikan kita solusi optimal
+untuk masalah optimasi.
+Perhatikan bahwa solusi ini 
 
 $$\mathbf{w}^* = (\mathbf X^\top \mathbf X)^{-1}\mathbf X^\top \mathbf{y}$$
 
-will only be unique
-when the matrix $\mathbf X^\top \mathbf X$ is invertible,
-i.e., when the columns of the design matrix
-are linearly independent :cite:`Golub.Van-Loan.1996`.
+hanya akan unik
+ketika matriks $\mathbf X^\top \mathbf X$ dapat dibalik,
+yaitu, ketika kolom dari design matrix
+linier tidak saling bergantung :cite:`Golub.Van-Loan.1996`.
 
 
-
-While simple problems like linear regression
-may admit analytic solutions,
-you should not get used to such good fortune.
-Although analytic solutions allow for nice mathematical analysis,
-the requirement of an analytic solution is so restrictive
-that it would exclude almost all exciting aspects of deep learning.
+Meskipun masalah sederhana seperti regresi linear
+dapat memiliki solusi analitik,
+Anda sebaiknya tidak terbiasa dengan keberuntungan seperti ini.
+Meskipun solusi analitik memungkinkan analisis matematis yang indah,
+persyaratan solusi analitik sangat ketat
+sehingga akan mengesampingkan hampir semua aspek menarik dari pembelajaran mendalam.
 
 ### Minibatch Stochastic Gradient Descent
 
-Fortunately, even in cases where we cannot solve the models analytically,
-we can still often train models effectively in practice.
-Moreover, for many tasks, those hard-to-optimize models
-turn out to be so much better that figuring out how to train them
-ends up being well worth the trouble.
+Untungnya, bahkan dalam kasus di mana kita tidak dapat menyelesaikan model secara analitik,
+kita masih sering dapat melatih model dengan efektif dalam praktik.
+Terlebih lagi, untuk banyak tugas, model yang sulit dioptimalkan tersebut
+ternyata jauh lebih baik sehingga mencari cara untuk melatihnya
+menjadi sepadan dengan usaha.
 
-The key technique for optimizing nearly every deep learning model,
-and which we will call upon throughout this book,
-consists of iteratively reducing the error
-by updating the parameters in the direction
-that incrementally lowers the loss function.
-This algorithm is called *gradient descent*.
+Teknik utama untuk mengoptimalkan hampir setiap model pembelajaran mendalam,
+dan yang akan kita gunakan sepanjang buku ini,
+terdiri dari pengurangan kesalahan secara iteratif
+dengan memperbarui parameter ke arah
+yang secara bertahap mengurangi fungsi kerugian.
+Algoritma ini disebut *gradient descent*.
 
-The most naive application of gradient descent
-consists of taking the derivative of the loss function,
-which is an average of the losses computed
-on every single example in the dataset.
-In practice, this can be extremely slow:
-we must pass over the entire dataset before making a single update,
-even if the update steps might be very powerful :cite:`Liu.Nocedal.1989`.
-Even worse, if there is a lot of redundancy in the training data,
-the benefit of a full update is limited.
+Penerapan gradient descent yang paling sederhana
+terdiri dari mengambil turunan dari fungsi kerugian,
+yang merupakan rata-rata dari kerugian yang dihitung
+pada setiap contoh dalam dataset.
+Dalam praktiknya, ini bisa sangat lambat:
+kita harus melalui seluruh dataset sebelum melakukan satu pembaruan,
+meskipun langkah pembaruan mungkin sangat kuat :cite:`Liu.Nocedal.1989`.
+Lebih buruk lagi, jika ada banyak redundansi dalam data pelatihan,
+manfaat dari pembaruan penuh terbatas.
 
-The other extreme is to consider only a single example at a time and to take
-update steps based on one observation at a time.
-The resulting algorithm, *stochastic gradient descent* (SGD)
-can be an effective strategy :cite:`Bottou.2010`, even for large datasets.
-Unfortunately, SGD has drawbacks, both computational and statistical.
-One problem arises from the fact that processors are a lot faster
-multiplying and adding numbers than they are
-at moving data from main memory to processor cache.
-It is up to an order of magnitude more efficient to
-perform a matrix--vector multiplication
-than a corresponding number of vector--vector operations.
-This means that it can take a lot longer to process
-one sample at a time compared to a full batch.
-A second problem is that some of the layers,
-such as batch normalization (to be described in :numref:`sec_batch_norm`),
-only work well when we have access
-to more than one observation at a time.
+Di sisi lain, kita bisa mempertimbangkan hanya satu contoh pada satu waktu
+dan melakukan langkah pembaruan berdasarkan satu pengamatan saja.
+Algoritma yang dihasilkan, *stochastic gradient descent* (SGD)
+bisa menjadi strategi yang efektif :cite:`Bottou.2010`, bahkan untuk dataset besar.
+Sayangnya, SGD memiliki kelemahan, baik dari segi komputasi maupun statistik.
+Salah satu masalah muncul dari fakta bahwa prosesor jauh lebih cepat
+dalam melakukan operasi perkalian dan penjumlahan angka
+dibandingkan memindahkan data dari memori utama ke cache prosesor.
+Jauh lebih efisien untuk
+melakukan perkalian matriks-vektor
+daripada sejumlah operasi vektor-vektor yang setara.
+Ini berarti bahwa memproses satu sampel pada satu waktu bisa memakan waktu jauh lebih lama dibandingkan batch penuh.
+Masalah kedua adalah bahwa beberapa lapisan,
+seperti normalisasi batch (yang akan dijelaskan di :numref:`sec_batch_norm`),
+hanya bekerja dengan baik saat kita memiliki
+lebih dari satu pengamatan pada satu waktu.
 
-The solution to both problems is to pick an intermediate strategy:
-rather than taking a full batch or only a single sample at a time,
-we take a *minibatch* of observations :cite:`Li.Zhang.Chen.ea.2014`.
-The specific choice of the size of the said minibatch depends on many factors,
-such as the amount of memory, the number of accelerators,
-the choice of layers, and the total dataset size.
-Despite all that, a number between 32 and 256,
-preferably a multiple of a large power of $2$, is a good start.
-This leads us to *minibatch stochastic gradient descent*.
+Solusi untuk kedua masalah ini adalah dengan memilih strategi menengah:
+alih-alih mengambil batch penuh atau hanya satu sampel pada satu waktu,
+kita mengambil *minibatch* dari beberapa pengamatan :cite:`Li.Zhang.Chen.ea.2014`.
+Pilihan ukuran minibatch bergantung pada banyak faktor,
+seperti jumlah memori, jumlah akselerator,
+pilihan lapisan, dan ukuran total dataset.
+Meskipun demikian, ukuran antara 32 dan 256,
+sebaiknya kelipatan dari pangkat besar $2$, adalah awal yang baik.
+Ini membawa kita pada *minibatch stochastic gradient descent*.
 
-In its most basic form, in each iteration $t$,
-we first randomly sample a minibatch $\mathcal{B}_t$
-consisting of a fixed number $|\mathcal{B}|$ of training examples.
-We then compute the derivative (gradient) of the average loss
-on the minibatch with respect to the model parameters.
-Finally, we multiply the gradient
-by a predetermined small positive value $\eta$,
-called the *learning rate*,
-and subtract the resulting term from the current parameter values.
-We can express the update as follows:
+Dalam bentuknya yang paling dasar, pada setiap iterasi $t$,
+kita pertama-tama mengambil sampel secara acak sebuah minibatch $\mathcal{B}_t$
+yang terdiri dari sejumlah tetap $|\mathcal{B}|$ contoh pelatihan.
+Kemudian kita menghitung turunan (gradien) dari kerugian rata-rata
+pada minibatch tersebut terhadap parameter model.
+Terakhir, kita mengalikan gradien
+dengan nilai positif kecil yang telah ditentukan $\eta$,
+yang disebut *learning rate*,
+dan mengurangkan hasilnya dari nilai parameter saat ini.
+Kita dapat mengekspresikan pembaruan ini sebagai berikut:
+
 
 $$(\mathbf{w},b) \leftarrow (\mathbf{w},b) - \frac{\eta}{|\mathcal{B}|} \sum_{i \in \mathcal{B}_t} \partial_{(\mathbf{w},b)} l^{(i)}(\mathbf{w},b).$$
 
-In summary, minibatch SGD proceeds as follows:
-(i) initialize the values of the model parameters, typically at random;
-(ii) iteratively sample random minibatches from the data,
-updating the parameters in the direction of the negative gradient.
-For quadratic losses and affine transformations,
-this has a closed-form expansion:
+Secara ringkas, minibatch SGD berjalan sebagai berikut:
+(i) menginisialisasi nilai parameter model, biasanya secara acak;
+(ii) mengambil minibatch secara acak dari data secara iteratif,
+memperbarui parameter ke arah gradien negatif.
+Untuk kerugian kuadrat dan transformasi afin,
+ini memiliki bentuk ekspansi tertutup:
 
 $$\begin{aligned} \mathbf{w} & \leftarrow \mathbf{w} - \frac{\eta}{|\mathcal{B}|} \sum_{i \in \mathcal{B}_t} \partial_{\mathbf{w}} l^{(i)}(\mathbf{w}, b) && = \mathbf{w} - \frac{\eta}{|\mathcal{B}|} \sum_{i \in \mathcal{B}_t} \mathbf{x}^{(i)} \left(\mathbf{w}^\top \mathbf{x}^{(i)} + b - y^{(i)}\right)\\ b &\leftarrow b -  \frac{\eta}{|\mathcal{B}|} \sum_{i \in \mathcal{B}_t} \partial_b l^{(i)}(\mathbf{w}, b) &&  = b - \frac{\eta}{|\mathcal{B}|} \sum_{i \in \mathcal{B}_t} \left(\mathbf{w}^\top \mathbf{x}^{(i)} + b - y^{(i)}\right). \end{aligned}$$
 :eqlabel:`eq_linreg_batch_update`
 
-Since we pick a minibatch $\mathcal{B}$
-we need to normalize by its size $|\mathcal{B}|$.
-Frequently minibatch size and learning rate are user-defined.
-Such tunable parameters that are not updated
-in the training loop are called *hyperparameters*.
-They can be tuned automatically by a number of techniques, such as Bayesian optimization
-:cite:`Frazier.2018`. In the end, the quality of the solution is
-typically assessed on a separate *validation dataset* (or *validation set*).
+Karena kita memilih sebuah minibatch $\mathcal{B}$,
+kita perlu menormalisasi dengan ukurannya $|\mathcal{B}|$.
+Seringkali ukuran minibatch dan learning rate ditentukan oleh pengguna.
+Parameter yang dapat diatur ini, yang tidak diperbarui
+di dalam loop pelatihan, disebut *hyperparameter*.
+Hyperparameter dapat disetel secara otomatis dengan sejumlah teknik, seperti optimisasi Bayesian
+:cite:`Frazier.2018`. Pada akhirnya, kualitas solusi biasanya dievaluasi
+menggunakan *validation dataset* terpisah (atau *validation set*).
 
-After training for some predetermined number of iterations
-(or until some other stopping criterion is met),
-we record the estimated model parameters,
-denoted $\hat{\mathbf{w}}, \hat{b}$.
-Note that even if our function is truly linear and noiseless,
-these parameters will not be the exact minimizers of the loss, nor even deterministic.
-Although the algorithm converges slowly towards the minimizers
-it typically will not find them exactly in a finite number of steps.
-Moreover, the minibatches $\mathcal{B}$
-used for updating the parameters are chosen at random.
-This breaks determinism.
+Setelah melatih model untuk jumlah iterasi yang telah ditentukan
+(atau hingga kriteria pemberhentian lain terpenuhi),
+kita mencatat parameter model yang diestimasi,
+dinyatakan sebagai $\hat{\mathbf{w}}, \hat{b}$.
+Perlu dicatat bahwa bahkan jika fungsi kita benar-benar linear dan bebas noise,
+parameter ini tidak akan menjadi minimizer loss yang tepat, bahkan tidak deterministik.
+Meskipun algoritma perlahan konvergen ke minimizer,
+umumnya tidak akan menemukannya secara tepat dalam jumlah langkah yang terbatas.
+Selain itu, minibatch $\mathcal{B}$
+yang digunakan untuk memperbarui parameter dipilih secara acak.
+Ini membuat prosesnya tidak deterministik.
 
-Linear regression happens to be a learning problem
-with a global minimum
-(whenever $\mathbf{X}$ is full rank, or equivalently,
-whenever $\mathbf{X}^\top \mathbf{X}$ is invertible).
-However, the loss surfaces for deep networks contain many saddle points and minima.
-Fortunately, we typically do not care about finding
-an exact set of parameters but merely any set of parameters
-that leads to accurate predictions (and thus low loss).
-In practice, deep learning practitioners
-seldom struggle to find parameters
-that minimize the loss *on training sets*
+Regresi linear kebetulan merupakan masalah pembelajaran
+dengan minimum global
+(ketika $\mathbf{X}$ memiliki peringkat penuh, atau secara ekuivalen,
+ketika $\mathbf{X}^\top \mathbf{X}$ dapat dibalik).
+Namun, permukaan kerugian untuk jaringan dalam mengandung banyak saddle point dan minimum.
+Untungnya, kita biasanya tidak peduli untuk menemukan
+seperangkat parameter yang benar-benar tepat tetapi hanya membutuhkan parameter
+yang menghasilkan prediksi akurat (dan dengan demikian kerugian rendah).
+Dalam praktiknya, praktisi pembelajaran mendalam
+jarang kesulitan menemukan parameter
+yang meminimalkan kerugian *pada set pelatihan*
 :cite:`Izmailov.Podoprikhin.Garipov.ea.2018,Frankle.Carbin.2018`.
-The more formidable task is to find parameters
-that lead to accurate predictions on previously unseen data,
-a challenge called *generalization*.
-We return to these topics throughout the book.
+Tugas yang lebih menantang adalah menemukan parameter
+yang menghasilkan prediksi akurat pada data yang belum pernah dilihat sebelumnya,
+sebuah tantangan yang disebut *generalization*.
+Kita akan kembali ke topik ini sepanjang buku ini.
 
-### Predictions
+### Prediksi
 
-Given the model $\hat{\mathbf{w}}^\top \mathbf{x} + \hat{b}$,
-we can now make *predictions* for a new example,
-e.g., predicting the sales price of a previously unseen house
-given its area $x_1$ and age $x_2$.
-Deep learning practitioners have taken to calling the prediction phase *inference*
-but this is a bit of a misnomer---*inference* refers broadly
-to any conclusion reached on the basis of evidence,
-including both the values of the parameters
-and the likely label for an unseen instance.
-If anything, in the statistics literature
-*inference* more often denotes parameter inference
-and this overloading of terminology creates unnecessary confusion
-when deep learning practitioners talk to statisticians.
-In the following we will stick to *prediction* whenever possible.
+Dengan model $\hat{\mathbf{w}}^\top \mathbf{x} + \hat{b}$,
+kita sekarang dapat membuat *prediksi* untuk contoh baru,
+misalnya, memprediksi harga jual dari rumah yang belum pernah dilihat
+berdasarkan luas $x_1$ dan usia $x_2$.
+Praktisi pembelajaran mendalam sering menyebut fase prediksi ini sebagai *inference*,
+tetapi ini sedikit keliru—*inference* secara umum merujuk
+pada kesimpulan yang diambil berdasarkan bukti,
+termasuk nilai parameter
+dan label yang mungkin untuk instance yang belum terlihat.
+Bahkan, dalam literatur statistik,
+*inference* lebih sering merujuk pada inferensi parameter,
+dan penggunaan istilah ini secara berlebihan menciptakan kebingungan yang tidak perlu
+ketika praktisi pembelajaran mendalam berbicara dengan ahli statistik.
+Di bagian selanjutnya, kita akan menggunakan istilah *prediksi* sebanyak mungkin.
 
 
 
-## Vectorization for Speed
 
-When training our models, we typically want to process
-whole minibatches of examples simultaneously.
-Doing this efficiently requires that (**we**) (~~should~~)
-(**vectorize the calculations and leverage
-fast linear algebra libraries
-rather than writing costly for-loops in Python.**)
+## Vektorisasi untuk Kecepatan
 
-To see why this matters so much,
-let's (**consider two methods for adding vectors.**)
-To start, we instantiate two 10,000-dimensional vectors
-containing all 1s.
-In the first method, we loop over the vectors with a Python for-loop.
-In the second, we rely on a single call to `+`.
+Saat melatih model kita, kita biasanya ingin memproses
+seluruh minibatch dari contoh secara bersamaan.
+Melakukan hal ini secara efisien membutuhkan bahwa (**kita**)
+(**memvektorisasi perhitungan dan memanfaatkan
+perpustakaan aljabar linear yang cepat
+daripada menulis loop for yang memakan waktu di Python.**)
+
+Untuk melihat mengapa ini sangat penting,
+mari (**pertimbangkan dua metode untuk menjumlahkan vektor.**)
+Sebagai permulaan, kita membuat dua vektor berdimensi 10.000
+yang masing-masing berisi nilai 1.
+Pada metode pertama, kita melakukan loop pada vektor dengan loop for di Python.
+Pada metode kedua, kita mengandalkan satu pemanggilan `+`.
+
 
 ```{.python .input}
 %%tab all
@@ -436,9 +435,10 @@ a = d2l.ones(n)
 b = d2l.ones(n)
 ```
 
-Now we can benchmark the workloads.
-First, [**we add them, one coordinate at a time,
-using a for-loop.**]
+Sekarang kita dapat membandingkan beban kerjanya.
+Pertama, [**kita menjumlahkan vektor tersebut, satu koordinat pada satu waktu,
+menggunakan loop for.**]
+
 
 ```{.python .input}
 %%tab mxnet, pytorch
@@ -460,17 +460,16 @@ f'{time.time() - t:.5f} sec'
 
 ```{.python .input}
 %%tab jax
-# JAX arrays are immutable, meaning that once created their contents
-# cannot be changed. For updating individual elements, JAX provides
-# an indexed update syntax that returns an updated copy
+# Array JAX bersifat immutable, artinya setelah dibuat, isinya
+# tidak dapat diubah. Untuk memperbarui elemen individu, JAX menyediakan
+# sintaks pembaruan terindeks yang mengembalikan salinan yang telah diperbarui.
 c = d2l.zeros(n)
 t = time.time()
 for i in range(n):
     c = c.at[i].set(a[i] + b[i])
 f'{time.time() - t:.5f} sec'
 ```
-
-(**Alternatively, we rely on the reloaded `+` operator to compute the elementwise sum.**)
+(**Sebagai alternatif, kita mengandalkan operator `+` yang di-overload untuk menghitung jumlah elemen secara langsung.**)
 
 ```{.python .input}
 %%tab all
@@ -479,42 +478,43 @@ d = a + b
 f'{time.time() - t:.5f} sec'
 ```
 
-The second method is dramatically faster than the first.
-Vectorizing code often yields order-of-magnitude speedups.
-Moreover, we push more of the mathematics to the library
-so we do not have to write as many calculations ourselves,
-reducing the potential for errors and increasing portability of the code.
+Metode kedua secara dramatis lebih cepat daripada metode pertama.
+Melvektorisasi kode sering kali menghasilkan peningkatan kecepatan secara signifikan.
+Selain itu, kita menyerahkan lebih banyak perhitungan matematika ke perpustakaan,
+sehingga kita tidak perlu menulis banyak perhitungan sendiri,
+mengurangi potensi kesalahan dan meningkatkan portabilitas kode.
 
 
-## The Normal Distribution and Squared Loss
+## Distribusi Normal dan Kerugian Kuadrat
 :label:`subsec_normal_distribution_and_squared_loss`
 
-So far we have given a fairly functional motivation
-of the squared loss objective:
-the optimal parameters return the conditional expectation $E[Y\mid X]$
-whenever the underlying pattern is truly linear,
-and the loss assigns large penalties for outliers.
-We can also provide a more formal motivation
-for the squared loss objective
-by making probabilistic assumptions
-about the distribution of noise.
+Sejauh ini kita telah memberikan motivasi fungsional
+untuk tujuan kerugian kuadrat:
+parameter optimal mengembalikan ekspektasi kondisional $E[Y\mid X]$
+ketika pola dasarnya benar-benar linear,
+dan fungsi kerugian memberikan penalti besar untuk outlier.
+Kita juga dapat memberikan motivasi yang lebih formal
+untuk tujuan kerugian kuadrat
+dengan membuat asumsi probabilistik
+tentang distribusi noise.
 
-Linear regression was invented at the turn of the 19th century.
-While it has long been debated whether Gauss or Legendre
-first thought up the idea,
-it was Gauss who also discovered the normal distribution
-(also called the *Gaussian*).
-It turns out that the normal distribution
-and linear regression with squared loss
-share a deeper connection than common parentage.
+Regresi linear ditemukan pada pergantian abad ke-19.
+Meskipun telah lama diperdebatkan apakah Gauss atau Legendre
+yang pertama kali memunculkan ide tersebut,
+Gauss juga menemukan distribusi normal
+(yang juga disebut *Gaussian*).
+Ternyata, distribusi normal
+dan regresi linear dengan kerugian kuadrat
+memiliki hubungan yang lebih dalam daripada sekadar kemiripan sejarah.
 
-To begin, recall that a normal distribution
-with mean $\mu$ and variance $\sigma^2$ (standard deviation $\sigma$)
-is given as
+Sebagai permulaan, ingat bahwa distribusi normal
+dengan mean $\mu$ dan varians $\sigma^2$ (simpangan baku $\sigma$)
+dinyatakan sebagai
 
 $$p(x) = \frac{1}{\sqrt{2 \pi \sigma^2}} \exp\left(-\frac{1}{2 \sigma^2} (x - \mu)^2\right).$$
 
-Below [**we define a function to compute the normal distribution**].
+Berikut ini [**kita mendefinisikan sebuah fungsi untuk menghitung distribusi normal**].
+
 
 ```{.python .input}
 %%tab all
@@ -526,7 +526,8 @@ def normal(x, mu, sigma):
         return p * np.exp(-0.5 * (x - mu)**2 / sigma**2)
 ```
 
-We can now (**visualize the normal distributions**).
+Sekarang kita dapat (**memvisualisasikan distribusi normal**).
+
 
 ```{.python .input}
 %%tab mxnet
@@ -550,211 +551,209 @@ if tab.selected('pytorch', 'mxnet', 'tensorflow'):
     # Use NumPy again for visualization
     x = np.arange(-7, 7, 0.01)
 
-# Mean and standard deviation pairs
+# Pasangan mean dan simpangan baku
 params = [(0, 1), (0, 2), (3, 1)]
 d2l.plot(x, [normal(x, mu, sigma) for mu, sigma in params], xlabel='x',
          ylabel='p(x)', figsize=(4.5, 2.5),
          legend=[f'mean {mu}, std {sigma}' for mu, sigma in params])
 ```
 
-Note that changing the mean corresponds
-to a shift along the $x$-axis,
-and increasing the variance
-spreads the distribution out,
-lowering its peak.
+Perhatikan bahwa mengubah mean berhubungan dengan
+pergeseran sepanjang sumbu $x$,
+dan meningkatkan varians
+menyebarkan distribusi, menurunkan puncaknya.
 
-One way to motivate linear regression with squared loss
-is to assume that observations arise from noisy measurements,
-where the noise $\epsilon$ follows the normal distribution 
+Salah satu cara untuk memotivasi regresi linear dengan kerugian kuadrat
+adalah dengan mengasumsikan bahwa pengamatan berasal dari pengukuran dengan noise,
+di mana noise $\epsilon$ mengikuti distribusi normal
 $\mathcal{N}(0, \sigma^2)$:
 
-$$y = \mathbf{w}^\top \mathbf{x} + b + \epsilon \textrm{ where } \epsilon \sim \mathcal{N}(0, \sigma^2).$$
+$$y = \mathbf{w}^\top \mathbf{x} + b + \epsilon \textrm{ di mana } \epsilon \sim \mathcal{N}(0, \sigma^2).$$
 
-Thus, we can now write out the *likelihood*
-of seeing a particular $y$ for a given $\mathbf{x}$ via
+Dengan demikian, kita sekarang dapat menuliskan *likelihood*
+untuk melihat nilai tertentu $y$ untuk $\mathbf{x}$ yang diberikan melalui
 
 $$P(y \mid \mathbf{x}) = \frac{1}{\sqrt{2 \pi \sigma^2}} \exp\left(-\frac{1}{2 \sigma^2} (y - \mathbf{w}^\top \mathbf{x} - b)^2\right).$$
 
-As such, the likelihood factorizes.
-According to *the principle of maximum likelihood*,
-the best values of parameters $\mathbf{w}$ and $b$ are those
-that maximize the *likelihood* of the entire dataset:
+Dengan demikian, likelihood dapat difaktorkan.
+Menurut *prinsip maximum likelihood*,
+nilai terbaik untuk parameter $\mathbf{w}$ dan $b$ adalah nilai-nilai
+yang memaksimalkan *likelihood* dari seluruh dataset:
 
 $$P(\mathbf y \mid \mathbf X) = \prod_{i=1}^{n} p(y^{(i)} \mid \mathbf{x}^{(i)}).$$
 
-The equality follows since all pairs $(\mathbf{x}^{(i)}, y^{(i)})$
-were drawn independently of each other.
-Estimators chosen according to the principle of maximum likelihood
-are called *maximum likelihood estimators*.
-While, maximizing the product of many exponential functions,
-might look difficult,
-we can simplify things significantly, without changing the objective,
-by maximizing the logarithm of the likelihood instead.
-For historical reasons, optimizations are more often expressed
-as minimization rather than maximization.
-So, without changing anything,
-we can *minimize* the *negative log-likelihood*,
-which we can express as follows:
+Persamaan ini mengikuti karena semua pasangan $(\mathbf{x}^{(i)}, y^{(i)})$
+diambil secara independen satu sama lain.
+Estimator yang dipilih berdasarkan prinsip maximum likelihood
+disebut *maximum likelihood estimators*.
+Meskipun memaksimalkan hasil perkalian dari banyak fungsi eksponensial
+terlihat sulit,
+kita dapat menyederhanakan hal tersebut secara signifikan, tanpa mengubah tujuan,
+dengan memaksimalkan logaritma dari likelihood.
+Karena alasan historis, optimisasi lebih sering diekspresikan
+sebagai minimisasi daripada maksimisasi.
+Jadi, tanpa mengubah apa pun,
+kita dapat *meminimalkan* *negative log-likelihood*,
+yang dapat kita nyatakan sebagai berikut:
 
 $$-\log P(\mathbf y \mid \mathbf X) = \sum_{i=1}^n \frac{1}{2} \log(2 \pi \sigma^2) + \frac{1}{2 \sigma^2} \left(y^{(i)} - \mathbf{w}^\top \mathbf{x}^{(i)} - b\right)^2.$$
 
-If we assume that $\sigma$ is fixed,
-we can ignore the first term,
-because it does not depend on $\mathbf{w}$ or $b$.
-The second term is identical
-to the squared error loss introduced earlier,
-except for the multiplicative constant $\frac{1}{\sigma^2}$.
-Fortunately, the solution does not depend on $\sigma$ either.
-It follows that minimizing the mean squared error
-is equivalent to the maximum likelihood estimation
-of a linear model under the assumption of additive Gaussian noise.
+Jika kita mengasumsikan bahwa $\sigma$ tetap,
+kita dapat mengabaikan suku pertama,
+karena tidak bergantung pada $\mathbf{w}$ atau $b$.
+Suku kedua identik
+dengan kerugian kuadrat yang diperkenalkan sebelumnya,
+kecuali untuk konstanta perkalian $\frac{1}{\sigma^2}$.
+Untungnya, solusinya tidak bergantung pada $\sigma$ juga.
+Ini berarti bahwa meminimalkan mean squared error
+setara dengan estimasi maximum likelihood
+dari model linear di bawah asumsi adanya noise Gaussian aditif.
 
 
-## Linear Regression as a Neural Network
+## Regresi Linear sebagai Jaringan Neural
 
-While linear models are not sufficiently rich
-to express the many complicated networks
-that we will introduce in this book,
-(artificial) neural networks are rich enough
-to subsume linear models as networks
-in which every feature is represented by an input neuron,
-all of which are connected directly to the output.
+Meskipun model linear tidak cukup kaya
+untuk mengekspresikan berbagai jaringan rumit
+yang akan kita perkenalkan dalam buku ini,
+jaringan neural (buatan) cukup kaya
+untuk memasukkan model linear sebagai jaringan
+di mana setiap fitur diwakili oleh neuron input,
+yang semuanya terhubung langsung ke output.
 
-:numref:`fig_single_neuron` depicts
-linear regression as a neural network.
-The diagram highlights the connectivity pattern,
-such as how each input is connected to the output,
-but not the specific values taken by the weights or biases.
+:numref:`fig_single_neuron` menggambarkan
+regresi linear sebagai jaringan neural.
+Diagram ini menyoroti pola konektivitas,
+seperti bagaimana setiap input terhubung ke output,
+tetapi tidak menunjukkan nilai spesifik dari bobot atau bias.
 
-![Linear regression is a single-layer neural network.](../img/singleneuron.svg)
+![Regresi linear adalah jaringan neural satu lapisan.](../img/singleneuron.svg)
 :label:`fig_single_neuron`
 
-The inputs are $x_1, \ldots, x_d$.
-We refer to $d$ as the *number of inputs*
-or the *feature dimensionality* in the input layer.
-The output of the network is $o_1$.
-Because we are just trying to predict
-a single numerical value,
-we have only one output neuron.
-Note that the input values are all *given*.
-There is just a single *computed* neuron.
-In summary, we can think of linear regression
-as a single-layer fully connected neural network.
-We will encounter networks
-with far more layers
-in later chapters.
+Inputnya adalah $x_1, \ldots, x_d$.
+Kita menyebut $d$ sebagai *jumlah input*
+atau *dimensi fitur* pada lapisan input.
+Output dari jaringan adalah $o_1$.
+Karena kita hanya mencoba memprediksi
+satu nilai numerik,
+kita hanya memiliki satu neuron output.
+Perhatikan bahwa nilai input semua *diberikan*.
+Hanya ada satu neuron yang *dihitung*.
+Singkatnya, kita dapat memandang regresi linear
+sebagai jaringan neural satu lapisan dengan koneksi penuh.
+Kita akan menjumpai jaringan
+dengan lebih banyak lapisan
+di bab-bab berikutnya.
 
-### Biology
+### Biologi
 
-Because linear regression predates computational neuroscience,
-it might seem anachronistic to describe
-linear regression in terms of neural networks.
-Nonetheless, they were a natural place to start
-when the cyberneticists and neurophysiologists
-Warren McCulloch and Walter Pitts began to develop
-models of artificial neurons.
-Consider the cartoonish picture
-of a biological neuron in :numref:`fig_Neuron`,
-consisting of *dendrites* (input terminals),
-the *nucleus* (CPU), the *axon* (output wire),
-and the *axon terminals* (output terminals),
-enabling connections to other neurons via *synapses*.
+Karena regresi linear muncul sebelum ilmu saraf komputasi,
+mungkin terlihat aneh untuk menggambarkan
+regresi linear dalam istilah jaringan neural.
+Namun demikian, ini adalah tempat yang alami untuk memulai
+ketika para ahli sibernetika dan neurofisiologi
+Warren McCulloch dan Walter Pitts mulai mengembangkan
+model neuron buatan.
+Pertimbangkan gambar kartun
+dari neuron biologis pada :numref:`fig_Neuron`,
+terdiri dari *dendrit* (terminal input),
+*nukleus* (CPU), *akson* (kabel output),
+dan *terminal akson* (terminal output),
+yang memungkinkan koneksi ke neuron lain melalui *sinapsis*.
 
-![The real neuron (source: "Anatomy and Physiology" by the US National Cancer Institute's Surveillance, Epidemiology and End Results (SEER) Program).](../img/neuron.svg)
+![Neuron asli (sumber: "Anatomy and Physiology" oleh US National Cancer Institute's Surveillance, Epidemiology and End Results (SEER) Program).](../img/neuron.svg)
 :label:`fig_Neuron`
 
-Information $x_i$ arriving from other neurons
-(or environmental sensors) is received in the dendrites.
-In particular, that information is weighted
-by *synaptic weights* $w_i$,
-determining the effect of the inputs,
-e.g., activation or inhibition via the product $x_i w_i$.
-The weighted inputs arriving from multiple sources
-are aggregated in the nucleus
-as a weighted sum $y = \sum_i x_i w_i + b$,
-possibly subject to some nonlinear postprocessing via a function $\sigma(y)$.
-This information is then sent via the axon to the axon terminals,
-where it reaches its destination
-(e.g., an actuator such as a muscle)
-or it is fed into another neuron via its dendrites.
+Informasi $x_i$ yang datang dari neuron lain
+(atau sensor lingkungan) diterima di dendrit.
+Secara khusus, informasi tersebut diberi bobot
+oleh *bobot sinapsis* $w_i$,
+yang menentukan efek dari input,
+misalnya, aktivasi atau inhibisi melalui produk $x_i w_i$.
+Input berbobot yang datang dari berbagai sumber
+diagregasi di nukleus
+sebagai jumlah berbobot $y = \sum_i x_i w_i + b$,
+mungkin melalui pemrosesan nonlinier melalui fungsi $\sigma(y)$.
+Informasi ini kemudian dikirim melalui akson ke terminal akson,
+di mana ia mencapai tujuannya
+(misalnya, penggerak seperti otot)
+atau diteruskan ke neuron lain melalui dendritnya.
 
-Certainly, the high-level idea that many such units
-could be combined, provided they have the correct connectivity and learning algorithm,
-to produce far more interesting and complex behavior
-than any one neuron alone could express
-arises from our study of real biological neural systems.
-At the same time, most research in deep learning today
-draws inspiration from a much wider source.
-We invoke :citet:`Russell.Norvig.2016`
-who pointed out that although airplanes might have been *inspired* by birds,
-ornithology has not been the primary driver
-of aeronautics innovation for some centuries.
-Likewise, inspiration in deep learning these days
-comes in equal or greater measure
-from mathematics, linguistics, psychology,
-statistics, computer science, and many other fields.
-
-## Summary
-
-In this section, we introduced
-traditional linear regression,
-where the parameters of a linear function
-are chosen to minimize squared loss on the training set.
-We also motivated this choice of objective
-both via some practical considerations
-and through an interpretation
-of linear regression as maximimum likelihood estimation
-under an assumption of linearity and Gaussian noise.
-After discussing both computational considerations
-and connections to statistics,
-we showed how such linear models could be expressed
-as simple neural networks where the inputs
-are directly wired to the output(s).
-While we will soon move past linear models altogether,
-they are sufficient to introduce most of the components
-that all of our models require:
-parametric forms, differentiable objectives,
-optimization via minibatch stochastic gradient descent,
-and ultimately, evaluation on previously unseen data.
+Tentu saja, ide tingkat tinggi bahwa banyak unit seperti ini
+dapat digabungkan, asalkan memiliki konektivitas dan algoritma pembelajaran yang tepat,
+untuk menghasilkan perilaku yang jauh lebih menarik dan kompleks
+daripada yang bisa diungkapkan oleh satu neuron saja
+berasal dari studi kita tentang sistem neural biologis nyata.
+Pada saat yang sama, sebagian besar penelitian dalam pembelajaran mendalam saat ini
+mengambil inspirasi dari sumber yang jauh lebih luas.
+Kita mengutip :citet:`Russell.Norvig.2016`
+yang menunjukkan bahwa meskipun pesawat terbang mungkin *terinspirasi* oleh burung,
+ornitologi bukanlah pendorong utama
+dari inovasi aeronautika selama beberapa abad terakhir.
+Demikian pula, inspirasi dalam pembelajaran mendalam saat ini
+datang dalam ukuran yang sama atau lebih besar
+dari matematika, linguistik, psikologi,
+statistik, ilmu komputer, dan banyak bidang lainnya.
 
 
+## Ringkasan
 
-## Exercises
+Di bagian ini, kita memperkenalkan
+regresi linear tradisional,
+di mana parameter dari fungsi linear
+dipilih untuk meminimalkan kerugian kuadrat pada set pelatihan.
+Kami juga memotivasi pemilihan tujuan ini
+baik melalui beberapa pertimbangan praktis
+maupun melalui interpretasi
+regresi linear sebagai estimasi maximum likelihood
+dengan asumsi linearitas dan noise Gaussian.
+Setelah membahas pertimbangan komputasi
+dan koneksi ke statistik,
+kita menunjukkan bagaimana model linear semacam itu dapat diekspresikan
+sebagai jaringan neural sederhana di mana input
+terhubung langsung ke output.
+Meskipun kita akan segera beralih dari model linear,
+model ini cukup untuk memperkenalkan sebagian besar komponen
+yang dibutuhkan semua model kita:
+bentuk parametrik, tujuan yang dapat didiferensiasikan,
+optimisasi melalui minibatch stochastic gradient descent,
+dan evaluasi pada data yang belum pernah dilihat sebelumnya.
 
-1. Assume that we have some data $x_1, \ldots, x_n \in \mathbb{R}$. Our goal is to find a constant $b$ such that $\sum_i (x_i - b)^2$ is minimized.
-    1. Find an analytic solution for the optimal value of $b$.
-    1. How does this problem and its solution relate to the normal distribution?
-    1. What if we change the loss from $\sum_i (x_i - b)^2$ to $\sum_i |x_i-b|$? Can you find the optimal solution for $b$?
-1. Prove that the affine functions that can be expressed by $\mathbf{x}^\top \mathbf{w} + b$ are equivalent to linear functions on $(\mathbf{x}, 1)$.
-1. Assume that you want to find quadratic functions of $\mathbf{x}$, i.e., $f(\mathbf{x}) = b + \sum_i w_i x_i + \sum_{j \leq i} w_{ij} x_{i} x_{j}$. How would you formulate this in a deep network?
-1. Recall that one of the conditions for the linear regression problem to be solvable was that the design matrix $\mathbf{X}^\top \mathbf{X}$ has full rank.
-    1. What happens if this is not the case?
-    1. How could you fix it? What happens if you add a small amount of coordinate-wise independent Gaussian noise to all entries of $\mathbf{X}$?
-    1. What is the expected value of the design matrix $\mathbf{X}^\top \mathbf{X}$ in this case?
-    1. What happens with stochastic gradient descent when $\mathbf{X}^\top \mathbf{X}$ does not have full rank?
-1. Assume that the noise model governing the additive noise $\epsilon$ is the exponential distribution. That is, $p(\epsilon) = \frac{1}{2} \exp(-|\epsilon|)$.
-    1. Write out the negative log-likelihood of the data under the model $-\log P(\mathbf y \mid \mathbf X)$.
-    1. Can you find a closed form solution?
-    1. Suggest a minibatch stochastic gradient descent algorithm to solve this problem. What could possibly go wrong (hint: what happens near the stationary point as we keep on updating the parameters)? Can you fix this?
-1. Assume that we want to design a neural network with two layers by composing two linear layers. That is, the output of the first layer becomes the input of the second layer. Why would such a naive composition not work?
-1. What happens if you want to use regression for realistic price estimation of houses or stock prices?
-    1. Show that the additive Gaussian noise assumption is not appropriate. Hint: can we have negative prices? What about fluctuations?
-    1. Why would regression to the logarithm of the price be much better, i.e., $y = \log \textrm{price}$?
-    1. What do you need to worry about when dealing with pennystock, i.e., stock with very low prices? Hint: can you trade at all possible prices? Why is this a bigger problem for cheap stock? For more information review the celebrated Black--Scholes model for option pricing :cite:`Black.Scholes.1973`.
-1. Suppose we want to use regression to estimate the *number* of apples sold in a grocery store.
-    1. What are the problems with a Gaussian additive noise model? Hint: you are selling apples, not oil.
-    1. The [Poisson distribution](https://en.wikipedia.org/wiki/Poisson_distribution) captures distributions over counts. It is given by $p(k \mid \lambda) = \lambda^k e^{-\lambda}/k!$. Here $\lambda$ is the rate function and $k$ is the number of events you see. Prove that $\lambda$ is the expected value of counts $k$.
-    1. Design a loss function associated with the Poisson distribution.
-    1. Design a loss function for estimating $\log \lambda$ instead.
+## Latihan
+
+1. Asumsikan bahwa kita memiliki data $x_1, \ldots, x_n \in \mathbb{R}$. Tujuan kita adalah menemukan konstanta $b$ sedemikian sehingga $\sum_i (x_i - b)^2$ diminimalkan.
+    1. Temukan solusi analitik untuk nilai optimal $b$.
+    1. Bagaimana masalah ini dan solusinya terkait dengan distribusi normal?
+    1. Bagaimana jika kita mengubah kerugian dari $\sum_i (x_i - b)^2$ menjadi $\sum_i |x_i-b|$? Bisakah Anda menemukan solusi optimal untuk $b$?
+1. Buktikan bahwa fungsi afin yang dapat diekspresikan dengan $\mathbf{x}^\top \mathbf{w} + b$ setara dengan fungsi linear pada $(\mathbf{x}, 1)$.
+1. Asumsikan bahwa Anda ingin menemukan fungsi kuadrat dari $\mathbf{x}$, yaitu $f(\mathbf{x}) = b + \sum_i w_i x_i + \sum_{j \leq i} w_{ij} x_{i} x_{j}$. Bagaimana Anda akan memformulasikan ini dalam jaringan yang dalam?
+1. Ingat bahwa salah satu kondisi agar masalah regresi linear dapat diselesaikan adalah bahwa design matrix $\mathbf{X}^\top \mathbf{X}$ memiliki peringkat penuh.
+    1. Apa yang terjadi jika tidak demikian?
+    1. Bagaimana Anda bisa memperbaikinya? Apa yang terjadi jika Anda menambahkan sedikit noise Gaussian independen pada setiap entri dari $\mathbf{X}$?
+    1. Berapakah nilai ekspektasi dari design matrix $\mathbf{X}^\top \mathbf{X}$ dalam kasus ini?
+    1. Apa yang terjadi dengan stochastic gradient descent ketika $\mathbf{X}^\top \mathbf{X}$ tidak memiliki peringkat penuh?
+1. Asumsikan bahwa model noise yang mengatur noise aditif $\epsilon$ adalah distribusi eksponensial. Artinya, $p(\epsilon) = \frac{1}{2} \exp(-|\epsilon|)$.
+    1. Tuliskan negative log-likelihood dari data di bawah model $-\log P(\mathbf y \mid \mathbf X)$.
+    1. Bisakah Anda menemukan solusi dalam bentuk tertutup?
+    1. Usulkan algoritma minibatch stochastic gradient descent untuk menyelesaikan masalah ini. Apa yang mungkin salah (petunjuk: apa yang terjadi di sekitar titik stasioner saat kita terus memperbarui parameter)? Bisakah Anda memperbaikinya?
+1. Asumsikan bahwa kita ingin merancang jaringan neural dengan dua lapisan dengan menggabungkan dua lapisan linear. Artinya, output dari lapisan pertama menjadi input dari lapisan kedua. Mengapa komposisi naif seperti ini tidak akan berhasil?
+1. Apa yang terjadi jika Anda ingin menggunakan regresi untuk estimasi harga rumah atau harga saham yang realistis?
+    1. Tunjukkan bahwa asumsi noise Gaussian aditif tidak sesuai. Petunjuk: bisakah kita memiliki harga negatif? Bagaimana dengan fluktuasi?
+    1. Mengapa regresi pada logaritma harga lebih baik, yaitu $y = \log \textrm{harga}$?
+    1. Apa yang perlu Anda perhatikan saat menangani saham bernilai rendah (pennystock), yaitu saham dengan harga sangat rendah? Petunjuk: bisakah Anda melakukan perdagangan pada semua harga yang mungkin? Mengapa ini menjadi masalah yang lebih besar untuk saham murah? Untuk informasi lebih lanjut, tinjau model Black-Scholes yang terkenal untuk penetapan harga opsi :cite:`Black.Scholes.1973`.
+1. Misalkan kita ingin menggunakan regresi untuk memperkirakan *jumlah* apel yang terjual di sebuah toko.
+    1. Apa masalahnya dengan model noise Gaussian aditif? Petunjuk: Anda menjual apel, bukan minyak.
+    1. [Distribusi Poisson](https://en.wikipedia.org/wiki/Poisson_distribution) menggambarkan distribusi pada jumlah. Distribusi ini diberikan oleh $p(k \mid \lambda) = \lambda^k e^{-\lambda}/k!$. Di sini $\lambda$ adalah fungsi laju dan $k$ adalah jumlah kejadian yang Anda lihat. Buktikan bahwa $\lambda$ adalah nilai ekspektasi dari jumlah $k$.
+    1. Rancang fungsi kerugian yang terkait dengan distribusi Poisson.
+    1. Rancang fungsi kerugian untuk memperkirakan $\log \lambda$.
 
 :begin_tab:`mxnet`
-[Discussions](https://discuss.d2l.ai/t/40)
+[Diskusi](https://discuss.d2l.ai/t/40)
 :end_tab:
 
 :begin_tab:`pytorch`
-[Discussions](https://discuss.d2l.ai/t/258)
+[Diskusi](https://discuss.d2l.ai/t/258)
 :end_tab:
 
 :begin_tab:`tensorflow`
-[Discussions](https://discuss.d2l.ai/t/259)
+[Diskusi](https://discuss.d2l.ai/t/259)
 :end_tab:
