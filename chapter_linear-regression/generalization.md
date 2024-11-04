@@ -1,478 +1,464 @@
-# Generalization
+# Generalisasi
 :label:`sec_generalization_basics`
 
-Consider two college students diligently
-preparing for their final exam.
-Commonly, this preparation will consist
-of practicing and testing their abilities
-by taking exams administered in previous years.
-Nonetheless, doing well on past exams is no guarantee
-that they will excel when it matters.
-For instance, imagine a student, Extraordinary Ellie,
-whose preparation consisted entirely
-of memorizing the answers
-to previous years' exam questions.
-Even if Ellie were endowed
-with an extraordinary memory,
-and thus could perfectly recall the answer
-to any *previously seen* question,
-she might nevertheless freeze
-when faced with a new (*previously unseen*) question.
-By comparison, imagine another student,
-Inductive Irene, with comparably poor
-memorization skills,
-but a knack for picking up patterns.
-Note that if the exam truly consisted of
-recycled questions from a previous year,
-Ellie would handily outperform Irene.
-Even if Irene's inferred patterns
-yielded 90% accurate predictions,
-they could never compete with
-Ellie's 100% recall.
-However, even if the exam consisted
-entirely of fresh questions,
-Irene might maintain her 90% average.
+Bayangkan dua mahasiswa yang dengan tekun
+mempersiapkan diri untuk ujian akhir mereka.
+Persiapan ini biasanya melibatkan
+latihan dan pengujian kemampuan mereka
+dengan mengerjakan soal-soal ujian dari tahun-tahun sebelumnya.
+Namun, melakukan dengan baik pada ujian masa lalu
+tidak menjamin mereka akan sukses saat ujian sesungguhnya.
+Misalnya, bayangkan seorang mahasiswa, Ellie yang Luar Biasa,
+yang persiapannya hanya berfokus
+pada menghafal jawaban dari soal-soal ujian
+tahun-tahun sebelumnya.
+Meskipun Ellie memiliki ingatan yang luar biasa
+dan dapat mengingat dengan sempurna jawaban
+untuk semua soal yang pernah dia lihat,
+dia mungkin akan terdiam ketika dihadapkan
+pada soal baru (*yang belum pernah dilihat sebelumnya*).
+Sebagai perbandingan, bayangkan mahasiswa lain,
+Irene yang Induktif, yang memiliki kemampuan menghafal yang kurang,
+tetapi memiliki bakat untuk mengenali pola.
+Perhatikan bahwa jika ujian tersebut
+benar-benar terdiri dari soal-soal daur ulang,
+Ellie akan unggul jauh di atas Irene.
+Meskipun prediksi pola yang ditemukan oleh Irene
+memiliki tingkat akurasi 90%,
+mereka tidak akan dapat bersaing dengan
+ingatan sempurna Ellie yang mencapai 100%.
+Namun, jika ujian tersebut seluruhnya terdiri dari soal baru,
+Irene mungkin akan tetap menjaga rata-rata 90%-nya.
 
-As machine learning scientists,
-our goal is to discover *patterns*.
-But how can we be sure that we have
-truly discovered a *general* pattern
-and not simply memorized our data?
-Most of the time, our predictions are only useful
-if our model discovers such a pattern.
-We do not want to predict yesterday's stock prices, but tomorrow's.
-We do not need to recognize
-already diagnosed diseases
-for previously seen patients,
-but rather previously undiagnosed
-ailments in previously unseen patients.
-This problem---how to discover patterns that *generalize*---is
-the fundamental problem of machine learning,
-and arguably of all of statistics.
-We might cast this problem as just one slice
-of a far grander question
-that engulfs all of science:
-when are we ever justified
-in making the leap from particular observations
-to more general statements?
+Sebagai ilmuwan machine learning,
+tujuan kita adalah untuk menemukan *pola*.
+Tetapi bagaimana kita bisa yakin bahwa
+kita benar-benar menemukan *pola umum*
+dan bukan sekadar menghafal data kita?
+Sebagian besar waktu, prediksi kita hanya berguna
+jika model kita benar-benar menemukan pola semacam itu.
+Kita tidak ingin memprediksi harga saham kemarin, tetapi besok.
+Kita tidak perlu mengenali
+penyakit yang sudah terdiagnosis untuk pasien yang sudah pernah diperiksa,
+tetapi justru untuk penyakit yang belum terdiagnosis
+pada pasien yang belum pernah diperiksa sebelumnya.
+Masalah ini—bagaimana menemukan pola yang *dapat digeneralisasi*—
+adalah masalah mendasar dalam machine learning,
+dan bisa dikatakan dalam seluruh statistik.
+Kita bisa menganggap masalah ini sebagai satu bagian kecil
+dari pertanyaan yang jauh lebih besar
+yang mencakup seluruh ilmu pengetahuan:
+kapan kita berhak membuat lompatan dari pengamatan khusus
+ke pernyataan yang lebih umum?
+
+Dalam kehidupan nyata, kita harus melatih model kita
+menggunakan sekumpulan data yang terbatas.
+Skala data yang tersedia bervariasi drastis tergantung pada domainnya.
+Untuk banyak masalah medis yang penting,
+kita hanya dapat mengakses beberapa ribu titik data.
+Dalam mempelajari penyakit langka,
+kita mungkin beruntung jika bisa mengakses ratusan titik data.
+Sebaliknya, dataset publik terbesar
+yang terdiri dari foto-foto berlabel,
+misalnya ImageNet :cite:`Deng.Dong.Socher.ea.2009`,
+mengandung jutaan gambar.
+Beberapa koleksi gambar tanpa label,
+seperti dataset Flickr YFC100M,
+bahkan lebih besar, dengan lebih dari
+100 juta gambar :cite:`thomee2016yfcc100m`.
+Namun, meskipun pada skala ekstrem ini,
+jumlah data yang tersedia tetap sangat kecil
+dibandingkan dengan ruang semua gambar
+yang mungkin ada pada resolusi megapiksel.
+Kapan pun kita bekerja dengan sampel yang terbatas,
+kita harus mengingat risiko
+bahwa kita mungkin hanya menyesuaikan data pelatihan,
+hanya untuk menyadari bahwa kita gagal
+menemukan pola yang dapat digeneralisasi.
 
 
-In real life, we must fit our models
-using a finite collection of data.
-The typical scales of that data
-vary wildly across domains.
-For many important medical problems,
-we can only access a few thousand data points.
-When studying rare diseases,
-we might be lucky to access hundreds.
-By contrast, the largest public datasets
-consisting of labeled photographs,
-e.g., ImageNet :cite:`Deng.Dong.Socher.ea.2009`,
-contain millions of images.
-And some unlabeled image collections
-such as the Flickr YFC100M dataset
-can be even larger, containing
-over 100 million images :cite:`thomee2016yfcc100m`.
-However, even at this extreme scale,
-the number of available data points
-remains infinitesimally small
-compared to the space of all possible images
-at a megapixel resolution.
-Whenever we work with finite samples,
-we must keep in mind the risk
-that we might fit our training data,
-only to discover that we failed
-to discover a generalizable pattern.
-
-The phenomenon of fitting closer to our training data
-than to the underlying distribution is called *overfitting*,
-and techniques for combatting overfitting
-are often called *regularization* methods.
-While it is no substitute for a proper introduction
-to statistical learning theory (see :citet:`Vapnik98,boucheron2005theory`),
-we will give you just enough intuition to get going.
-We will revisit generalization in many chapters
-throughout the book,
-exploring both what is known about
-the principles underlying generalization
-in various models,
-and also heuristic techniques
-that have been found (empirically)
-to yield improved generalization
-on tasks of practical interest.
+Fenomena di mana model menyesuaikan lebih baik pada data pelatihan
+daripada pada distribusi yang mendasari disebut *overfitting*,
+dan teknik untuk melawan overfitting
+sering kali disebut sebagai metode *regularisasi*.
+Meskipun ini bukan pengganti yang memadai
+untuk pengenalan teori pembelajaran statistik (lihat :citet:`Vapnik98,boucheron2005theory`),
+kami akan memberikan cukup banyak intuisi agar Anda bisa memulai.
+Kita akan mengunjungi kembali konsep generalisasi di banyak bab
+di sepanjang buku ini,
+mengeksplorasi baik apa yang diketahui tentang
+prinsip-prinsip dasar generalisasi
+dalam berbagai model,
+dan juga teknik heuristik
+yang telah ditemukan (secara empiris)
+dapat meningkatkan generalisasi
+pada tugas-tugas yang memiliki kepentingan praktis.
 
 
 
-## Training Error and Generalization Error
+## Error Pelatihan dan Error Generalisasi
 
+Dalam pengaturan pembelajaran terawasi yang standar,
+kita mengasumsikan bahwa data pelatihan dan data uji
+diambil *secara independen* dari distribusi yang *identik*.
+Ini biasanya disebut sebagai *asumsi IID* (Independent and Identically Distributed).
+Meskipun asumsi ini kuat, penting untuk dicatat bahwa,
+tanpa asumsi ini, kita akan menghadapi kesulitan besar.
+Mengapa kita harus percaya bahwa data pelatihan
+yang diambil dari distribusi $P(X,Y)$
+dapat memberi tahu kita bagaimana membuat prediksi
+pada data uji yang dihasilkan oleh
+*distribusi yang berbeda* $Q(X,Y)$?
+Melakukan lompatan seperti itu membutuhkan asumsi yang kuat
+tentang bagaimana $P$ dan $Q$ berhubungan.
+Nantinya, kita akan membahas beberapa asumsi
+yang memungkinkan adanya perubahan distribusi,
+tetapi pertama-tama kita perlu memahami kasus IID,
+di mana $P(\cdot) = Q(\cdot)$.
 
-In the standard supervised learning setting,
-we assume that the training data and the test data
-are drawn *independently* from *identical* distributions.
-This is commonly called the *IID assumption*.
-While this assumption is strong,
-it is worth noting that, absent any such assumption,
-we would be dead in the water.
-Why should we believe that training data
-sampled from distribution $P(X,Y)$
-should tell us how to make predictions on
-test data generated by a *different distribution* $Q(X,Y)$?
-Making such leaps turns out to require
-strong assumptions about how $P$ and $Q$ are related.
-Later on we will discuss some assumptions
-that allow for shifts in distribution
-but first we need to understand the IID case,
-where $P(\cdot) = Q(\cdot)$.
-
-To begin with, we need to differentiate between
-the *training error* $R_\textrm{emp}$,
-which is a *statistic*
-calculated on the training dataset,
-and the *generalization error* $R$,
-which is an *expectation* taken
-with respect to the underlying distribution.
-You can think of the generalization error as
-what you would see  if you applied your model
-to an infinite stream of additional data examples
-drawn from the same underlying data distribution.
-Formally the training error is expressed as a *sum* (with the same notation as :numref:`sec_linear_regression`):
+Untuk memulai, kita perlu membedakan antara
+*error pelatihan* $R_\textrm{emp}$,
+yang merupakan *statistik* yang dihitung pada dataset pelatihan,
+dan *error generalisasi* $R$,
+yang merupakan *ekspektasi* yang diambil
+dengan menghormati distribusi dasar.
+Anda bisa menganggap error generalisasi sebagai
+apa yang akan Anda lihat jika Anda menerapkan model Anda
+pada aliran data tambahan yang tak terbatas
+yang diambil dari distribusi data dasar yang sama.
+Secara formal, error pelatihan diekspresikan sebagai *jumlah* (dengan notasi yang sama seperti pada :numref:`sec_linear_regression`):
 
 $$R_\textrm{emp}[\mathbf{X}, \mathbf{y}, f] = \frac{1}{n} \sum_{i=1}^n l(\mathbf{x}^{(i)}, y^{(i)}, f(\mathbf{x}^{(i)})),$$
 
-
-while the generalization error is expressed as an integral:
+sementara error generalisasi diekspresikan sebagai integral:
 
 $$R[p, f] = E_{(\mathbf{x}, y) \sim P} [l(\mathbf{x}, y, f(\mathbf{x}))] =
 \int \int l(\mathbf{x}, y, f(\mathbf{x})) p(\mathbf{x}, y) \;d\mathbf{x} dy.$$
 
-Problematically, we can never calculate
-the generalization error $R$ exactly.
-Nobody ever tells us the precise form
-of the density function $p(\mathbf{x}, y)$.
-Moreover, we cannot sample an infinite stream of data points.
-Thus, in practice, we must *estimate* the generalization error
-by applying our model to an independent test set
-constituted of a random selection of examples
-$\mathbf{X}'$ and labels $\mathbf{y}'$
-that were withheld from our training set.
-This consists of applying the same formula
-that was used for calculating the empirical training error
-but to a test set $\mathbf{X}', \mathbf{y}'$.
+Masalahnya, kita tidak pernah dapat menghitung
+error generalisasi $R$ dengan tepat.
+Tidak ada yang pernah memberi tahu kita bentuk pasti
+dari fungsi densitas $p(\mathbf{x}, y)$.
+Selain itu, kita tidak bisa mengambil sampel data dalam jumlah tak terbatas.
+Oleh karena itu, dalam praktiknya, kita harus *mengestimasi* error generalisasi
+dengan menerapkan model kita pada set uji independen
+yang terdiri dari pilihan acak contoh
+$\mathbf{X}'$ dan label $\mathbf{y}'$
+yang tidak termasuk dalam set pelatihan kita.
+Ini terdiri dari menerapkan formula yang sama
+yang digunakan untuk menghitung error pelatihan empiris
+tetapi pada set uji $\mathbf{X}', \mathbf{y}'$.
+
+Yang penting, ketika kita mengevaluasi pengklasifikasi kita pada set uji,
+kita bekerja dengan pengklasifikasi yang *tetap*
+(yang tidak bergantung pada sampel set uji),
+dan dengan demikian mengestimasi error-nya
+hanya merupakan masalah estimasi rata-rata.
+Namun, hal yang sama tidak dapat dikatakan
+untuk set pelatihan.
+Perhatikan bahwa model yang kita peroleh
+bergantung secara eksplisit pada pilihan set pelatihan
+dan, oleh karena itu, error pelatihan
+umumnya akan menjadi estimasi bias dari error sebenarnya
+pada populasi dasar.
+Pertanyaan utama dalam generalisasi
+adalah kapan kita harus mengharapkan error pelatihan kita
+mendekati error populasi
+(dan dengan demikian error generalisasi).
+
+### Kompleksitas Model
+
+Dalam teori klasik, ketika kita memiliki
+model yang sederhana dan data yang melimpah,
+error pelatihan dan generalisasi cenderung mendekati.
+Namun, ketika kita bekerja dengan
+model yang lebih kompleks dan/atau contoh yang lebih sedikit,
+kita mengharapkan error pelatihan turun
+tetapi kesenjangan generalisasi meningkat.
+Hal ini seharusnya tidak mengejutkan.
+Bayangkan kelas model yang begitu ekspresif
+sehingga untuk dataset $n$ contoh mana pun,
+kita dapat menemukan seperangkat parameter
+yang dapat menyesuaikan label apa pun dengan sempurna,
+bahkan jika diberikan secara acak.
+Dalam kasus ini, bahkan jika kita menyesuaikan data pelatihan kita dengan sempurna,
+bagaimana kita bisa menyimpulkan apa pun tentang error generalisasi?
+Yang kita tahu, error generalisasi kita
+mungkin tidak lebih baik dari tebakan acak.
+
+Secara umum, tanpa ada batasan pada kelas model kita,
+kita tidak bisa menyimpulkan, hanya berdasarkan penyesuaian data pelatihan,
+bahwa model kita telah menemukan pola yang dapat digeneralisasi :cite:`vapnik1994measuring`.
+Di sisi lain, jika kelas model kita
+tidak mampu menyesuaikan label secara arbitrer,
+maka harus ada pola yang ditemukan.
+Gagasan teori pembelajaran tentang kompleksitas model
+mengambil inspirasi dari gagasan
+Karl Popper, seorang filsuf ilmu yang berpengaruh,
+yang memformalkan kriteria *dapat dipalsukan*.
+Menurut Popper, teori yang
+dapat menjelaskan semua pengamatan yang ada
+bukanlah teori ilmiah sama sekali!
+Lagi pula, apa yang diceritakan teori tersebut tentang dunia
+jika teori tersebut tidak menyingkirkan kemungkinan apa pun?
+Singkatnya, yang kita inginkan adalah hipotesis
+yang *tidak bisa* menjelaskan semua pengamatan
+yang mungkin kita buat,
+namun tetap cocok dengan pengamatan yang kita *buat*.
+
+Sekarang, apa yang secara tepat membentuk gagasan
+tentang kompleksitas model yang sesuai adalah masalah yang kompleks.
+Seringkali, model dengan lebih banyak parameter
+mampu menyesuaikan lebih banyak
+label yang diberikan secara arbitrer.
+Namun, ini tidak selalu benar.
+Misalnya, metode kernel beroperasi di ruang
+dengan jumlah parameter tak terbatas,
+namun kompleksitasnya dikendalikan
+dengan cara lain :cite:`Scholkopf.Smola.2002`.
+Salah satu gagasan kompleksitas yang sering berguna
+adalah rentang nilai yang dapat diambil parameter.
+Di sini, model yang parameternya diizinkan
+mengambil nilai sewenang-wenang
+akan menjadi lebih kompleks.
+Kita akan mengunjungi kembali gagasan ini di bagian berikutnya,
+ketika kita memperkenalkan *penurunan bobot*,
+teknik regularisasi praktis pertama Anda.
+Perlu dicatat, sulit membandingkan
+kompleksitas antara anggota dari kelas model yang sangat berbeda
+(misalnya, pohon keputusan vs. jaringan saraf).
 
 
-Crucially, when we evaluate our classifier on the test set,
-we are working with a *fixed* classifier
-(it does not depend on the sample of the test set),
-and thus estimating its error
-is simply the problem of mean estimation.
-However the same cannot be said
-for the training set.
-Note that the model we wind up with
-depends explicitly on the selection of the training set
-and thus the training error will in general
-be a biased estimate of the true error
-on the underlying population.
-The central question of generalization
-is then when should we expect our training error
-to be close to the population error
-(and thus the generalization error).
-
-### Model Complexity
-
-In classical theory, when we have
-simple models and abundant data,
-the training and generalization errors tend to be close.
-However, when we work with
-more complex models and/or fewer examples,
-we expect the training error to go down
-but the generalization gap to grow.
-This should not be surprising.
-Imagine a model class so expressive that
-for any dataset of $n$ examples,
-we can find a set of parameters
-that can perfectly fit arbitrary labels,
-even if randomly assigned.
-In this case, even if we fit our training data perfectly,
-how can we conclude anything about the generalization error?
-For all we know, our generalization error
-might be no better than random guessing.
-
-In general, absent any restriction on our model class,
-we cannot conclude, based on fitting the training data alone,
-that our model has discovered any generalizable pattern :cite:`vapnik1994measuring`.
-On the other hand, if our model class
-was not capable of fitting arbitrary labels,
-then it must have discovered a pattern.
-Learning-theoretic ideas about model complexity
-derived some inspiration from the ideas
-of Karl Popper, an influential philosopher of science,
-who formalized the criterion of falsifiability.
-According to Popper, a theory
-that can explain any and all observations
-is not a scientific theory at all!
-After all, what has it told us about the world
-if it has not ruled out any possibility?
-In short, what we want is a hypothesis
-that *could not* explain any observations
-we might conceivably make
-and yet nevertheless happens to be compatible
-with those observations that we *in fact* make.
-
-Now what precisely constitutes an appropriate
-notion of model complexity is a complex matter.
-Often, models with more parameters
-are able to fit a greater number
-of arbitrarily assigned labels.
-However, this is not necessarily true.
-For instance, kernel methods operate in spaces
-with infinite numbers of parameters,
-yet their complexity is controlled
-by other means :cite:`Scholkopf.Smola.2002`.
-One notion of complexity that often proves useful
-is the range of values that the parameters can take.
-Here, a model whose parameters are permitted
-to take arbitrary values
-would be more complex.
-We will revisit this idea in the next section,
-when we introduce *weight decay*,
-your first practical regularization technique.
-Notably, it can be difficult to compare
-complexity among members of substantially different model classes
-(say, decision trees vs. neural networks).
 
 
-At this point, we must stress another important point
-that we will revisit when introducing deep neural networks.
-When a model is capable of fitting arbitrary labels,
-low training error does not necessarily
-imply low generalization error.
-*However, it does not necessarily
-imply high generalization error either!*
-All we can say with confidence is that
-low training error alone is not enough
-to certify low generalization error.
-Deep neural networks turn out to be just such models:
-while they generalize well in practice,
-they are too powerful to allow us to conclude
-much on the basis of training error alone.
-In these cases we must rely more heavily
-on our holdout data to certify generalization
-after the fact.
-Error on the holdout data, i.e., validation set,
-is called the *validation error*.
+Pada titik ini, kita harus menekankan poin penting lainnya
+yang akan kita bahas kembali ketika memperkenalkan jaringan saraf dalam.
+Ketika sebuah model mampu menyesuaikan label secara arbitrer,
+error pelatihan yang rendah tidak serta-merta
+menunjukkan error generalisasi yang rendah.
+*Namun, ini juga tidak serta-merta
+menunjukkan error generalisasi yang tinggi!*
+Yang bisa kita katakan dengan percaya diri adalah
+bahwa error pelatihan yang rendah saja tidak cukup
+untuk memastikan error generalisasi yang rendah.
+Jaringan saraf dalam ternyata adalah model seperti ini:
+meskipun mereka melakukan generalisasi dengan baik dalam praktiknya,
+mereka terlalu kuat untuk memungkinkan kita menyimpulkan
+banyak hal hanya berdasarkan error pelatihan.
+Dalam kasus ini, kita harus lebih mengandalkan
+data holdout untuk memastikan generalisasi
+setelah fakta.
+Error pada data holdout, yaitu, set validasi,
+disebut *error validasi*.
 
-## Underfitting or Overfitting?
+## Underfitting atau Overfitting?
 
-When we compare the training and validation errors,
-we want to be mindful of two common situations.
-First, we want to watch out for cases
-when our training error and validation error are both substantial
-but there is a little gap between them.
-If the model is unable to reduce the training error,
-that could mean that our model is too simple
-(i.e., insufficiently expressive)
-to capture the pattern that we are trying to model.
-Moreover, since the *generalization gap* ($R_\textrm{emp} - R$)
-between our training and generalization errors is small,
-we have reason to believe that we could get away with a more complex model.
-This phenomenon is known as *underfitting*.
+Ketika kita membandingkan error pelatihan dan error validasi,
+kita ingin waspada terhadap dua situasi umum.
+Pertama, kita ingin memperhatikan kasus
+di mana error pelatihan dan error validasi kita keduanya cukup besar
+tetapi hanya ada sedikit perbedaan di antara keduanya.
+Jika model tidak dapat mengurangi error pelatihan,
+itu bisa berarti bahwa model kita terlalu sederhana
+(yaitu, tidak cukup ekspresif)
+untuk menangkap pola yang ingin kita modelkan.
+Selain itu, karena *gap generalisasi* ($R_\textrm{emp} - R$)
+antara error pelatihan dan error generalisasi kita kecil,
+kita memiliki alasan untuk percaya bahwa kita bisa menggunakan model yang lebih kompleks.
+Fenomena ini dikenal sebagai *underfitting*.
 
-On the other hand, as we discussed above,
-we want to watch out for the cases
-when our training error is significantly lower
-than our validation error, indicating severe *overfitting*.
-Note that overfitting is not always a bad thing.
-In deep learning especially,
-the best predictive models often perform
-far better on training data than on holdout data.
-Ultimately, we usually care about
-driving the generalization error lower,
-and only care about the gap insofar
-as it becomes an obstacle to that end.
-Note that if the training error is zero,
-then the generalization gap is precisely equal to the generalization error
-and we can make progress only by reducing the gap.
+Di sisi lain, seperti yang telah kita bahas di atas,
+kita ingin waspada terhadap kasus
+di mana error pelatihan kita jauh lebih rendah
+daripada error validasi kita, yang mengindikasikan *overfitting* yang parah.
+Perlu dicatat bahwa overfitting tidak selalu buruk.
+Dalam pembelajaran mendalam khususnya,
+model prediktif terbaik sering kali menunjukkan
+kinerja jauh lebih baik pada data pelatihan dibandingkan pada data holdout.
+Pada akhirnya, biasanya kita peduli tentang
+menurunkan error generalisasi,
+dan hanya peduli pada perbedaannya sejauh
+itu menjadi hambatan untuk mencapai tujuan tersebut.
+Perhatikan bahwa jika error pelatihan adalah nol,
+maka gap generalisasi persis sama dengan error generalisasi
+dan kita hanya bisa membuat kemajuan dengan mengurangi perbedaan ini.
 
-### Polynomial Curve Fitting
+### Penyesuaian Kurva Polinomial
 :label:`subsec_polynomial-curve-fitting`
 
-To illustrate some classical intuition
-about overfitting and model complexity,
-consider the following:
-given training data consisting of a single feature $x$
-and a corresponding real-valued label $y$,
-we try to find the polynomial of degree $d$
+Untuk mengilustrasikan beberapa intuisi klasik
+tentang overfitting dan kompleksitas model,
+pertimbangkan hal berikut:
+diberikan data pelatihan yang terdiri dari satu fitur $x$
+dan label bernilai nyata $y$ yang bersesuaian,
+kita mencoba menemukan polinomial derajat $d$
 
 $$\hat{y}= \sum_{i=0}^d x^i w_i$$
 
-for estimating the label $y$.
-This is just a linear regression problem
-where our features are given by the powers of $x$,
-the model's weights are given by $w_i$,
-and the bias is given by $w_0$ since $x^0 = 1$ for all $x$.
-Since this is just a linear regression problem,
-we can use the squared error as our loss function.
+untuk memperkirakan label $y$.
+Ini hanyalah masalah regresi linear
+di mana fitur kita diberikan oleh pangkat $x$,
+bobot model diberikan oleh $w_i$,
+dan bias diberikan oleh $w_0$ karena $x^0 = 1$ untuk semua $x$.
+Karena ini hanya masalah regresi linear,
+kita dapat menggunakan error kuadrat sebagai fungsi kerugian kita.
 
+Fungsi polinomial dengan derajat yang lebih tinggi lebih kompleks
+daripada fungsi polinomial dengan derajat lebih rendah,
+karena fungsi polinomial dengan derajat lebih tinggi memiliki lebih banyak parameter
+dan rentang pemilihan fungsi model lebih luas.
+Dengan data pelatihan yang tetap,
+fungsi polinomial dengan derajat lebih tinggi harus selalu
+mencapai error pelatihan yang lebih rendah (paling tidak sama)
+dibandingkan dengan polinomial dengan derajat lebih rendah.
+Bahkan, kapan pun setiap contoh data
+memiliki nilai $x$ yang berbeda,
+fungsi polinomial dengan derajat
+sama dengan jumlah contoh data
+dapat menyesuaikan set pelatihan secara sempurna.
+Kita membandingkan hubungan antara derajat polinomial (kompleksitas model)
+dan underfitting serta overfitting dalam :numref:`fig_capacity_vs_error`.
 
-A higher-order polynomial function is more complex
-than a lower-order polynomial function,
-since the higher-order polynomial has more parameters
-and the model function's selection range is wider.
-Fixing the training dataset,
-higher-order polynomial functions should always
-achieve lower (at worst, equal) training error
-relative to lower-degree polynomials.
-In fact, whenever each data example
-has a distinct value of $x$,
-a polynomial function with degree
-equal to the number of data examples
-can fit the training set perfectly.
-We compare the relationship between polynomial degree (model complexity)
-and both underfitting and overfitting in :numref:`fig_capacity_vs_error`.
-
-![Influence of model complexity on underfitting and overfitting.](../img/capacity-vs-error.svg)
+![Pengaruh kompleksitas model pada underfitting dan overfitting.](../img/capacity-vs-error.svg)
 :label:`fig_capacity_vs_error`
 
 
-### Dataset Size
 
-As the above bound already indicates,
-another big consideration
-to bear in mind is dataset size.
-Fixing our model, the fewer samples
-we have in the training dataset,
-the more likely (and more severely)
-we are to encounter overfitting.
-As we increase the amount of training data,
-the generalization error typically decreases.
-Moreover, in general, more data never hurts.
-For a fixed task and data distribution,
-model complexity should not increase
-more rapidly than the amount of data.
-Given more data, we might  attempt
-to fit a more complex model.
-Absent sufficient data, simpler models
-may be more difficult to beat.
-For many tasks, deep learning
-only outperforms linear models
-when many thousands of training examples are available.
-In part, the current success of deep learning
-owes considerably to the abundance of massive datasets
-arising from Internet companies, cheap storage,
-connected devices, and the broad digitization of the economy.
+### Ukuran Dataset
 
-## Model Selection
+Seperti yang ditunjukkan oleh batas di atas,
+pertimbangan besar lainnya yang perlu diingat adalah ukuran dataset.
+Dengan model yang tetap, semakin sedikit sampel
+yang kita miliki di dataset pelatihan,
+semakin besar kemungkinan (dan semakin parah)
+kita akan mengalami overfitting.
+Seiring kita menambah jumlah data pelatihan,
+error generalisasi biasanya menurun.
+Selain itu, secara umum, lebih banyak data tidak pernah merugikan.
+Untuk tugas dan distribusi data yang tetap,
+kompleksitas model tidak boleh meningkat
+lebih cepat dari jumlah data yang ada.
+Dengan lebih banyak data, kita mungkin mencoba
+untuk menyesuaikan model yang lebih kompleks.
+Tanpa data yang cukup, model yang lebih sederhana
+mungkin lebih sulit untuk dikalahkan.
+Untuk banyak tugas, pembelajaran mendalam (deep learning)
+hanya mengungguli model linear
+ketika ribuan contoh pelatihan tersedia.
+Keberhasilan pembelajaran mendalam saat ini sebagian besar
+berutang pada melimpahnya dataset masif
+yang berasal dari perusahaan internet, penyimpanan murah,
+perangkat yang terhubung, dan digitalisasi ekonomi yang luas.
+
+## Pemilihan Model
 :label:`subsec_generalization-model-selection`
 
-Typically, we select our final model
-only after evaluating multiple models
-that differ in various ways
-(different architectures, training objectives,
-selected features, data preprocessing,
-learning rates, etc.).
-Choosing among many models is aptly
-called *model selection*.
+Biasanya, kita memilih model akhir kita
+hanya setelah mengevaluasi beberapa model
+yang berbeda dalam berbagai cara
+(arsitektur yang berbeda, tujuan pelatihan,
+fitur yang dipilih, pra-pemrosesan data,
+laju pembelajaran, dll.).
+Memilih di antara banyak model ini disebut
+*pemilihan model*.
 
-In principle, we should not touch our test set
-until after we have chosen all our hyperparameters.
-Were we to use the test data in the model selection process,
-there is a risk that we might overfit the test data.
-Then we would be in serious trouble.
-If we overfit our training data,
-there is always the evaluation on test data to keep us honest.
-But if we overfit the test data, how would we ever know?
-See :citet:`ong2005learning` for an example of how
-this can lead to absurd results even for models where the complexity
-can be tightly controlled.
+Pada prinsipnya, kita tidak boleh menyentuh set uji
+sampai kita telah memilih semua hiperparameter.
+Jika kita menggunakan data uji dalam proses pemilihan model,
+ada risiko bahwa kita mungkin melakukan overfitting pada data uji.
+Jika ini terjadi, kita akan berada dalam masalah besar.
+Jika kita melakukan overfitting pada data pelatihan,
+kita selalu dapat mengevaluasi model pada data uji untuk menjaga kejujuran.
+Tetapi jika kita melakukan overfitting pada data uji, bagaimana kita akan tahu?
+Lihat :citet:`ong2005learning` untuk contoh bagaimana
+ini dapat mengarah pada hasil yang absurd bahkan untuk model di mana kompleksitasnya
+dapat dikendalikan secara ketat.
 
-Thus, we should never rely on the test data for model selection.
-And yet we cannot rely solely on the training data
-for model selection either because
-we cannot estimate the generalization error
-on the very data that we use to train the model.
+Oleh karena itu, kita sebaiknya tidak mengandalkan data uji untuk pemilihan model.
+Namun, kita juga tidak dapat hanya mengandalkan data pelatihan
+untuk pemilihan model karena
+kita tidak dapat memperkirakan error generalisasi
+pada data yang sama yang kita gunakan untuk melatih model.
 
+Dalam aplikasi praktis, gambarannya menjadi lebih keruh.
+Meskipun idealnya kita hanya akan menyentuh data uji sekali,
+untuk menilai model terbaik atau untuk membandingkan
+sejumlah kecil model satu sama lain,
+data uji di dunia nyata jarang dibuang setelah satu kali penggunaan.
+Kita jarang mampu menyediakan set uji baru untuk setiap putaran eksperimen.
+Faktanya, menggunakan kembali data benchmark selama beberapa dekade
+dapat memiliki dampak signifikan pada
+pengembangan algoritme,
+misalnya untuk [klasifikasi gambar](https://paperswithcode.com/sota/image-classification-on-imagenet)
+dan [pengenalan karakter optik](https://paperswithcode.com/sota/image-classification-on-mnist).
 
-In practical applications, the picture gets muddier.
-While ideally we would only touch the test data once,
-to assess the very best model or to compare
-a small number of models with each other,
-real-world test data is seldom discarded after just one use.
-We can seldom afford a new test set for each round of experiments.
-In fact, recycling benchmark data for decades
-can have a significant impact on the
-development of algorithms,
-e.g., for [image classification](https://paperswithcode.com/sota/image-classification-on-imagenet)
-and [optical character recognition](https://paperswithcode.com/sota/image-classification-on-mnist).
-
-The common practice for addressing the problem of *training on the test set*
-is to split our data three ways,
-incorporating a *validation set*
-in addition to the training and test datasets.
-The result is a murky business where the boundaries
-between validation and test data are worryingly ambiguous.
-Unless explicitly stated otherwise, in the experiments in this book
-we are really working with what should rightly be called
-training data and validation data, with no true test sets.
-Therefore, the accuracy reported in each experiment of the book is really
-the validation accuracy and not a true test set accuracy.
+Praktik umum untuk mengatasi masalah *pelatihan pada set uji*
+adalah membagi data kita menjadi tiga bagian,
+menggabungkan *set validasi*
+selain dataset pelatihan dan uji.
+Hasilnya adalah bisnis yang tidak jelas di mana batas
+antara data validasi dan data uji sangat ambigu.
+Kecuali disebutkan secara eksplisit, dalam eksperimen di buku ini
+kita sebenarnya bekerja dengan apa yang seharusnya disebut
+data pelatihan dan data validasi, tanpa set uji yang sebenarnya.
+Oleh karena itu, akurasi yang dilaporkan dalam setiap eksperimen di buku ini sebenarnya
+adalah akurasi validasi dan bukan akurasi set uji yang sebenarnya.
 
 ### Cross-Validation
 
-When training data is scarce,
-we might not even be able to afford to hold out
-enough data to constitute a proper validation set.
-One popular solution to this problem is to employ
-$K$*-fold cross-validation*.
-Here, the original training data is split into $K$ non-overlapping subsets.
-Then model training and validation are executed $K$ times,
-each time training on $K-1$ subsets and validating
-on a different subset (the one not used for training in that round).
-Finally, the training and validation errors are estimated
-by averaging over the results from the $K$ experiments.
+Ketika data pelatihan langka,
+kita mungkin bahkan tidak mampu menyisihkan
+data yang cukup untuk membentuk set validasi yang layak.
+Salah satu solusi populer untuk masalah ini adalah menggunakan
+*cross-validation K-kali lipat*.
+Di sini, data pelatihan asli dibagi menjadi $K$ subset yang tidak saling tumpang tindih.
+Kemudian pelatihan model dan validasi dijalankan $K$ kali,
+setiap kali melatih pada $K-1$ subset dan memvalidasi
+pada subset yang berbeda (yang tidak digunakan untuk pelatihan pada putaran tersebut).
+Akhirnya, error pelatihan dan validasi diperkirakan
+dengan menghitung rata-rata hasil dari $K$ eksperimen tersebut.
 
 
+## Ringkasan
 
-## Summary
+Bagian ini mengeksplorasi beberapa dasar 
+dari generalisasi dalam pembelajaran mesin.
+Beberapa ide ini menjadi rumit
+dan kontraintuitif saat kita masuk ke model yang lebih dalam; di sini, model memiliki kemampuan untuk melakukan overfitting data secara signifikan,
+dan gagasan tentang kompleksitas yang relevan
+dapat menjadi implisit dan kontraintuitif
+(misalnya, arsitektur yang lebih besar dengan lebih banyak parameter
+justru lebih baik dalam generalisasi).
+Berikut adalah beberapa aturan praktis:
 
-This section explored some of the  underpinnings
-of generalization in  machine learning.
-Some of these ideas become complicated
-and counterintuitive when we get to deeper models; here, models are capable of overfitting data badly,
-and the relevant notions of complexity
-can be both implicit and counterintuitive
-(e.g., larger architectures with more parameters
-generalizing better).
-We leave you with a few rules of thumb:
+1. Gunakan set validasi (atau *cross-validation K-kali lipat*) untuk pemilihan model;
+2. Model yang lebih kompleks seringkali membutuhkan lebih banyak data;
+3. Gagasan kompleksitas yang relevan mencakup baik jumlah parameter maupun rentang nilai yang diizinkan untuk diambil;
+4. Dengan kondisi lain yang sama, lebih banyak data hampir selalu mengarah pada generalisasi yang lebih baik;
+5. Semua pembicaraan tentang generalisasi ini bergantung pada asumsi IID. Jika kita melonggarkan asumsi ini, memungkinkan distribusi bergeser antara periode pelatihan dan pengujian, maka kita tidak bisa mengatakan apapun tentang generalisasi tanpa asumsi tambahan (yang mungkin lebih ringan).
 
-1. Use validation sets (or $K$*-fold cross-validation*) for model selection;
-1. More complex models often require more data;
-1. Relevant notions of complexity include both the number of parameters and the range of values that they are allowed to take;
-1. Keeping all else equal, more data almost always leads to better generalization;
-1. This entire talk of generalization is all predicated on the IID assumption. If we relax this assumption, allowing for distributions to shift between the train and testing periods, then we cannot say anything about generalization absent a further (perhaps milder) assumption.
+## Latihan
 
-
-## Exercises
-
-1. When can you solve the problem of polynomial regression exactly?
-1. Give at least five examples where dependent random variables make treating the problem as IID data inadvisable.
-1. Can you ever expect to see zero training error? Under which circumstances would you see zero generalization error?
-1. Why is $K$-fold cross-validation very expensive to compute?
-1. Why is the $K$-fold cross-validation error estimate biased?
-1. The VC dimension is defined as the maximum number of points that can be classified with arbitrary labels $\{\pm 1\}$ by a function of a class of functions. Why might this not be a good idea for measuring how complex the class of functions is? Hint: consider the magnitude of the functions.
-1. Your manager gives you a difficult dataset on which your current algorithm does not perform so well. How would you justify to him that you need more data? Hint: you cannot increase the data but you can decrease it.
+1. Kapan Anda bisa menyelesaikan masalah regresi polinomial secara eksak?
+2. Berikan setidaknya lima contoh di mana variabel acak yang bergantung membuat menganggap masalah sebagai data IID tidak disarankan.
+3. Apakah Anda pernah mengharapkan error pelatihan menjadi nol? Dalam keadaan apa Anda akan melihat error generalisasi nol?
+4. Mengapa $K$-fold cross-validation sangat mahal untuk dihitung?
+5. Mengapa estimasi error *K*-fold cross-validation bias?
+6. Dimensi VC didefinisikan sebagai jumlah maksimum titik yang dapat diklasifikasikan dengan label sembarang $\{\pm 1\}$ oleh fungsi dari suatu kelas fungsi. Mengapa ini mungkin bukan ide yang baik untuk mengukur seberapa kompleks kelas fungsi tersebut? Petunjuk: pertimbangkan besarnya fungsi.
+7. Manajer Anda memberi Anda dataset yang sulit di mana algoritma saat ini tidak bekerja dengan baik. Bagaimana Anda akan meyakinkan manajer bahwa Anda membutuhkan lebih banyak data? Petunjuk: Anda tidak dapat menambah data tetapi Anda dapat menguranginya.
 
 :begin_tab:`mxnet`
-[Discussions](https://discuss.d2l.ai/t/96)
+[Diskusi](https://discuss.d2l.ai/t/96)
 :end_tab:
 
 :begin_tab:`pytorch`
-[Discussions](https://discuss.d2l.ai/t/97)
+[Diskusi](https://discuss.d2l.ai/t/97)
 :end_tab:
 
 :begin_tab:`tensorflow`
-[Discussions](https://discuss.d2l.ai/t/234)
+[Diskusi](https://discuss.d2l.ai/t/234)
 :end_tab:
 
 :begin_tab:`jax`
-[Discussions](https://discuss.d2l.ai/t/17978)
+[Diskusi](https://discuss.d2l.ai/t/17978)
 :end_tab:
