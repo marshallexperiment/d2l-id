@@ -1,25 +1,25 @@
-# Linear Neural Networks for Regression
+# Jaringan Neural Linear untuk Regresi
 :label:`chap_regression`
 
-Before we worry about making our neural networks deep,
-it will be helpful to implement some shallow ones,
-for which the inputs connect directly to the outputs.
-This will prove important for a few reasons.
-First, rather than getting distracted by complicated architectures,
-we can focus on the basics of neural network training,
-including parametrizing the output layer, handling data,
-specifying a loss function, and training the model.
-Second, this class of shallow networks happens
-to comprise the set of linear models,
-which subsumes many classical methods of statistical prediction,
-including linear and softmax regression.
-Understanding these classical tools is pivotal
-because they are widely used in many contexts
-and we will often need to use them as baselines
-when justifying the use of fancier architectures.
-This chapter will focus narrowly on linear regression
-and the next one will extend our modeling repertoire
-by developing linear neural networks for classification.
+Sebelum kita mulai memikirkan untuk membuat jaringan neural yang mendalam,
+akan sangat membantu untuk mengimplementasikan jaringan yang dangkal terlebih dahulu,
+di mana input terhubung langsung ke output.
+Ini akan penting untuk beberapa alasan.
+Pertama, alih-alih terganggu oleh arsitektur yang rumit,
+kita bisa fokus pada dasar-dasar pelatihan jaringan neural,
+termasuk parametrisasi lapisan output, menangani data,
+menentukan fungsi kerugian, dan melatih model.
+Kedua, kelas jaringan dangkal ini kebetulan mencakup
+set dari model linear,
+yang mencakup banyak metode prediksi statistik klasik,
+termasuk regresi linear dan softmax.
+Memahami alat-alat klasik ini sangat penting
+karena mereka digunakan secara luas dalam banyak konteks
+dan kita sering perlu menggunakannya sebagai baseline
+saat membenarkan penggunaan arsitektur yang lebih canggih.
+Bab ini akan fokus secara sempit pada regresi linear
+dan bab berikutnya akan memperluas repertori pemodelan kita
+dengan mengembangkan jaringan neural linear untuk klasifikasi.
 
 ```toc
 :maxdepth: 2
