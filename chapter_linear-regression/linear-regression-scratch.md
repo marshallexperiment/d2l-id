@@ -3,34 +3,34 @@
 tab.interact_select(['mxnet', 'pytorch', 'tensorflow', 'jax'])
 ```
 
-# Linear Regression Implementation from Scratch
+# Implementasi Regresi Linear dari Awal
 :label:`sec_linear_scratch`
 
-We are now ready to work through 
-a fully functioning implementation 
-of linear regression. 
-In this section, 
-(**we will implement the entire method from scratch,
-including (i) the model; (ii) the loss function;
-(iii) a minibatch stochastic gradient descent optimizer;
-and (iv) the training function 
-that stitches all of these pieces together.**)
-Finally, we will run our synthetic data generator
-from :numref:`sec_synthetic-regression-data`
-and apply our model
-on the resulting dataset. 
-While modern deep learning frameworks 
-can automate nearly all of this work,
-implementing things from scratch is the only way
-to make sure that you really know what you are doing.
-Moreover, when it is time to customize models,
-defining our own layers or loss functions,
-understanding how things work under the hood will prove handy.
-In this section, we will rely only 
-on tensors and automatic differentiation.
-Later, we will introduce a more concise implementation,
-taking advantage of the bells and whistles of deep learning frameworks 
-while retaining the structure of what follows below.
+Sekarang kita siap untuk bekerja melalui
+implementasi penuh dari regresi linear.
+Di bagian ini, 
+(**kita akan mengimplementasikan seluruh metode dari awal,
+termasuk (i) model; (ii) fungsi kerugian;
+(iii) optimizer minibatch stochastic gradient descent;
+dan (iv) fungsi pelatihan 
+yang menghubungkan semua bagian ini.**)
+Akhirnya, kita akan menjalankan pembangkit data sintetis kita
+dari :numref:`sec_synthetic-regression-data`
+dan menerapkan model kita
+pada dataset yang dihasilkan.
+Meskipun framework pembelajaran mendalam modern
+dapat mengotomatiskan hampir semua pekerjaan ini,
+mengimplementasikan semuanya dari awal adalah satu-satunya cara
+untuk memastikan bahwa Anda benar-benar tahu apa yang Anda lakukan.
+Selain itu, ketika saatnya tiba untuk menyesuaikan model,
+mendefinisikan layer atau fungsi kerugian sendiri,
+memahami cara kerja di balik layar akan sangat membantu.
+Di bagian ini, kita hanya akan mengandalkan 
+tensor dan diferensiasi otomatis.
+Nantinya, kita akan memperkenalkan implementasi yang lebih ringkas,
+memanfaatkan fitur tambahan dari framework pembelajaran mendalam 
+sambil mempertahankan struktur yang akan kita kembangkan di bawah ini.
+
 
 ```{.python .input  n=2}
 %%tab mxnet
@@ -64,24 +64,25 @@ from jax import numpy as jnp
 import optax
 ```
 
-## Defining the Model
+## Mendefinisikan Model
 
-[**Before we can begin optimizing our model's parameters**] by minibatch SGD,
-(**we need to have some parameters in the first place.**)
-In the following we initialize weights by drawing
-random numbers from a normal distribution with mean 0
-and a standard deviation of 0.01. 
-The magic number 0.01 often works well in practice, 
-but you can specify a different value 
-through the argument `sigma`.
-Moreover we set the bias to 0.
-Note that for object-oriented design
-we add the code to the `__init__` method of a subclass of `d2l.Module` (introduced in :numref:`subsec_oo-design-models`).
+[**Sebelum kita dapat mulai mengoptimalkan parameter model**] dengan minibatch SGD,
+(**kita perlu memiliki beberapa parameter terlebih dahulu.**)
+Pada langkah berikut, kita menginisialisasi bobot dengan mengambil
+angka acak dari distribusi normal dengan mean 0
+dan simpangan baku 0.01.
+Angka 0.01 seringkali bekerja dengan baik dalam praktik,
+tetapi Anda dapat menentukan nilai yang berbeda
+melalui argumen `sigma`.
+Selain itu, kita menetapkan bias ke 0.
+Perhatikan bahwa untuk desain berbasis objek
+kita menambahkan kode ke metode `__init__` dari subclass `d2l.Module` (diperkenalkan di :numref:`subsec_oo-design-models`).
+
 
 ```{.python .input  n=6}
 %%tab pytorch, mxnet, tensorflow
 class LinearRegressionScratch(d2l.Module):  #@save
-    """The linear regression model implemented from scratch."""
+    """Model regresi linear yang diimplementasikan dari awal."""
     def __init__(self, num_inputs, lr, sigma=0.01):
         super().__init__()
         self.save_hyperparameters()
@@ -103,7 +104,7 @@ class LinearRegressionScratch(d2l.Module):  #@save
 ```{.python .input  n=7}
 %%tab jax
 class LinearRegressionScratch(d2l.Module):  #@save
-    """The linear regression model implemented from scratch."""
+    """Model regresi linear yang diimplementasikan dari awal."""
     num_inputs: int
     lr: float
     sigma: float = 0.01
@@ -114,21 +115,22 @@ class LinearRegressionScratch(d2l.Module):  #@save
         self.b = self.param('b', nn.initializers.zeros, (1))
 ```
 
-Next we must [**define our model,
-relating its input and parameters to its output.**]
-Using the same notation as :eqref:`eq_linreg-y-vec`
-for our linear model we simply take the matrix--vector product
-of the input features $\mathbf{X}$ 
-and the model weights $\mathbf{w}$,
-and add the offset $b$ to each example.
-The product $\mathbf{Xw}$ is a vector and $b$ is a scalar.
-Because of the broadcasting mechanism 
-(see :numref:`subsec_broadcasting`),
-when we add a vector and a scalar,
-the scalar is added to each component of the vector.
-The resulting `forward` method 
-is registered in the `LinearRegressionScratch` class
-via `add_to_class` (introduced in :numref:`oo-design-utilities`).
+Selanjutnya kita harus [**mendefinisikan model kita,
+menghubungkan input dan parameternya dengan output.**]
+Dengan menggunakan notasi yang sama seperti pada :eqref:`eq_linreg-y-vec`
+untuk model linear kita, kita cukup mengambil hasil perkalian matriks-vektor
+dari fitur input $\mathbf{X}$
+dan bobot model $\mathbf{w}$,
+dan menambahkan offset $b$ ke setiap contoh.
+Hasil kali $\mathbf{Xw}$ adalah sebuah vektor dan $b$ adalah skalar.
+Karena mekanisme broadcasting
+(lihat :numref:`subsec_broadcasting`),
+ketika kita menambahkan vektor dan skalar,
+skalar tersebut ditambahkan ke setiap komponen vektor.
+Metode `forward` yang dihasilkan
+didaftarkan dalam kelas `LinearRegressionScratch`
+melalui `add_to_class` (diperkenalkan di :numref:`oo-design-utilities`).
+
 
 ```{.python .input  n=8}
 %%tab all
@@ -137,19 +139,20 @@ def forward(self, X):
     return d2l.matmul(X, self.w) + self.b
 ```
 
-## Defining the Loss Function
+## Mendefinisikan Fungsi Kerugian
 
-Since [**updating our model requires taking
-the gradient of our loss function,**]
-we ought to (**define the loss function first.**)
-Here we use the squared loss function
-in :eqref:`eq_mse`.
-In the implementation, we need to transform the true value `y`
-into the predicted value's shape `y_hat`.
-The result returned by the following method
-will also have the same shape as `y_hat`. 
-We also return the averaged loss value
-among all examples in the minibatch.
+Karena [**memperbarui model kita memerlukan pengambilan
+gradien dari fungsi kerugian,**]
+kita perlu (**mendefinisikan fungsi kerugian terlebih dahulu.**)
+Di sini kita menggunakan fungsi kerugian kuadrat
+pada :eqref:`eq_mse`.
+Dalam implementasinya, kita perlu mengubah nilai sebenarnya `y`
+menjadi bentuk yang sama dengan nilai prediksi `y_hat`.
+Hasil yang dikembalikan oleh metode berikut
+juga akan memiliki bentuk yang sama dengan `y_hat`.
+Kita juga mengembalikan nilai kerugian rata-rata
+di antara semua contoh dalam minibatch.
+
 
 ```{.python .input  n=9}
 %%tab pytorch, mxnet, tensorflow
@@ -168,65 +171,67 @@ def loss(self, params, X, y, state):
     return d2l.reduce_mean(l)
 ```
 
-## Defining the Optimization Algorithm
+## Mendefinisikan Algoritma Optimasi
 
-As discussed in :numref:`sec_linear_regression`,
-linear regression has a closed-form solution.
-However, our goal here is to illustrate 
-how to train more general neural networks,
-and that requires that we teach you 
-how to use minibatch SGD.
-Hence we will take this opportunity
-to introduce your first working example of SGD.
-At each step, using a minibatch 
-randomly drawn from our dataset,
-we estimate the gradient of the loss
-with respect to the parameters.
-Next, we update the parameters
-in the direction that may reduce the loss.
+Seperti yang dibahas pada :numref:`sec_linear_regression`,
+regresi linear memiliki solusi dalam bentuk tertutup.
+Namun, tujuan kita di sini adalah untuk mengilustrasikan 
+cara melatih jaringan neural yang lebih umum,
+yang memerlukan kita untuk mempelajari 
+cara menggunakan minibatch SGD.
+Oleh karena itu, kita akan menggunakan kesempatan ini
+untuk memperkenalkan contoh pertama Anda tentang SGD yang berfungsi.
+Pada setiap langkah, dengan menggunakan minibatch 
+yang diambil secara acak dari dataset kita,
+kita memperkirakan gradien dari kerugian
+terhadap parameter.
+Selanjutnya, kita memperbarui parameter
+ke arah yang mungkin mengurangi kerugian.
 
-The following code applies the update, 
-given a set of parameters, a learning rate `lr`.
-Since our loss is computed as an average over the minibatch, 
-we do not need to adjust the learning rate against the batch size. 
-In later chapters we will investigate 
-how learning rates should be adjusted
-for very large minibatches as they arise 
-in distributed large-scale learning.
-For now, we can ignore this dependency.
+Kode berikut menerapkan pembaruan, 
+diberikan satu set parameter dan learning rate `lr`.
+Karena kerugian kita dihitung sebagai rata-rata pada minibatch, 
+kita tidak perlu menyesuaikan learning rate terhadap ukuran batch. 
+Di bab-bab berikutnya, kita akan menyelidiki 
+bagaimana learning rate harus disesuaikan
+untuk minibatch yang sangat besar 
+dalam pembelajaran skala besar terdistribusi.
+Untuk saat ini, kita dapat mengabaikan ketergantungan ini.
+
 
 :begin_tab:`mxnet`
-We define our `SGD` class, 
-a subclass of `d2l.HyperParameters` (introduced in :numref:`oo-design-utilities`),
-to have a similar API
-as the built-in SGD optimizer.
-We update the parameters in the `step` method.
-It accepts a `batch_size` argument that can be ignored.
+Kita mendefinisikan kelas `SGD` kita, 
+sebuah subclass dari `d2l.HyperParameters` (diperkenalkan di :numref:`oo-design-utilities`),
+agar memiliki API yang mirip
+dengan optimizer SGD bawaan.
+Kita memperbarui parameter dalam metode `step`.
+Metode ini menerima argumen `batch_size` yang dapat diabaikan.
 :end_tab:
 
 :begin_tab:`pytorch`
-We define our `SGD` class,
-a subclass of `d2l.HyperParameters` (introduced in :numref:`oo-design-utilities`),
-to have a similar API 
-as the built-in SGD optimizer.
-We update the parameters in the `step` method.
-The `zero_grad` method sets all gradients to 0,
-which must be run before a backpropagation step.
+Kita mendefinisikan kelas `SGD` kita,
+sebuah subclass dari `d2l.HyperParameters` (diperkenalkan di :numref:`oo-design-utilities`),
+agar memiliki API yang mirip
+dengan optimizer SGD bawaan.
+Kita memperbarui parameter dalam metode `step`.
+Metode `zero_grad` mengatur semua gradien menjadi 0,
+yang harus dijalankan sebelum langkah backpropagation.
 :end_tab:
 
 :begin_tab:`tensorflow`
-We define our `SGD` class,
-a subclass of `d2l.HyperParameters` (introduced in :numref:`oo-design-utilities`),
-to have a similar API
-as the built-in SGD optimizer.
-We update the parameters in the `apply_gradients` method.
-It accepts a list of parameter and gradient pairs.
+Kita mendefinisikan kelas `SGD` kita,
+sebuah subclass dari `d2l.HyperParameters` (diperkenalkan di :numref:`oo-design-utilities`),
+agar memiliki API yang mirip
+dengan optimizer SGD bawaan.
+Kita memperbarui parameter dalam metode `apply_gradients`.
+Metode ini menerima daftar pasangan parameter dan gradien.
 :end_tab:
+
 
 ```{.python .input  n=11}
 %%tab mxnet, pytorch
 class SGD(d2l.HyperParameters):  #@save
-    """Minibatch stochastic gradient descent."""
+    """Stochastic gradient descent dengan minibatch."""
     def __init__(self, params, lr):
         self.save_hyperparameters()
 
@@ -249,7 +254,7 @@ class SGD(d2l.HyperParameters):  #@save
 ```{.python .input  n=12}
 %%tab tensorflow
 class SGD(d2l.HyperParameters):  #@save
-    """Minibatch stochastic gradient descent."""
+    """Stochastic gradient descent dengan minibatch."""
     def __init__(self, lr):
         self.save_hyperparameters()
 
@@ -261,10 +266,10 @@ class SGD(d2l.HyperParameters):  #@save
 ```{.python .input  n=13}
 %%tab jax
 class SGD(d2l.HyperParameters):  #@save
-    """Minibatch stochastic gradient descent."""
-    # The key transformation of Optax is the GradientTransformation
-    # defined by two methods, the init and the update.
-    # The init initializes the state and the update transforms the gradients.
+    """Stochastic gradient descent dengan minibatch."""
+    # Transformasi kunci dari Optax adalah GradientTransformation
+    # yang didefinisikan oleh dua metode, yaitu init dan update.
+    # Init menginisialisasi state, dan update mengubah gradien.
     # https://github.com/deepmind/optax/blob/master/optax/_src/transform.py
     def __init__(self, lr):
         self.save_hyperparameters()
@@ -276,9 +281,9 @@ class SGD(d2l.HyperParameters):  #@save
 
     def update(self, updates, state, params=None):
         del params
-        # When state.apply_gradients method is called to update flax's
-        # train_state object, it internally calls optax.apply_updates method
-        # adding the params to the update equation defined below.
+        # Ketika metode state.apply_gradients dipanggil untuk memperbarui flax's
+        # objek train_state, metode ini secara internal memanggil optax.apply_updates
+        # menambahkan params ke persamaan update yang didefinisikan di bawah ini.
         updates = jax.tree_util.tree_map(lambda g: -self.lr * g, updates)
         return updates, state
 
@@ -286,7 +291,7 @@ class SGD(d2l.HyperParameters):  #@save
         return optax.GradientTransformation(self.init, self.update)
 ```
 
-We next define the `configure_optimizers` method, which returns an instance of the `SGD` class.
+Selanjutnya kita mendefinisikan metode `configure_optimizers`, yang mengembalikan instance dari kelas `SGD`.
 
 ```{.python .input  n=14}
 %%tab all
@@ -298,44 +303,45 @@ def configure_optimizers(self):
         return SGD(self.lr)
 ```
 
-## Training
+## Pelatihan
 
-Now that we have all of the parts in place
-(parameters, loss function, model, and optimizer),
-we are ready to [**implement the main training loop.**]
-It is crucial that you understand this code fully
-since you will employ similar training loops
-for every other deep learning model
-covered in this book.
-In each *epoch*, we iterate through 
-the entire training dataset, 
-passing once through every example
-(assuming that the number of examples 
-is divisible by the batch size). 
-In each *iteration*, we grab a minibatch of training examples,
-and compute its loss through the model's `training_step` method. 
-Then we compute the gradients with respect to each parameter. 
-Finally, we will call the optimization algorithm
-to update the model parameters. 
-In summary, we will execute the following loop:
+Sekarang setelah kita memiliki semua komponen yang diperlukan
+(parameter, fungsi kerugian, model, dan optimizer),
+kita siap untuk [**mengimplementasikan loop pelatihan utama.**]
+Memahami kode ini sepenuhnya adalah hal yang sangat penting
+karena Anda akan menggunakan loop pelatihan serupa
+untuk setiap model pembelajaran mendalam lainnya
+yang dibahas dalam buku ini.
+Di setiap *epoch*, kita akan melakukan iterasi
+melalui seluruh dataset pelatihan,
+melewati setiap contoh satu kali
+(dengan asumsi jumlah contoh
+dapat dibagi oleh ukuran batch).
+Di setiap *iterasi*, kita mengambil satu minibatch dari contoh pelatihan,
+dan menghitung kerugiannya melalui metode `training_step` dari model.
+Kemudian kita menghitung gradien terhadap setiap parameter.
+Terakhir, kita akan memanggil algoritma optimasi
+untuk memperbarui parameter model.
+Singkatnya, kita akan mengeksekusi loop berikut:
 
-* Initialize parameters $(\mathbf{w}, b)$
-* Repeat until done
-    * Compute gradient $\mathbf{g} \leftarrow \partial_{(\mathbf{w},b)} \frac{1}{|\mathcal{B}|} \sum_{i \in \mathcal{B}} l(\mathbf{x}^{(i)}, y^{(i)}, \mathbf{w}, b)$
-    * Update parameters $(\mathbf{w}, b) \leftarrow (\mathbf{w}, b) - \eta \mathbf{g}$
+* Inisialisasi parameter $(\mathbf{w}, b)$
+* Ulangi sampai selesai
+    * Hitung gradien $\mathbf{g} \leftarrow \partial_{(\mathbf{w},b)} \frac{1}{|\mathcal{B}|} \sum_{i \in \mathcal{B}} l(\mathbf{x}^{(i)}, y^{(i)}, \mathbf{w}, b)$
+    * Perbarui parameter $(\mathbf{w}, b) \leftarrow (\mathbf{w}, b) - \eta \mathbf{g}$
  
-Recall that the synthetic regression dataset 
-that we generated in :numref:``sec_synthetic-regression-data`` 
-does not provide a validation dataset. 
-In most cases, however, 
-we will want a validation dataset 
-to measure our model quality. 
-Here we pass the validation dataloader 
-once in each epoch to measure the model performance.
-Following our object-oriented design,
-the `prepare_batch` and `fit_epoch` methods
-are registered in the `d2l.Trainer` class
-(introduced in :numref:`oo-design-training`).
+Ingat bahwa dataset regresi sintetis
+yang kita hasilkan di :numref:``sec_synthetic-regression-data``
+tidak menyediakan dataset validasi.
+Namun, dalam sebagian besar kasus,
+kita ingin memiliki dataset validasi
+untuk mengukur kualitas model kita.
+Di sini kita melewati dataloader validasi
+satu kali di setiap epoch untuk mengukur performa model.
+Mengikuti desain berbasis objek kita,
+metode `prepare_batch` dan `fit_epoch`
+terdaftar dalam kelas `d2l.Trainer`
+(diperkenalkan di :numref:`oo-design-training`).
+
 
 ```{.python .input  n=15}
 %%tab all    
@@ -354,7 +360,7 @@ def fit_epoch(self):
         self.optim.zero_grad()
         with torch.no_grad():
             loss.backward()
-            if self.gradient_clip_val > 0:  # To be discussed later
+            if self.gradient_clip_val > 0:  # Didiskusikan nanti
                 self.clip_gradients(self.gradient_clip_val, self.model)
             self.optim.step()
         self.train_batch_idx += 1
@@ -419,7 +425,7 @@ def fit_epoch(self):
                                                            self.prepare_batch(batch),
                                                            self.state)
             self.state = self.state.apply_gradients(grads=grads)
-            # Can be ignored for models without Dropout Layers
+            # Dapat diabaikan untuk model tanpa Lapisan Dropout
             self.state = self.state.replace(
                 dropout_rng=jax.random.split(self.state.dropout_rng)[0])
             self.state = self.state.replace(batch_stats=mutated_vars['batch_stats'])
@@ -445,22 +451,23 @@ def fit_epoch(self):
         self.val_batch_idx += 1
 ```
 
-We are almost ready to train the model,
-but first we need some training data.
-Here we use the `SyntheticRegressionData` class 
-and pass in some ground truth parameters.
-Then we train our model with 
-the learning rate `lr=0.03` 
-and set `max_epochs=3`. 
-Note that in general, both the number of epochs 
-and the learning rate are hyperparameters.
-In general, setting hyperparameters is tricky
-and we will usually want to use a three-way split,
-one set for training, 
-a second for hyperparameter selection,
-and the third reserved for the final evaluation.
-We elide these details for now but will revise them
-later.
+Kita hampir siap untuk melatih model,
+tetapi pertama-tama kita membutuhkan data pelatihan.
+Di sini kita menggunakan kelas `SyntheticRegressionData`
+dan memasukkan beberapa parameter ground truth.
+Kemudian kita melatih model kita dengan
+learning rate `lr=0.03`
+dan menetapkan `max_epochs=3`.
+Perlu dicatat bahwa, secara umum, baik jumlah epoch
+maupun learning rate adalah hyperparameter.
+Menetapkan hyperparameter bisa jadi rumit,
+dan kita biasanya ingin menggunakan pembagian tiga arah,
+satu set untuk pelatihan,
+set kedua untuk pemilihan hyperparameter,
+dan yang ketiga disimpan untuk evaluasi akhir.
+Kita abaikan detail ini untuk saat ini, tetapi akan kita revisi
+di bagian selanjutnya.
+
 
 ```{.python .input  n=20}
 %%tab all
@@ -470,111 +477,112 @@ trainer = d2l.Trainer(max_epochs=3)
 trainer.fit(model, data)
 ```
 
-Because we synthesized the dataset ourselves,
-we know precisely what the true parameters are.
-Thus, we can [**evaluate our success in training
-by comparing the true parameters
-with those that we learned**] through our training loop.
-Indeed they turn out to be very close to each other.
+Karena kita sendiri yang mensintesis dataset,
+kita tahu persis apa saja parameter sebenarnya.
+Oleh karena itu, kita dapat [**mengevaluasi keberhasilan pelatihan kita
+dengan membandingkan parameter sebenarnya
+dengan parameter yang kita pelajari**] melalui loop pelatihan kita.
+Hasilnya, parameter yang dipelajari ternyata sangat mendekati parameter sebenarnya.
+
 
 ```{.python .input  n=21}
 %%tab pytorch
 with torch.no_grad():
-    print(f'error in estimating w: {data.w - d2l.reshape(model.w, data.w.shape)}')
-    print(f'error in estimating b: {data.b - model.b}')
+    print(f'kesalahan dalam estimasi w: {data.w - d2l.reshape(model.w, data.w.shape)}')
+    print(f'kesalahan dalam estimasi b: {data.b - model.b}')
+
 ```
 
 ```{.python .input  n=22}
 %%tab mxnet, tensorflow
-print(f'error in estimating w: {data.w - d2l.reshape(model.w, data.w.shape)}')
-print(f'error in estimating b: {data.b - model.b}')
+print(f'kesalahan dalam mengestimasi w: {data.w - d2l.reshape(model.w, data.w.shape)}')
+print(f'kesalahan dalam mengestimasi b: {data.b - model.b}')
 ```
 
 ```{.python .input  n=23}
 %%tab jax
 params = trainer.state.params
-print(f"error in estimating w: {data.w - d2l.reshape(params['w'], data.w.shape)}")
-print(f"error in estimating b: {data.b - params['b']}")
+print(f"kesalahan dalam mengestimasi w: {data.w - d2l.reshape(params['w'], data.w.shape)}")
+print(f"kesalahan dalam mengestimasi b: {data.b - params['b']}")
 ```
 
-We should not take the ability to exactly recover 
-the ground truth parameters for granted.
-In general, for deep models unique solutions
-for the parameters do not exist,
-and even for linear models,
-exactly recovering the parameters
-is only possible when no feature 
-is linearly dependent on the others.
-However, in machine learning, 
-we are often less concerned
-with recovering true underlying parameters,
-but rather with parameters 
-that lead to highly accurate prediction :cite:`Vapnik.1992`.
-Fortunately, even on difficult optimization problems,
-stochastic gradient descent can often find remarkably good solutions,
-owing partly to the fact that, for deep networks,
-there exist many configurations of the parameters
-that lead to highly accurate prediction.
+
+Kita tidak boleh menerima begitu saja kemampuan
+untuk tepat mengembalikan parameter ground truth.
+Secara umum, untuk model dalam, solusi unik
+untuk parameter tidak selalu ada,
+dan bahkan untuk model linear,
+mengembalikan parameter secara tepat
+hanya mungkin jika tidak ada fitur
+yang secara linear bergantung pada fitur lainnya.
+Namun, dalam pembelajaran mesin,
+kita sering kurang peduli
+dengan pemulihan parameter dasar yang sebenarnya,
+tetapi lebih peduli dengan parameter
+yang menghasilkan prediksi yang sangat akurat :cite:`Vapnik.1992`.
+Untungnya, bahkan pada masalah optimasi yang sulit,
+stochastic gradient descent sering kali dapat menemukan solusi yang sangat baik,
+sebagian karena fakta bahwa, untuk jaringan dalam,
+terdapat banyak konfigurasi parameter
+yang menghasilkan prediksi yang sangat akurat.
 
 
-## Summary
+## Ringkasan
 
-In this section, we took a significant step 
-towards designing deep learning systems 
-by implementing a fully functional 
-neural network model and training loop.
-In this process, we built a data loader, 
-a model, a loss function, an optimization procedure,
-and a visualization and monitoring tool. 
-We did this by composing a Python object 
-that contains all relevant components for training a model. 
-While this is not yet a professional-grade implementation
-it is perfectly functional and code like this 
-could already help you to solve small problems quickly.
-In the coming sections, we will see how to do this
-both *more concisely* (avoiding boilerplate code)
-and *more efficiently* (using our GPUs to their full potential).
+Di bagian ini, kita mengambil langkah signifikan
+menuju perancangan sistem pembelajaran mendalam
+dengan mengimplementasikan model jaringan neural
+dan loop pelatihan yang sepenuhnya fungsional.
+Dalam proses ini, kita membangun pemuat data,
+model, fungsi kerugian, prosedur optimasi,
+dan alat visualisasi serta pemantauan.
+Kita melakukannya dengan menyusun objek Python
+yang berisi semua komponen relevan untuk melatih model.
+Meskipun ini belum merupakan implementasi tingkat profesional,
+implementasi ini sudah sangat fungsional dan kode seperti ini
+dapat membantu Anda menyelesaikan masalah kecil dengan cepat.
+Di bagian selanjutnya, kita akan melihat cara melakukannya
+dengan *lebih ringkas* (menghindari kode berulang)
+dan *lebih efisien* (memanfaatkan GPU kita secara maksimal).
 
 
+## Latihan
 
-## Exercises
-
-1. What would happen if we were to initialize the weights to zero. Would the algorithm still work? What if we
-   initialized the parameters with variance $1000$ rather than $0.01$?
-1. Assume that you are [Georg Simon Ohm](https://en.wikipedia.org/wiki/Georg_Ohm) trying to come up
-   with a model for resistance that relates voltage and current. Can you use automatic
-   differentiation to learn the parameters of your model?
-1. Can you use [Planck's Law](https://en.wikipedia.org/wiki/Planck%27s_law) to determine the temperature of an object
-   using spectral energy density? For reference, the spectral density $B$ of radiation emanating from a black body is
-   $B(\lambda, T) = \frac{2 hc^2}{\lambda^5} \cdot \left(\exp \frac{h c}{\lambda k T} - 1\right)^{-1}$. Here
-   $\lambda$ is the wavelength, $T$ is the temperature, $c$ is the speed of light, $h$ is Planck's constant, and $k$ is the
-   Boltzmann constant. You measure the energy for different wavelengths $\lambda$ and you now need to fit the spectral
-   density curve to Planck's law.
-1. What are the problems you might encounter if you wanted to compute the second derivatives of the loss? How would
-   you fix them?
-1. Why is the `reshape` method needed in the `loss` function?
-1. Experiment using different learning rates to find out how quickly the loss function value drops. Can you reduce the
-   error by increasing the number of epochs of training?
-1. If the number of examples cannot be divided by the batch size, what happens to `data_iter` at the end of an epoch?
-1. Try implementing a different loss function, such as the absolute value loss `(y_hat - d2l.reshape(y, y_hat.shape)).abs().sum()`.
-    1. Check what happens for regular data.
-    1. Check whether there is a difference in behavior if you actively perturb some entries, such as $y_5 = 10000$, of $\mathbf{y}$.
-    1. Can you think of a cheap solution for combining the best aspects of squared loss and absolute value loss?
-       Hint: how can you avoid really large gradient values?
-1. Why do we need to reshuffle the dataset? Can you design a case where a maliciously constructed dataset would break the optimization algorithm otherwise?
+1. Apa yang akan terjadi jika kita menginisialisasi bobot ke nol? Apakah algoritma masih akan bekerja? Bagaimana jika kita
+   menginisialisasi parameter dengan varians $1000$ daripada $0.01$?
+1. Asumsikan bahwa Anda adalah [Georg Simon Ohm](https://en.wikipedia.org/wiki/Georg_Ohm) yang mencoba mengembangkan
+   model untuk resistansi yang berhubungan dengan tegangan dan arus. Bisakah Anda menggunakan diferensiasi otomatis
+   untuk mempelajari parameter model Anda?
+1. Bisakah Anda menggunakan [Hukum Planck](https://en.wikipedia.org/wiki/Planck%27s_law) untuk menentukan suhu suatu objek
+   menggunakan kerapatan energi spektral? Sebagai referensi, kerapatan spektral $B$ dari radiasi yang dipancarkan oleh benda hitam adalah
+   $B(\lambda, T) = \frac{2 hc^2}{\lambda^5} \cdot \left(\exp \frac{h c}{\lambda k T} - 1\right)^{-1}$. Di sini
+   $\lambda$ adalah panjang gelombang, $T$ adalah suhu, $c$ adalah kecepatan cahaya, $h$ adalah konstanta Planck, dan $k$ adalah
+   konstanta Boltzmann. Anda mengukur energi untuk berbagai panjang gelombang $\lambda$ dan Anda sekarang perlu menyesuaikan kurva kerapatan
+   spektral ke hukum Planck.
+1. Apa saja masalah yang mungkin Anda temui jika Anda ingin menghitung turunan kedua dari kerugian? Bagaimana cara Anda memperbaikinya?
+1. Mengapa metode `reshape` diperlukan dalam fungsi `loss`?
+1. Eksperimen dengan menggunakan learning rate yang berbeda untuk melihat seberapa cepat nilai fungsi kerugian menurun. Bisakah Anda mengurangi
+   kesalahan dengan meningkatkan jumlah epoch pelatihan?
+1. Jika jumlah contoh tidak dapat dibagi oleh ukuran batch, apa yang terjadi pada `data_iter` di akhir suatu epoch?
+1. Cobalah mengimplementasikan fungsi kerugian yang berbeda, seperti kerugian nilai absolut `(y_hat - d2l.reshape(y, y_hat.shape)).abs().sum()`.
+    1. Lihat apa yang terjadi untuk data biasa.
+    1. Periksa apakah ada perbedaan perilaku jika Anda secara aktif mengganggu beberapa entri, seperti $y_5 = 10000$, dari $\mathbf{y}$.
+    1. Bisakah Anda memikirkan solusi murah untuk menggabungkan aspek terbaik dari kerugian kuadrat dan kerugian nilai absolut?
+       Petunjuk: bagaimana Anda dapat menghindari nilai gradien yang sangat besar?
+1. Mengapa kita perlu mengacak ulang dataset? Bisakah Anda merancang kasus di mana dataset yang disusun secara tidak baik dapat merusak algoritma optimasi?
 
 :begin_tab:`mxnet`
-[Discussions](https://discuss.d2l.ai/t/42)
+[Diskusi](https://discuss.d2l.ai/t/42)
 :end_tab:
 
 :begin_tab:`pytorch`
-[Discussions](https://discuss.d2l.ai/t/43)
+[Diskusi](https://discuss.d2l.ai/t/43)
 :end_tab:
 
 :begin_tab:`tensorflow`
-[Discussions](https://discuss.d2l.ai/t/201)
+[Diskusi](https://discuss.d2l.ai/t/201)
 :end_tab:
 
 :begin_tab:`jax`
-[Discussions](https://discuss.d2l.ai/t/17976)
+[Diskusi](https://discuss.d2l.ai/t/17976)
 :end_tab:
