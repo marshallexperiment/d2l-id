@@ -3,19 +3,19 @@
 tab.interact_select(['mxnet', 'pytorch', 'tensorflow', 'jax'])
 ```
 
-# Synthetic Regression Data
+# Data Regresi Sintetis
 :label:`sec_synthetic-regression-data`
 
+Pembelajaran mesin berkaitan dengan ekstraksi informasi dari data.
+Jadi, Anda mungkin bertanya-tanya, apa yang mungkin bisa kita pelajari dari data sintetis?
+Meskipun kita mungkin tidak secara intrinsik peduli pada pola 
+yang kita sendiri masukkan ke dalam model pembangkitan data buatan,
+dataset semacam itu tetap berguna untuk tujuan didaktis,
+membantu kita mengevaluasi sifat algoritma pembelajaran kita
+dan memastikan bahwa implementasi kita bekerja seperti yang diharapkan.
+Sebagai contoh, jika kita membuat data dengan parameter yang benar diketahui *a priori*,
+kita dapat memeriksa apakah model kita benar-benar dapat memulihkannya.
 
-Machine learning is all about extracting information from data.
-So you might wonder, what could we possibly learn from synthetic data?
-While we might not care intrinsically about the patterns 
-that we ourselves baked into an artificial data generating model,
-such datasets are nevertheless useful for didactic purposes,
-helping us to evaluate the properties of our learning 
-algorithms and to confirm that our implementations work as expected.
-For example, if we create data for which the correct parameters are known *a priori*,
-then we can check that our model can in fact recover them.
 
 ```{.python .input}
 %%tab mxnet
@@ -54,35 +54,36 @@ import tensorflow as tf
 import tensorflow_datasets as tfds
 ```
 
-## Generating the Dataset
+## Menghasilkan Dataset
 
-For this example, we will work in low dimension
-for succinctness.
-The following code snippet generates 1000 examples
-with 2-dimensional features drawn 
-from a standard normal distribution.
-The resulting design matrix $\mathbf{X}$
-belongs to $\mathbb{R}^{1000 \times 2}$. 
-We generate each label by applying 
-a *ground truth* linear function, 
-corrupting them via additive noise $\boldsymbol{\epsilon}$, 
-drawn independently and identically for each example:
+Untuk contoh ini, kita akan bekerja dalam dimensi rendah
+untuk kesederhanaan.
+Cuplikan kode berikut menghasilkan 1000 contoh
+dengan fitur berdimensi 2 yang diambil
+dari distribusi normal standar.
+Matriks desain yang dihasilkan $\mathbf{X}$
+berada dalam $\mathbb{R}^{1000 \times 2}$.
+Kita menghasilkan setiap label dengan menerapkan
+fungsi linear *ground truth*,
+yang kita ganggu dengan noise aditif $\boldsymbol{\epsilon}$,
+yang diambil secara independen dan identik untuk setiap contoh:
 
 (**$$\mathbf{y}= \mathbf{X} \mathbf{w} + b + \boldsymbol{\epsilon}.$$**)
 
-For convenience we assume that $\boldsymbol{\epsilon}$ is drawn 
-from a normal distribution with mean $\mu= 0$ 
-and standard deviation $\sigma = 0.01$.
-Note that for object-oriented design
-we add the code to the `__init__` method of a subclass of `d2l.DataModule` (introduced in :numref:`oo-design-data`). 
-It is good practice to allow the setting of any additional hyperparameters. 
-We accomplish this with `save_hyperparameters()`. 
-The `batch_size` will be determined later.
+Untuk kemudahan, kita asumsikan bahwa $\boldsymbol{\epsilon}$ diambil
+dari distribusi normal dengan mean $\mu= 0$
+dan simpangan baku $\sigma = 0.01$.
+Perhatikan bahwa untuk desain berbasis objek,
+kita menambahkan kode ke metode `__init__` dari subclass `d2l.DataModule` (diperkenalkan di :numref:`oo-design-data`).
+Merupakan praktik yang baik untuk memungkinkan pengaturan hyperparameter tambahan.
+Kita mencapai ini dengan `save_hyperparameters()`.
+`batch_size` akan ditentukan kemudian.
+
 
 ```{.python .input}
 %%tab all
 class SyntheticRegressionData(d2l.DataModule):  #@save
-    """Synthetic data for linear regression."""
+    """Data sintetis untuk regresi linear."""
     def __init__(self, w, b, noise=0.01, num_train=1000, num_val=1000, 
                  batch_size=32):
         super().__init__()
@@ -102,36 +103,39 @@ class SyntheticRegressionData(d2l.DataModule):  #@save
         self.y = d2l.matmul(self.X, d2l.reshape(w, (-1, 1))) + b + noise
 ```
 
-Below, we set the true parameters to $\mathbf{w} = [2, -3.4]^\top$ and $b = 4.2$.
-Later, we can check our estimated parameters against these *ground truth* values.
+Di bawah ini, kita menetapkan parameter sebenarnya ke $\mathbf{w} = [2, -3.4]^\top$ dan $b = 4.2$.
+Nantinya, kita dapat memeriksa parameter yang kita estimasi terhadap nilai *ground truth* ini.
+
 
 ```{.python .input}
 %%tab all
 data = SyntheticRegressionData(w=d2l.tensor([2, -3.4]), b=4.2)
 ```
 
-[**Each row in `features` consists of a vector in $\mathbb{R}^2$ and each row in `labels` is a scalar.**] Let's have a look at the first entry.
+[**Setiap baris di `features` terdiri dari sebuah vektor di $\mathbb{R}^2$ dan setiap baris di `labels` adalah sebuah skalar.**] Mari kita lihat entri pertama.
+
 
 ```{.python .input}
 %%tab all
 print('features:', data.X[0],'\nlabel:', data.y[0])
 ```
 
-## Reading the Dataset
+## Membaca Dataset
 
-Training machine learning models often requires multiple passes over a dataset, 
-grabbing one minibatch of examples at a time. 
-This data is then used to update the model. 
-To illustrate how this works, we 
-[**implement the `get_dataloader` method,**] 
-registering it in the `SyntheticRegressionData` class via `add_to_class` (introduced in :numref:`oo-design-utilities`).
-It (**takes a batch size, a matrix of features,
-and a vector of labels, and generates minibatches of size `batch_size`.**)
-As such, each minibatch consists of a tuple of features and labels. 
-Note that we need to be mindful of whether we're in training or validation mode: 
-in the former, we will want to read the data in random order, 
-whereas for the latter, being able to read data in a pre-defined order 
-may be important for debugging purposes.
+Melatih model pembelajaran mesin sering kali membutuhkan beberapa kali pemrosesan melalui dataset, 
+mengambil satu minibatch contoh pada satu waktu. 
+Data ini kemudian digunakan untuk memperbarui model. 
+Untuk mengilustrasikan cara kerjanya, kita 
+[**mengimplementasikan metode `get_dataloader`,**] 
+dengan mendaftarkannya di kelas `SyntheticRegressionData` melalui `add_to_class` (diperkenalkan di :numref:`oo-design-utilities`).
+Metode ini (**mengambil ukuran batch, matriks fitur,
+dan vektor label, dan menghasilkan minibatch dengan ukuran `batch_size`.**)
+Dengan demikian, setiap minibatch terdiri dari pasangan fitur dan label. 
+Perhatikan bahwa kita perlu memperhatikan apakah kita berada dalam mode pelatihan atau validasi: 
+pada yang pertama, kita ingin membaca data dalam urutan acak, 
+sedangkan pada yang kedua, kemampuan untuk membaca data dalam urutan yang sudah ditentukan 
+dapat penting untuk tujuan debugging.
+
 
 ```{.python .input}
 %%tab all
@@ -152,9 +156,10 @@ def get_dataloader(self, train):
             yield tf.gather(self.X, j), tf.gather(self.y, j)
 ```
 
-To build some intuition, let's inspect the first minibatch of
-data. Each minibatch of features provides us with both its size and the dimensionality of input features.
-Likewise, our minibatch of labels will have a matching shape given by `batch_size`.
+Untuk membangun intuisi, mari kita periksa minibatch pertama dari
+data. Setiap minibatch fitur memberi kita ukuran serta dimensi dari fitur input.
+Demikian pula, minibatch label kita akan memiliki bentuk yang sesuai dengan `batch_size`.
+
 
 ```{.python .input}
 %%tab all
@@ -162,42 +167,44 @@ X, y = next(iter(data.train_dataloader()))
 print('X shape:', X.shape, '\ny shape:', y.shape)
 ```
 
-While seemingly innocuous, the invocation 
-of `iter(data.train_dataloader())` 
-illustrates the power of Python's object-oriented design. 
-Note that we added a method to the `SyntheticRegressionData` class
-*after* creating the `data` object. 
-Nonetheless, the object benefits from 
-the *ex post facto* addition of functionality to the class.
+Meskipun terlihat tidak berbahaya, pemanggilan 
+`iter(data.train_dataloader())`
+mengilustrasikan kekuatan desain berbasis objek di Python.
+Perhatikan bahwa kita menambahkan metode ke kelas `SyntheticRegressionData`
+*setelah* membuat objek `data`.
+Namun demikian, objek tersebut tetap dapat memanfaatkan 
+penambahan fungsi secara *ex post facto* pada kelas.
 
-Throughout the iteration we obtain distinct minibatches
-until the entire dataset has been exhausted (try this).
-While the iteration implemented above is good for didactic purposes,
-it is inefficient in ways that might get us into trouble with real problems.
-For example, it requires that we load all the data in memory
-and that we perform lots of random memory access.
-The built-in iterators implemented in a deep learning framework
-are considerably more efficient and they can deal
-with sources such as data stored in files, 
-data received via a stream, 
-and data generated or processed on the fly. 
-Next let's try to implement the same method using built-in iterators.
+Sepanjang iterasi, kita memperoleh minibatch yang berbeda
+sampai seluruh dataset habis (coba lakukan ini).
+Meskipun iterasi yang diterapkan di atas baik untuk tujuan didaktis,
+ini tidak efisien dalam beberapa cara yang bisa menjadi masalah pada masalah nyata.
+Sebagai contoh, iterasi ini membutuhkan kita untuk memuat semua data ke dalam memori
+dan melakukan banyak akses memori secara acak.
+Iterator bawaan yang diterapkan dalam framework pembelajaran mendalam
+jauh lebih efisien dan dapat menangani
+sumber seperti data yang disimpan dalam file,
+data yang diterima melalui aliran (stream),
+dan data yang dihasilkan atau diproses secara langsung.
+Selanjutnya, mari kita coba menerapkan metode yang sama menggunakan iterator bawaan.
 
-## Concise Implementation of the Data Loader
+## Implementasi Ringkas dari Data Loader
 
-Rather than writing our own iterator,
-we can [**call the existing API in a framework to load data.**]
-As before, we need a dataset with features `X` and labels `y`. 
-Beyond that, we set `batch_size` in the built-in data loader 
-and let it take care of shuffling examples  efficiently.
+Alih-alih menulis iterator kita sendiri,
+kita bisa [**memanggil API yang sudah ada dalam framework untuk memuat data.**]
+Seperti sebelumnya, kita membutuhkan dataset dengan fitur `X` dan label `y`.
+Selain itu, kita menetapkan `batch_size` dalam data loader bawaan
+dan membiarkannya menangani pengacakan contoh secara efisien.
 
 :begin_tab:`jax`
-JAX is all about NumPy like API with device acceleration and the functional
-transformations, so at least the current version doesn’t include data loading
-methods. With other  libraries we already have great data loaders out there,
-and JAX suggests using them instead. Here we will grab TensorFlow’s data loader,
-and modify it slightly to make it work with JAX.
+JAX berfokus pada API mirip NumPy dengan percepatan perangkat dan transformasi fungsional,
+sehingga setidaknya versi saat ini tidak mencakup metode pemuatan data.
+Dengan pustaka lain, kita sudah memiliki data loader yang hebat di luar sana,
+dan JAX menyarankan untuk menggunakan data loader tersebut.
+Di sini kita akan menggunakan data loader dari TensorFlow,
+dan sedikit memodifikasinya agar bekerja dengan JAX.
 :end_tab:
+
 
 ```{.python .input}
 %%tab all
@@ -213,8 +220,8 @@ def get_tensorloader(self, tensors, train, indices=slice(0, None)):
         return torch.utils.data.DataLoader(dataset, self.batch_size,
                                            shuffle=train)
     if tab.selected('jax'):
-        # Use Tensorflow Datasets & Dataloader. JAX or Flax do not provide
-        # any dataloading functionality
+        # Gunakan Tensorflow Datasets & Dataloader. JAX atau Flax tidak menyediakan
+        # fungsi pemuatan data
         shuffle_buffer = tensors[0].shape[0] if train else 1
         return tfds.as_numpy(
             tf.data.Dataset.from_tensor_slices(tensors).shuffle(
@@ -224,6 +231,7 @@ def get_tensorloader(self, tensors, train, indices=slice(0, None)):
         shuffle_buffer = tensors[0].shape[0] if train else 1
         return tf.data.Dataset.from_tensor_slices(tensors).shuffle(
             buffer_size=shuffle_buffer).batch(self.batch_size)
+
 ```
 
 ```{.python .input}
@@ -233,8 +241,8 @@ def get_dataloader(self, train):
     i = slice(0, self.num_train) if train else slice(self.num_train, None)
     return self.get_tensorloader((self.X, self.y), train, i)
 ```
+Data loader baru berperilaku sama seperti yang sebelumnya, kecuali bahwa ia lebih efisien dan memiliki beberapa fungsi tambahan.
 
-The new data loader behaves just like the previous one, except that it is more efficient and has some added functionality.
 
 ```{.python .input  n=4}
 %%tab all
@@ -242,61 +250,63 @@ X, y = next(iter(data.train_dataloader()))
 print('X shape:', X.shape, '\ny shape:', y.shape)
 ```
 
-For instance, the data loader provided by the framework API 
-supports the built-in `__len__` method, 
-so we can query its length, 
-i.e., the number of batches.
+Sebagai contoh, data loader yang disediakan oleh API framework 
+mendukung metode bawaan `__len__`, 
+sehingga kita dapat mengetahui panjangnya, 
+yaitu jumlah batch.
+
 
 ```{.python .input}
 %%tab all
 len(data.train_dataloader())
 ```
 
-## Summary
 
-Data loaders are a convenient way of abstracting out 
-the process of loading and manipulating data. 
-This way the same machine learning *algorithm* 
-is capable of processing many different types and sources of data 
-without the need for modification. 
-One of the nice things about data loaders 
-is that they can be composed. 
-For instance, we might be loading images 
-and then have a postprocessing filter 
-that crops them or modifies them in other ways. 
-As such, data loaders can be used 
-to describe an entire data processing pipeline. 
+## Ringkasan
 
-As for the model itself, the two-dimensional linear model 
-is about the simplest we might encounter. 
-It lets us test out the accuracy of regression models 
-without worrying about having insufficient amounts of data 
-or an underdetermined system of equations. 
-We will put this to good use in the next section.  
+Data loader adalah cara yang nyaman untuk mengabstraksikan 
+proses pemuatan dan manipulasi data.
+Dengan cara ini, *algoritma* pembelajaran mesin yang sama 
+dapat memproses berbagai jenis dan sumber data 
+tanpa perlu modifikasi.
+Salah satu hal yang menarik tentang data loader 
+adalah bahwa data loader dapat digabungkan.
+Misalnya, kita mungkin memuat gambar 
+dan kemudian memiliki filter pascapemrosesan 
+yang memotong gambar atau memodifikasinya dengan cara lain.
+Dengan demikian, data loader dapat digunakan 
+untuk menggambarkan seluruh pipeline pemrosesan data.
+
+Adapun model itu sendiri, model linear dua dimensi 
+adalah yang paling sederhana yang mungkin kita temui.
+Model ini memungkinkan kita menguji akurasi model regresi 
+tanpa khawatir tentang jumlah data yang tidak mencukupi 
+atau sistem persamaan yang kurang terdefinisi.
+Kita akan memanfaatkannya dengan baik di bagian selanjutnya.
 
 
-## Exercises
+## Latihan
 
-1. What will happen if the number of examples cannot be divided by the batch size. How would you change this behavior by specifying a different argument by using the framework's API?
-1. Suppose that we want to generate a huge dataset, where both the size of the parameter vector `w` and the number of examples `num_examples` are large.
-    1. What happens if we cannot hold all data in memory?
-    1. How would you shuffle the data if it is held on disk? Your task is to design an *efficient* algorithm that does not require too many random reads or writes. Hint: [pseudorandom permutation generators](https://en.wikipedia.org/wiki/Pseudorandom_permutation) allow you to design a reshuffle without the need to store the permutation table explicitly :cite:`Naor.Reingold.1999`. 
-1. Implement a data generator that produces new data on the fly, every time the iterator is called. 
-1. How would you design a random data generator that generates *the same* data each time it is called?
+1. Apa yang akan terjadi jika jumlah contoh tidak dapat dibagi oleh ukuran batch? Bagaimana Anda akan mengubah perilaku ini dengan menentukan argumen yang berbeda dengan menggunakan API framework?
+1. Misalkan kita ingin menghasilkan dataset yang sangat besar, di mana ukuran vektor parameter `w` dan jumlah contoh `num_examples` besar.
+    1. Apa yang terjadi jika kita tidak dapat menyimpan semua data dalam memori?
+    1. Bagaimana Anda akan mengacak data jika disimpan di disk? Tugas Anda adalah merancang algoritma *efisien* yang tidak memerlukan terlalu banyak operasi baca atau tulis acak. Petunjuk: [generator permutasi pseudorandom](https://en.wikipedia.org/wiki/Pseudorandom_permutation) memungkinkan Anda merancang pengacakan ulang tanpa perlu menyimpan tabel permutasi secara eksplisit :cite:`Naor.Reingold.1999`.
+1. Implementasikan generator data yang menghasilkan data baru secara langsung, setiap kali iterator dipanggil.
+1. Bagaimana Anda akan merancang generator data acak yang menghasilkan *data yang sama* setiap kali dipanggil?
 
 
 :begin_tab:`mxnet`
-[Discussions](https://discuss.d2l.ai/t/6662)
+[Diskusi](https://discuss.d2l.ai/t/6662)
 :end_tab:
 
 :begin_tab:`pytorch`
-[Discussions](https://discuss.d2l.ai/t/6663)
+[Diskusi](https://discuss.d2l.ai/t/6663)
 :end_tab:
 
 :begin_tab:`tensorflow`
-[Discussions](https://discuss.d2l.ai/t/6664)
+[Diskusi](https://discuss.d2l.ai/t/6664)
 :end_tab:
 
 :begin_tab:`jax`
-[Discussions](https://discuss.d2l.ai/t/17975)
+[Diskusi](https://discuss.d2l.ai/t/17975)
 :end_tab:
