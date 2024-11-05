@@ -32,7 +32,7 @@
 # 3 - chapter_linear-networks
 
 - [x] ./chapter_linear-networks/generalization.md
-- [ ] ./chapter_linear-networks/synthetic-regression-data.md
+- [x] ./chapter_linear-networks/synthetic-regression-data.md
 - [x] ./chapter_linear-networks/linear-regression.md
 - [x] ./chapter_linear-networks/index.md
 - [ ] ./chapter_linear-networks/oo-design.md
