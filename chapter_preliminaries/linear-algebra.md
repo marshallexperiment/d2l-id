@@ -163,8 +163,9 @@ Since $x_2$ is a scalar, we do not bold it.
 By default, we visualize vectors
 by stacking their elements vertically:
 
-$$\mathbf{x} =\begin{bmatrix}x_{1}  \\ \vdots  \\x_{n}\end{bmatrix}.$$
-:eqlabel:`eq_vec_def`
+$$
+\mathbf{x} = \begin{bmatrix} x_{1} \\ \vdots \\ x_{n} \end{bmatrix}.
+$$:eqlabel:`eq_vec_def`
 
 Here $x_1, \ldots, x_n$ are elements of the vector.
 Later on, we will distinguish between such *column vectors*
