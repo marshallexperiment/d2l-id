@@ -341,7 +341,7 @@ dengan hanya skalar, vektor, dan matriks,
 akhirnya Anda mungkin perlu bekerja dengan
 [**tensor**] berorde lebih tinggi.
 Tensor (**memberi kita cara generik untuk menggambarkan
-perluasan ke array berorde-$n^{\textrm{th}}$.**)
+perluasan ke array berorde- $n^{\textrm{th}}$.**)
 Kami menyebut objek perangkat lunak dari *kelas tensor* sebagai "tensor"
 karena mereka juga dapat memiliki jumlah sumbu yang sebarang.
 Meskipun mungkin membingungkan menggunakan kata
