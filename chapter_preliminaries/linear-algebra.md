@@ -972,9 +972,11 @@ saat menghitung panjang hipotenusa segitiga siku-siku
 adalah akar kuadrat dari jumlah kuadrat elemen-elemen vektor.
 Secara formal, ini disebut sebagai [**norma $\ell_2$**] dan dinyatakan sebagai
 
-(**$$\|\mathbf{x}\|_2 = \sqrt{\sum_{i=1}^n x_i^2}.$$**)
+(**$$
+\|\mathbf{x}\|_2 = \sqrt{\sum_{i=1}^n x_i^2}.
+$$**)
 
-Metode `norm` menghitung norma $\ell_2`.
+Metode `norm` menghitung norma $\ell_2$.
 
 
 ```{.python .input}
@@ -1006,7 +1008,9 @@ dan ukuran terkaitnya disebut sebagai jarak Manhattan.
 Secara definisi, norma $\ell_1$ menjumlahkan
 nilai absolut dari elemen-elemen vektor:
 
-(**$$\|\mathbf{x}\|_1 = \sum_{i=1}^n \left|x_i \right|.$$**)
+(**$$
+\|\mathbf{x}\|_1 = \sum_{i=1}^{n} |x_i|.
+$$**)
 
 Dibandingkan dengan norma $\ell_2$, norma ini kurang sensitif terhadap nilai pencilan.
 Untuk menghitung norma $\ell_1$,
