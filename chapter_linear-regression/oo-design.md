@@ -3,43 +3,39 @@
 tab.interact_select(['mxnet', 'pytorch', 'tensorflow', 'jax'])
 ```
 
-# Object-Oriented Design for Implementation
+# Desain Berorientasi Objek untuk Implementasi
 :label:`sec_oo-design`
 
-In our introduction to linear regression,
-we walked through various components
-including
-the data, the model, the loss function,
-and the optimization algorithm.
-Indeed,
-linear regression is
-one of the simplest machine learning models.
-Training it,
-however, uses many of the same components that other models in this book require.
-Therefore, 
-before diving into the implementation details
-it is worth 
-designing some of the APIs
-that we use throughout. 
-Treating components in deep learning
-as objects,
-we can start by
-defining classes for these objects
-and their interactions.
-This object-oriented design
-for implementation
-will greatly
-streamline the presentation and you might even want to use it in your projects.
+Dalam pengenalan kita terhadap regresi linear,
+kita membahas berbagai komponen
+termasuk data, model, fungsi kerugian,
+dan algoritma optimasi.
+Memang, regresi linear adalah
+salah satu model pembelajaran mesin yang paling sederhana.
+Namun, pelatihan model ini
+menggunakan banyak komponen yang juga dibutuhkan oleh model lain dalam buku ini.
+Oleh karena itu,
+sebelum masuk ke detail implementasi,
+pantas kiranya
+merancang beberapa API
+yang akan kita gunakan sepanjang pembahasan. 
+Dengan memperlakukan komponen dalam pembelajaran mendalam
+sebagai objek,
+kita dapat mulai dengan
+mendefinisikan kelas untuk objek-objek ini
+dan interaksinya.
+Desain berorientasi objek untuk implementasi ini
+akan sangat menyederhanakan presentasi, dan mungkin Anda juga ingin menggunakannya dalam proyek Anda.
 
+Terinspirasi oleh pustaka open-source seperti [PyTorch Lightning](https://www.pytorchlightning.ai/),
+pada tingkat tinggi
+kita ingin memiliki tiga kelas:
+(i) `Module` berisi model, fungsi kerugian, dan metode optimasi;
+(ii) `DataModule` menyediakan data loader untuk pelatihan dan validasi;
+(iii) kedua kelas ini digabungkan menggunakan kelas `Trainer`, yang memungkinkan kita
+melatih model pada berbagai platform perangkat keras.
+Sebagian besar kode dalam buku ini mengadaptasi `Module` dan `DataModule`. Kita akan menyentuh kelas `Trainer` hanya ketika kita membahas GPU, CPU, pelatihan paralel, dan algoritma optimasi.
 
-Inspired by open-source libraries such as [PyTorch Lightning](https://www.pytorchlightning.ai/),
-at a high level
-we wish to have three classes: 
-(i) `Module` contains models, losses, and optimization methods; 
-(ii) `DataModule` provides data loaders for training and validation; 
-(iii) both classes are combined using the `Trainer` class, which allows us to
-train models on a variety of hardware platforms. 
-Most code in this book adapts `Module` and `DataModule`. We will touch upon the `Trainer` class only when we discuss GPUs, CPUs, parallel training, and optimization algorithms.
 
 ```{.python .input}
 %%tab mxnet
@@ -79,11 +75,13 @@ import time
 from typing import Any
 ```
 
-## Utilities
+## Utilitas
 :label:`oo-design-utilities`
 
-We need a few utilities to simplify object-oriented programming in Jupyter notebooks. One of the challenges is that class definitions tend to be fairly long blocks of code. Notebook readability demands short code fragments, interspersed with explanations, a requirement incompatible with the style of programming common for Python libraries. The first
-utility function allows us to register functions as methods in a class *after* the class has been created. In fact, we can do so *even after* we have created instances of the class! It allows us to split the implementation of a class into multiple code blocks.
+Kita memerlukan beberapa utilitas untuk menyederhanakan pemrograman berorientasi objek di Jupyter notebook. Salah satu tantangannya adalah bahwa definisi kelas cenderung menjadi blok kode yang cukup panjang. Keterbacaan notebook membutuhkan fragmen kode yang pendek, diselingi dengan penjelasan, sebuah kebutuhan yang tidak sesuai dengan gaya pemrograman yang umum untuk pustaka Python. 
+Fungsi utilitas pertama memungkinkan kita untuk mendaftarkan fungsi sebagai metode dalam kelas *setelah* kelas tersebut dibuat. Faktanya, kita bahkan dapat melakukannya *setelah* kita membuat instance dari kelas tersebut! Hal ini memungkinkan kita untuk membagi implementasi sebuah kelas menjadi beberapa blok kode.
+
+
 
 ```{.python .input}
 %%tab all
