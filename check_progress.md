@@ -31,13 +31,13 @@
 
 # 3 - chapter_linear-networks
 
-- [ ] ./chapter_linear-networks/generalization.md
+- [x] ./chapter_linear-networks/generalization.md
 - [ ] ./chapter_linear-networks/synthetic-regression-data.md
-- [ ] ./chapter_linear-networks/linear-regression.md
-- [ ] ./chapter_linear-networks/index.md
+- [x] ./chapter_linear-networks/linear-regression.md
+- [x] ./chapter_linear-networks/index.md
 - [ ] ./chapter_linear-networks/oo-design.md
 - [ ] ./chapter_linear-networks/linear-regression-scratch.md
-- [ ] ./chapter_linear-networks/linear-regression-concise.md
+- [x] ./chapter_linear-networks/linear-regression-concise.md
 - [ ] ./chapter_linear-networks/weight-decay.md
 
 # 4 - chapter_linear-classification
