@@ -872,10 +872,10 @@ $$\mathbf{A}=\begin{bmatrix}
 
 
 Biarkan $\mathbf{a}^\top_{i} \in \mathbb{R}^k$ mewakili
-vektor baris yang mewakili baris ke-$i$
+vektor baris yang mewakili baris ke- $i$
 dari matriks $\mathbf{A}$
 dan biarkan $\mathbf{b}_{j} \in \mathbb{R}^k$ mewakili
-vektor kolom dari kolom ke-$j$
+vektor kolom dari kolom ke- $j$
 dari matriks $\mathbf{B}$:
 
 $$\mathbf{A}=
@@ -894,25 +894,12 @@ $$
 Untuk membentuk hasil perkalian matriks $\mathbf{C} \in \mathbb{R}^{n \times m}$,
 kita cukup menghitung setiap elemen $c_{ij}$
 sebagai produk dot antara
-baris ke-$i$ dari $\mathbf{A}$
-dan kolom ke-$j$ dari $\mathbf{B}$,
+baris ke- $i$ dari $\mathbf{A}$
+dan kolom ke- $j$ dari $\mathbf{B}$,
 yaitu $\mathbf{a}^\top_i \mathbf{b}_j$:
 
-$$\mathbf{C} = \mathbf{AB} = \begin{bmatrix}
-\mathbf{a}^\top_{1} \\
-\mathbf{a}^\top_{2} \\
-\vdots \\
-\mathbf{a}^\top_n \\
-\end{bmatrix}
-\begin{bmatrix}
- \mathbf{b}_{1} & \mathbf{b}_{2} & \cdots & \mathbf{b}_{m} \\
-\end{bmatrix}
-= \begin{bmatrix}
-\mathbf{a}^\top_{1} \mathbf{b}_1 & \mathbf{a}^\top_{1}\mathbf{b}_2& \cdots & \mathbf{a}^\top_{1} \mathbf{b}_m \\
- \mathbf{a}^\top_{2}\mathbf{b}_1 & \mathbf{a}^\top_{2} \mathbf{b}_2 & \cdots & \mathbf{a}^\top_{2} \mathbf{b}_m \\
- \vdots & \vdots & \ddots &\vdots\\
-\mathbf{a}^\top_{n} \mathbf{b}_1 & \mathbf{a}^\top_{n}\mathbf{b}_2& \cdots& \mathbf{a}^\top_{n} \mathbf{b}_m
-\end{bmatrix}.
+$$
+\mathbf{C} = \mathbf{AB} = \begin{bmatrix} \mathbf{a}^\top_{1} \\ \mathbf{a}^\top_{2} \\ \vdots \\ \mathbf{a}^\top_n \end{bmatrix} \begin{bmatrix} \mathbf{b}_{1} & \mathbf{b}_{2} & \cdots & \mathbf{b}_{m} \end{bmatrix} = \begin{bmatrix} \mathbf{a}^\top_{1} \mathbf{b}_{1} & \mathbf{a}^\top_{1} \mathbf{b}_{2} & \cdots & \mathbf{a}^\top_{1} \mathbf{b}_{m} \\ \mathbf{a}^\top_{2} \mathbf{b}_{1} & \mathbf{a}^\top_{2} \mathbf{b}_{2} & \cdots & \mathbf{a}^\top_{2} \mathbf{b}_{m} \\ \vdots & \vdots & \ddots & \vdots \\ \mathbf{a}^\top_{n} \mathbf{b}_{1} & \mathbf{a}^\top_{n} \mathbf{b}_{2} & \cdots & \mathbf{a}^\top_{n} \mathbf{b}_{m} \end{bmatrix}.
 $$
 
 [**Kita dapat memandang perkalian matriks--matriks $\mathbf{AB}$
