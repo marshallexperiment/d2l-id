@@ -86,13 +86,13 @@ Fungsi utilitas pertama memungkinkan kita untuk mendaftarkan fungsi sebagai meto
 ```{.python .input}
 %%tab all
 def add_to_class(Class):  #@save
-    """Register functions as methods in created class."""
+    """Mendaftarkan fungsi sebagai metode dalam kelas yang telah dibuat."""
     def wrapper(obj):
         setattr(Class, obj.__name__, obj)
     return wrapper
 ```
 
-Let's have a quick look at how to use it. We plan to implement a class `A` with a method `do`. Instead of having code for both `A` and `do` in the same code block, we can first declare the class `A` and create an instance `a`.
+Mari kita lihat cara cepat penggunaannya. Kita berencana mengimplementasikan kelas `A` dengan metode `do`. Alih-alih menulis kode untuk `A` dan `do` dalam satu blok kode yang sama, kita dapat terlebih dahulu mendeklarasikan kelas `A` dan membuat sebuah instance `a`.
 
 ```{.python .input}
 %%tab all
@@ -102,8 +102,8 @@ class A:
 
 a = A()
 ```
+Selanjutnya, kita mendefinisikan metode `do` seperti biasa, tetapi tidak dalam lingkup kelas `A`. Sebagai gantinya, kita mendekorasi metode ini dengan `add_to_class` dengan kelas `A` sebagai argumennya. Dengan cara ini, metode tersebut dapat mengakses variabel anggota dari `A` seperti yang diharapkan seolah-olah metode tersebut adalah bagian dari definisi `A`. Mari kita lihat apa yang terjadi ketika kita memanggilnya untuk instance `a`.
 
-Next we define the method `do` as we normally would, but not in class `A`'s scope. Instead, we decorate this method by `add_to_class` with class `A` as its argument. In doing so, the method is able to access the member variables of `A` just as we would expect had it been included as part of `A`'s definition. Let's see what happens when we invoke it for the instance `a`.
 
 ```{.python .input}
 %%tab all
