@@ -38,7 +38,7 @@
 - [x] ./chapter_linear-networks/oo-design.md
 - [x] ./chapter_linear-networks/linear-regression-scratch.md
 - [x] ./chapter_linear-networks/linear-regression-concise.md
-- [ ] ./chapter_linear-networks/weight-decay.md
+- [x] ./chapter_linear-networks/weight-decay.md
 
 # 4 - chapter_linear-classification
 
