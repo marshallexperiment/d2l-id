@@ -3,48 +3,48 @@
 tab.interact_select(['mxnet', 'pytorch', 'tensorflow', 'jax'])
 ```
 
-# Weight Decay
+# Regularisasi Bobot (Weight Decay)
 :label:`sec_weight_decay`
 
-Now that we have characterized the problem of overfitting,
-we can introduce our first *regularization* technique.
-Recall that we can always mitigate overfitting
-by collecting more training data.
-However, that can be costly, time consuming,
-or entirely out of our control,
-making it impossible in the short run.
-For now, we can assume that we already have
-as much high-quality data as our resources permit
-and focus the tools at our disposal
-when the dataset is taken as a given.
+Setelah kita memahami permasalahan *overfitting*,
+kita bisa memperkenalkan teknik *regularisasi* pertama kita.
+Ingat bahwa kita selalu dapat mengurangi *overfitting*
+dengan mengumpulkan lebih banyak data pelatihan.
+Namun, hal itu bisa mahal, memakan waktu,
+atau bahkan di luar kendali kita,
+sehingga tidak mungkin dilakukan dalam waktu singkat.
+Untuk saat ini, kita bisa menganggap bahwa kita sudah memiliki
+data berkualitas tinggi sebanyak mungkin yang diizinkan oleh sumber daya kita
+dan fokus pada alat yang ada di tangan
+ketika dataset yang ada telah ditetapkan.
 
-Recall that in our polynomial regression example
+Ingat kembali bahwa dalam contoh regresi polinomial kita
 (:numref:`subsec_polynomial-curve-fitting`)
-we could limit our model's capacity
-by tweaking the degree
-of the fitted polynomial.
-Indeed, limiting the number of features
-is a popular technique for mitigating overfitting.
-However, simply tossing aside features
-can be too blunt an instrument.
-Sticking with the polynomial regression
-example, consider what might happen
-with high-dimensional input.
-The natural extensions of polynomials
-to multivariate data are called *monomials*,
-which are simply products of powers of variables.
-The degree of a monomial is the sum of the powers.
-For example, $x_1^2 x_2$, and $x_3 x_5^2$
-are both monomials of degree 3.
+kita dapat membatasi kapasitas model kita
+dengan menyesuaikan derajat polinomial yang dipasang.
+Memang, membatasi jumlah fitur
+adalah teknik populer untuk mengurangi *overfitting*.
+Namun, membuang fitur begitu saja
+bisa menjadi instrumen yang terlalu kasar.
+Mengikuti contoh regresi polinomial,
+pertimbangkan apa yang mungkin terjadi
+pada masukan berdimensi tinggi.
+Perluasan alami dari polinomial
+ke data multivariat disebut *monomial*,
+yang merupakan produk dari pangkat variabel.
+Derajat monomial adalah jumlah pangkatnya.
+Sebagai contoh, $x_1^2 x_2$, dan $x_3 x_5^2$
+keduanya adalah monomial berderajat 3.
 
-Note that the number of terms with degree $d$
-blows up rapidly as $d$ grows larger.
-Given $k$ variables, the number of monomials
-of degree $d$ is ${k - 1 + d} \choose {k - 1}$.
-Even small changes in degree, say from $2$ to $3$,
-dramatically increase the complexity of our model.
-Thus we often need a more fine-grained tool
-for adjusting function complexity.
+Perlu diperhatikan bahwa jumlah suku dengan derajat $d$
+akan meningkat drastis seiring bertambahnya $d$.
+Diberikan $k$ variabel, jumlah monomial
+dengan derajat $d$ adalah ${k - 1 + d} \choose {k - 1}$.
+Bahkan perubahan kecil dalam derajat, misalnya dari $2$ ke $3$,
+dapat secara dramatis meningkatkan kompleksitas model kita.
+Oleh karena itu, kita sering membutuhkan alat yang lebih halus
+untuk menyesuaikan kompleksitas fungsi.
+
 
 ```{.python .input}
 %%tab mxnet
@@ -79,163 +79,162 @@ from jax import numpy as jnp
 import optax
 ```
 
-## Norms and Weight Decay
+## Norma dan Regularisasi Bobot (Weight Decay)
 
-(**Rather than directly manipulating the number of parameters,
-*weight decay*, operates by restricting the values 
-that the parameters can take.**)
-More commonly called $\ell_2$ regularization
-outside of deep learning circles
-when optimized by minibatch stochastic gradient descent,
-weight decay might be the most widely used technique
-for regularizing parametric machine learning models.
-The technique is motivated by the basic intuition
-that among all functions $f$,
-the function $f = 0$
-(assigning the value $0$ to all inputs)
-is in some sense the *simplest*,
-and that we can measure the complexity
-of a function by the distance of its parameters from zero.
-But how precisely should we measure
-the distance between a function and zero?
-There is no single right answer.
-In fact, entire branches of mathematics,
-including parts of functional analysis
-and the theory of Banach spaces,
-are devoted to addressing such issues.
+(**Daripada langsung memanipulasi jumlah parameter,
+*regularisasi bobot* (weight decay) bekerja dengan membatasi nilai
+yang bisa diambil oleh parameter-parameter.**)
+Di luar lingkup deep learning,
+teknik ini lebih dikenal sebagai regularisasi $\ell_2$
+dan ketika dioptimalkan menggunakan *stochastic gradient descent* minibatch,
+regularisasi bobot mungkin merupakan teknik paling umum
+untuk mengatur model pembelajaran mesin parametrik.
+Motivasi di balik teknik ini didasari oleh intuisi dasar
+bahwa di antara semua fungsi $f$,
+fungsi $f = 0$ (yang memberikan nilai $0$ untuk semua input)
+dalam beberapa hal adalah fungsi yang *paling sederhana*,
+dan kita bisa mengukur kompleksitas
+dari suatu fungsi dengan jarak parameternya dari nol.
+Namun, bagaimana tepatnya kita harus mengukur
+jarak antara suatu fungsi dengan nol?
+Tidak ada satu jawaban yang benar.
+Faktanya, cabang matematika tertentu,
+seperti analisis fungsional
+dan teori ruang Banach,
+didedikasikan untuk membahas pertanyaan-pertanyaan seperti ini.
 
-One simple interpretation might be
-to measure the complexity of a linear function
+Salah satu interpretasi sederhana
+adalah mengukur kompleksitas fungsi linear
 $f(\mathbf{x}) = \mathbf{w}^\top \mathbf{x}$
-by some norm of its weight vector, e.g., $\| \mathbf{w} \|^2$.
-Recall that we introduced the $\ell_2$ norm and $\ell_1$ norm,
-which are special cases of the more general $\ell_p$ norm,
-in :numref:`subsec_lin-algebra-norms`.
-The most common method for ensuring a small weight vector
-is to add its norm as a penalty term
-to the problem of minimizing the loss.
-Thus we replace our original objective,
-*minimizing the prediction loss on the training labels*,
-with new objective,
-*minimizing the sum of the prediction loss and the penalty term*.
-Now, if our weight vector grows too large,
-our learning algorithm might focus
-on minimizing the weight norm $\| \mathbf{w} \|^2$
-rather than minimizing the training error.
-That is exactly what we want.
-To illustrate things in code,
-we revive our previous example
-from :numref:`sec_linear_regression` for linear regression.
-There, our loss was given by
+dengan norma vektor bobotnya, misalnya $\| \mathbf{w} \|^2$.
+Ingat bahwa kita telah memperkenalkan norma $\ell_2$ dan norma $\ell_1$,
+yang merupakan kasus khusus dari norma $\ell_p$ yang lebih umum,
+di :numref:`subsec_lin-algebra-norms`.
+Metode paling umum untuk memastikan vektor bobot yang kecil
+adalah dengan menambahkan normanya sebagai istilah penalti
+ke dalam masalah minimisasi loss.
+Dengan demikian, kita mengganti tujuan awal kita,
+*mengurangi loss prediksi pada label pelatihan*,
+dengan tujuan baru,
+*mengurangi jumlah loss prediksi dan istilah penalti*.
+Sekarang, jika vektor bobot kita terlalu besar,
+algoritma pembelajaran kita mungkin lebih berfokus
+pada meminimalkan norma bobot $\| \mathbf{w} \|^2$
+daripada meminimalkan kesalahan pelatihan.
+Itulah yang kita inginkan.
+Untuk menggambarkan hal ini dalam kode,
+kita menghidupkan kembali contoh sebelumnya
+dari :numref:`sec_linear_regression` untuk regresi linear.
+Di sana, loss kita diberikan oleh
 
 $$L(\mathbf{w}, b) = \frac{1}{n}\sum_{i=1}^n \frac{1}{2}\left(\mathbf{w}^\top \mathbf{x}^{(i)} + b - y^{(i)}\right)^2.$$
 
-Recall that $\mathbf{x}^{(i)}$ are the features,
-$y^{(i)}$ is the label for any data example $i$, and $(\mathbf{w}, b)$
-are the weight and bias parameters, respectively.
-To penalize the size of the weight vector,
-we must somehow add $\| \mathbf{w} \|^2$ to the loss function,
-but how should the model trade off the
-standard loss for this new additive penalty?
-In practice, we characterize this trade-off
-via the *regularization constant* $\lambda$,
-a nonnegative hyperparameter
-that we fit using validation data:
+Ingat bahwa $\mathbf{x}^{(i)}$ adalah fitur,
+$y^{(i)}$ adalah label untuk contoh data $i$, dan $(\mathbf{w}, b)$
+masing-masing adalah parameter bobot dan bias.
+Untuk memberikan penalti pada ukuran vektor bobot,
+kita harus menambahkan $\| \mathbf{w} \|^2$ ke fungsi loss,
+tetapi bagaimana model seharusnya menyeimbangkan
+antara loss standar dengan penalti tambahan ini?
+Dalam praktiknya, kita menyesuaikan keseimbangan ini
+melalui *konstanta regularisasi* $\lambda$,
+sebuah hyperparameter non-negatif
+yang kita sesuaikan menggunakan data validasi:
 
 $$L(\mathbf{w}, b) + \frac{\lambda}{2} \|\mathbf{w}\|^2.$$
 
+Untuk $\lambda = 0$, kita mendapatkan kembali fungsi loss asli.
+Untuk $\lambda > 0$, kita membatasi ukuran $\| \mathbf{w} \|$.
+Kita membagi dengan $2$ sebagai konvensi:
+ketika kita mengambil turunan dari fungsi kuadrat,
+$2$ dan $1/2$ saling membatalkan, memastikan bahwa ekspresi
+untuk pembaruan terlihat rapi dan sederhana.
+Pembaca yang cermat mungkin bertanya mengapa kita menggunakan norma kuadrat
+dan bukan norma standar (yaitu, jarak Euclidean).
+Kita melakukannya demi kemudahan komputasi.
+Dengan mengkuadratkan norma $\ell_2$, kita menghilangkan akar kuadrat,
+sehingga tersisa jumlah kuadrat dari
+masing-masing komponen vektor bobot.
+Ini membuat turunan dari penalti mudah dihitung:
+jumlah turunan sama dengan turunan dari jumlah.
 
-For $\lambda = 0$, we recover our original loss function.
-For $\lambda > 0$, we restrict the size of $\| \mathbf{w} \|$.
-We divide by $2$ by convention:
-when we take the derivative of a quadratic function,
-the $2$ and $1/2$ cancel out, ensuring that the expression
-for the update looks nice and simple.
-The astute reader might wonder why we work with the squared
-norm and not the standard norm (i.e., the Euclidean distance).
-We do this for computational convenience.
-By squaring the $\ell_2$ norm, we remove the square root,
-leaving the sum of squares of
-each component of the weight vector.
-This makes the derivative of the penalty easy to compute: 
-the sum of derivatives equals the derivative of the sum.
+Lebih lanjut, Anda mungkin bertanya mengapa kita menggunakan norma $\ell_2$
+daripada, misalnya, norma $\ell_1$.
+Faktanya, pilihan lain juga valid dan
+populer di bidang statistik.
+Sementara model linear yang diregularisasi $\ell_2$
+mewakili algoritma *ridge regression* klasik,
+regresi linear yang diregularisasi $\ell_1$
+adalah metode fundamental dalam statistik,
+dikenal sebagai *lasso regression*.
+Salah satu alasan menggunakan norma $\ell_2$
+adalah karena ia memberikan penalti besar
+pada komponen besar dari vektor bobot.
+Ini mendorong algoritma pembelajaran kita
+untuk memilih model yang mendistribusikan bobot secara merata
+di antara banyak fitur.
+Dalam praktiknya, hal ini dapat membuat model lebih tahan
+terhadap kesalahan pengukuran dalam satu variabel.
+Sebaliknya, penalti $\ell_1$ menghasilkan model
+yang memusatkan bobot pada sejumlah kecil fitur
+dengan menyetel bobot lainnya ke nol.
+Ini memberi kita metode efektif untuk *seleksi fitur*,
+yang mungkin diinginkan karena alasan lain.
+Misalnya, jika model kita hanya bergantung pada beberapa fitur,
+kita mungkin tidak perlu mengumpulkan, menyimpan, atau mentransmisikan data
+untuk fitur lainnya (yang dibuang).
 
-
-Moreover, you might ask why we work with the $\ell_2$ norm
-in the first place and not, say, the $\ell_1$ norm.
-In fact, other choices are valid and
-popular throughout statistics.
-While $\ell_2$-regularized linear models constitute
-the classic *ridge regression* algorithm,
-$\ell_1$-regularized linear regression
-is a similarly fundamental method in statistics, 
-popularly known as *lasso regression*.
-One reason to work with the $\ell_2$ norm
-is that it places an outsize penalty
-on large components of the weight vector.
-This biases our learning algorithm
-towards models that distribute weight evenly
-across a larger number of features.
-In practice, this might make them more robust
-to measurement error in a single variable.
-By contrast, $\ell_1$ penalties lead to models
-that concentrate weights on a small set of features
-by clearing the other weights to zero.
-This gives us an effective method for *feature selection*,
-which may be desirable for other reasons.
-For example, if our model only relies on a few features,
-then we may not need to collect, store, or transmit data
-for the other (dropped) features. 
-
-Using the same notation in :eqref:`eq_linreg_batch_update`,
-minibatch stochastic gradient descent updates
-for $\ell_2$-regularized regression as follows:
+Dengan notasi yang sama pada :eqref:`eq_linreg_batch_update`,
+pembaruan *stochastic gradient descent* minibatch
+untuk regresi yang diregularisasi $\ell_2$ adalah sebagai berikut:
 
 $$\begin{aligned}
 \mathbf{w} & \leftarrow \left(1- \eta\lambda \right) \mathbf{w} - \frac{\eta}{|\mathcal{B}|} \sum_{i \in \mathcal{B}} \mathbf{x}^{(i)} \left(\mathbf{w}^\top \mathbf{x}^{(i)} + b - y^{(i)}\right).
 \end{aligned}$$
 
-As before, we update $\mathbf{w}$ based on the amount
-by which our estimate differs from the observation.
-However, we also shrink the size of $\mathbf{w}$ towards zero.
-That is why the method is sometimes called "weight decay":
-given the penalty term alone,
-our optimization algorithm *decays*
-the weight at each step of training.
-In contrast to feature selection,
-weight decay offers us a mechanism for continuously adjusting the complexity of a function.
-Smaller values of $\lambda$ correspond
-to less constrained $\mathbf{w}$,
-whereas larger values of $\lambda$
-constrain $\mathbf{w}$ more considerably.
-Whether we include a corresponding bias penalty $b^2$ 
-can vary across implementations, 
-and may vary across layers of a neural network.
-Often, we do not regularize the bias term.
-Besides,
-although $\ell_2$ regularization may not be equivalent to weight decay for other optimization algorithms,
-the idea of regularization through
-shrinking the size of weights
-still holds true.
+Seperti sebelumnya, kita memperbarui $\mathbf{w}$ berdasarkan seberapa jauh
+perkiraan kita dari pengamatan.
+Namun, kita juga mengurangi ukuran $\mathbf{w}$ menuju nol.
+Itulah mengapa metode ini kadang disebut "weight decay":
+dengan hanya mempertimbangkan istilah penalti,
+algoritma optimisasi kita *menurunkan*
+bobot di setiap langkah pelatihan.
+Berbeda dengan seleksi fitur,
+weight decay menawarkan mekanisme untuk terus menyesuaikan kompleksitas fungsi.
+Nilai $\lambda$ yang lebih kecil menunjukkan
+$\mathbf{w}$ yang lebih longgar,
+sedangkan nilai $\lambda$ yang lebih besar
+lebih membatasi $\mathbf{w}$.
+Apakah kita menyertakan penalti bias $b^2$
+dapat bervariasi antar implementasi,
+dan mungkin berbeda antar lapisan dalam jaringan neural.
+Seringkali, kita tidak melakukan regularisasi pada parameter bias.
+Selain itu,
+meskipun regularisasi $\ell_2$ mungkin tidak setara dengan weight decay pada algoritma optimisasi lainnya,
+gagasan regularisasi melalui
+pengecilan ukuran bobot
+tetap berlaku.
 
-## High-Dimensional Linear Regression
 
-We can illustrate the benefits of weight decay 
-through a simple synthetic example.
+## Regresi Linear Berdimensi Tinggi
 
-First, we [**generate some data as before**]:
+Kita bisa menggambarkan manfaat dari regularisasi bobot
+melalui contoh sintetik sederhana.
 
-(**$$y = 0.05 + \sum_{i = 1}^d 0.01 x_i + \epsilon \textrm{ where }
+Pertama, kita [**menghasilkan beberapa data seperti sebelumnya**]:
+
+(**$$y = 0.05 + \sum_{i = 1}^d 0.01 x_i + \epsilon \textrm{ di mana }
 \epsilon \sim \mathcal{N}(0, 0.01^2).$$**)
 
-In this synthetic dataset, our label is given 
-by an underlying linear function of our inputs,
-corrupted by Gaussian noise 
-with zero mean and standard deviation 0.01.
-For illustrative purposes, 
-we can make the effects of overfitting pronounced,
-by increasing the dimensionality of our problem to $d = 200$
-and working with a small training set with only 20 examples.
+Dalam dataset sintetik ini, label kita ditentukan
+oleh fungsi linear dasar dari input kita,
+yang terganggu oleh noise Gaussian
+dengan mean nol dan deviasi standar 0.01.
+Untuk tujuan ilustratif,
+kita dapat membuat efek dari overfitting lebih jelas
+dengan meningkatkan dimensi masalah kita menjadi $d = 200$
+dan menggunakan set pelatihan kecil dengan hanya 20 contoh data.
+
 
 ```{.python .input}
 %%tab all
@@ -260,18 +259,18 @@ class Data(d2l.DataModule):
         return self.get_tensorloader([self.X, self.y], train, i)
 ```
 
-## Implementation from Scratch
+## Implementasi dari Awal
 
-Now, let's try implementing weight decay from scratch.
-Since minibatch stochastic gradient descent
-is our optimizer,
-we just need to add the squared $\ell_2$ penalty
-to the original loss function.
+Sekarang, mari kita coba mengimplementasikan regularisasi bobot dari awal.
+Karena *stochastic gradient descent* minibatch adalah optimisasi kita,
+kita hanya perlu menambahkan penalti kuadrat $\ell_2$
+ke fungsi loss yang asli.
 
-### (**Defining $\ell_2$ Norm Penalty**)
+### (**Mendefinisikan Penalti Norma $\ell_2$**)
 
-Perhaps the most convenient way of implementing this penalty
-is to square all terms in place and sum them.
+Mungkin cara yang paling mudah untuk mengimplementasikan penalti ini
+adalah dengan mengkuadratkan semua elemen pada tempatnya dan menjumlahkannya.
+
 
 ```{.python .input}
 %%tab all
@@ -279,11 +278,13 @@ def l2_penalty(w):
     return d2l.reduce_sum(w**2) / 2
 ```
 
-### Defining the Model
+### Mendefinisikan Model
 
-In the final model,
-the linear regression and the squared loss have not changed since :numref:`sec_linear_scratch`,
-so we will just define a subclass of `d2l.LinearRegressionScratch`. The only change here is that our loss now includes the penalty term.
+Pada model akhir,
+regresi linear dan loss kuadrat tidak berubah sejak :numref:`sec_linear_scratch`,
+jadi kita hanya akan mendefinisikan sebuah subclass dari `d2l.LinearRegressionScratch`.
+Perubahan satu-satunya di sini adalah bahwa loss kita sekarang mencakup istilah penalti.
+
 
 ```{.python .input}
 %%tab pytorch, mxnet, tensorflow
@@ -307,7 +308,7 @@ class WeightDecayScratch(d2l.LinearRegressionScratch):
                 self.lambd * l2_penalty(params['w']))
 ```
 
-The following code fits our model on the training set with 20 examples and evaluates it on the validation set with 100 examples.
+Kode berikut menyesuaikan model kita pada set pelatihan dengan 20 contoh dan mengevaluasinya pada set validasi dengan 100 contoh.
 
 ```{.python .input}
 %%tab all
@@ -325,77 +326,79 @@ def train_scratch(lambd):
               float(l2_penalty(trainer.state.params['w'])))
 ```
 
-### [**Training without Regularization**]
+### [**Pelatihan tanpa Regularisasi**]
 
-We now run this code with `lambd = 0`,
-disabling weight decay.
-Note that we overfit badly,
-decreasing the training error but not the
-validation error---a textbook case of overfitting.
+Sekarang kita menjalankan kode ini dengan `lambd = 0`,
+yang menonaktifkan regularisasi bobot.
+Perhatikan bahwa kita mengalami overfitting yang parah,
+di mana error pada pelatihan menurun tetapi tidak pada
+error validasi—ini adalah contoh textbook dari overfitting.
+
 
 ```{.python .input}
 %%tab all
 train_scratch(0)
 ```
 
-### [**Using Weight Decay**]
+### [**Menggunakan Regularisasi Bobot**]
 
-Below, we run with substantial weight decay.
-Note that the training error increases
-but the validation error decreases.
-This is precisely the effect
-we expect from regularization.
+Di bawah ini, kita menjalankan pelatihan dengan regularisasi bobot yang cukup besar.
+Perhatikan bahwa error pada pelatihan meningkat
+tetapi error pada validasi menurun.
+Inilah efek yang kita harapkan dari regularisasi.
+
 
 ```{.python .input}
 %%tab all
 train_scratch(3)
 ```
 
-## [**Concise Implementation**]
+## [**Implementasi Singkat**]
 
-Because weight decay is ubiquitous
-in neural network optimization,
-the deep learning framework makes it especially convenient,
-integrating weight decay into the optimization algorithm itself
-for easy use in combination with any loss function.
-Moreover, this integration serves a computational benefit,
-allowing implementation tricks to add weight decay to the algorithm,
-without any additional computational overhead.
-Since the weight decay portion of the update
-depends only on the current value of each parameter,
-the optimizer must touch each parameter once anyway.
+Karena regularisasi bobot sangat umum
+dalam optimisasi jaringan saraf,
+kerangka kerja deep learning membuatnya sangat nyaman,
+dengan mengintegrasikan regularisasi bobot langsung ke dalam algoritma optimisasi itu sendiri,
+sehingga mudah digunakan dengan berbagai fungsi loss.
+Selain itu, integrasi ini memiliki keuntungan komputasional,
+memungkinkan penerapan trik implementasi untuk menambahkan regularisasi bobot ke algoritma
+tanpa overhead komputasional tambahan.
+Karena bagian pembaruan regularisasi bobot
+hanya bergantung pada nilai parameter saat ini,
+optimisasi harus mengakses setiap parameter sekali saja.
 
 :begin_tab:`mxnet`
-Below, we specify
-the weight decay hyperparameter directly
-through `wd` when instantiating our `Trainer`.
-By default, Gluon decays both
-weights and biases simultaneously.
-Note that the hyperparameter `wd`
-will be multiplied by `wd_mult`
-when updating model parameters.
-Thus, if we set `wd_mult` to zero,
-the bias parameter $b$ will not decay.
+Di bawah ini, kita menentukan
+hiperparameter regularisasi bobot secara langsung
+melalui `wd` saat menginstansiasi `Trainer`.
+Secara default, Gluon melakukan regularisasi
+baik pada bobot maupun bias secara bersamaan.
+Perhatikan bahwa hiperparameter `wd`
+akan dikalikan dengan `wd_mult`
+saat memperbarui parameter model.
+Jadi, jika kita mengatur `wd_mult` ke nol,
+parameter bias $b$ tidak akan mengalami regularisasi.
 :end_tab:
 
 :begin_tab:`pytorch`
-Below, we specify
-the weight decay hyperparameter directly
-through `weight_decay` when instantiating our optimizer.
-By default, PyTorch decays both
-weights and biases simultaneously, but
-we can configure the optimizer to handle different parameters
-according to different policies.
-Here, we only set `weight_decay` for
-the weights (the `net.weight` parameters), hence the 
-bias (the `net.bias` parameter) will not decay.
+Di bawah ini, kita menentukan
+hiperparameter regularisasi bobot secara langsung
+melalui `weight_decay` saat menginstansiasi optimisasi.
+Secara default, PyTorch melakukan regularisasi
+baik pada bobot maupun bias secara bersamaan, namun
+kita dapat mengkonfigurasi optimisasi untuk menangani parameter berbeda
+dengan kebijakan yang berbeda.
+Di sini, kita hanya menetapkan `weight_decay`
+untuk bobot (`net.weight`), sehingga
+bias (`net.bias`) tidak akan mengalami regularisasi.
 :end_tab:
 
 :begin_tab:`tensorflow`
-Below, we create an $\ell_2$ regularizer with
-the weight decay hyperparameter `wd` and apply it to the layer's weights
-through the `kernel_regularizer` argument.
+Di bawah ini, kita membuat regularizer $\ell_2$ dengan
+hiperparameter regularisasi bobot `wd` dan menerapkannya pada bobot lapisan
+melalui argumen `kernel_regularizer`.
 :end_tab:
+
 
 ```{.python .input}
 %%tab mxnet
@@ -453,13 +456,13 @@ class WeightDecay(d2l.LinearRegression):
                            optax.sgd(self.lr))
 ```
 
-[**The plot looks similar to that when
-we implemented weight decay from scratch**].
-However, this version runs faster
-and is easier to implement,
-benefits that will become more
-pronounced as you address larger problems
-and this work becomes more routine.
+[**Plot ini terlihat mirip dengan plot ketika
+kita mengimplementasikan regularisasi bobot dari awal**].
+Namun, versi ini berjalan lebih cepat
+dan lebih mudah diimplementasikan,
+keuntungan yang akan menjadi lebih
+nyata saat Anda mengatasi masalah yang lebih besar
+dan pekerjaan ini menjadi lebih rutin.
 
 ```{.python .input}
 %%tab all
@@ -468,52 +471,51 @@ model.board.yscale='log'
 trainer.fit(model, data)
 
 if tab.selected('jax'):
-    print('L2 norm of w:', float(l2_penalty(model.get_w_b(trainer.state)[0])))
+    print('Norma L2 dari w:', float(l2_penalty(model.get_w_b(trainer.state)[0])))
 if tab.selected('pytorch', 'mxnet', 'tensorflow'):
-    print('L2 norm of w:', float(l2_penalty(model.get_w_b()[0])))
+    print('Norma L2 dari w:', float(l2_penalty(model.get_w_b()[0])))
 ```
 
-So far, we have touched upon one notion of
-what constitutes a simple linear function.
-However, even for simple nonlinear functions, the situation can be much more complex. To see this, the concept of [reproducing kernel Hilbert space (RKHS)](https://en.wikipedia.org/wiki/Reproducing_kernel_Hilbert_space)
-allows one to apply tools introduced
-for linear functions in a nonlinear context.
-Unfortunately, RKHS-based algorithms
-tend to scale poorly to large, high-dimensional data.
-In this book we will often adopt the common heuristic
-whereby weight decay is applied
-to all layers of a deep network.
+Sejauh ini, kita telah membahas satu konsep tentang
+apa yang dianggap sebagai fungsi linear yang sederhana.
+Namun, bahkan untuk fungsi non-linear sederhana, situasinya bisa jauh lebih kompleks. Untuk melihat hal ini, konsep [ruang Hilbert kernel reproduksi (RKHS)](https://en.wikipedia.org/wiki/Reproducing_kernel_Hilbert_space)
+memungkinkan penerapan alat-alat yang diperkenalkan
+untuk fungsi linear dalam konteks non-linear.
+Sayangnya, algoritme berbasis RKHS
+cenderung tidak efisien untuk data besar yang berdimensi tinggi.
+Dalam buku ini, kita akan sering mengadopsi heuristik umum
+di mana weight decay diterapkan
+ke semua lapisan jaringan dalam.
 
-## Summary
+## Ringkasan
 
-Regularization is a common method for dealing with overfitting. Classical regularization techniques add a penalty term to the loss function (when training) to reduce the complexity of the learned model.
-One particular choice for keeping the model simple is using an $\ell_2$ penalty. This leads to weight decay in the update steps of the minibatch stochastic gradient descent algorithm.
-In practice, the weight decay functionality is provided in optimizers from deep learning frameworks.
-Different sets of parameters can have different update behaviors within the same training loop.
+Regularisasi adalah metode umum untuk menangani overfitting. Teknik regularisasi klasik menambahkan istilah penalti pada fungsi loss (saat pelatihan) untuk mengurangi kompleksitas model yang dipelajari.
+Salah satu pilihan khusus untuk menjaga model tetap sederhana adalah dengan menggunakan penalti $\ell_2$. Ini menghasilkan weight decay pada langkah pembaruan dari algoritme *stochastic gradient descent* minibatch.
+Dalam praktiknya, fungsi weight decay disediakan dalam optimizer dari framework pembelajaran mendalam.
+Set parameter yang berbeda dapat memiliki perilaku pembaruan yang berbeda dalam loop pelatihan yang sama.
 
 
+## Latihan
 
-## Exercises
-
-1. Experiment with the value of $\lambda$ in the estimation problem in this section. Plot training and validation accuracy as a function of $\lambda$. What do you observe?
-1. Use a validation set to find the optimal value of $\lambda$. Is it really the optimal value? Does this matter?
-1. What would the update equations look like if instead of $\|\mathbf{w}\|^2$ we used $\sum_i |w_i|$ as our penalty of choice ($\ell_1$ regularization)?
-1. We know that $\|\mathbf{w}\|^2 = \mathbf{w}^\top \mathbf{w}$. Can you find a similar equation for matrices (see the Frobenius norm in :numref:`subsec_lin-algebra-norms`)?
-1. Review the relationship between training error and generalization error. In addition to weight decay, increased training, and the use of a model of suitable complexity, what other ways might help us deal with overfitting?
-1. In Bayesian statistics we use the product of prior and likelihood to arrive at a posterior via $P(w \mid x) \propto P(x \mid w) P(w)$. How can you identify $P(w)$ with regularization?
+1. Bereksperimenlah dengan nilai $\lambda$ dalam masalah estimasi di bagian ini. Buatlah plot akurasi pelatihan dan validasi sebagai fungsi dari $\lambda$. Apa yang Anda amati?
+2. Gunakan set validasi untuk menemukan nilai optimal dari $\lambda$. Apakah ini benar-benar nilai optimal? Apakah ini penting?
+3. Bagaimana bentuk persamaan pembaruan jika, alih-alih $\|\mathbf{w}\|^2$, kita menggunakan $\sum_i |w_i|$ sebagai penalti yang dipilih (regularisasi $\ell_1$)?
+4. Kita tahu bahwa $\|\mathbf{w}\|^2 = \mathbf{w}^\top \mathbf{w}$. Bisakah Anda menemukan persamaan serupa untuk matriks (lihat norma Frobenius di :numref:`subsec_lin-algebra-norms`)?
+5. Tinjau hubungan antara error pelatihan dan error generalisasi. Selain weight decay, pelatihan yang lebih lama, dan penggunaan model dengan kompleksitas yang sesuai, metode apa lagi yang dapat membantu kita menangani overfitting?
+6. Dalam statistik Bayesian, kita menggunakan produk prior dan likelihood untuk mendapatkan posterior melalui $P(w \mid x) \propto P(x \mid w) P(w)$. Bagaimana Anda dapat mengidentifikasi $P(w)$ dengan regularisasi?
 
 :begin_tab:`mxnet`
-[Discussions](https://discuss.d2l.ai/t/98)
+[Diskusi](https://discuss.d2l.ai/t/98)
 :end_tab:
 
 :begin_tab:`pytorch`
-[Discussions](https://discuss.d2l.ai/t/99)
+[Diskusi](https://discuss.d2l.ai/t/99)
 :end_tab:
 
 :begin_tab:`tensorflow`
-[Discussions](https://discuss.d2l.ai/t/236)
+[Diskusi](https://discuss.d2l.ai/t/236)
 :end_tab:
 
 :begin_tab:`jax`
-[Discussions](https://discuss.d2l.ai/t/17979)
+[Diskusi](https://discuss.d2l.ai/t/17979)
 :end_tab:
