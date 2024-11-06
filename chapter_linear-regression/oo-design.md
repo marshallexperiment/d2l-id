@@ -114,21 +114,22 @@ def do(self):
 a.do()
 ```
 
-The second one is a utility class that saves all arguments in a class's `__init__` method as class attributes. This allows us to extend constructor call signatures implicitly without additional code.
+Yang kedua adalah kelas utilitas yang menyimpan semua argumen dalam metode `__init__` suatu kelas sebagai atribut kelas. 
+Ini memungkinkan kita untuk memperluas tanda tangan pemanggilan konstruktor secara implisit tanpa kode tambahan.
 
 ```{.python .input}
 %%tab all
 class HyperParameters:  #@save
-    """The base class of hyperparameters."""
+    """Kelas dasar untuk hyperparameter."""
     def save_hyperparameters(self, ignore=[]):
         raise NotImplemented
 ```
 
-We defer its implementation into :numref:`sec_utils`. To use it, we define our class that inherits from `HyperParameters` and calls `save_hyperparameters` in the `__init__` method.
+Kita menunda implementasinya hingga :numref:`sec_utils`. Untuk menggunakannya, kita mendefinisikan kelas kita yang mewarisi `HyperParameters` dan memanggil `save_hyperparameters` di dalam metode `__init__`.
 
 ```{.python .input}
 %%tab all
-# Call the fully implemented HyperParameters class saved in d2l
+# Memanggil kelas HyperParameters yang telah diimplementasikan sepenuhnya dan disimpan di d2l
 class B(d2l.HyperParameters):
     def __init__(self, a, b, c):
         self.save_hyperparameters(ignore=['c'])
@@ -138,14 +139,15 @@ class B(d2l.HyperParameters):
 b = B(a=1, b=2, c=3)
 ```
 
-The final utility allows us to plot experiment progress interactively while it is going on. In deference to the much more powerful (and complex) [TensorBoard](https://www.tensorflow.org/tensorboard) we name it `ProgressBoard`. The  implementation is deferred to :numref:`sec_utils`. For now, let's simply see it in action.
+Utilitas terakhir memungkinkan kita untuk memplot kemajuan eksperimen secara interaktif saat eksperimen berlangsung. Sebagai penghormatan terhadap [TensorBoard](https://www.tensorflow.org/tensorboard) yang jauh lebih kuat (dan kompleks), kita menamakannya `ProgressBoard`. Implementasinya ditunda hingga :numref:`sec_utils`. Untuk sekarang, mari kita lihat langsung penggunaannya.
 
-The `draw` method plots a point `(x, y)` in the figure, with `label` specified in the legend. The optional `every_n` smooths the line by only showing $1/n$ points in the figure. Their values are averaged from the $n$ neighbor points in the original figure.
+Metode `draw` memplot titik `(x, y)` dalam gambar, dengan `label` yang ditentukan dalam legenda. Parameter opsional `every_n` memperhalus garis dengan hanya menampilkan $1/n$ titik dalam gambar. 
+Nilai-nilai ini adalah rata-rata dari $n$ titik tetangga di gambar asli.
 
 ```{.python .input}
 %%tab all
 class ProgressBoard(d2l.HyperParameters):  #@save
-    """The board that plots data points in animation."""
+    """Papan yang memplot titik data secara animasi."""
     def __init__(self, xlabel=None, ylabel=None, xlim=None,
                  ylim=None, xscale='linear', yscale='linear',
                  ls=['-', '--', '-.', ':'], colors=['C0', 'C1', 'C2', 'C3'],
@@ -156,7 +158,7 @@ class ProgressBoard(d2l.HyperParameters):  #@save
         raise NotImplemented
 ```
 
-In the following example, we draw `sin` and `cos` with a different smoothness. If you run this code block, you will see the lines grow in animation.
+Dalam contoh berikut, kita memplot `sin` dan `cos` dengan tingkat kehalusan yang berbeda. Jika Anda menjalankan blok kode ini, Anda akan melihat garis-garis tersebut tumbuh secara animatif.
 
 ```{.python .input}
 %%tab all
@@ -166,23 +168,24 @@ for x in np.arange(0, 10, 0.1):
     board.draw(x, np.cos(x), 'cos', every_n=10)
 ```
 
-## Models
+## Model
 :label:`subsec_oo-design-models`
 
-The `Module` class is the base class of all models we will implement. At the very least we need three methods. The first, `__init__`, stores the learnable parameters, the `training_step` method accepts a data batch to return the loss value, and finally, `configure_optimizers` returns the optimization method, or a list of them, that is used to update the learnable parameters. Optionally we can define `validation_step` to report the evaluation measures.
-Sometimes we put the code for computing the output into a separate `forward` method to make it more reusable.
+Kelas `Module` adalah kelas dasar dari semua model yang akan kita implementasikan. Setidaknya kita membutuhkan tiga metode. Pertama, `__init__`, yang menyimpan parameter yang dapat dipelajari; metode `training_step` yang menerima satu batch data dan mengembalikan nilai kerugian; dan terakhir, `configure_optimizers` yang mengembalikan metode optimasi, atau daftar metode, yang digunakan untuk memperbarui parameter yang dapat dipelajari. Sebagai opsi, kita dapat mendefinisikan `validation_step` untuk melaporkan ukuran evaluasi.
+Terkadang, kita memisahkan kode untuk menghitung output ke dalam metode `forward` agar lebih mudah digunakan kembali.
 
 :begin_tab:`jax`
-With the introduction of [dataclasses](https://docs.python.org/3/library/dataclasses.html)
-in Python 3.7, classes decorated with `@dataclass` automatically add magic
-methods such as `__init__` and `__repr__`. The member variables are defined
-using type annotations. All Flax modules are Python 3.7 dataclasses.
+Dengan diperkenalkannya [dataclasses](https://docs.python.org/3/library/dataclasses.html)
+pada Python 3.7, kelas yang dihiasi dengan `@dataclass` secara otomatis menambahkan metode
+magis seperti `__init__` dan `__repr__`. Variabel anggota didefinisikan
+menggunakan anotasi tipe. Semua modul Flax adalah dataclass Python 3.7.
 :end_tab:
+
 
 ```{.python .input}
 %%tab pytorch
 class Module(d2l.nn_Module, d2l.HyperParameters):  #@save
-    """The base class of models."""
+    """Kelas dasar dari model-model."""
     def __init__(self, plot_train_per_epoch=2, plot_valid_per_epoch=1):
         super().__init__()
         self.save_hyperparameters()
@@ -192,12 +195,12 @@ class Module(d2l.nn_Module, d2l.HyperParameters):  #@save
         raise NotImplementedError
 
     def forward(self, X):
-        assert hasattr(self, 'net'), 'Neural network is defined'
+        assert hasattr(self, 'net'), 'Jaringan neural harus didefinisikan'
         return self.net(X)
 
     def plot(self, key, value, train):
-        """Plot a point in animation."""
-        assert hasattr(self, 'trainer'), 'Trainer is not inited'
+        """Memplot sebuah titik dalam animasi."""
+        assert hasattr(self, 'trainer'), 'Trainer belum diinisialisasi'
         self.board.xlabel = 'epoch'
         if train:
             x = self.trainer.train_batch_idx / \
@@ -228,7 +231,7 @@ class Module(d2l.nn_Module, d2l.HyperParameters):  #@save
 ```{.python .input}
 %%tab mxnet, tensorflow, jax
 class Module(d2l.nn_Module, d2l.HyperParameters):  #@save
-    """The base class of models."""
+    """Kelas dasar dari model-model."""
     if tab.selected('mxnet', 'tensorflow'):
         def __init__(self, plot_train_per_epoch=2, plot_valid_per_epoch=1):
             super().__init__()
@@ -238,10 +241,10 @@ class Module(d2l.nn_Module, d2l.HyperParameters):  #@save
             self.training = None
 
     if tab.selected('jax'):
-        # No need for save_hyperparam when using Python dataclass
+        # Tidak perlu menggunakan save_hyperparam saat memakai dataclass Python
         plot_train_per_epoch: int = field(default=2, init=False)
         plot_valid_per_epoch: int = field(default=1, init=False)
-        # Use default_factory to make sure new plots are generated on each run
+        # Menggunakan default_factory untuk memastikan plot baru dibuat setiap kali dijalankan
         board: ProgressBoard = field(default_factory=lambda: ProgressBoard(),
                                      init=False)
 
@@ -250,7 +253,7 @@ class Module(d2l.nn_Module, d2l.HyperParameters):  #@save
 
     if tab.selected('mxnet', 'tensorflow'):
         def forward(self, X):
-            assert hasattr(self, 'net'), 'Neural network is defined'
+            assert hasattr(self, 'net'), 'Jaringan neural harus didefinisikan'
             return self.net(X)
 
     if tab.selected('tensorflow'):
@@ -260,19 +263,19 @@ class Module(d2l.nn_Module, d2l.HyperParameters):  #@save
             return self.forward(X, *args)
 
     if tab.selected('jax'):
-        # JAX & Flax do not have a forward-method-like syntax. Flax uses setup
-        # and built-in __call__ magic methods for forward pass. Adding here
-        # for consistency
+        # JAX & Flax tidak memiliki sintaks metode forward seperti yang lain. Flax menggunakan setup
+        # dan metode magis __call__ bawaan untuk forward pass. Ditambahkan di sini
+        # untuk konsistensi
         def forward(self, X, *args, **kwargs):
-            assert hasattr(self, 'net'), 'Neural network is defined'
+            assert hasattr(self, 'net'), 'Jaringan neural harus didefinisikan'
             return self.net(X, *args, **kwargs)
 
         def __call__(self, X, *args, **kwargs):
             return self.forward(X, *args, **kwargs)
 
     def plot(self, key, value, train):
-        """Plot a point in animation."""
-        assert hasattr(self, 'trainer'), 'Trainer is not inited'
+        """Memplot titik dalam animasi."""
+        assert hasattr(self, 'trainer'), 'Trainer belum diinisialisasi'
         self.board.xlabel = 'epoch'
         if train:
             x = self.trainer.train_batch_idx / \
@@ -313,43 +316,44 @@ class Module(d2l.nn_Module, d2l.HyperParameters):  #@save
             self.plot('loss', l, train=False)
         
         def apply_init(self, dummy_input, key):
-            """To be defined later in :numref:`sec_lazy_init`"""
+            """Akan didefinisikan kemudian di :numref:`sec_lazy_init`"""
             raise NotImplementedError
 
     def configure_optimizers(self):
         raise NotImplementedError
+
 ```
 
 :begin_tab:`mxnet`
-You may notice that `Module` is a subclass of `nn.Block`, the base class of neural networks in Gluon.
-It provides convenient features for handling neural networks. For example, if we define a `forward` method, such as `forward(self, X)`, then for an instance `a` we can invoke this method by `a(X)`. This works since it calls the `forward` method in the built-in `__call__` method. You can find more details and examples about `nn.Block` in :numref:`sec_model_construction`.
+Anda mungkin memperhatikan bahwa `Module` adalah subclass dari `nn.Block`, kelas dasar jaringan neural di Gluon.
+Ini menyediakan fitur yang memudahkan penanganan jaringan neural. Misalnya, jika kita mendefinisikan metode `forward`, seperti `forward(self, X)`, maka untuk instance `a` kita dapat memanggil metode ini dengan `a(X)`. Ini berfungsi karena memanggil metode `forward` dalam metode `__call__` bawaan. Anda dapat menemukan lebih banyak detail dan contoh tentang `nn.Block` di :numref:`sec_model_construction`.
 :end_tab:
 
 :begin_tab:`pytorch`
-You may notice that `Module` is a subclass of `nn.Module`, the base class of neural networks in PyTorch.
-It provides convenient features for handling neural networks. For example, if we define a `forward` method, such as `forward(self, X)`, then for an instance `a` we can invoke this method by `a(X)`. This works since it calls the `forward` method in the built-in `__call__` method. You can find more details and examples about `nn.Module` in :numref:`sec_model_construction`.
+Anda mungkin memperhatikan bahwa `Module` adalah subclass dari `nn.Module`, kelas dasar jaringan neural di PyTorch.
+Ini menyediakan fitur yang memudahkan penanganan jaringan neural. Misalnya, jika kita mendefinisikan metode `forward`, seperti `forward(self, X)`, maka untuk instance `a` kita dapat memanggil metode ini dengan `a(X)`. Ini berfungsi karena memanggil metode `forward` dalam metode `__call__` bawaan. Anda dapat menemukan lebih banyak detail dan contoh tentang `nn.Module` di :numref:`sec_model_construction`.
 :end_tab:
 
 :begin_tab:`tensorflow`
-You may notice that `Module` is a subclass of `tf.keras.Model`, the base class of neural networks in TensorFlow.
-It provides convenient features for handling neural networks. For example, it invokes the `call` method in the built-in `__call__` method. Here we redirect `call` to the `forward` method, saving its arguments as a class attribute. We do this to make our code more similar to other framework implementations.
+Anda mungkin memperhatikan bahwa `Module` adalah subclass dari `tf.keras.Model`, kelas dasar jaringan neural di TensorFlow.
+Ini menyediakan fitur yang memudahkan penanganan jaringan neural. Misalnya, ia memanggil metode `call` dalam metode `__call__` bawaan. Di sini kita mengarahkan `call` ke metode `forward`, menyimpan argumennya sebagai atribut kelas. Kami melakukan ini untuk membuat kode kami lebih mirip dengan implementasi framework lainnya.
 :end_tab:
 
 :begin_tab:`jax`
-You may notice that `Module` is a subclass of `linen.Module`, the base class of neural networks in Flax.
-It provides convenient features for handling neural networks. For example, it handles the model parameters, provides the `nn.compact` decorator to simplify code, invokes the `__call__` method among other things.
-Here we also redirect `__call__` to the `forward` method. We do this to make our code more similar to other framework implementations.
+Anda mungkin memperhatikan bahwa `Module` adalah subclass dari `linen.Module`, kelas dasar jaringan neural di Flax.
+Ini menyediakan fitur yang memudahkan penanganan jaringan neural. Misalnya, ini menangani parameter model, menyediakan dekorator `nn.compact` untuk menyederhanakan kode, dan memanggil metode `__call__` di antara hal-hal lainnya.
+Di sini kita juga mengarahkan `__call__` ke metode `forward`. Kami melakukan ini untuk membuat kode kami lebih mirip dengan implementasi framework lainnya.
 :end_tab:
 
-##  Data
+## Data
 :label:`oo-design-data`
 
-The `DataModule` class is the base class for data. Quite frequently the `__init__` method is used to prepare the data. This includes downloading and preprocessing if needed. The `train_dataloader` returns the data loader for the training dataset. A data loader is a (Python) generator that yields a data batch each time it is used. This batch is then fed into the `training_step` method of `Module` to compute the loss. There is an optional `val_dataloader` to return the validation dataset loader. It behaves in the same manner, except that it yields data batches for the `validation_step` method in `Module`.
+Kelas `DataModule` adalah kelas dasar untuk data. Cukup sering metode `__init__` digunakan untuk menyiapkan data, termasuk mengunduh dan melakukan prapemrosesan jika diperlukan. Metode `train_dataloader` mengembalikan pemuat data untuk dataset pelatihan. Pemuat data adalah generator (Python) yang menghasilkan batch data setiap kali digunakan. Batch ini kemudian dimasukkan ke dalam metode `training_step` dari `Module` untuk menghitung loss. Ada opsi `val_dataloader` untuk mengembalikan pemuat dataset validasi. Ini berperilaku sama, kecuali menghasilkan batch data untuk metode `validation_step` dalam `Module`.
 
 ```{.python .input}
 %%tab all
 class DataModule(d2l.HyperParameters):  #@save
-    """The base class of data."""
+    """Kelas dasar untuk data."""
     if tab.selected('mxnet', 'pytorch'):
         def __init__(self, root='../data', num_workers=4):
             self.save_hyperparameters()
@@ -368,24 +372,24 @@ class DataModule(d2l.HyperParameters):  #@save
         return self.get_dataloader(train=False)
 ```
 
-## Training
+## Pelatihan
 :label:`oo-design-training`
 
 :begin_tab:`pytorch, mxnet, tensorflow`
-The `Trainer` class trains the learnable parameters in the `Module` class with data specified in `DataModule`. The key method is `fit`, which accepts two arguments: `model`, an instance of `Module`, and `data`, an instance of `DataModule`. It then iterates over the entire dataset `max_epochs` times to train the model. As before, we will defer the implementation of this method to later chapters.
+Kelas `Trainer` melatih parameter yang dapat dipelajari dalam kelas `Module` menggunakan data yang ditentukan di `DataModule`. Metode kunci di sini adalah `fit`, yang menerima dua argumen: `model`, sebuah instance dari `Module`, dan `data`, sebuah instance dari `DataModule`. Kemudian metode ini mengulangi seluruh dataset sebanyak `max_epochs` kali untuk melatih model. Seperti sebelumnya, kita akan menunda implementasi metode ini ke bab-bab selanjutnya.
 :end_tab:
 
 :begin_tab:`jax`
-The `Trainer` class trains the learnable parameters `params` with data specified in `DataModule`. The key method is `fit`, which accepts three arguments: `model`, an instance of `Module`, `data`, an instance of `DataModule`, and `key`, a JAX `PRNGKeyArray`. We make the `key` argument optional here to simplify the interface, but it is recommended to always pass and initialize the model parameters with a root key in JAX and Flax. It then iterates over the entire dataset `max_epochs` times to train the model. As before, we will defer the implementation of this method to later chapters.
+Kelas `Trainer` melatih parameter yang dapat dipelajari `params` menggunakan data yang ditentukan di `DataModule`. Metode kunci di sini adalah `fit`, yang menerima tiga argumen: `model`, sebuah instance dari `Module`, `data`, sebuah instance dari `DataModule`, dan `key`, sebuah `PRNGKeyArray` JAX. Di sini kita membuat argumen `key` menjadi opsional untuk menyederhanakan antarmuka, tetapi disarankan untuk selalu memasukkan dan menginisialisasi parameter model dengan key utama dalam JAX dan Flax. Kemudian metode ini mengulangi seluruh dataset sebanyak `max_epochs` kali untuk melatih model. Seperti sebelumnya, kita akan menunda implementasi metode ini ke bab-bab selanjutnya.
 :end_tab:
 
 ```{.python .input}
 %%tab all
 class Trainer(d2l.HyperParameters):  #@save
-    """The base class for training models with data."""
+    """Kelas dasar untuk melatih model dengan data."""
     def __init__(self, max_epochs, num_gpus=0, gradient_clip_val=0):
         self.save_hyperparameters()
-        assert num_gpus == 0, 'No GPU support yet'
+        assert num_gpus == 0, 'Belum ada dukungan GPU'
 
     def prepare_data(self, data):
         self.train_dataloader = data.train_dataloader()
@@ -428,14 +432,14 @@ class Trainer(d2l.HyperParameters):  #@save
             params = variables['params']
 
             if 'batch_stats' in variables.keys():
-                # Here batch_stats will be used later (e.g., for batch norm)
+                # Di sini batch_stats akan digunakan nanti (misalnya, untuk batch norm)
                 batch_stats = variables['batch_stats']
             else:
                 batch_stats = {}
 
-            # Flax uses optax under the hood for a single state obj TrainState.
-            # More will be discussed later in the dropout and batch
-            # normalization section
+            # Flax menggunakan optax di belakang layar untuk satu objek state TrainState.
+            # Lebih lanjut akan dibahas nanti di bagian dropout dan batch
+            # normalization
             class TrainState(train_state.TrainState):
                 batch_stats: Any
                 dropout_rng: jax.random.PRNGKeyArray
@@ -455,40 +459,29 @@ class Trainer(d2l.HyperParameters):  #@save
         raise NotImplementedError
 ```
 
-## Summary
+## Ringkasan
 
-To highlight the object-oriented design
-for our future deep learning implementation,
-the above classes simply show how their objects 
-store data and interact with each other.
-We will keep enriching implementations of these classes,
-such as via `@add_to_class`,
-in the rest of the book.
-Moreover,
-these fully implemented classes
-are saved in the [D2L library](https://github.com/d2l-ai/d2l-en/tree/master/d2l),
-a *lightweight toolkit* that makes structured modeling for deep learning easy. 
-In particular, it facilitates reusing many components between projects without changing much at all. For instance, we can replace just the optimizer, just the model, just the dataset, etc.;
-this degree of modularity pays dividends throughout the book in terms of conciseness and simplicity (this is why we added it) and it can do the same for your own projects. 
+Untuk menyoroti desain berbasis objek (object-oriented design) dalam implementasi pembelajaran mendalam yang akan kita buat ke depannya, kelas-kelas di atas menunjukkan bagaimana objek-objek tersebut menyimpan data dan berinteraksi satu sama lain. Kita akan terus memperkaya implementasi dari kelas-kelas ini, seperti menggunakan `@add_to_class`, di bagian-bagian berikutnya dalam buku ini. 
 
+Selain itu, kelas-kelas yang telah diimplementasikan sepenuhnya disimpan di [perpustakaan D2L](https://github.com/d2l-ai/d2l-en/tree/master/d2l), yaitu *toolkit ringan* yang mempermudah pemodelan terstruktur untuk deep learning. Terutama, ini memfasilitasi penggunaan kembali banyak komponen antara berbagai proyek tanpa perlu banyak perubahan. Sebagai contoh, kita dapat mengganti hanya optimizernya, modelnya, atau dataset-nya; tingkat modularitas ini memberikan manfaat dalam hal keringkasan dan kesederhanaan sepanjang buku ini (itulah mengapa kita menambahkannya), dan ini juga dapat berguna dalam proyek-proyek Anda sendiri.
 
-## Exercises
+## Latihan
 
-1. Locate full implementations of the above classes that are saved in the [D2L library](https://github.com/d2l-ai/d2l-en/tree/master/d2l). We strongly recommend that you look at the implementation in detail once you have gained some more familiarity with deep learning modeling.
-1. Remove the `save_hyperparameters` statement in the `B` class. Can you still print `self.a` and `self.b`? Optional: if you have dived into the full implementation of the `HyperParameters` class, can you explain why?
+1. Temukan implementasi lengkap dari kelas-kelas di atas yang disimpan di [perpustakaan D2L](https://github.com/d2l-ai/d2l-en/tree/master/d2l). Kami sangat merekomendasikan Anda untuk melihat detail implementasinya setelah Anda lebih memahami pemodelan deep learning.
+2. Hapus pernyataan `save_hyperparameters` dalam kelas `B`. Apakah Anda masih dapat mencetak `self.a` dan `self.b`? Opsional: jika Anda telah mempelajari implementasi lengkap dari kelas `HyperParameters`, bisakah Anda menjelaskan mengapa?
 
 :begin_tab:`mxnet`
-[Discussions](https://discuss.d2l.ai/t/6645)
+[Diskusi](https://discuss.d2l.ai/t/6645)
 :end_tab:
 
 :begin_tab:`pytorch`
-[Discussions](https://discuss.d2l.ai/t/6646)
+[Diskusi](https://discuss.d2l.ai/t/6646)
 :end_tab:
 
 :begin_tab:`tensorflow`
-[Discussions](https://discuss.d2l.ai/t/6647)
+[Diskusi](https://discuss.d2l.ai/t/6647)
 :end_tab:
 
 :begin_tab:`jax`
-[Discussions](https://discuss.d2l.ai/t/17974)
+[Diskusi](https://discuss.d2l.ai/t/17974)
 :end_tab:
