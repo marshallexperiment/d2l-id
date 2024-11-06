@@ -1,587 +1,313 @@
-# Generalization in Classification
+# Generalisasi dalam Klasifikasi
 
 :label:`chap_classification_generalization`
 
+Sejauh ini, kita telah berfokus pada cara mengatasi masalah klasifikasi multikelas 
+dengan melatih jaringan saraf (linear) dengan output ganda dan fungsi softmax. 
+Dengan menafsirkan keluaran model kita sebagai prediksi probabilistik, kita memotivasi dan menurunkan fungsi loss cross-entropy, 
+yang menghitung kemungkinan log negatif yang ditetapkan oleh model kita 
+(untuk set parameter yang tetap) pada label yang sebenarnya. 
+Akhirnya, kita menerapkan alat ini dengan menyesuaikan model kita pada set pelatihan. Namun, seperti biasa, 
+tujuan kita adalah mempelajari *pola umum*, yang dinilai secara empiris pada data yang belum pernah dilihat sebelumnya (set uji). 
+Akurasi tinggi pada set pelatihan tidak berarti apa-apa.
+
+Ketika setiap input kita unik (dan memang ini benar untuk sebagian besar dataset berdimensi tinggi), 
+kita dapat mencapai akurasi sempurna pada set pelatihan dengan hanya menghafal dataset pada epoch pelatihan pertama
+dan kemudian melihat label saat kita melihat gambar baru. Namun, menghafal label yang tepat yang terkait dengan contoh 
+pelatihan yang tepat tidak memberi tahu kita bagaimana mengklasifikasikan contoh baru. 
+Tanpa panduan lebih lanjut, kita mungkin harus mengandalkan tebakan acak setiap kali kita menemui contoh baru.
+
+Beberapa pertanyaan penting yang membutuhkan perhatian segera:
+
+1. Berapa banyak contoh uji yang kita butuhkan untuk memberikan perkiraan yang baik dari akurasi pengklasifikasi kita pada populasi dasar?
+2. Apa yang terjadi jika kita terus mengevaluasi model pada set uji yang sama berulang kali?
+3. Mengapa kita harus berharap bahwa menghubungkan model linear kita dengan set pelatihan harus berjalan lebih baik daripada skema hafalan naif kita?
 
 
-So far, we have focused on how to tackle multiclass classification problems
-by training (linear) neural networks with multiple outputs and softmax functions.
-Interpreting our model's outputs as probabilistic predictions,
-we motivated and derived the cross-entropy loss function,
-which calculates the negative log likelihood
-that our model (for a fixed set of parameters)
-assigns to the actual labels.
-And finally, we put these tools into practice
-by fitting our model to the training set.
-However, as always, our goal is to learn *general patterns*,
-as assessed empirically on previously unseen data (the test set).
-High accuracy on the training set means nothing.
-Whenever each of our inputs is unique
-(and indeed this is true for most high-dimensional datasets),
-we can attain perfect accuracy on the training set
-by just memorizing the dataset on the first training epoch,
-and subsequently looking up the label whenever we see a new image.
-And yet, memorizing the exact labels
-associated with the exact training examples
-does not tell us how to classify new examples.
-Absent further guidance, we might have to fall back
-on random guessing whenever we encounter new examples.
+Sementara :numref:`sec_generalization_basics` memperkenalkan dasar-dasar overfitting dan generalisasi dalam konteks regresi linear, 
+bab ini akan membahas lebih dalam, memperkenalkan beberapa ide dasar dari teori pembelajaran statistik. 
+Ternyata kita sering kali dapat menjamin generalisasi *a priori*: untuk banyak model, dan untuk batas atas yang diinginkan pada kesenjangan generalisasi $\epsilon$, 
+kita sering kali dapat menentukan jumlah sampel yang diperlukan $n$ sedemikian rupa sehingga jika set pelatihan kita mengandung setidaknya $n$ sampel, 
+error empiris kita akan berada dalam $\epsilon$ dari error sesungguhnya, *untuk setiap distribusi pembangkitan data*.
 
-A number of burning questions demand immediate attention:
+Sayangnya, juga ternyata bahwa meskipun jaminan semacam ini menyediakan dasar intelektual yang kuat,
+mereka memiliki kegunaan praktis yang terbatas bagi praktisi deep learning. 
+Singkatnya, jaminan ini menunjukkan bahwa memastikan generalisasi dari 
+jaringan saraf dalam *a priori* memerlukan jumlah contoh yang luar biasa banyak (mungkin triliunan atau lebih), 
+bahkan ketika kita menemukan bahwa, pada tugas-tugas yang kita pedulikan, 
+jaringan saraf dalam umumnya dapat melakukan generalisasi dengan sangat baik dengan jumlah contoh yang jauh lebih sedikit (ribuan).
 
-1. How many test examples do we need to give a good estimate of the accuracy of our classifiers on the underlying population?
-1. What happens if we keep evaluating models on the same test repeatedly?
-1. Why should we expect that fitting our linear models to the training set
-   should fare any better than our naive memorization scheme?
+Oleh karena itu, praktisi deep learning sering kali mengesampingkan jaminan *a priori* sepenuhnya 
+dan sebagai gantinya menggunakan metode yang telah terbukti melakukan generalisasi dengan baik pada masalah serupa di masa lalu, serta mengesahkan generalisasi *secara post hoc* melalui evaluasi empiris. 
+Ketika kita sampai pada :numref:`chap_perceptrons`, 
+kita akan kembali membahas generalisasi dan memberikan pengantar ringan pada literatur ilmiah yang luas yang telah berkembang dalam upaya untuk 
+menjelaskan mengapa jaringan saraf dalam dapat melakukan generalisasi dalam praktik.
 
 
-Whereas :numref:`sec_generalization_basics` introduced
-the basics of overfitting and generalization
-in the context of linear regression,
-this chapter will go a little deeper,
-introducing some of the foundational ideas
-of statistical learning theory.
-It turns out that we often can guarantee generalization *a priori*:
-for many models,
-and for any desired upper bound
-on the generalization gap $\epsilon$,
-we can often determine some required number of samples $n$
-such that if our training set contains at least $n$
-samples, our empirical error will lie
-within $\epsilon$ of the true error,
-*for any data generating distribution*.
-Unfortunately, it also turns out
-that while these sorts of guarantees provide
-a profound set of intellectual building blocks,
-they are of limited practical utility
-to the deep learning practitioner.
-In short, these guarantees suggest
-that ensuring generalization
-of deep neural networks *a priori*
-requires an absurd number of examples
-(perhaps trillions or more),
-even when we find that, on the tasks we care about,
-deep neural networks typically generalize
-remarkably well with far fewer examples (thousands).
-Thus deep learning practitioners often forgo
-*a priori* guarantees altogether,
-instead employing methods
-that have generalized well
-on similar problems in the past,
-and certifying generalization *post hoc*
-through empirical evaluations.
-When we get to :numref:`chap_perceptrons`,
-we will revisit generalization
-and provide a light introduction
-to the vast scientific literature
-that has sprung in attempts
-to explain why deep neural networks generalize in practice.
+## Test Set
 
-## The Test Set
-
-Since we have already begun to rely on test sets
-as the gold standard method
-for assessing generalization error,
-let's get started by discussing
-the properties of such error estimates.
-Let's focus on a fixed classifier $f$,
-without worrying about how it was obtained.
-Moreover suppose that we possess
-a *fresh* dataset of examples $\mathcal{D} = {(\mathbf{x}^{(i)},y^{(i)})}_{i=1}^n$
-that were not used to train the classifier $f$.
-The *empirical error* of our classifier $f$ on $\mathcal{D}$
-is simply the fraction of instances
-for which the prediction $f(\mathbf{x}^{(i)})$
-disagrees with the true label $y^{(i)}$,
-and is given by the following expression:
+Karena kita telah mulai mengandalkan set uji sebagai metode standar emas untuk menilai error generalisasi, mari kita mulai dengan membahas sifat-sifat dari perkiraan error tersebut. 
+Mari kita fokus pada pengklasifikasi tetap $f$, tanpa memusingkan bagaimana pengklasifikasi tersebut diperoleh. 
+Selain itu, anggaplah bahwa kita memiliki sebuah *dataset baru* dari contoh $\mathcal{D} = {(\mathbf{x}^{(i)},y^{(i)})}_{i=1}^n$ yang tidak digunakan untuk melatih pengklasifikasi $f$. 
+*Error empiris* dari pengklasifikasi kita $f$ pada $\mathcal{D}$ adalah fraksi dari contoh yang prediksinya $f(\mathbf{x}^{(i)})$ tidak sesuai dengan label sebenarnya $y^{(i)}$, yang diberikan oleh rumus berikut:
 
 $$\epsilon_\mathcal{D}(f) = \frac{1}{n}\sum_{i=1}^n \mathbf{1}(f(\mathbf{x}^{(i)}) \neq y^{(i)}).$$
 
-By contrast, the *population error*
-is the *expected* fraction
-of examples in the underlying population
-(some distribution $P(X,Y)$  characterized
-by probability density function $p(\mathbf{x},y)$)
-for which our classifier disagrees
-with the true label:
+Sebaliknya, *error populasi* adalah fraksi *yang diharapkan* dari contoh dalam populasi dasar (suatu distribusi $P(X,Y)$ yang ditandai dengan fungsi kepadatan probabilitas $p(\mathbf{x},y)$) di mana pengklasifikasi 
+kita tidak sesuai dengan label yang sebenarnya:
 
 $$\epsilon(f) =  E_{(\mathbf{x}, y) \sim P} \mathbf{1}(f(\mathbf{x}) \neq y) =
 \int\int \mathbf{1}(f(\mathbf{x}) \neq y) p(\mathbf{x}, y) \;d\mathbf{x} dy.$$
 
-While $\epsilon(f)$ is the quantity that we actually care about,
-we cannot observe it directly,
-just as we cannot directly
-observe the average height in a large population
-without measuring every single person.
-We can only estimate this quantity based on samples.
-Because our test set $\mathcal{D}$
-is statistically representative
-of the underlying population,
-we can view $\epsilon_\mathcal{D}(f)$ as a statistical
-estimator of the population error $\epsilon(f)$.
-Moreover, because our quantity of interest $\epsilon(f)$
-is an expectation (of the random variable $\mathbf{1}(f(X) \neq Y)$)
-and the corresponding estimator $\epsilon_\mathcal{D}(f)$
-is the sample average,
-estimating the population error
-is simply the classic problem of mean estimation,
-which you may recall from :numref:`sec_prob`.
-
-An important classical result from probability theory
-called the *central limit theorem* guarantees
-that whenever we possess $n$ random samples $a_1, ..., a_n$
-drawn from any distribution with mean $\mu$ and standard deviation $\sigma$,
-then, as the number of samples $n$ approaches infinity,
-the sample average $\hat{\mu}$ approximately
-tends towards a normal distribution centered
-at the true mean and with standard deviation $\sigma/\sqrt{n}$.
-Already, this tells us something important:
-as the number of examples grows large,
-our test error $\epsilon_\mathcal{D}(f)$
-should approach the true error $\epsilon(f)$
-at a rate of $\mathcal{O}(1/\sqrt{n})$.
-Thus, to estimate our test error twice as precisely,
-we must collect four times as large a test set.
-To reduce our test error by a factor of one hundred,
-we must collect ten thousand times as large a test set.
-In general, such a rate of $\mathcal{O}(1/\sqrt{n})$
-is often the best we can hope for in statistics.
-
-Now that we know something about the asymptotic rate
-at which our test error $\epsilon_\mathcal{D}(f)$ converges to the true error $\epsilon(f)$,
-we can zoom in on some important details.
-Recall that the random variable of interest
-$\mathbf{1}(f(X) \neq Y)$
-can only take values $0$ and $1$
-and thus is a Bernoulli random variable,
-characterized by a parameter
-indicating the probability that it takes value $1$.
-Here, $1$ means that our classifier made an error,
-so the parameter of our random variable
-is actually the true error rate $\epsilon(f)$.
-The variance $\sigma^2$ of a Bernoulli
-depends on its parameter (here, $\epsilon(f)$)
-according to the expression $\epsilon(f)(1-\epsilon(f))$.
-While $\epsilon(f)$ is initially unknown,
-we know that it cannot be greater than $1$.
-A little investigation of this function
-reveals that our variance is highest
-when the true error rate is close to $0.5$
-and can be far lower when it is
-close to $0$ or close to $1$.
-This tells us that the asymptotic standard deviation
-of our estimate $\epsilon_\mathcal{D}(f)$ of the error $\epsilon(f)$
-(over the choice of the $n$ test samples)
-cannot be any greater than $\sqrt{0.25/n}$.
-
-If we ignore the fact that this rate characterizes
-behavior as the test set size approaches infinity
-rather than when we possess finite samples,
-this tells us that if we want our test error $\epsilon_\mathcal{D}(f)$
-to approximate the population error $\epsilon(f)$
-such that one standard deviation corresponds
-to an interval of $\pm 0.01$,
-then we should collect roughly 2500 samples.
-If we want to fit two standard deviations
-in that range and thus be 95% confident
-that $\epsilon_\mathcal{D}(f) \in \epsilon(f) \pm 0.01$,
-then we will need 10,000 samples!
-
-This turns out to be the size of the test sets
-for many popular benchmarks in machine learning.
-You might be surprised to find out that thousands
-of applied deep learning papers get published every year
-making a big deal out of error rate improvements of $0.01$ or less.
-Of course, when the error rates are much closer to $0$,
-then an improvement of $0.01$ can indeed be a big deal.
+Meskipun $\epsilon(f)$ adalah besaran yang benar-benar kita perhatikan, kita tidak dapat mengamatinya secara langsung, 
+sama halnya dengan kita tidak dapat mengamati tinggi rata-rata dalam populasi besar tanpa mengukur setiap orang. 
+Kita hanya bisa memperkirakan besaran ini berdasarkan sampel. Karena set uji kita $\mathcal{D}$ secara statistik representatif terhadap populasi dasar, 
+kita dapat melihat $\epsilon_\mathcal{D}(f)$ sebagai estimator statistik dari error populasi $\epsilon(f)$. 
+Selain itu, karena besaran yang kita minati $\epsilon(f)$ adalah ekspektasi (dari variabel acak $\mathbf{1}(f(X) \neq Y)$) 
+dan estimator yang sesuai $\epsilon_\mathcal{D}(f)$ adalah rata-rata sampel, 
+memperkirakan error populasi hanyalah masalah klasik dalam estimasi rata-rata, yang mungkin Anda ingat dari :numref:`sec_prob`.
 
 
-One pesky feature of our analysis thus far
-is that it really only tells us about asymptotics,
-i.e., how the relationship between $\epsilon_\mathcal{D}$ and $\epsilon$
-evolves as our sample size goes to infinity.
-Fortunately, because our random variable is bounded,
-we can obtain valid finite sample bounds
-by applying an inequality due to Hoeffding (1963):
+Hasil penting dari teori probabilitas klasik yang disebut *teorema limit pusat* menjamin bahwa ketika kita memiliki $n$ sampel acak $a_1, ..., a_n$ 
+yang diambil dari distribusi apapun dengan rata-rata $\mu$ dan standar deviasi $\sigma$, maka ketika jumlah sampel $n$ mendekati tak hingga, 
+rata-rata sampel $\hat{\mu}$ akan mendekati distribusi normal yang terpusat pada rata-rata sebenarnya dan dengan standar deviasi $\sigma/\sqrt{n}$. 
+Ini memberikan kita suatu wawasan penting: ketika jumlah contoh bertambah banyak, error pengujian $\epsilon_\mathcal{D}(f)$ kita akan 
+mendekati error sebenarnya $\epsilon(f)$ dengan laju $\mathcal{O}(1/\sqrt{n})$. 
+
+Dengan kata lain, untuk memperkirakan error pengujian kita dengan dua kali lebih presisi, 
+kita harus mengumpulkan set pengujian yang empat kali lebih besar. 
+Untuk mengurangi error pengujian kita hingga seratus kali lebih kecil, kita harus mengumpulkan set pengujian sepuluh ribu kali lebih besar. 
+Secara umum, laju $\mathcal{O}(1/\sqrt{n})$ ini sering kali menjadi harapan terbaik yang dapat kita capai dalam statistik.
+
+Sekarang, setelah kita mengetahui sesuatu tentang laju asimptotik di mana error pengujian $\epsilon_\mathcal{D}(f)$ kita mendekati error 
+sebenarnya $\epsilon(f)$, kita dapat menyoroti beberapa detail penting. Ingat bahwa variabel acak yang kita minati $\mathbf{1}(f(X) \neq Y)$ 
+hanya dapat bernilai $0$ dan $1$, sehingga merupakan variabel acak Bernoulli, 
+yang ditandai oleh suatu parameter yang menunjukkan probabilitas bahwa ia bernilai $1$. Di sini, $1$ berarti 
+bahwa pengklasifikasi kita membuat kesalahan, sehingga parameter dari variabel acak kita sebenarnya adalah tingkat error sebenarnya $\epsilon(f)$. 
+
+Variansi $\sigma^2$ dari variabel Bernoulli tergantung pada parameternya (di sini, $\epsilon(f)$) 
+menurut persamaan $\epsilon(f)(1-\epsilon(f))$. Walaupun $\epsilon(f)$ pada awalnya tidak diketahui, 
+kita tahu bahwa nilainya tidak mungkin lebih besar dari $1$. Sedikit investigasi terhadap fungsi ini 
+menunjukkan bahwa variansi kita adalah yang tertinggi ketika tingkat error sebenarnya mendekati $0.5$ dan 
+dapat jauh lebih rendah ketika mendekati $0$ atau $1$. Ini memberi tahu kita bahwa standar deviasi asimptotik 
+dari perkiraan kita $\epsilon_\mathcal{D}(f)$ terhadap error $\epsilon(f)$ (atas pilihan dari $n$ sampel uji) tidak bisa lebih besar dari $\sqrt{0.25/n}$.
+
+
+Jika kita mengabaikan fakta bahwa laju ini menggambarkan perilaku ketika 
+ukuran set pengujian mendekati tak hingga daripada ketika kita memiliki sampel yang terbatas, 
+ini menunjukkan bahwa jika kita ingin error pengujian $\epsilon_\mathcal{D}(f)$ 
+mendekati error populasi $\epsilon(f)$ sehingga satu standar deviasi 
+sesuai dengan interval $\pm 0.01$, maka kita harus mengumpulkan sekitar 2500 sampel. 
+Jika kita ingin memasukkan dua standar deviasi dalam rentang tersebut 
+dan dengan demikian memiliki keyakinan 95% bahwa $\epsilon_\mathcal{D}(f) \in \epsilon(f) \pm 0.01$, 
+maka kita akan memerlukan 10.000 sampel!
+
+Ukuran ini ternyata sesuai dengan ukuran set pengujian pada banyak tolok ukur (benchmark) populer dalam machine learning. 
+Anda mungkin akan terkejut mengetahui bahwa ribuan makalah deep learning terapan diterbitkan setiap tahun, 
+yang menyoroti peningkatan error rate sebesar $0.01$ atau kurang. Tentu saja, ketika tingkat error mendekati $0$, 
+maka peningkatan sebesar $0.01$ memang bisa sangat berarti.
+
+Salah satu karakteristik yang agak mengganggu dari analisis kita sejauh ini adalah 
+bahwa analisis tersebut hanya benar-benar memberikan 
+informasi mengenai asimptotik, yaitu, bagaimana hubungan antara $\epsilon_\mathcal{D}$ dan $\epsilon$ 
+berkembang ketika ukuran sampel menuju tak hingga. 
+Untungnya, karena variabel acak kita terbatas, kita dapat memperoleh batasan sampel yang valid 
+dengan menggunakan sebuah ketidaksamaan yang diperkenalkan oleh Hoeffding (1963):
 
 $$P(\epsilon_\mathcal{D}(f) - \epsilon(f) \geq t) < \exp\left( - 2n t^2 \right).$$
 
-Solving for the smallest dataset size
-that would allow us to conclude
-with 95% confidence that the distance $t$
-between our estimate $\epsilon_\mathcal{D}(f)$
-and the true error rate $\epsilon(f)$
-does not exceed $0.01$,
-you will find that roughly 15,000 examples are required
-as compared to the 10,000 examples suggested
-by the asymptotic analysis above.
-If you go deeper into statistics
-you will find that this trend holds generally.
-Guarantees that hold even in finite samples
-are typically slightly more conservative.
-Note that in the scheme of things,
-these numbers are not so far apart,
-reflecting the general usefulness
-of asymptotic analysis for giving
-us ballpark figures even if they are not
-guarantees we can take to court.
-
-## Test Set Reuse
-
-In some sense, you are now set up to succeed
-at conducting empirical machine learning research.
-Nearly all practical models are developed
-and validated based on test set performance
-and you are now a master of the test set.
-For any fixed classifier $f$,
-you know how to evaluate its test error $\epsilon_\mathcal{D}(f)$,
-and know precisely what can (and cannot)
-be said about its population error $\epsilon(f)$.
-
-So let's say that you take this knowledge
-and prepare to train your first model $f_1$.
-Knowing just how confident you need to be
-in the performance of your classifier's error rate
-you apply our analysis above to determine
-an appropriate number of examples
-to set aside for the test set.
-Moreover, let's assume that you took the lessons from
-:numref:`sec_generalization_basics` to heart
-and made sure to preserve the sanctity of the test set
-by conducting all of your preliminary analysis,
-hyperparameter tuning, and even selection
-among multiple competing model architectures
-on a validation set.
-Finally you evaluate your model $f_1$
-on the test set and report an unbiased
-estimate of the population error
-with an associated confidence interval.
-
-So far everything seems to be going well.
-However, that night you wake up at 3am
-with a brilliant idea for a new modeling approach.
-The next day, you code up your new model,
-tune its hyperparameters on the validation set
-and not only are you getting your new model $f_2$ to work
-but its error rate appears to be much lower than $f_1$'s.
-However, the thrill of discovery suddenly fades
-as you prepare for the final evaluation.
-You do not have a test set!
-
-Even though the original test set $\mathcal{D}$
-is still sitting on your server,
-you now face two formidable problems.
-First, when you collected your test set,
-you determined the required level of precision
-under the assumption that you were evaluating
-a single classifier $f$.
-However, if you get into the business
-of evaluating multiple classifiers $f_1, ..., f_k$
-on the same test set,
-you must consider the problem of false discovery.
-Before, you might have been 95% sure
-that $\epsilon_\mathcal{D}(f) \in \epsilon(f) \pm 0.01$
-for a single classifier $f$
-and thus the probability of a misleading result
-was a mere 5%.
-With $k$ classifiers in the mix,
-it can be hard to guarantee
-that there is not even one among them
-whose test set performance is misleading.
-With 20 classifiers under consideration,
-you might have no power at all
-to rule out the possibility
-that at least one among them
-received a misleading score.
-This problem relates to multiple hypothesis testing,
-which despite a vast literature in statistics,
-remains a persistent problem plaguing scientific research.
+Dengan menyelesaikan untuk ukuran dataset terkecil yang memungkinkan kita menyimpulkan dengan keyakinan 95% bahwa jarak $t$ 
+antara perkiraan kita $\epsilon_\mathcal{D}(f)$ dan tingkat error sebenarnya $\epsilon(f)$ tidak melebihi $0.01$, 
+Anda akan menemukan bahwa diperlukan sekitar 15.000 contoh, 
+dibandingkan dengan 10.000 contoh yang disarankan oleh analisis asimptotik di atas. 
+Jika Anda mendalami statistik lebih jauh, Anda akan menemukan bahwa tren ini berlaku secara umum. 
+Jaminan yang tetap berlaku bahkan dalam sampel terbatas biasanya sedikit lebih konservatif. 
+Perlu dicatat bahwa dalam skema besar, angka-angka ini tidak terlalu jauh berbeda, 
+yang mencerminkan kegunaan umum dari analisis asimptotik untuk memberikan kita perkiraan kasar 
+meskipun bukan jaminan yang dapat kita jadikan pegangan pasti.
 
 
-If that is not enough to worry you,
-there is a special reason to distrust
-the results that you get on subsequent evaluations.
-Recall that our analysis of test set performance
-rested on the assumption that the classifier
-was chosen absent any contact with the test set
-and thus we could view the test set
-as drawn randomly from the underlying population.
-Here, not only are you testing multiple functions,
-the subsequent function $f_2$ was chosen
-after you observed the test set performance of $f_1$.
-Once information from the test set has leaked to the modeler,
-it can never be a true test set again in the strictest sense.
-This problem is called *adaptive overfitting* and has recently emerged
-as a topic of intense interest to learning theorists and statisticians
-:cite:`dwork2015preserving`.
-Fortunately, while it is possible
-to leak all information out of a holdout set,
-and the theoretical worst case scenarios are bleak,
-these analyses may be too conservative.
-In practice, take care to create real test sets,
-to consult them as infrequently as possible,
-to account for multiple hypothesis testing
-when reporting confidence intervals,
-and to dial up your vigilance more aggressively
-when the stakes are high and your dataset size is small.
-When running a series of benchmark challenges,
-it is often good practice to maintain
-several test sets so that after each round,
-the old test set can be demoted to a validation set.
+## Penggunaan Ulang Test Set
+
+Dalam beberapa hal, Anda sekarang siap untuk berhasil dalam melakukan penelitian empiris dalam machine learning. 
+Hampir semua model praktis dikembangkan dan divalidasi berdasarkan kinerja test set, 
+dan Anda kini telah menguasai penggunaan test set. Untuk setiap classifier tetap $f$, 
+Anda tahu cara mengevaluasi error pengujiannya $\epsilon_\mathcal{D}(f)$, 
+dan tahu dengan tepat apa yang bisa (dan tidak bisa) dikatakan tentang error populasinya $\epsilon(f)$.
+
+Jadi, katakanlah Anda menggunakan pengetahuan ini dan bersiap untuk melatih model pertama Anda $f_1$. 
+Mengetahui seberapa yakin Anda perlu dalam tingkat error classifier Anda, 
+Anda menerapkan analisis di atas untuk menentukan jumlah contoh yang sesuai untuk dialokasikan ke test set. 
+Selain itu, misalkan Anda telah mempelajari dengan seksama pelajaran dari :numref:`sec_generalization_basics` 
+dan memastikan untuk menjaga kemurnian test set dengan melakukan semua analisis awal, tuning hyperparameter, 
+dan bahkan pemilihan di antara beberapa arsitektur model yang bersaing di validation set.
+
+Akhirnya, Anda mengevaluasi model $f_1$ Anda pada test set 
+dan melaporkan estimasi yang tidak bias dari error populasi 
+dengan interval kepercayaan yang terkait. 
+Hingga saat ini, semuanya tampak berjalan dengan baik. 
+Namun, malam itu, Anda terbangun pukul 3 pagi 
+dengan ide brilian untuk pendekatan pemodelan baru.
+
+Keesokan harinya, Anda menulis kode untuk model baru Anda, men-tune hyperparameternya pada validation set, 
+dan ternyata model baru $f_2$ Anda tidak hanya berfungsi, tetapi juga menunjukkan error rate yang tampaknya jauh lebih rendah dibandingkan $f_1$. 
+Namun, kegembiraan atas penemuan ini tiba-tiba memudar saat Anda bersiap untuk evaluasi akhir. Anda tidak memiliki test set!
+
+
+Meskipun test set asli $\mathcal{D}$ masih berada di server Anda, kini Anda menghadapi dua masalah besar. 
+Pertama, saat Anda mengumpulkan test set, Anda menentukan tingkat presisi yang diperlukan dengan asumsi 
+bahwa Anda hanya mengevaluasi satu classifier $f$. Namun, jika Anda mulai mengevaluasi beberapa classifier $f_1, ..., f_k$ pada test set yang sama, 
+Anda harus mempertimbangkan masalah *false discovery*. Sebelumnya, Anda mungkin 95% yakin bahwa $\epsilon_\mathcal{D}(f) \in \epsilon(f) \pm 0.01$ 
+untuk satu classifier $f$, sehingga kemungkinan hasil yang menyesatkan hanya 5%. Dengan $k$ classifier dalam campuran, sulit menjamin bahwa 
+tidak ada satu pun di antara mereka yang kinerjanya pada test set ternyata menyesatkan. Dengan 20 classifier yang dipertimbangkan, 
+Anda mungkin sama sekali tidak memiliki kekuatan untuk menyingkirkan kemungkinan bahwa setidaknya satu dari mereka mendapatkan skor yang menyesatkan. 
+Masalah ini terkait dengan *multiple hypothesis testing*, 
+yang meskipun memiliki literatur yang luas dalam statistik, tetap menjadi masalah yang mengganggu penelitian ilmiah.
+
+Jika itu belum cukup membuat Anda khawatir, ada alasan khusus untuk meragukan hasil yang Anda peroleh pada evaluasi selanjutnya. 
+Ingat bahwa analisis kinerja test set kita didasarkan pada asumsi bahwa classifier dipilih tanpa kontak dengan test set sehingga
+kita dapat menganggap test set diambil secara acak dari populasi dasar. Di sini, bukan hanya Anda menguji beberapa fungsi, 
+tetapi fungsi selanjutnya $f_2$ dipilih setelah Anda mengamati kinerja test set dari $f_1$. Begitu informasi dari test set 
+bocor ke pihak yang membuat model, test set tersebut tidak pernah bisa menjadi test set sejati lagi dalam pengertian yang paling ketat. 
+Masalah ini disebut *adaptive overfitting* dan baru-baru ini menjadi 
+topik yang menarik perhatian para teoritikus pembelajaran dan ahli statistik :cite:`dwork2015preserving`.
+
+Untungnya, meskipun mungkin untuk membocorkan semua informasi dari holdout set, 
+dan skenario terburuk secara teori tampak suram, analisis ini mungkin terlalu konservatif. 
+Dalam praktiknya, berhati-hatilah untuk membuat test set yang sesungguhnya, untuk merujuknya sesedikit mungkin, 
+untuk mempertimbangkan *multiple hypothesis testing* saat melaporkan interval kepercayaan, dan untuk meningkatkan 
+kewaspadaan Anda lebih agresif ketika risikonya tinggi dan ukuran dataset Anda kecil. 
+Saat menjalankan serangkaian tantangan benchmark, 
+seringkali merupakan praktik yang baik untuk mempertahankan beberapa test set sehingga setelah setiap putaran, 
+test set lama dapat diturunkan menjadi validation set.
+
+
+## Teori Pembelajaran Statistik
+
+Sederhananya, *test set adalah satu-satunya yang kita miliki*, 
+namun fakta ini terasa kurang memuaskan. Pertama, jarang sekali kita 
+memiliki *test set yang sejati*—kecuali jika kita sendiri yang membuat dataset, 
+kemungkinan orang lain sudah mengevaluasi classifier mereka sendiri pada "test set" kita. 
+Dan bahkan ketika kita yang pertama kali menggunakannya, kita akan segera merasa frustrasi, 
+ingin bisa mengevaluasi upaya pemodelan kita berikutnya tanpa merasa tidak yakin apakah kita bisa mempercayai hasilnya. 
+Selain itu, bahkan test set sejati hanya dapat memberi tahu kita *post hoc* apakah suatu 
+classifier benar-benar dapat melakukan generalisasi pada populasi, bukan apakah kita punya alasan untuk berharap *a priori* bahwa itu seharusnya bisa melakukan generalisasi.
+
+Dengan keraguan ini, Anda mungkin sudah cukup siap untuk melihat daya tarik dari *teori pembelajaran statistik*, 
+subbidang matematika dalam machine learning yang berfokus pada prinsip-prinsip mendasar yang menjelaskan mengapa/kapan model 
+yang dilatih pada data empiris dapat/akan melakukan generalisasi terhadap data yang belum terlihat. 
+Salah satu tujuan utama para peneliti pembelajaran statistik adalah untuk membatasi celah generalisasi, 
+yang menghubungkan sifat-sifat kelas model dengan jumlah sampel dalam dataset.
+
+Para teoritikus pembelajaran berupaya membatasi perbedaan antara *empirical error* $\epsilon_\mathcal{S}(f_\mathcal{S})$ dari 
+classifier yang dipelajari $f_\mathcal{S}$, yang dilatih dan dievaluasi pada training set $\mathcal{S}$, dengan error sebenarnya $\epsilon(f_\mathcal{S})$ dari 
+classifier yang sama pada populasi dasar. Ini mungkin terlihat mirip dengan masalah evaluasi yang baru saja kita bahas, 
+tetapi ada perbedaan besar. Sebelumnya, classifier $f$ bersifat tetap dan kita hanya memerlukan dataset untuk tujuan evaluasi.
+Dan memang, classifier yang tetap dapat melakukan generalisasi: error-nya pada dataset (yang belum pernah terlihat sebelumnya) adalah perkiraan yang tidak bias dari error populasi.
+
+Namun, apa yang bisa kita katakan ketika classifier dilatih dan dievaluasi pada dataset yang sama? 
+Bisakah kita yakin bahwa error pelatihan akan mendekati error pengujian?
 
 
 
+Misalkan classifier yang kita pelajari $f_\mathcal{S}$ harus dipilih dari 
+suatu himpunan fungsi yang telah ditentukan sebelumnya, yaitu $\mathcal{F}$. 
+Ingat dari diskusi kita tentang test set bahwa walaupun mudah untuk memperkirakan error dari satu classifier, 
+situasinya menjadi rumit ketika kita mulai mempertimbangkan sekumpulan classifier. Meskipun *empirical error* 
+dari setiap satu classifier (tetap) cenderung mendekati error sebenarnya dengan probabilitas tinggi, 
+begitu kita mempertimbangkan sekumpulan classifier, 
+kita perlu khawatir tentang kemungkinan bahwa *hanya satu* dari mereka memiliki estimasi error yang buruk.
+
+Kekhawatirannya adalah bahwa kita mungkin memilih classifier 
+seperti itu dan dengan demikian secara drastis meremehkan error populasi. 
+Selain itu, bahkan untuk model linear, karena parameter-parameter dari model tersebut 
+memiliki nilai yang kontinu, kita biasanya memilih dari 
+kelas fungsi yang tidak terbatas ($|\mathcal{F}| = \infty$).
 
 
-## Statistical Learning Theory
+Salah satu solusi ambisius untuk masalah ini adalah mengembangkan alat analitik untuk membuktikan *uniform convergence*, 
+yaitu bahwa dengan probabilitas tinggi, *empirical error rate* untuk setiap classifier dalam kelas $f \in \mathcal{F}$ 
+akan *secara simultan* konvergen ke *true error rate* mereka masing-masing. Dengan kata lain, kita mencari prinsip 
+teoretis yang memungkinkan kita menyatakan bahwa dengan probabilitas setidaknya $1 - \delta$ (untuk beberapa nilai kecil $\delta$), 
+tidak ada tingkat error classifier $\epsilon(f)$ (di antara semua classifier dalam kelas $\mathcal{F}$) 
+yang salah diperkirakan lebih dari jumlah kecil $\alpha$. Jelas, kita tidak bisa membuat pernyataan seperti itu untuk semua kelas model $\mathcal{F}$. 
+Ingat kelas *memorization machines* yang selalu mencapai error empiris $0$ tetapi tidak pernah melebihi tebakan acak pada populasi yang mendasarinya.
 
-Put simply, *test sets are all that we really have*,
-and yet this fact seems strangely unsatisfying.
-First, we seldom possess a *true test set*---unless
-we are the ones creating the dataset,
-someone else has probably already evaluated
-their own classifier on our ostensible "test set".
-And even when we have first dibs,
-we soon find ourselves frustrated, wishing we could
-evaluate our subsequent modeling attempts
-without the gnawing feeling
-that we cannot trust our numbers.
-Moreover, even a true test set can only tell us *post hoc*
-whether a classifier has in fact generalized to the population,
-not whether we have any reason to expect *a priori*
-that it should generalize.
+Dalam beberapa hal, kelas memorizers terlalu fleksibel. 
+Tidak ada hasil *uniform convergence* yang mungkin berlaku. 
+Di sisi lain, classifier tetap (fixed classifier) tidak berguna—ia menggeneralisasi dengan sempurna, 
+tetapi tidak sesuai dengan data pelatihan atau data pengujian. Pertanyaan utama dalam pembelajaran historisnya dirumuskan sebagai 
+keseimbangan antara kelas model yang lebih fleksibel (dengan varians tinggi) yang lebih sesuai dengan data pelatihan tetapi berisiko overfitting, 
+versus kelas model yang lebih kaku (dengan bias tinggi) yang dapat melakukan generalisasi dengan baik tetapi berisiko underfitting.
+Pertanyaan inti dalam teori pembelajaran adalah mengembangkan analisis matematika yang sesuai untuk mengukur di mana suatu model berada dalam spektrum ini, dan memberikan jaminan yang terkait.
 
-With these misgivings in mind,
-you might now be sufficiently primed
-to see the appeal of *statistical learning theory*,
-the mathematical subfield of machine learning
-whose practitioners aim to elucidate the
-fundamental principles that explain
-why/when models trained on empirical data
-can/will generalize to unseen data.
-One of the primary aims
-of statistical learning researchers
-has been to bound the generalization gap,
-relating the properties of the model class
-to the number of samples in the dataset.
+Dalam serangkaian makalah yang berpengaruh, Vapnik dan Chervonenkis memperluas teori tentang konvergensi 
+frekuensi relatif untuk kelas fungsi yang lebih umum :cite:`VapChe64,VapChe68,VapChe71,VapChe74b,VapChe81,VapChe91`.
+Salah satu kontribusi utama dari 
+penelitian ini adalah *Vapnik--Chervonenkis (VC) dimension*, 
+yang mengukur (salah satu konsep) kompleksitas (fleksibilitas) dari kelas model. 
+Selain itu, salah satu hasil utama mereka mengikat perbedaan antara error empiris
+dan error populasi sebagai fungsi dari VC dimension dan jumlah sampel:
 
-Learning theorists aim to bound the difference
-between the *empirical error* $\epsilon_\mathcal{S}(f_\mathcal{S})$
-of a learned classifier $f_\mathcal{S}$,
-both trained and evaluated
-on the training set $\mathcal{S}$,
-and the true error $\epsilon(f_\mathcal{S})$
-of that same classifier on the underlying population.
-This might look similar to the evaluation problem
-that we just addressed but there is a major difference.
-Earlier, the classifier $f$ was fixed
-and we only needed a dataset
-for evaluative purposes.
-And indeed, any fixed classifier does generalize:
-its error on a (previously unseen) dataset
-is an unbiased estimate of the population error.
-But what can we say when a classifier
-is trained and evaluated on the same dataset?
-Can we ever be confident that the training error
-will be close to the testing error?
+$$P\left(R[p, f] - R_\textrm{emp}[\mathbf{X}, \mathbf{Y}, f] < \alpha\right) \geq 1-\delta \ \textrm{ untuk }\ \alpha \geq c \sqrt{(\textrm{VC} - \log \delta)/n}.$$
+
+Di sini, $\delta > 0$ adalah probabilitas bahwa batas tersebut dilanggar, $\alpha$ adalah batas 
+atas pada *generalization gap*, dan $n$ adalah ukuran dataset. Terakhir, $c > 0$ adalah konstanta 
+yang hanya bergantung pada skala kerugian yang dapat ditimbulkan. Salah satu penggunaan batas ini 
+adalah dengan memasukkan nilai yang diinginkan dari $\delta$ dan $\alpha$ untuk menentukan berapa banyak 
+sampel yang harus dikumpulkan. VC dimension mengukur jumlah titik data terbesar di mana kita dapat menetapkan pelabelan (biner) 
+sembarang dan untuk masing-masing menemukan model $f$ dalam kelas yang sesuai dengan pelabelan tersebut. 
+Sebagai contoh, model linear pada masukan berdimensi $d$ memiliki VC dimension $d+1$.
+Mudah dilihat bahwa sebuah garis dapat menetapkan pelabelan apapun pada tiga titik dalam dua dimensi, tetapi tidak pada empat titik.
+
+Sayangnya, teori ini cenderung terlalu pesimistis untuk model yang lebih kompleks, 
+dan untuk mendapatkan jaminan ini biasanya membutuhkan lebih banyak contoh daripada yang sebenarnya 
+diperlukan untuk mencapai tingkat error yang diinginkan. 
+Perhatikan juga bahwa dengan memperbaiki kelas model dan $\delta$, 
+tingkat error kita sekali lagi menurun dengan laju $\mathcal{O}(1/\sqrt{n})$ yang biasa. 
+Tampaknya tidak mungkin kita bisa mendapatkan hasil yang lebih baik dalam hal $n$.
+Namun, saat kita memvariasikan kelas model, VC dimension dapat menunjukkan gambaran pesimistis tentang *generalization gap*.
 
 
-Suppose that our learned classifier $f_\mathcal{S}$ must be chosen
-from some pre-specified set of functions $\mathcal{F}$.
-Recall from our discussion of test sets
-that while it is easy to estimate
-the error of a single classifier,
-things get hairy when we begin
-to consider collections of classifiers.
-Even if the empirical error
-of any one (fixed) classifier
-will be close to its true error
-with high probability,
-once we consider a collection of classifiers,
-we need to worry about the possibility
-that *just one* of them
-will receive a badly estimated error.
-The worry is that we might pick such a classifier
-and thereby grossly underestimate
-the population error.
-Moreover, even for linear models,
-because their parameters are continuously valued,
-we are typically choosing from
-an infinite class of functions ($|\mathcal{F}| = \infty$).
+## Ringkasan
 
-One ambitious solution to the problem
-is to develop analytic tools
-for proving uniform convergence, i.e.,
-that with high probability,
-the empirical error rate for every classifier in the class $f\in\mathcal{F}$
-will *simultaneously* converge to its true error rate.
-In other words, we seek a theoretical principle
-that would allow us to state that
-with probability at least $1-\delta$
-(for some small $\delta$)
-no classifier's error rate $\epsilon(f)$
-(among all classifiers in the class $\mathcal{F}$)
-will be misestimated by more
-than some  small amount $\alpha$.
-Clearly, we cannot make such statements
-for all model classes $\mathcal{F}$.
-Recall the class of memorization machines
-that always achieve empirical error $0$
-but never outperform random guessing
-on the underlying population.
+Cara paling sederhana untuk mengevaluasi sebuah model adalah dengan menggunakan test set 
+yang terdiri dari data yang sebelumnya tidak terlihat. 
+Evaluasi test set memberikan estimasi yang tidak bias dari error sebenarnya 
+dan berkonvergen pada laju $\mathcal{O}(1/\sqrt{n})$ saat ukuran test set bertambah. 
+Kita dapat menyediakan interval kepercayaan perkiraan berdasarkan distribusi asimptotik yang tepat 
+atau interval kepercayaan sampel terbatas yang valid berdasarkan jaminan sampel terbatas (yang lebih konservatif). 
+Evaluasi test set adalah landasan dari penelitian machine learning modern. Namun, test set jarang menjadi test set 
+yang sejati (karena sering digunakan oleh banyak peneliti berulang kali). 
+Ketika test set yang sama digunakan untuk mengevaluasi beberapa model, mengendalikan false discovery menjadi sulit, 
+yang dapat menyebabkan masalah besar dalam teori. Dalam praktiknya, signifikansi masalah ini bergantung pada ukuran holdout 
+set yang digunakan dan apakah set ini hanya digunakan untuk memilih hyperparameter atau jika informasi bocor lebih langsung.
+Meskipun demikian, praktik yang baik adalah mengkurasi test set yang benar (atau beberapa set) 
+dan bersikap se-konservatif mungkin tentang seberapa sering mereka digunakan.
 
-In a sense the class of memorizers is too flexible.
-No such a uniform convergence result could possibly hold.
-On the other hand, a fixed classifier is useless---it
-generalizes perfectly, but fits neither
-the training data nor the test data.
-The central question of learning
-has thus historically been framed as a trade-off
-between more flexible (higher variance) model classes
-that better fit the training data but risk overfitting,
-versus more rigid (higher bias) model classes
-that generalize well but risk underfitting.
-A central question in learning theory
-has been to develop the appropriate
-mathematical analysis to quantify
-where a model sits along this spectrum,
-and to provide the associated guarantees.
+Berharap menyediakan solusi yang lebih memuaskan, para teoritikus pembelajaran statistik telah mengembangkan metode untuk menjamin konvergensi seragam di seluruh kelas model. 
+Jika memang error empiris setiap model secara simultan berkonvergen ke error sebenarnya, 
+maka kita bebas memilih model yang berkinerja terbaik, meminimalkan error pelatihan, dengan mengetahui bahwa model tersebut juga akan berkinerja serupa pada data holdout. 
+Secara krusial, setiap hasil semacam itu harus bergantung pada beberapa properti dari kelas model. 
+Vladimir Vapnik dan Alexey Chervonenkis memperkenalkan *VC dimension*, 
+yang menyajikan hasil konvergensi seragam yang berlaku untuk semua model dalam kelas VC. 
+Error pelatihan untuk semua model dalam kelas ini (secara simultan) dijamin mendekati error sebenarnya, 
+dan dijamin semakin mendekat pada laju $\mathcal{O}(1/\sqrt{n})$. Setelah penemuan revolusioner dari VC dimension, 
+banyak ukuran kompleksitas alternatif telah diusulkan, masing-masing memfasilitasi jaminan generalisasi yang serupa. 
+Lihat :citet:`boucheron2005theory` untuk pembahasan mendalam tentang berbagai cara lanjutan untuk mengukur kompleksitas fungsi.
 
-In a series of seminal papers,
-Vapnik and Chervonenkis extended
-the theory on the convergence
-of relative frequencies
-to more general classes of functions
-:cite:`VapChe64,VapChe68,VapChe71,VapChe74b,VapChe81,VapChe91`.
-One of the key contributions of this line of work
-is the Vapnik--Chervonenkis (VC) dimension,
-which measures (one notion of)
-the complexity (flexibility) of a model class.
-Moreover, one of their key results bounds
-the difference between the empirical error
-and the population error as a function
-of the VC dimension and the number of samples:
+Sayangnya, meskipun ukuran kompleksitas ini telah menjadi alat yang berguna dalam teori statistik, 
+mereka ternyata tidak memiliki kekuatan (jika diterapkan secara langsung) untuk menjelaskan mengapa deep neural network mampu melakukan generalisasi. 
+Deep neural network sering kali memiliki jutaan parameter (atau lebih), dan dengan mudah dapat menetapkan label acak pada banyak titik data. 
+Namun demikian, mereka mampu melakukan generalisasi dengan baik pada masalah praktis dan, secara mengejutkan, 
+seringkali melakukan generalisasi lebih baik saat modelnya lebih besar dan lebih dalam, meskipun memiliki VC dimension yang lebih tinggi.
+Pada bab berikutnya, kita akan meninjau kembali generalisasi dalam konteks deep learning.
 
-$$P\left(R[p, f] - R_\textrm{emp}[\mathbf{X}, \mathbf{Y}, f] < \alpha\right) \geq 1-\delta
-\ \textrm{ for }\ \alpha \geq c \sqrt{(\textrm{VC} - \log \delta)/n}.$$
+## Latihan
 
-Here $\delta > 0$ is the probability that the bound is violated,
-$\alpha$ is the upper bound on the generalization gap,
-and $n$ is the dataset size.
-Lastly, $c > 0$ is a constant that depends
-only on the scale of the loss that can be incurred.
-One use of the bound might be to plug in desired
-values of $\delta$ and $\alpha$
-to determine how many samples to collect.
-The VC dimension quantifies the largest
-number of data points for which we can assign
-any arbitrary (binary) labeling
-and for each find some model $f$ in the class
-that agrees with that labeling.
-For example, linear models on $d$-dimensional inputs
-have VC dimension $d+1$.
-It is easy to see that a line can assign
-any possible labeling to three points in two dimensions,
-but not to four.
-Unfortunately, the theory tends to be
-overly pessimistic for more complex models
-and obtaining this guarantee typically requires
-far more examples than are actually needed
-to achieve the desired error rate.
-Note also that fixing the model class and $\delta$,
-our error rate again decays
-with the usual $\mathcal{O}(1/\sqrt{n})$ rate.
-It seems unlikely that we could do better in terms of $n$.
-However, as we vary the model class,
-VC dimension can present
-a pessimistic picture
-of the generalization gap.
+1. Jika kita ingin memperkirakan error dari model tetap $f$ dengan ketelitian hingga $0.0001$ dengan probabilitas lebih dari 99,9%, berapa banyak sampel yang kita butuhkan?
+2. Misalkan seseorang memiliki test set berlabel $\mathcal{D}$ dan hanya menyediakan input tanpa label (fitur). Sekarang, anggap bahwa Anda hanya dapat mengakses label test set dengan menjalankan model $f$ (tanpa batasan pada kelas model) pada masing-masing input tanpa label dan menerima error yang sesuai $\epsilon_\mathcal{D}(f)$. Berapa banyak model yang perlu Anda evaluasi sebelum seluruh test set bocor dan Anda dapat terlihat memiliki error $0$, tanpa memandang error sebenarnya Anda?
+3. Berapakah VC dimension dari kelas polinomial orde lima?
+4. Berapakah VC dimension dari persegi panjang yang berorientasi sumbu pada data berdimensi dua?
 
-
-
-
-
-## Summary
-
-The most straightforward way to evaluate a model
-is to consult a test set comprised of previously unseen data.
-Test set evaluations provide an unbiased estimate of the true error
-and converge at the desired $\mathcal{O}(1/\sqrt{n})$ rate as the test set grows.
-We can provide approximate confidence intervals
-based on exact asymptotic distributions
-or valid finite sample confidence intervals
-based on (more conservative) finite sample guarantees.
-Indeed test set evaluation is the bedrock
-of modern machine learning research.
-However, test sets are seldom true test sets
-(used by multiple researchers again and again).
-Once the same test set is used
-to evaluate multiple models,
-controlling for false discovery can be difficult.
-This can cause huge problems in theory.
-In practice, the significance of the problem
-depends on the size of the holdout sets in question
-and whether they are merely being used to choose hyperparameters
-or if they are leaking information more directly.
-Nevertheless, it is good practice to curate real test sets (or multiple)
-and to be as conservative as possible about how often they are used.
-
-
-Hoping to provide a more satisfying solution,
-statistical learning theorists have developed methods
-for guaranteeing uniform convergence over a model class.
-If indeed every model's empirical error simultaneously
-converges to its true error,
-then we are free to choose the model that performs
-best, minimizing the training error,
-knowing that it too will perform similarly well
-on the holdout data.
-Crucially, any one of such results must depend
-on some property of the model class.
-Vladimir Vapnik and Alexey Chernovenkis
-introduced the VC dimension,
-presenting uniform convergence results
-that hold for all models in a VC class.
-The training errors for all models in the class
-are (simultaneously) guaranteed
-to be close to their true errors,
-and guaranteed to grow even closer
-at $\mathcal{O}(1/\sqrt{n})$ rates.
-Following the revolutionary discovery of VC dimension,
-numerous alternative complexity measures have been proposed,
-each facilitating an analogous generalization guarantee.
-See :citet:`boucheron2005theory` for a detailed discussion
-of several advanced ways of measuring function complexity.
-Unfortunately, while these complexity measures
-have become broadly useful tools in statistical theory,
-they turn out to be powerless
-(as straightforwardly applied)
-for explaining why deep neural networks generalize.
-Deep neural networks often have millions of parameters (or more),
-and can easily assign random labels to large collections of points.
-Nevertheless, they generalize well on practical problems
-and, surprisingly, they often generalize better,
-when they are larger and deeper,
-despite incurring higher VC dimensions.
-In the next chapter, we will revisit generalization
-in the context of deep learning.
-
-## Exercises
-
-1. If we wish to estimate the error of a fixed model $f$
-   to within $0.0001$ with probability greater than 99.9%,
-   how many samples do we need?
-1. Suppose that somebody else possesses a labeled test set
-   $\mathcal{D}$ and only makes available the unlabeled inputs (features).
-   Now suppose that you can only access the test set labels
-   by running a model $f$ (with no restrictions placed on the model class)
-   on each of the unlabeled inputs
-   and receiving the corresponding error $\epsilon_\mathcal{D}(f)$.
-   How many models would you need to evaluate
-   before you leak the entire test set
-   and thus could appear to have error $0$,
-   regardless of your true error?
-1. What is the VC dimension of the class of fifth-order polynomials?
-1. What is the VC dimension of axis-aligned rectangles on two-dimensional data?
-
-[Discussions](https://discuss.d2l.ai/t/6829)
+[Diskusi](https://discuss.d2l.ai/t/6829)
