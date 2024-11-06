@@ -42,7 +42,7 @@
 
 # 4 - chapter_linear-classification
 
-- [ ] ./chapter_linear-classification/generalization-classification.md
+- [x] ./chapter_linear-classification/generalization-classification.md
 - [ ] ./chapter_linear-classification/softmax-regression-concise.md
 - [ ] ./chapter_linear-classification/softmax-regression.md
 - [ ] ./chapter_linear-classification/softmax-regression-scratch.md
