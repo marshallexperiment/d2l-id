@@ -3,17 +3,18 @@
 tab.interact_select(['mxnet', 'pytorch', 'tensorflow', 'jax'])
 ```
 
-# Softmax Regression Implementation from Scratch
+# Implementasi Regresi Softmax dari Awal
 :label:`sec_softmax_scratch`
 
-Because softmax regression is so fundamental,
-we believe that you ought to know
-how to implement it yourself.
-Here, we limit ourselves to defining the
-softmax-specific aspects of the model
-and reuse the other components
-from our linear regression section,
-including the training loop.
+Karena regresi softmax sangat mendasar,
+kami percaya bahwa Anda sebaiknya mengetahui
+cara mengimplementasikannya sendiri.
+Di sini, kita membatasi diri untuk mendefinisikan
+aspek-aspek khusus dari model softmax
+dan menggunakan kembali komponen-komponen lain
+dari bagian regresi linear kita,
+termasuk loop pelatihan.
+
 
 ```{.python .input}
 %%tab mxnet
@@ -43,17 +44,18 @@ from jax import numpy as jnp
 from functools import partial
 ```
 
-## The Softmax
+## Fungsi Softmax
 
-Let's begin with the most important part:
-the mapping from scalars to probabilities.
-For a refresher, recall the operation of the sum operator
-along specific dimensions in a tensor,
-as discussed in :numref:`subsec_lin-alg-reduction`
-and :numref:`subsec_lin-alg-non-reduction`.
-[**Given a matrix `X` we can sum over all elements (by default) or only
-over elements in the same axis.**]
-The `axis` variable lets us compute row and column sums:
+Mari kita mulai dengan bagian yang paling penting:
+pemetaan dari skalar ke probabilitas.
+Sebagai penyegaran, ingat kembali operasi operator penjumlahan
+pada dimensi tertentu dalam tensor,
+seperti yang dibahas di :numref:`subsec_lin-alg-reduction`
+dan :numref:`subsec_lin-alg-non-reduction`.
+[**Diberikan sebuah matriks `X`, kita dapat menjumlahkan semua elemen (secara default) atau hanya
+elemen-elemen pada sumbu tertentu.**]
+Variabel `axis` memungkinkan kita untuk menghitung jumlah per baris atau per kolom:
+
 
 ```{.python .input}
 %%tab all
@@ -61,34 +63,37 @@ X = d2l.tensor([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]])
 d2l.reduce_sum(X, 0, keepdims=True), d2l.reduce_sum(X, 1, keepdims=True)
 ```
 
-Computing the softmax requires three steps:
-(i) exponentiation of each term;
-(ii) a sum over each row to compute the normalization constant for each example;
-(iii) division of each row by its normalization constant,
-ensuring that the result sums to 1:
+Menghitung softmax memerlukan tiga langkah:
+(i) eksponensiasi setiap elemen;
+(ii) penjumlahan per baris untuk menghitung konstanta normalisasi untuk setiap contoh;
+(iii) pembagian setiap baris dengan konstanta normalisasinya,
+memastikan bahwa hasil akhirnya berjumlah 1:
 
 (**
 $$\mathrm{softmax}(\mathbf{X})_{ij} = \frac{\exp(\mathbf{X}_{ij})}{\sum_k \exp(\mathbf{X}_{ik})}.$$
 **)
 
-The (logarithm of the) denominator
-is called the (log) *partition function*.
-It was introduced in [statistical physics](https://en.wikipedia.org/wiki/Partition_function_(statistical_mechanics))
-to sum over all possible states in a thermodynamic ensemble.
-The implementation is straightforward:
+Penyebutnya (logaritma dari penyebut ini)
+disebut sebagai (log) *fungsi partisi*.
+Fungsi ini diperkenalkan dalam [fisika statistik](https://en.wikipedia.org/wiki/Partition_function_(statistical_mechanics))
+untuk menjumlahkan semua kemungkinan keadaan dalam ensemble termodinamika.
+Implementasinya cukup sederhana:
 
 ```{.python .input}
 %%tab all
 def softmax(X):
     X_exp = d2l.exp(X)
     partition = d2l.reduce_sum(X_exp, 1, keepdims=True)
-    return X_exp / partition  # The broadcasting mechanism is applied here
+    return X_exp / partition  # Mekanisme Broadcasting Diterapkan di Sini
 ```
 
-For any input `X`, [**we turn each element
-into a nonnegative number.
-Each row sums up to 1,**]
-as is required for a probability. Caution: the code above is *not* robust against very large or very small arguments. While it is sufficient to illustrate what is happening, you should *not* use this code verbatim for any serious purpose. Deep learning frameworks have such protections built in and we will be using the built-in softmax going forward.
+Untuk setiap input `X`, [**kita mengubah setiap elemen
+menjadi bilangan non-negatif.
+Setiap baris berjumlah 1,**]
+sesuai dengan persyaratan untuk probabilitas. Perhatian: kode di atas *tidak* tahan terhadap argumen yang sangat besar atau sangat kecil. 
+Meskipun ini cukup untuk menggambarkan apa yang terjadi, Anda sebaiknya *tidak* menggunakan kode ini secara langsung untuk keperluan serius. 
+Framework deep learning memiliki perlindungan semacam ini yang sudah tertanam, dan kita akan menggunakan softmax bawaan framework tersebut ke depannya.
+
 
 ```{.python .input}
 %%tab mxnet
@@ -111,34 +116,34 @@ X_prob = softmax(X)
 X_prob, d2l.reduce_sum(X_prob, 1)
 ```
 
-## The Model
+## Model
 
-We now have everything that we need
-to implement [**the softmax regression model.**]
-As in our linear regression example,
-each instance will be represented
-by a fixed-length vector.
-Since the raw data here consists
-of $28 \times 28$ pixel images,
-[**we flatten each image,
-treating them as vectors of length 784.**]
-In later chapters, we will introduce
-convolutional neural networks,
-which exploit the spatial structure
-in a more satisfying way.
+Sekarang kita memiliki semua yang diperlukan
+untuk mengimplementasikan [**model regresi softmax.**]
+Seperti pada contoh regresi linear kita,
+setiap instance akan direpresentasikan
+oleh vektor dengan panjang tetap.
+Karena data mentah di sini terdiri dari
+gambar $28 \times 28$ piksel,
+[**kita meratakan setiap gambar,
+menganggapnya sebagai vektor dengan panjang 784.**]
+Pada bab-bab selanjutnya, kita akan memperkenalkan
+jaringan saraf konvolusi,
+yang memanfaatkan struktur spasial
+dengan cara yang lebih memuaskan.
 
+Pada regresi softmax,
+jumlah output dari jaringan kita
+harus sama dengan jumlah kelas.
+(**Karena dataset kita memiliki 10 kelas,
+jaringan kita memiliki dimensi output sebesar 10.**)
+Akibatnya, bobot kita akan membentuk matriks berukuran $784 \times 10$
+ditambah vektor baris $1 \times 10$ untuk bias.
+Seperti pada regresi linear,
+kita menginisialisasi bobot `W`
+dengan noise Gaussian.
+Bias diinisialisasi dengan nilai nol.
 
-In softmax regression,
-the number of outputs from our network
-should be equal to the number of classes.
-(**Since our dataset has 10 classes,
-our network has an output dimension of 10.**)
-Consequently, our weights constitute a $784 \times 10$ matrix
-plus a $1 \times 10$ row vector for the biases.
-As with linear regression,
-we initialize the weights `W`
-with Gaussian noise.
-The biases are initialized as zeros.
 
 ```{.python .input}
 %%tab mxnet
@@ -195,11 +200,12 @@ class SoftmaxRegressionScratch(d2l.Classifier):
         self.b = self.param('b', nn.initializers.zeros, self.num_outputs)
 ```
 
-The code below defines how the network
-maps each input to an output.
-Note that we flatten each $28 \times 28$ pixel image in the batch
-into a vector using `reshape`
-before passing the data through our model.
+Kode di bawah ini mendefinisikan bagaimana jaringan
+memetakan setiap input ke output.
+Perhatikan bahwa kita meratakan setiap gambar $28 \times 28$ piksel dalam batch
+menjadi sebuah vektor menggunakan `reshape`
+sebelum mengoper data melalui model kita.
+
 
 ```{.python .input}
 %%tab all
@@ -209,27 +215,27 @@ def forward(self, X):
     return softmax(d2l.matmul(X, self.W) + self.b)
 ```
 
-## The Cross-Entropy Loss
+## Loss Cross-Entropy
 
-Next we need to implement the cross-entropy loss function
-(introduced in :numref:`subsec_softmax-regression-loss-func`).
-This may be the most common loss function
-in all of deep learning.
-At the moment, applications of deep learning
-easily cast as classification problems
-far outnumber those better treated as regression problems.
+Selanjutnya, kita perlu mengimplementasikan fungsi loss cross-entropy
+(yang diperkenalkan di :numref:`subsec_softmax-regression-loss-func`).
+Ini mungkin merupakan fungsi loss yang paling umum
+dalam deep learning.
+Saat ini, aplikasi deep learning
+yang diformulasikan sebagai masalah klasifikasi
+jauh lebih banyak daripada yang lebih baik diperlakukan sebagai masalah regresi.
 
-Recall that cross-entropy takes the negative log-likelihood
-of the predicted probability assigned to the true label.
-For efficiency we avoid Python for-loops and use indexing instead.
-In particular, the one-hot encoding in $\mathbf{y}$
-allows us to select the matching terms in $\hat{\mathbf{y}}$.
+Ingat bahwa cross-entropy mengambil log-likelihood negatif
+dari probabilitas prediksi yang diberikan pada label yang benar.
+Untuk efisiensi, kita menghindari penggunaan for-loop Python dan menggunakan indexing sebagai gantinya.
+Secara khusus, one-hot encoding dalam $\mathbf{y}$
+memungkinkan kita untuk memilih suku yang sesuai dalam $\hat{\mathbf{y}}$.
 
-To see this in action we [**create sample data `y_hat`
-with 2 examples of predicted probabilities over 3 classes and their corresponding labels `y`.**]
-The correct labels are $0$ and $2$ respectively (i.e., the first and third class).
-[**Using `y` as the indices of the probabilities in `y_hat`,**]
-we can pick out terms efficiently.
+Untuk melihat ini dalam aksi, kita [**membuat data contoh `y_hat`
+dengan 2 contoh probabilitas prediksi pada 3 kelas dan label yang sesuai `y`.**]
+Label yang benar adalah $0$ dan $2$ masing-masing (yaitu, kelas pertama dan ketiga).
+[**Dengan menggunakan `y` sebagai indeks probabilitas dalam `y_hat`,**]
+kita dapat memilih suku dengan efisien.
 
 ```{.python .input}
 %%tab mxnet, pytorch, jax
@@ -246,18 +252,19 @@ tf.boolean_mask(y_hat, tf.one_hot(y, depth=y_hat.shape[-1]))
 ```
 
 :begin_tab:`pytorch, mxnet, tensorflow`
-Now we can (**implement the cross-entropy loss function**) by averaging over the logarithms of the selected probabilities.
+Sekarang kita dapat (**mengimplementasikan fungsi loss cross-entropy**) dengan mengambil rata-rata dari logaritma probabilitas yang dipilih.
 :end_tab:
 
 :begin_tab:`jax`
-Now we can (**implement the cross-entropy loss function**) by averaging over the logarithms of the selected probabilities.
+Sekarang kita dapat (**mengimplementasikan fungsi loss cross-entropy**) dengan mengambil rata-rata dari logaritma probabilitas yang dipilih.
 
-Note that to make use of `jax.jit` to speed up JAX implementations, and
-to make sure `loss` is a pure function, the `cross_entropy` function is re-defined
-inside the `loss` to avoid usage of any global variables or functions
-which may render the `loss` function impure.
-We refer interested readers to the [JAX documentation](https://jax.readthedocs.io/en/latest/notebooks/Common_Gotchas_in_JAX.html#pure-functions) on `jax.jit` and pure functions.
+Perhatikan bahwa untuk memanfaatkan `jax.jit` dalam mempercepat implementasi JAX, dan
+untuk memastikan bahwa `loss` adalah fungsi murni, fungsi `cross_entropy` didefinisikan ulang
+di dalam `loss` untuk menghindari penggunaan variabel atau fungsi global
+yang mungkin membuat fungsi `loss` menjadi tidak murni.
+Pembaca yang tertarik dapat merujuk ke [dokumentasi JAX](https://jax.readthedocs.io/en/latest/notebooks/Common_Gotchas_in_JAX.html#pure-functions) tentang `jax.jit` dan fungsi murni.
 :end_tab:
+
 
 ```{.python .input}
 %%tab mxnet, pytorch, jax
@@ -291,32 +298,32 @@ def loss(self, params, X, y, state):
     def cross_entropy(y_hat, y):
         return -d2l.reduce_mean(d2l.log(y_hat[list(range(len(y_hat))), y]))
     y_hat = state.apply_fn({'params': params}, *X)
-    # The returned empty dictionary is a placeholder for auxiliary data,
-    # which will be used later (e.g., for batch norm)
+    # Dictionary kosong yang dikembalikan adalah placeholder untuk data tambahan,
+    # yang akan digunakan nanti (misalnya, untuk batch normalization)
     return cross_entropy(y_hat, y), {}
 ```
 
-## Training
+## Pelatihan
 
-We reuse the `fit` method defined in :numref:`sec_linear_scratch` to [**train the model with 10 epochs.**]
-Note that the number of epochs (`max_epochs`),
-the minibatch size (`batch_size`),
-and learning rate (`lr`)
-are adjustable hyperparameters.
-That means that while these values are not
-learned during our primary training loop,
-they still influence the performance
-of our model, both vis-à-vis training
-and generalization performance.
-In practice you will want to choose these values
-based on the *validation* split of the data
-and then, ultimately, to evaluate your final model
-on the *test* split.
-As discussed in :numref:`subsec_generalization-model-selection`,
-we will regard the test data of Fashion-MNIST
-as the validation set, thus
-reporting validation loss and validation accuracy
-on this split.
+Kita menggunakan kembali metode `fit` yang didefinisikan di :numref:`sec_linear_scratch` untuk [**melatih model dengan 10 epoch.**]
+Perhatikan bahwa jumlah epoch (`max_epochs`),
+ukuran minibatch (`batch_size`),
+dan learning rate (`lr`)
+adalah hyperparameter yang dapat diatur.
+Artinya, meskipun nilai-nilai ini tidak
+dipelajari selama loop pelatihan utama,
+mereka tetap mempengaruhi kinerja
+model kita, baik dalam hal pelatihan
+maupun kinerja generalisasi.
+Dalam praktiknya, Anda akan memilih nilai-nilai ini
+berdasarkan pada *split validasi* dari data
+dan kemudian, akhirnya, mengevaluasi model akhir Anda
+pada *split tes*.
+Seperti dibahas di :numref:`subsec_generalization-model-selection`,
+kita akan menganggap data tes dari Fashion-MNIST
+sebagai set validasi, sehingga
+melaporkan loss validasi dan akurasi validasi
+pada split ini.
 
 ```{.python .input}
 %%tab all
@@ -326,10 +333,11 @@ trainer = d2l.Trainer(max_epochs=10)
 trainer.fit(model, data)
 ```
 
-## Prediction
+## Prediksi
 
-Now that training is complete,
-our model is ready to [**classify some images.**]
+Sekarang pelatihan selesai,
+model kita siap untuk [**mengklasifikasikan beberapa gambar.**]
+
 
 ```{.python .input}
 %%tab all
@@ -341,11 +349,12 @@ if tab.selected('jax'):
 preds.shape
 ```
 
-We are more interested in the images we label *incorrectly*. We visualize them by
-comparing their actual labels
-(first line of text output)
-with the predictions from the model
-(second line of text output).
+Kita lebih tertarik pada gambar yang kita labeli *secara tidak benar*. Kita memvisualisasikannya dengan
+membandingkan label sebenarnya
+(baris pertama dari output teks)
+dengan prediksi dari model
+(baris kedua dari output teks).
+
 
 ```{.python .input}
 %%tab all
@@ -356,47 +365,46 @@ labels = [a+'\n'+b for a, b in zip(
 data.visualize([X, y], labels=labels)
 ```
 
-## Summary
+## Ringkasan
 
-By now we are starting to get some experience
-with solving linear regression
-and classification problems.
-With it, we have reached what would arguably be
-the state of the art of 1960--1970s of statistical modeling.
-In the next section, we will show you how to leverage
-deep learning frameworks to implement this model
-much more efficiently.
+Sejauh ini kita mulai mendapatkan pengalaman
+dalam menyelesaikan masalah regresi linear
+dan klasifikasi.
+Dengan ini, kita telah mencapai apa yang bisa dibilang
+merupakan state of the art dalam pemodelan statistik pada tahun 1960--1970an.
+Pada bagian berikutnya, kita akan menunjukkan cara memanfaatkan
+framework deep learning untuk mengimplementasikan model ini
+dengan jauh lebih efisien.
 
-## Exercises
+## Latihan
 
-1. In this section, we directly implemented the softmax function based on the mathematical definition of the softmax operation. As discussed in :numref:`sec_softmax` this can cause numerical instabilities.
-    1. Test whether `softmax` still works correctly if an input has a value of $100$.
-    1. Test whether `softmax` still works correctly if the largest of all inputs is smaller than $-100$.
-    1. Implement a fix by looking at the value relative to the largest entry in the argument.
-1. Implement a `cross_entropy` function that follows the definition of the cross-entropy loss function $\sum_i y_i \log \hat{y}_i$.
-    1. Try it out in the code example of this section.
-    1. Why do you think it runs more slowly?
-    1. Should you use it? When would it make sense to?
-    1. What do you need to be careful of? Hint: consider the domain of the logarithm.
-1. Is it always a good idea to return the most likely label? For example, would you do this for medical diagnosis? How would you try to address this?
-1. Assume that we want to use softmax regression to predict the next word based on some features. What are some problems that might arise from a large vocabulary?
-1. Experiment with the hyperparameters of the code in this section. In particular:
-    1. Plot how the validation loss changes as you change the learning rate.
-    1. Do the validation and training loss change as you change the minibatch size? How large or small do you need to go before you see an effect?
-
+1. Pada bagian ini, kita langsung mengimplementasikan fungsi softmax berdasarkan definisi matematis dari operasi softmax. Seperti yang dibahas di :numref:`sec_softmax`, ini bisa menyebabkan ketidakstabilan numerik.
+    1. Uji apakah `softmax` masih berfungsi dengan benar jika input memiliki nilai $100$.
+    1. Uji apakah `softmax` masih berfungsi dengan benar jika nilai terbesar dari semua input lebih kecil dari $-100$.
+    1. Implementasikan perbaikan dengan melihat nilai relatif terhadap entri terbesar dalam argumen.
+2. Implementasikan fungsi `cross_entropy` yang mengikuti definisi fungsi loss cross-entropy $\sum_i y_i \log \hat{y}_i$.
+    1. Coba gunakan pada contoh kode di bagian ini.
+    1. Mengapa menurut Anda fungsi ini berjalan lebih lambat?
+    1. Haruskah Anda menggunakannya? Kapan ini masuk akal?
+    1. Apa yang perlu Anda perhatikan? Petunjuk: pertimbangkan domain dari logaritma.
+3. Apakah selalu merupakan ide yang baik untuk mengembalikan label yang paling mungkin? Misalnya, apakah Anda akan melakukan ini untuk diagnosis medis? Bagaimana Anda akan mencoba mengatasi ini?
+4. Asumsikan bahwa kita ingin menggunakan regresi softmax untuk memprediksi kata berikutnya berdasarkan beberapa fitur. Apa saja masalah yang mungkin muncul dari kosakata yang besar?
+5. Bereksperimenlah dengan hyperparameter dari kode di bagian ini. Khususnya:
+    1. Plot bagaimana perubahan loss validasi saat Anda mengubah learning rate.
+    1. Apakah loss validasi dan pelatihan berubah saat Anda mengubah ukuran minibatch? Seberapa besar atau kecil Anda harus mencoba untuk melihat efeknya?
 
 :begin_tab:`mxnet`
-[Discussions](https://discuss.d2l.ai/t/50)
+[Diskusi](https://discuss.d2l.ai/t/50)
 :end_tab:
 
 :begin_tab:`pytorch`
-[Discussions](https://discuss.d2l.ai/t/51)
+[Diskusi](https://discuss.d2l.ai/t/51)
 :end_tab:
 
 :begin_tab:`tensorflow`
-[Discussions](https://discuss.d2l.ai/t/225)
+[Diskusi](https://discuss.d2l.ai/t/225)
 :end_tab:
 
 :begin_tab:`jax`
-[Discussions](https://discuss.d2l.ai/t/17982)
+[Diskusi](https://discuss.d2l.ai/t/17982)
 :end_tab:
