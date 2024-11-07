@@ -1,18 +1,19 @@
-# Linear Neural Networks for Classification
+# Jaringan Saraf Linear untuk Klasifikasi
 :label:`chap_classification`
 
-Now that you have worked through all of the mechanics
-you are ready to apply the skills you have learned to broader kinds of tasks.
-Even as we pivot towards classification,
-most of the plumbing remains the same:
-loading the data, passing it through the model,
-generating output, calculating the loss,
-taking gradients with respect to weights,
-and updating the model.
-However, the precise form of the targets,
-the parametrization of the output layer,
-and the choice of loss function will adapt
-to suit the *classification* setting.
+Sekarang setelah Anda mempelajari semua mekanisme dasarnya,
+Anda siap untuk menerapkan keterampilan yang telah Anda pelajari pada jenis tugas yang lebih luas.
+Meskipun kita beralih ke klasifikasi,
+sebagian besar langkah-langkah dasarnya tetap sama:
+memuat data, melewatkannya melalui model,
+menghasilkan output, menghitung loss,
+mengambil gradien terhadap bobot,
+dan memperbarui model.
+Namun, bentuk target yang tepat,
+parameterisasi dari lapisan output,
+dan pilihan fungsi loss akan disesuaikan
+untuk pengaturan *klasifikasi*.
+
 
 ```toc
 :maxdepth: 2
