@@ -3,15 +3,14 @@
 tab.interact_select(['mxnet', 'pytorch', 'tensorflow', 'jax'])
 ```
 
-# Concise Implementation of Softmax Regression
+# Implementasi Singkat dari Regresi Softmax
 :label:`sec_softmax_concise`
 
+Seperti halnya framework deep learning tingkat tinggi
+yang mempermudah implementasi regresi linear
+(lihat :numref:`sec_linear_concise`),
+mereka juga sama nyamannya digunakan di sini.
 
-
-Just as high-level deep learning frameworks
-made it easier to implement linear regression
-(see :numref:`sec_linear_concise`),
-they are similarly convenient here.
 
 ```{.python .input}
 %%tab mxnet
@@ -45,39 +44,38 @@ from jax import numpy as jnp
 import optax
 ```
 
-## Defining the Model
+## Mendefinisikan Model
 
-As in :numref:`sec_linear_concise`, 
-we construct our fully connected layer 
-using the built-in layer. 
-The built-in `__call__` method then invokes `forward` 
-whenever we need to apply the network to some input.
+Seperti pada :numref:`sec_linear_concise`, 
+kita membangun layer fully connected 
+menggunakan layer bawaan. 
+Metode bawaan `__call__` kemudian memanggil `forward` 
+setiap kali kita perlu menerapkan jaringan pada input tertentu.
 
 :begin_tab:`mxnet`
-Even though the input `X` is a fourth-order tensor, 
-the built-in `Dense` layer 
-will automatically convert `X` into a second-order tensor 
-by keeping the dimensionality along the first axis unchanged.
+Meskipun input `X` adalah tensor orde keempat, 
+layer `Dense` bawaan 
+akan secara otomatis mengonversi `X` menjadi tensor orde kedua 
+dengan mempertahankan dimensi sepanjang sumbu pertama tidak berubah.
 :end_tab:
 
 :begin_tab:`pytorch`
-We use a `Flatten` layer to convert the fourth-order tensor `X` to second order 
-by keeping the dimensionality along the first axis unchanged.
-
+Kita menggunakan layer `Flatten` untuk mengonversi tensor orde keempat `X` menjadi orde kedua 
+dengan mempertahankan dimensi sepanjang sumbu pertama tidak berubah.
 :end_tab:
 
 :begin_tab:`tensorflow`
-We use a `Flatten` layer to convert the fourth-order tensor `X` 
-by keeping the dimension along the first axis unchanged.
+Kita menggunakan layer `Flatten` untuk mengonversi tensor orde keempat `X` 
+dengan mempertahankan dimensi sepanjang sumbu pertama tidak berubah.
 :end_tab:
 
 :begin_tab:`jax`
-Flax allows users to write the network class in a more compact way
-using `@nn.compact` dectorator. With `@nn.compact`, one
-can simply write all network logic inside a single “forward pass”
-method, without needing to define the standard `setup` method in
-the dataclass.
+Flax memungkinkan pengguna untuk menulis kelas jaringan dengan cara yang lebih ringkas 
+menggunakan dekorator `@nn.compact`. Dengan `@nn.compact`, 
+pengguna cukup menulis semua logika jaringan di dalam satu metode "forward pass", 
+tanpa perlu mendefinisikan metode `setup` standar dalam dataclass.
 :end_tab:
+
 
 ```{.python .input}
 %%tab pytorch
@@ -125,25 +123,25 @@ class SoftmaxRegression(d2l.Classifier):  #@save
         return X
 ```
 
-## Softmax Revisited
+## Peninjauan Kembali Softmax
 :label:`subsec_softmax-implementation-revisited`
 
-In :numref:`sec_softmax_scratch` we calculated our model's output
-and applied the cross-entropy loss. While this is perfectly
-reasonable mathematically, it is risky computationally, because of
-numerical underflow and overflow in the exponentiation.
+Pada :numref:`sec_softmax_scratch`, kita menghitung output model
+dan menerapkan loss cross-entropy. Meskipun ini sepenuhnya
+masuk akal secara matematis, ini berisiko secara komputasional karena
+terjadinya underflow dan overflow numerik saat melakukan eksponensial.
 
-Recall that the softmax function computes probabilities via
+Ingat bahwa fungsi softmax menghitung probabilitas melalui
 $\hat y_j = \frac{\exp(o_j)}{\sum_k \exp(o_k)}$.
-If some of the $o_k$ are very large, i.e., very positive,
-then $\exp(o_k)$ might be larger than the largest number
-we can have for certain data types. This is called *overflow*. Likewise,
-if every argument is a very large negative number, we will get *underflow*.
-For instance, single precision floating point numbers approximately
-cover the range of $10^{-38}$ to $10^{38}$. As such, if the largest term in $\mathbf{o}$
-lies outside the interval $[-90, 90]$, the result will not be stable.
-A way round this problem is to subtract $\bar{o} \stackrel{\textrm{def}}{=} \max_k o_k$ from
-all entries:
+Jika beberapa nilai $o_k$ sangat besar, yaitu sangat positif,
+maka $\exp(o_k)$ mungkin menjadi lebih besar dari nilai maksimum
+yang dapat disimpan dalam tipe data tertentu. Hal ini disebut *overflow*. Begitu juga,
+jika setiap argumen adalah angka negatif yang sangat besar, kita akan mengalami *underflow*.
+Sebagai contoh, angka floating point presisi tunggal mencakup kisaran
+dari sekitar $10^{-38}$ hingga $10^{38}$. Karena itu, jika elemen terbesar dalam $\mathbf{o}$
+terletak di luar interval $[-90, 90]$, hasilnya tidak akan stabil.
+Cara mengatasi masalah ini adalah dengan mengurangkan $\bar{o} \stackrel{\textrm{def}}{=} \max_k o_k$ dari
+semua elemen:
 
 $$
 \hat y_j = \frac{\exp o_j}{\sum_k \exp o_k} =
@@ -151,21 +149,20 @@ $$
 \frac{\exp(o_j - \bar{o})}{\sum_k \exp (o_k - \bar{o})}.
 $$
 
-By construction we know that $o_j - \bar{o} \leq 0$ for all $j$. As such, for a $q$-class
-classification problem, the denominator is contained in the interval $[1, q]$. Moreover, the
-numerator never exceeds $1$, thus preventing numerical overflow. Numerical underflow only
-occurs when $\exp(o_j - \bar{o})$ numerically evaluates as $0$. Nonetheless, a few steps down
-the road we might find ourselves in trouble when we want to compute $\log \hat{y}_j$ as $\log 0$.
-In particular, in backpropagation,
-we might find ourselves faced with a screenful
-of the dreaded `NaN` (Not a Number) results.
+Dengan konstruksi ini, kita tahu bahwa $o_j - \bar{o} \leq 0$ untuk semua $j$. Jadi, untuk masalah klasifikasi dengan $q$ kelas,
+penyebutnya berada dalam interval $[1, q]$. Selain itu,
+pembilangnya tidak pernah melebihi $1$, sehingga mencegah terjadinya overflow numerik. Underflow numerik hanya terjadi
+ketika $\exp(o_j - \bar{o})$ secara numerik bernilai $0$. Meski demikian, beberapa langkah berikutnya
+mungkin akan bermasalah ketika kita ingin menghitung $\log \hat{y}_j$ sebagai $\log 0$.
+Khususnya, dalam proses backpropagation,
+kita mungkin akan dihadapkan pada layar penuh hasil `NaN` (Not a Number).
 
-Fortunately, we are saved by the fact that
-even though we are computing exponential functions,
-we ultimately intend to take their log
-(when calculating the cross-entropy loss).
-By combining softmax and cross-entropy,
-we can escape the numerical stability issues altogether. We have:
+Untungnya, kita terselamatkan oleh fakta bahwa
+meskipun kita menghitung fungsi eksponensial,
+kita pada akhirnya berniat untuk mengambil log-nya
+(saat menghitung loss cross-entropy).
+Dengan menggabungkan softmax dan cross-entropy,
+kita bisa menghindari masalah stabilitas numerik sama sekali. Kita memiliki:
 
 $$
 \log \hat{y}_j =
@@ -173,14 +170,15 @@ $$
 o_j - \bar{o} - \log \sum_k \exp (o_k - \bar{o}).
 $$
 
-This avoids both overflow and underflow.
-We will want to keep the conventional softmax function handy
-in case we ever want to evaluate the output probabilities by our model.
-But instead of passing softmax probabilities into our new loss function,
-we just
-[**pass the logits and compute the softmax and its log
-all at once inside the cross-entropy loss function,**]
-which does smart things like the ["LogSumExp trick"](https://en.wikipedia.org/wiki/LogSumExp).
+Ini menghindari baik overflow maupun underflow.
+Kita akan tetap mempertahankan fungsi softmax konvensional
+jika suatu saat kita ingin mengevaluasi probabilitas output model kita.
+Namun, alih-alih mengirimkan probabilitas softmax ke dalam fungsi loss baru kita,
+kita cukup
+[**mengirimkan nilai logits dan menghitung softmax beserta log-nya
+secara langsung di dalam fungsi loss cross-entropy,**]
+yang melakukan penanganan cerdas seperti ["LogSumExp trick"](https://en.wikipedia.org/wiki/LogSumExp).
+
 
 ```{.python .input}
 %%tab pytorch, mxnet, tensorflow
@@ -216,9 +214,10 @@ def loss(self, params, X, Y, state, averaged=True):
     return (fn(Y_hat, Y).mean(), {}) if averaged else (fn(Y_hat, Y), {})
 ```
 
-## Training
+## Pelatihan
 
-Next we train our model. We use Fashion-MNIST images, flattened to 784-dimensional feature vectors.
+Selanjutnya, kita melatih model kita. Kita menggunakan gambar Fashion-MNIST yang telah diratakan menjadi vektor fitur berdimensi 784.
+
 
 ```{.python .input}
 %%tab all
@@ -228,39 +227,36 @@ trainer = d2l.Trainer(max_epochs=10)
 trainer.fit(model, data)
 ```
 
-As before, this algorithm converges to a solution
-that is reasonably accurate,
-albeit this time with fewer lines of code than before.
+Seperti sebelumnya, algoritma ini berkonvergensi menuju solusi
+dengan akurasi yang cukup baik,
+meskipun kali ini dengan lebih sedikit baris kode dibandingkan sebelumnya.
 
+## Ringkasan
 
-## Summary
+API tingkat tinggi sangat nyaman karena mampu menyembunyikan aspek-aspek yang berpotensi berbahaya, seperti stabilitas numerik, dari penggunanya. Selain itu, mereka memungkinkan pengguna merancang model secara ringkas dengan sangat sedikit baris kode. Hal ini merupakan kelebihan sekaligus kekurangan. Manfaat yang jelas adalah membuat hal-hal menjadi sangat mudah diakses, bahkan bagi insinyur yang belum pernah mengambil satu kelas statistik pun dalam hidup mereka (sebenarnya, mereka adalah bagian dari audiens target buku ini). Namun, menyembunyikan aspek-aspek yang rumit juga datang dengan konsekuensi: kurangnya dorongan untuk menambahkan komponen baru dan berbeda secara mandiri, karena sedikit pengalaman praktis untuk melakukannya. Selain itu, hal ini membuatnya lebih sulit untuk *memperbaiki* sesuatu ketika framework gagal menutupi semua kasus.
 
-High-level APIs are very convenient at hiding from their user potentially dangerous aspects, such as numerical stability. Moreover, they allow users to design models concisely with very few lines of code. This is both a blessing and a curse. The obvious benefit is that it makes things highly accessible, even to engineers who never took a single class of statistics in their life (in fact, they are part of the target audience of the book). But hiding the sharp edges also comes with a price: a disincentive to add new and different components on your own, since there is little muscle memory for doing it. Moreover, it makes it more difficult to *fix* things whenever the protective padding of
-a framework fails to cover all the corner cases entirely. Again, this is due to lack of familiarity.
+Oleh karena itu, kami sangat mendorong Anda untuk meninjau *kedua* versi dasar dan versi elegan dari banyak implementasi yang mengikuti. Meskipun kami menekankan kemudahan pemahaman, implementasi-implementasi ini biasanya tetap cukup efisien (dengan pengecualian besar pada konvolusi). Kami berniat agar Anda dapat membangun dari implementasi ini ketika Anda menemukan sesuatu yang baru yang belum disediakan oleh framework manapun.
 
-As such, we strongly urge you to review *both* the bare bones and the elegant versions of many of the implementations that follow. While we emphasize ease of understanding, the implementations are nonetheless usually quite performant (convolutions are the big exception here). It is our intention to allow you to build on these when you invent something new that no framework can give you.
+## Latihan
 
-
-## Exercises
-
-1. Deep learning uses many different number formats, including FP64 double precision (used extremely rarely),
-FP32 single precision, BFLOAT16 (good for compressed representations), FP16 (very unstable), TF32 (a new format from NVIDIA), and INT8. Compute the smallest and largest argument of the exponential function for which the result does not lead to numerical underflow or overflow.
-1. INT8 is a very limited format consisting of nonzero numbers from $1$ to $255$. How could you extend its dynamic range without using more bits? Do standard multiplication and addition still work?
-1. Increase the number of epochs for training. Why might the validation accuracy decrease after a while? How could we fix this?
-1. What happens as you increase the learning rate? Compare the loss curves for several learning rates. Which one works better? When?
+1. Deep learning menggunakan berbagai format angka yang berbeda, termasuk presisi ganda FP64 (sangat jarang digunakan),
+   presisi tunggal FP32, BFLOAT16 (baik untuk representasi yang terkompresi), FP16 (sangat tidak stabil), TF32 (format baru dari NVIDIA), dan INT8. Hitung argumen terkecil dan terbesar dari fungsi eksponensial untuk hasil yang tidak menyebabkan underflow atau overflow numerik.
+2. INT8 adalah format yang sangat terbatas yang hanya terdiri dari angka non-nol dari $1$ hingga $255$. Bagaimana Anda bisa memperluas jangkauan dinamisnya tanpa menggunakan lebih banyak bit? Apakah perkalian dan penjumlahan standar masih berfungsi?
+3. Tingkatkan jumlah epoch untuk pelatihan. Mengapa akurasi validasi mungkin menurun setelah beberapa waktu? Bagaimana kita bisa memperbaiki ini?
+4. Apa yang terjadi ketika Anda meningkatkan learning rate? Bandingkan kurva loss untuk beberapa learning rate. Mana yang bekerja lebih baik? Kapan?
 
 :begin_tab:`mxnet`
-[Discussions](https://discuss.d2l.ai/t/52)
+[Diskusi](https://discuss.d2l.ai/t/52)
 :end_tab:
 
 :begin_tab:`pytorch`
-[Discussions](https://discuss.d2l.ai/t/53)
+[Diskusi](https://discuss.d2l.ai/t/53)
 :end_tab:
 
 :begin_tab:`tensorflow`
-[Discussions](https://discuss.d2l.ai/t/260)
+[Diskusi](https://discuss.d2l.ai/t/260)
 :end_tab:
 
 :begin_tab:`jax`
-[Discussions](https://discuss.d2l.ai/t/17983)
+[Diskusi](https://discuss.d2l.ai/t/17983)
 :end_tab:
