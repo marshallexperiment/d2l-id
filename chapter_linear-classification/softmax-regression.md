@@ -1,130 +1,125 @@
-# Softmax Regression
+# Regresi Softmax
 :label:`sec_softmax`
 
-In :numref:`sec_linear_regression`, we introduced linear regression,
-working through implementations from scratch in :numref:`sec_linear_scratch`
-and again using high-level APIs of a deep learning framework
-in :numref:`sec_linear_concise` to do the heavy lifting.
+Pada :numref:`sec_linear_regression`, kita telah memperkenalkan regresi linear,
+dengan implementasi dari awal di :numref:`sec_linear_scratch`
+dan menggunakan API tingkat tinggi dari framework deep learning
+di :numref:`sec_linear_concise` untuk menangani bagian yang rumit.
 
-Regression is the hammer we reach for when
-we want to answer *how much?* or *how many?* questions.
-If you want to predict the number of dollars (price)
-at which a house will be sold,
-or the number of wins a baseball team might have,
-or the number of days that a patient
-will remain hospitalized before being discharged,
-then you are probably looking for a regression model.
-However, even within regression models,
-there are important distinctions.
-For instance, the price of a house
-will never be negative and changes might often be *relative* to its baseline price.
-As such, it might be more effective to regress
-on the logarithm of the price.
-Likewise, the number of days a patient spends in hospital
-is a *discrete nonnegative* random variable.
-As such, least mean squares might not be an ideal approach either.
-This sort of time-to-event modeling
-comes with a host of other complications that are dealt with
-in a specialized subfield called *survival modeling*.
+Regresi adalah alat yang kita gunakan ketika ingin menjawab pertanyaan *berapa banyak?* atau *seberapa banyak?*.
+Jika Anda ingin memprediksi jumlah dolar (harga)
+sebuah rumah akan dijual,
+atau jumlah kemenangan yang mungkin diperoleh sebuah tim baseball,
+atau jumlah hari seorang pasien
+akan tetap dirawat sebelum dipulangkan,
+maka Anda mungkin sedang mencari model regresi.
+Namun, bahkan dalam model regresi,
+terdapat perbedaan penting.
+Misalnya, harga rumah
+tidak akan pernah negatif dan perubahannya sering kali *relatif* terhadap harga dasarnya.
+Oleh karena itu, mungkin lebih efektif untuk melakukan regresi
+pada logaritma harga.
+Demikian juga, jumlah hari seorang pasien di rumah sakit
+adalah variabel acak *diskret non-negatif*.
+Karena itu, metode least mean squares mungkin tidak menjadi pendekatan yang ideal.
+Pemodelan seperti ini, yang berkaitan dengan *time-to-event*,
+memiliki banyak aspek rumit yang ditangani dalam subbidang khusus yang disebut *pemodelan survival*.
 
-The point here is not to overwhelm you but just
-to let you know that there is a lot more to estimation
-than simply minimizing squared errors.
-And more broadly, there is a lot more to supervised learning than regression.
-In this section, we focus on *classification* problems
-where we put aside *how much?* questions
-and instead focus on *which category?* questions.
+Tujuannya di sini bukan untuk membingungkan Anda, melainkan
+untuk memberi tahu bahwa ada banyak hal dalam estimasi
+selain sekadar meminimalkan kesalahan kuadrat.
+Lebih luas lagi, ada lebih banyak hal dalam pembelajaran terawasi selain regresi.
+Pada bagian ini, kita fokus pada masalah *klasifikasi*
+di mana kita mengesampingkan pertanyaan *berapa banyak?*
+dan sebagai gantinya berfokus pada pertanyaan *kategori mana?*
 
+* Apakah email ini masuk ke folder spam atau inbox?
+* Apakah pelanggan ini lebih mungkin untuk mendaftar
+  atau tidak untuk layanan berlangganan?
+* Apakah gambar ini menampilkan seekor keledai, anjing, kucing, atau ayam jantan?
+* Film mana yang paling mungkin akan ditonton Aston selanjutnya?
+* Bagian mana dari buku yang akan Anda baca berikutnya?
 
+Secara umum, praktisi machine learning
+menggunakan kata *klasifikasi*
+untuk menggambarkan dua masalah yang secara halus berbeda:
+(i) mereka yang hanya tertarik pada
+penetapan tegas contoh ke dalam kategori (kelas);
+dan (ii) mereka yang ingin membuat penetapan lunak,
+yaitu, menilai probabilitas bahwa setiap kategori berlaku.
+Perbedaan ini sering kali menjadi kabur, sebagian karena
+sering kali, meskipun kita hanya peduli pada penetapan tegas,
+kita masih menggunakan model yang membuat penetapan lunak.
 
-* Does this email belong in the spam folder or the inbox?
-* Is this customer more likely to sign up
-  or not to sign up for a subscription service?
-* Does this image depict a donkey, a dog, a cat, or a rooster?
-* Which movie is Aston most likely to watch next?
-* Which section of the book are you going to read next?
+Lebih jauh lagi, ada kasus di mana lebih dari satu label mungkin benar.
+Misalnya, sebuah artikel berita mungkin secara bersamaan mencakup
+topik hiburan, bisnis, dan penerbangan luar angkasa,
+tetapi tidak mencakup topik medis atau olahraga.
+Maka, mengkategorikan artikel ini hanya ke dalam satu dari kategori tersebut
+tidak akan sangat berguna.
+Masalah ini umumnya dikenal sebagai [klasifikasi multi-label](https://en.wikipedia.org/wiki/Multi-label_classification).
+Lihat :citet:`Tsoumakas.Katakis.2007` untuk gambaran umum
+dan :citet:`Huang.Xu.Yu.2015`
+untuk algoritma yang efektif dalam penandaan gambar.
 
-Colloquially, machine learning practitioners
-overload the word *classification*
-to describe two subtly different problems:
-(i) those where we are interested only in
-hard assignments of examples to categories (classes);
-and (ii) those where we wish to make soft assignments,
-i.e., to assess the probability that each category applies.
-The distinction tends to get blurred, in part,
-because often, even when we only care about hard assignments,
-we still use models that make soft assignments.
-
-Even more, there are cases where more than one label might be true.
-For instance, a news article might simultaneously cover
-the topics of entertainment, business, and space flight,
-but not the topics of medicine or sports.
-Thus, categorizing it into one of the above categories
-on their own would not be very useful.
-This problem is commonly known as [multi-label classification](https://en.wikipedia.org/wiki/Multi-label_classification).
-See :citet:`Tsoumakas.Katakis.2007` for an overview
-and :citet:`Huang.Xu.Yu.2015`
-for an effective algorithm when tagging images.
-
-## Classification
+## Klasifikasi
 :label:`subsec_classification-problem`
 
-To get our feet wet, let's start with
-a simple image classification problem.
-Here, each input consists of a $2\times2$ grayscale image.
-We can represent each pixel value with a single scalar,
-giving us four features $x_1, x_2, x_3, x_4$.
-Further, let's assume that each image belongs to one
-among the categories "cat", "chicken", and "dog".
+Untuk memulai, mari kita mulai dengan
+masalah klasifikasi gambar sederhana.
+Di sini, setiap input terdiri dari gambar grayscale $2\times2$.
+Kita dapat merepresentasikan setiap nilai piksel dengan satu skalar,
+sehingga kita memiliki empat fitur $x_1, x_2, x_3, x_4$.
+Selanjutnya, kita asumsikan bahwa setiap gambar termasuk dalam salah satu
+dari kategori "kucing", "ayam", dan "anjing".
 
-Next, we have to choose how to represent the labels.
-We have two obvious choices.
-Perhaps the most natural impulse would be
-to choose $y \in \{1, 2, 3\}$,
-where the integers represent
-$\{\textrm{dog}, \textrm{cat}, \textrm{chicken}\}$ respectively.
-This is a great way of *storing* such information on a computer.
-If the categories had some natural ordering among them,
-say if we were trying to predict
-$\{\textrm{baby}, \textrm{toddler}, \textrm{adolescent}, \textrm{young adult}, \textrm{adult}, \textrm{geriatric}\}$,
-then it might even make sense to cast this as
-an [ordinal regression](https://en.wikipedia.org/wiki/Ordinal_regression) problem
-and keep the labels in this format.
-See :citet:`Moon.Smola.Chang.ea.2010` for an overview
-of different types of ranking loss functions
-and :citet:`Beutel.Murray.Faloutsos.ea.2014` for a Bayesian approach
-that addresses responses with more than one mode.
+Selanjutnya, kita harus memilih cara untuk merepresentasikan label.
+Kita memiliki dua pilihan yang jelas.
+Mungkin dorongan paling alami adalah
+memilih $y \in \{1, 2, 3\}$,
+di mana bilangan bulat mewakili
+$\{\textrm{anjing}, \textrm{kucing}, \textrm{ayam}\}$ secara berturut-turut.
+Ini adalah cara yang bagus untuk *menyimpan* informasi semacam ini di komputer.
+Jika kategori memiliki urutan alami,
+misalnya jika kita mencoba memprediksi
+$\{\textrm{bayi}, \textrm{balita}, \textrm{remaja}, \textrm{dewasa muda}, \textrm{dewasa}, \textrm{lansia}\}$,
+maka mungkin masuk akal untuk mengklasifikasikan ini sebagai masalah
+[regresi ordinal](https://en.wikipedia.org/wiki/Ordinal_regression)
+dan menyimpan label dalam format ini.
+Lihat :citet:`Moon.Smola.Chang.ea.2010` untuk gambaran umum
+berbagai jenis fungsi loss peringkat
+dan :citet:`Beutel.Murray.Faloutsos.ea.2014` untuk pendekatan Bayesian
+yang menangani respons dengan lebih dari satu mode.
 
-In general, classification problems do not come
-with natural orderings among the classes.
-Fortunately, statisticians long ago invented a simple way
-to represent categorical data: the *one-hot encoding*.
-A one-hot encoding is a vector
-with as many components as we have categories.
-The component corresponding to a particular instance's category is set to 1
-and all other components are set to 0.
-In our case, a label $y$ would be a three-dimensional vector,
-with $(1, 0, 0)$ corresponding to "cat", $(0, 1, 0)$ to "chicken",
-and $(0, 0, 1)$ to "dog":
+Secara umum, masalah klasifikasi tidak datang
+dengan urutan alami di antara kelas-kelasnya.
+Untungnya, ahli statistik lama telah menemukan cara sederhana
+untuk merepresentasikan data kategori: *one-hot encoding*.
+One-hot encoding adalah vektor
+dengan komponen sebanyak jumlah kategori yang kita miliki.
+Komponen yang sesuai dengan kategori dari instance tertentu diatur ke 1
+dan semua komponen lainnya diatur ke 0.
+Dalam kasus kita, label $y$ akan menjadi vektor berdimensi tiga,
+dengan $(1, 0, 0)$ mewakili "kucing", $(0, 1, 0)$ untuk "ayam",
+dan $(0, 0, 1)$ untuk "anjing":
 
 $$y \in \{(1, 0, 0), (0, 1, 0), (0, 0, 1)\}.$$
 
-### Linear Model
+### Model Linear
 
-In order to estimate the conditional probabilities
-associated with all the possible classes,
-we need a model with multiple outputs, one per class.
-To address classification with linear models,
-we will need as many affine functions as we have outputs.
-Strictly speaking, we only need one fewer,
-since the final category has to be the difference
-between $1$ and the sum of the other categories,
-but for reasons of symmetry
-we use a slightly redundant parametrization.
-Each output corresponds to its own affine function.
-In our case, since we have 4 features and 3 possible output categories,
-we need 12 scalars to represent the weights ($w$ with subscripts),
-and 3 scalars to represent the biases ($b$ with subscripts). This yields:
+Untuk memperkirakan probabilitas kondisional
+yang terkait dengan semua kelas yang mungkin,
+kita memerlukan model dengan banyak output, satu untuk setiap kelas.
+Untuk mengatasi klasifikasi dengan model linear,
+kita membutuhkan sebanyak mungkin fungsi afine sesuai dengan jumlah output.
+Secara teknis, kita hanya perlu satu fungsi lebih sedikit,
+karena kategori terakhir merupakan selisih antara $1$ dan jumlah kategori lainnya,
+tetapi demi simetri,
+kita menggunakan parameterisasi yang sedikit berlebih.
+Setiap output sesuai dengan fungsi afine-nya sendiri.
+Dalam kasus kita, karena kita memiliki 4 fitur dan 3 kategori output yang mungkin,
+kita memerlukan 12 skalar untuk mewakili bobot ($w$ dengan subskrip),
+dan 3 skalar untuk mewakili bias ($b$ dengan subskrip). Ini menghasilkan:
 
 $$
 \begin{aligned}
@@ -134,211 +129,211 @@ o_3 &= x_1 w_{31} + x_2 w_{32} + x_3 w_{33} + x_4 w_{34} + b_3.
 \end{aligned}
 $$
 
-The corresponding neural network diagram
-is shown in :numref:`fig_softmaxreg`.
-Just as in linear regression,
-we use a single-layer neural network.
-And since the calculation of each output, $o_1, o_2$, and $o_3$,
-depends on every input, $x_1$, $x_2$, $x_3$, and $x_4$,
-the output layer can also be described as a *fully connected layer*.
+Diagram jaringan saraf yang sesuai
+ditampilkan pada :numref:`fig_softmaxreg`.
+Seperti pada regresi linear,
+kita menggunakan jaringan saraf satu lapis.
+Dan karena perhitungan setiap output, $o_1, o_2$, dan $o_3$,
+bergantung pada setiap input, $x_1$, $x_2$, $x_3$, dan $x_4$,
+lapisan output ini juga dapat disebut sebagai *fully connected layer*.
 
-![Softmax regression is a single-layer neural network.](../img/softmaxreg.svg)
+![Regresi softmax adalah jaringan saraf satu lapis.](../img/softmaxreg.svg)
 :label:`fig_softmaxreg`
 
-For a more concise notation we use vectors and matrices:
-$\mathbf{o} = \mathbf{W} \mathbf{x} + \mathbf{b}$ is
-much better suited for mathematics and code.
-Note that we have gathered all of our weights into a $3 \times 4$ matrix and all biases
-$\mathbf{b} \in \mathbb{R}^3$ in a vector.
+Untuk notasi yang lebih ringkas, kita menggunakan vektor dan matriks:
+$\mathbf{o} = \mathbf{W} \mathbf{x} + \mathbf{b}$
+jauh lebih cocok untuk matematika dan kode.
+Perhatikan bahwa kita telah mengumpulkan semua bobot kita dalam matriks $3 \times 4$ dan semua bias
+$\mathbf{b} \in \mathbb{R}^3$ dalam sebuah vektor.
 
-### The Softmax
+### Fungsi Softmax
 :label:`subsec_softmax_operation`
 
-Assuming a suitable loss function,
-we could try, directly, to minimize the difference
-between $\mathbf{o}$ and the labels $\mathbf{y}$.
-While it turns out that treating classification
-as a vector-valued regression problem works surprisingly well,
-it is nonetheless unsatisfactory in the following ways:
+Dengan asumsi terdapat fungsi loss yang sesuai,
+kita bisa langsung mencoba meminimalkan perbedaan
+antara $\mathbf{o}$ dan label $\mathbf{y}$.
+Meskipun menganggap klasifikasi
+sebagai masalah regresi vektor-valued bekerja cukup baik,
+hal ini tetap tidak memuaskan dalam cara berikut:
 
-* There is no guarantee that the outputs $o_i$ sum up to $1$ in the way we expect probabilities to behave.
-* There is no guarantee that the outputs $o_i$ are even nonnegative, even if their outputs sum up to $1$, or that they do not exceed $1$.
+* Tidak ada jaminan bahwa output $o_i$ akan berjumlah $1$, sebagaimana yang kita harapkan dari probabilitas.
+* Tidak ada jaminan bahwa output $o_i$ bernilai non-negatif, meskipun outputnya berjumlah $1$, atau bahwa nilainya tidak melebihi $1$.
 
-Both aspects render the estimation problem difficult to solve
-and the solution very brittle to outliers.
-For instance, if we assume that there
-is a positive linear dependency
-between the number of bedrooms and the likelihood
-that someone will buy a house,
-the probability might exceed $1$
-when it comes to buying a mansion!
-As such, we need a mechanism to "squish" the outputs.
+Kedua aspek ini membuat masalah estimasi sulit untuk dipecahkan
+dan solusinya sangat rentan terhadap outlier.
+Misalnya, jika kita berasumsi bahwa terdapat ketergantungan linear positif
+antara jumlah kamar tidur dan kemungkinan
+seseorang akan membeli rumah,
+probabilitasnya mungkin melebihi $1$
+ketika datang untuk membeli rumah mewah!
+Karena itu, kita memerlukan mekanisme untuk "mengompres" output.
 
-There are many ways we might accomplish this goal.
-For instance, we could assume that the outputs
-$\mathbf{o}$ are corrupted versions of $\mathbf{y}$,
-where the corruption occurs by means of adding noise $\boldsymbol{\epsilon}$
-drawn from a normal distribution.
-In other words, $\mathbf{y} = \mathbf{o} + \boldsymbol{\epsilon}$,
-where $\epsilon_i \sim \mathcal{N}(0, \sigma^2)$.
-This is the so-called [probit model](https://en.wikipedia.org/wiki/Probit_model),
-first introduced by :citet:`Fechner.1860`.
-While appealing, it does not work quite as well
-nor lead to a particularly nice optimization problem,
-when compared to the softmax.
+Ada banyak cara untuk mencapai tujuan ini.
+Misalnya, kita bisa mengasumsikan bahwa output
+$\mathbf{o}$ adalah versi yang telah tercemar dari $\mathbf{y}$,
+di mana pencemaran terjadi melalui penambahan noise $\boldsymbol{\epsilon}$
+yang diambil dari distribusi normal.
+Dengan kata lain, $\mathbf{y} = \mathbf{o} + \boldsymbol{\epsilon}$,
+di mana $\epsilon_i \sim \mathcal{N}(0, \sigma^2)$.
+Ini disebut [model probit](https://en.wikipedia.org/wiki/Probit_model),
+yang pertama kali diperkenalkan oleh :citet:`Fechner.1860`.
+Meskipun menarik, model ini tidak bekerja sebaik
+dan tidak menghasilkan masalah optimisasi yang mudah diselesaikan,
+jika dibandingkan dengan softmax.
 
-Another way to accomplish this goal
-(and to ensure nonnegativity) is to use
-an exponential function $P(y = i) \propto \exp o_i$.
-This does indeed satisfy the requirement
-that the conditional class probability
-increases with increasing $o_i$, it is monotonic,
-and all probabilities are nonnegative.
-We can then transform these values so that they add up to $1$
-by dividing each by their sum.
-This process is called *normalization*.
-Putting these two pieces together
-gives us the *softmax* function:
+Cara lain untuk mencapai tujuan ini
+(dan untuk memastikan non-negatif) adalah menggunakan
+fungsi eksponensial $P(y = i) \propto \exp o_i$.
+Ini memenuhi syarat bahwa
+probabilitas kelas kondisional
+meningkat seiring dengan meningkatnya $o_i$, bersifat monoton,
+dan semua probabilitas adalah non-negatif.
+Kita kemudian dapat mentransformasikan nilai-nilai ini sehingga berjumlah $1$
+dengan membagi masing-masing dengan jumlah totalnya.
+Proses ini disebut *normalisasi*.
+Menggabungkan dua bagian ini
+menghasilkan fungsi *softmax*:
 
-$$\hat{\mathbf{y}} = \mathrm{softmax}(\mathbf{o}) \quad \textrm{where}\quad \hat{y}_i = \frac{\exp(o_i)}{\sum_j \exp(o_j)}.$$
+$$\hat{\mathbf{y}} = \mathrm{softmax}(\mathbf{o}) \quad \textrm{di mana}\quad \hat{y}_i = \frac{\exp(o_i)}{\sum_j \exp(o_j)}.$$
 :eqlabel:`eq_softmax_y_and_o`
 
-Note that the largest coordinate of $\mathbf{o}$
-corresponds to the most likely class according to $\hat{\mathbf{y}}$.
-Moreover, because the softmax operation
-preserves the ordering among its arguments,
-we do not need to compute the softmax
-to determine which class has been assigned the highest probability. Thus,
+Perhatikan bahwa komponen terbesar dari $\mathbf{o}$
+sesuai dengan kelas yang paling mungkin menurut $\hat{\mathbf{y}}$.
+Selain itu, karena operasi softmax
+mempertahankan urutan di antara argumennya,
+kita tidak perlu menghitung softmax
+untuk menentukan kelas mana yang memiliki probabilitas tertinggi. Dengan demikian,
 
 $$
 \operatorname*{argmax}_j \hat y_j = \operatorname*{argmax}_j o_j.
 $$
 
+Ide softmax berasal dari :citet:`Gibbs.1902`,
+yang mengadaptasi ide dari fisika.
+Lebih jauh ke belakang, Boltzmann,
+bapak fisika statistik modern,
+menggunakan trik ini untuk memodelkan distribusi
+atas keadaan energi pada molekul gas.
+Secara khusus, ia menemukan bahwa prevalensi
+suatu keadaan energi dalam ensemble termodinamika,
+seperti molekul dalam gas,
+sebanding dengan $\exp(-E/kT)$.
+Di sini, $E$ adalah energi suatu keadaan,
+$T$ adalah temperatur, dan $k$ adalah konstanta Boltzmann.
+Ketika ahli statistik berbicara tentang meningkatkan atau menurunkan
+"temperatur" dari suatu sistem statistik,
+mereka mengacu pada mengubah $T$
+untuk mendukung keadaan energi yang lebih rendah atau lebih tinggi.
+Mengikuti ide Gibbs, energi disamakan dengan kesalahan.
+Model berbasis energi :cite:`Ranzato.Boureau.Chopra.ea.2007`
+menggunakan sudut pandang ini ketika menggambarkan
+masalah dalam deep learning.
 
-The idea of a softmax dates back to :citet:`Gibbs.1902`,
-who adapted ideas from physics.
-Dating even further back, Boltzmann,
-the father of modern statistical physics,
-used this trick to model a distribution
-over energy states in gas molecules.
-In particular, he discovered that the prevalence
-of a state of energy in a thermodynamic ensemble,
-such as the molecules in a gas,
-is proportional to $\exp(-E/kT)$.
-Here, $E$ is the energy of a state,
-$T$ is the temperature, and $k$ is the Boltzmann constant.
-When statisticians talk about increasing or decreasing
-the "temperature" of a statistical system,
-they refer to changing $T$
-in order to favor lower or higher energy states.
-Following Gibbs' idea, energy equates to error.
-Energy-based models :cite:`Ranzato.Boureau.Chopra.ea.2007`
-use this point of view when describing
-problems in deep learning.
 
-### Vectorization
+### Vektorisasi
 :label:`subsec_softmax_vectorization`
 
-To improve computational efficiency,
-we vectorize calculations in minibatches of data.
-Assume that we are given a minibatch $\mathbf{X} \in \mathbb{R}^{n \times d}$
-of $n$ examples with dimensionality (number of inputs) $d$.
-Moreover, assume that we have $q$ categories in the output.
-Then the weights satisfy $\mathbf{W} \in \mathbb{R}^{d \times q}$
-and the bias satisfies $\mathbf{b} \in \mathbb{R}^{1\times q}$.
+Untuk meningkatkan efisiensi komputasi,
+kita melakukan vektorisasi perhitungan pada minibatch data.
+Misalkan kita memiliki minibatch $\mathbf{X} \in \mathbb{R}^{n \times d}$
+dari $n$ contoh dengan dimensi (jumlah input) $d$.
+Selain itu, misalkan kita memiliki $q$ kategori dalam output.
+Maka bobot memenuhi $\mathbf{W} \in \mathbb{R}^{d \times q}$
+dan bias memenuhi $\mathbf{b} \in \mathbb{R}^{1\times q}$.
 
 $$ \begin{aligned} \mathbf{O} &= \mathbf{X} \mathbf{W} + \mathbf{b}, \\ \hat{\mathbf{Y}} & = \mathrm{softmax}(\mathbf{O}). \end{aligned} $$
 :eqlabel:`eq_minibatch_softmax_reg`
 
-This accelerates the dominant operation into
-a matrix--matrix product $\mathbf{X} \mathbf{W}$.
-Moreover, since each row in $\mathbf{X}$ represents a data example,
-the softmax operation itself can be computed *rowwise*:
-for each row of $\mathbf{O}$, exponentiate all entries
-and then normalize them by the sum.
-Note, though, that care must be taken
-to avoid exponentiating and taking logarithms of large numbers,
-since this can cause numerical overflow or underflow.
-Deep learning frameworks take care of this automatically.
+Hal ini mempercepat operasi utama menjadi
+produk matriks--matriks $\mathbf{X} \mathbf{W}$.
+Selain itu, karena setiap baris dalam $\mathbf{X}$ mewakili contoh data,
+operasi softmax itu sendiri dapat dihitung secara *per baris*:
+untuk setiap baris dari $\mathbf{O}$, lakukan eksponensial pada semua entri
+dan kemudian normalkan mereka dengan jumlah totalnya.
+Namun, perlu diperhatikan bahwa kita harus berhati-hati
+untuk menghindari eksponensiasi dan mengambil logaritma dari angka besar,
+karena ini dapat menyebabkan overflow atau underflow numerik.
+Framework deep learning menangani ini secara otomatis.
 
-## Loss Function
+## Fungsi Loss
 :label:`subsec_softmax-regression-loss-func`
 
-Now that we have a mapping from features $\mathbf{x}$
-to probabilities $\mathbf{\hat{y}}$,
-we need a way to optimize the accuracy of this mapping.
-We will rely on maximum likelihood estimation,
-the very same method that we encountered
-when providing a probabilistic justification
-for the mean squared error loss in
+Sekarang setelah kita memiliki pemetaan dari fitur $\mathbf{x}$
+ke probabilitas $\mathbf{\hat{y}}$,
+kita memerlukan cara untuk mengoptimalkan akurasi pemetaan ini.
+Kita akan bergantung pada estimasi maksimum likelihood,
+metode yang sama yang kita temui
+saat memberikan justifikasi probabilistik
+untuk loss mean squared error dalam
 :numref:`subsec_normal_distribution_and_squared_loss`.
 
 ### Log-Likelihood
 
-The softmax function gives us a vector $\hat{\mathbf{y}}$,
-which we can interpret as the (estimated) conditional probabilities
-of each class, given any input $\mathbf{x}$,
-such as $\hat{y}_1$ = $P(y=\textrm{cat} \mid \mathbf{x})$.
-In the following we assume that for a dataset
-with features $\mathbf{X}$ the labels $\mathbf{Y}$
-are represented using a one-hot encoding label vector.
-We can compare the estimates with reality
-by checking how probable the actual classes are
-according to our model, given the features:
+Fungsi softmax memberi kita sebuah vektor $\hat{\mathbf{y}}$,
+yang dapat kita tafsirkan sebagai probabilitas kondisional (estimasi)
+dari setiap kelas, mengingat input $\mathbf{x}$,
+seperti $\hat{y}_1 = P(y=\textrm{kucing} \mid \mathbf{x})$.
+Selanjutnya kita mengasumsikan bahwa untuk sebuah dataset
+dengan fitur $\mathbf{X}$ label $\mathbf{Y}$
+direpresentasikan menggunakan vektor label one-hot encoding.
+Kita dapat membandingkan estimasi dengan realitas
+dengan memeriksa seberapa mungkin kelas sebenarnya
+menurut model kita, berdasarkan fitur-fitur tersebut:
 
 $$
 P(\mathbf{Y} \mid \mathbf{X}) = \prod_{i=1}^n P(\mathbf{y}^{(i)} \mid \mathbf{x}^{(i)}).
 $$
 
-We are allowed to use the factorization
-since we assume that each label is drawn independently
-from its respective distribution $P(\mathbf{y}\mid\mathbf{x}^{(i)})$.
-Since maximizing the product of terms is awkward,
-we take the negative logarithm to obtain the equivalent problem
-of minimizing the negative log-likelihood:
+Kita dapat menggunakan faktorisasi ini
+karena kita mengasumsikan bahwa setiap label diambil secara independen
+dari distribusi masing-masing $P(\mathbf{y}\mid\mathbf{x}^{(i)})$.
+Karena memaksimalkan hasil kali dari beberapa suku agak sulit,
+kita mengambil logaritma negatif untuk mendapatkan masalah yang setara
+yaitu meminimalkan negative log-likelihood:
 
 $$
 -\log P(\mathbf{Y} \mid \mathbf{X}) = \sum_{i=1}^n -\log P(\mathbf{y}^{(i)} \mid \mathbf{x}^{(i)})
 = \sum_{i=1}^n l(\mathbf{y}^{(i)}, \hat{\mathbf{y}}^{(i)}),
 $$
 
-where for any pair of label $\mathbf{y}$
-and model prediction $\hat{\mathbf{y}}$
-over $q$ classes, the loss function $l$ is
+di mana untuk setiap pasangan label $\mathbf{y}$
+dan prediksi model $\hat{\mathbf{y}}$
+dalam $q$ kelas, fungsi loss $l$ adalah
 
 $$ l(\mathbf{y}, \hat{\mathbf{y}}) = - \sum_{j=1}^q y_j \log \hat{y}_j. $$
 :eqlabel:`eq_l_cross_entropy`
 
-For reasons explained later on,
-the loss function in :eqref:`eq_l_cross_entropy`
-is commonly called the *cross-entropy loss*.
-Since $\mathbf{y}$ is a one-hot vector of length $q$,
-the sum over all its coordinates $j$ vanishes for all but one term.
-Note that the loss $l(\mathbf{y}, \hat{\mathbf{y}})$
-is bounded from below by $0$
-whenever $\hat{\mathbf{y}}$ is a probability vector:
-no single entry is larger than $1$,
-hence their negative logarithm cannot be lower than $0$;
-$l(\mathbf{y}, \hat{\mathbf{y}}) = 0$ only if we predict
-the actual label with *certainty*.
-This can never happen for any finite setting of the weights
-because taking a softmax output towards $1$
-requires taking the corresponding input $o_i$ to infinity
-(or all other outputs $o_j$ for $j \neq i$ to negative infinity).
-Even if our model could assign an output probability of $0$,
-any error made when assigning such high confidence
-would incur infinite loss ($-\log 0 = \infty$).
+Untuk alasan yang akan dijelaskan nanti,
+fungsi loss dalam :eqref:`eq_l_cross_entropy`
+umumnya disebut sebagai *loss cross-entropy*.
+Karena $\mathbf{y}$ adalah vektor one-hot berdimensi $q$,
+penjumlahan atas semua koordinat $j$ akan bernilai nol untuk semua kecuali satu suku.
+Perhatikan bahwa loss $l(\mathbf{y}, \hat{\mathbf{y}})$
+dibatasi dari bawah oleh $0$
+ketika $\hat{\mathbf{y}}$ adalah vektor probabilitas:
+tidak ada satu entri pun yang lebih besar dari $1$,
+sehingga logaritma negatif mereka tidak bisa lebih rendah dari $0$;
+$l(\mathbf{y}, \hat{\mathbf{y}}) = 0$ hanya jika kita memprediksi
+label aktual dengan *kepastian*.
+Hal ini tidak mungkin terjadi pada pengaturan bobot yang terbatas,
+karena untuk mengarahkan output softmax menuju $1$
+kita perlu membuat input yang sesuai $o_i$ menuju tak terhingga
+(atau semua output lain $o_j$ untuk $j \neq i$ menuju negatif tak terhingga).
+Bahkan jika model kita dapat menetapkan probabilitas output sebesar $0$,
+kesalahan apa pun yang dibuat dengan menetapkan kepercayaan tinggi tersebut
+akan menghasilkan loss tak hingga ($-\log 0 = \infty$).
 
 
-### Softmax and Cross-Entropy Loss
+
+### Softmax dan Loss Cross-Entropy
 :label:`subsec_softmax_and_derivatives`
 
-Since the softmax function
-and the corresponding cross-entropy loss are so common,
-it is worth understanding a bit better how they are computed.
-Plugging :eqref:`eq_softmax_y_and_o` into the definition of the loss
-in :eqref:`eq_l_cross_entropy`
-and using the definition of the softmax we obtain
+Karena fungsi softmax
+dan loss cross-entropy yang terkait begitu umum,
+maka perlu memahami sedikit lebih dalam bagaimana mereka dihitung.
+Dengan memasukkan :eqref:`eq_softmax_y_and_o` ke dalam definisi loss
+di :eqref:`eq_l_cross_entropy`
+dan menggunakan definisi softmax, kita peroleh
 
 $$
 \begin{aligned}
@@ -348,202 +343,195 @@ l(\mathbf{y}, \hat{\mathbf{y}}) &=  - \sum_{j=1}^q y_j \log \frac{\exp(o_j)}{\su
 \end{aligned}
 $$
 
-To understand a bit better what is going on,
-consider the derivative with respect to any logit $o_j$. We get
+Untuk memahami sedikit lebih baik apa yang sedang terjadi,
+pertimbangkan turunan terhadap setiap logit $o_j$. Kita mendapatkan
 
 $$
 \partial_{o_j} l(\mathbf{y}, \hat{\mathbf{y}}) = \frac{\exp(o_j)}{\sum_{k=1}^q \exp(o_k)} - y_j = \mathrm{softmax}(\mathbf{o})_j - y_j.
 $$
 
-In other words, the derivative is the difference
-between the probability assigned by our model,
-as expressed by the softmax operation,
-and what actually happened, as expressed
-by elements in the one-hot label vector.
-In this sense, it is very similar
-to what we saw in regression,
-where the gradient was the difference
-between the observation $y$ and estimate $\hat{y}$.
-This is not a coincidence.
-In any exponential family model,
-the gradients of the log-likelihood are given by precisely this term.
-This fact makes computing gradients easy in practice.
+Dengan kata lain, turunan adalah perbedaan
+antara probabilitas yang diberikan oleh model kita,
+seperti yang diungkapkan oleh operasi softmax,
+dan apa yang sebenarnya terjadi, sebagaimana diwakili
+oleh elemen-elemen dalam vektor label one-hot.
+Dalam hal ini, turunan ini sangat mirip
+dengan yang kita lihat pada regresi,
+di mana gradien adalah perbedaan
+antara pengamatan $y$ dan estimasi $\hat{y}$.
+Ini bukan kebetulan.
+Dalam model family eksponensial apa pun,
+gradien log-likelihood diberikan oleh suku ini.
+Fakta ini membuat perhitungan gradien mudah dalam praktiknya.
 
-Now consider the case where we observe not just a single outcome
-but an entire distribution over outcomes.
-We can use the same representation as before for the label $\mathbf{y}$.
-The only difference is that rather
-than a vector containing only binary entries,
-say $(0, 0, 1)$, we now have a generic probability vector,
-say $(0.1, 0.2, 0.7)$.
-The math that we used previously to define the loss $l$
-in :eqref:`eq_l_cross_entropy`
-still works well,
-just that the interpretation is slightly more general.
-It is the expected value of the loss for a distribution over labels.
-This loss is called the *cross-entropy loss* and it is
-one of the most commonly used losses for classification problems.
-We can demystify the name by introducing just the basics of information theory.
-In a nutshell, it measures the number of bits needed to encode what we see, $\mathbf{y}$,
-relative to what we predict that should happen, $\hat{\mathbf{y}}$.
-We provide a very basic explanation in the following. For further
-details on information theory see
-:citet:`Cover.Thomas.1999` or :citet:`mackay2003information`.
+Sekarang pertimbangkan kasus di mana kita mengamati bukan hanya satu hasil
+tetapi seluruh distribusi hasil.
+Kita dapat menggunakan representasi yang sama seperti sebelumnya untuk label $\mathbf{y}$.
+Satu-satunya perbedaan adalah bahwa
+alih-alih vektor yang hanya berisi entri biner,
+misalnya $(0, 0, 1)$, sekarang kita memiliki vektor probabilitas umum,
+misalnya $(0.1, 0.2, 0.7)$.
+Matematika yang kita gunakan sebelumnya untuk mendefinisikan loss $l$
+di :eqref:`eq_l_cross_entropy`
+masih berfungsi dengan baik,
+hanya saja interpretasinya sedikit lebih umum.
+Ini adalah nilai ekspektasi dari loss untuk distribusi label.
+Loss ini disebut *loss cross-entropy* dan merupakan
+salah satu loss yang paling umum digunakan untuk masalah klasifikasi.
+Kita dapat memperjelas nama ini dengan memperkenalkan dasar-dasar teori informasi.
+Secara singkat, ini mengukur jumlah bit yang dibutuhkan untuk mengkodekan apa yang kita lihat, $\mathbf{y}$,
+relatif terhadap apa yang kita prediksi akan terjadi, $\hat{\mathbf{y}}$.
+Berikut adalah penjelasan dasar. Untuk rincian lebih lanjut tentang teori informasi, lihat
+:citet:`Cover.Thomas.1999` atau :citet:`mackay2003information`.
 
-
-
-## Information Theory Basics
+## Dasar-dasar Teori Informasi
 :label:`subsec_info_theory_basics`
 
-Many deep learning papers use intuition and terms from information theory.
-To make sense of them, we need some common language.
-This is a survival guide.
-*Information theory* deals with the problem
-of encoding, decoding, transmitting,
-and manipulating information (also known as data).
+Banyak makalah deep learning menggunakan intuisi dan istilah dari teori informasi.
+Untuk memahaminya, kita memerlukan beberapa istilah umum.
+Ini adalah panduan dasar.
+*Teori informasi* berkaitan dengan masalah
+pengkodean, dekode, transmisi,
+dan manipulasi informasi (juga dikenal sebagai data).
 
-### Entropy
+### Entropi
 
-The central idea in information theory is to quantify the
-amount of information contained in data.
-This places a  limit on our ability to compress data.
-For a distribution $P$ its *entropy*, $H[P]$, is defined as:
+Ide utama dalam teori informasi adalah mengkuantifikasi
+jumlah informasi yang terkandung dalam data.
+Ini memberi batas pada kemampuan kita untuk mengompresi data.
+Untuk distribusi $P$, *entropi*-nya, $H[P]$, didefinisikan sebagai:
 
 $$H[P] = \sum_j - P(j) \log P(j).$$
 :eqlabel:`eq_softmax_reg_entropy`
 
-One of the fundamental theorems of information theory states
-that in order to encode data drawn randomly from the distribution $P$,
-we need at least $H[P]$ "nats" to encode it :cite:`Shannon.1948`.
-If you wonder what a "nat" is, it is the equivalent of bit
-but when using a code with base $e$ rather than one with base 2.
-Thus, one nat is $\frac{1}{\log(2)} \approx 1.44$ bit.
+Salah satu teorema fundamental teori informasi menyatakan
+bahwa untuk mengkodekan data yang diambil secara acak dari distribusi $P$,
+kita membutuhkan setidaknya $H[P]$ "nat" untuk mengkodekannya :cite:`Shannon.1948`.
+Jika Anda bertanya-tanya apa itu "nat", ini setara dengan bit
+tetapi saat menggunakan kode berbasis $e$ daripada berbasis 2.
+Jadi, satu nat adalah $\frac{1}{\log(2)} \approx 1.44$ bit.
+
 
 
 ### Surprisal
 
-You might be wondering what compression has to do with prediction.
-Imagine that we have a stream of data that we want to compress.
-If it is always easy for us to predict the next token,
-then this data is easy to compress.
-Take the extreme example where every token in the stream
-always takes the same value.
-That is a very boring data stream!
-And not only it is boring, but it is also easy to predict.
-Because the tokens are always the same,
-we do not have to transmit any information
-to communicate the contents of the stream.
-Easy to predict, easy to compress.
+Anda mungkin bertanya-tanya apa hubungan kompresi dengan prediksi.
+Bayangkan kita memiliki aliran data yang ingin kita kompresi.
+Jika selalu mudah bagi kita untuk memprediksi token berikutnya,
+maka data ini mudah dikompresi.
+Ambil contoh ekstrem di mana setiap token dalam aliran
+selalu memiliki nilai yang sama.
+Itu adalah aliran data yang sangat membosankan!
+Dan tidak hanya membosankan, tetapi juga mudah diprediksi.
+Karena token-token tersebut selalu sama,
+kita tidak perlu mengirimkan informasi apa pun
+untuk mengomunikasikan isi dari aliran tersebut.
+Mudah diprediksi, mudah dikompresi.
 
-However if we cannot perfectly predict every event,
-then we might sometimes be surprised.
-Our surprise is greater when an event is assigned lower probability.
-Claude Shannon settled on $\log \frac{1}{P(j)} = -\log P(j)$
-to quantify one's *surprisal* at observing an event $j$
-having assigned it a (subjective) probability $P(j)$.
-The entropy defined in :eqref:`eq_softmax_reg_entropy`
-is then the *expected surprisal*
-when one assigned the correct probabilities
-that truly match the data-generating process.
+Namun, jika kita tidak dapat memprediksi setiap kejadian dengan sempurna,
+maka terkadang kita mungkin terkejut.
+Tingkat keterkejutan kita lebih besar ketika suatu kejadian diberi probabilitas yang lebih rendah.
+Claude Shannon memilih $\log \frac{1}{P(j)} = -\log P(j)$
+untuk mengkuantifikasi *keterkejutan* seseorang saat mengamati kejadian $j$
+yang diberi probabilitas (subjektif) $P(j)$.
+Entropi yang didefinisikan pada :eqref:`eq_softmax_reg_entropy`
+kemudian menjadi *ekspektasi keterkejutan*
+ketika seseorang memberikan probabilitas yang benar
+yang benar-benar sesuai dengan proses pembangkitan data.
 
+### Peninjauan Kembali Cross-Entropy
 
-### Cross-Entropy Revisited
+Jika entropi adalah tingkat keterkejutan yang dialami
+oleh seseorang yang mengetahui probabilitas sebenarnya,
+maka Anda mungkin bertanya, apa itu cross-entropy?
+Cross-entropy *dari* $P$ *ke* $Q$, dilambangkan dengan $H(P, Q)$,
+adalah ekspektasi keterkejutan dari seorang pengamat dengan probabilitas subjektif $Q$
+saat melihat data yang sebenarnya dihasilkan menurut probabilitas $P$.
+Ini diberikan oleh $H(P, Q) \stackrel{\textrm{def}}{=} \sum_j - P(j) \log Q(j)$.
+Cross-entropy terendah tercapai ketika $P=Q$.
+Dalam kasus ini, cross-entropy dari $P$ ke $Q$ adalah $H(P, P)= H(P)$.
 
-So if entropy is the level of surprise experienced
-by someone who knows the true probability,
-then you might be wondering, what is cross-entropy?
-The cross-entropy *from* $P$ *to* $Q$, denoted $H(P, Q)$,
-is the expected surprisal of an observer with subjective probabilities $Q$
-upon seeing data that was actually generated according to probabilities $P$.
-This is given by $H(P, Q) \stackrel{\textrm{def}}{=} \sum_j - P(j) \log Q(j)$.
-The lowest possible cross-entropy is achieved when $P=Q$.
-In this case, the cross-entropy from $P$ to $Q$ is $H(P, P)= H(P)$.
+Singkatnya, kita dapat melihat tujuan klasifikasi cross-entropy
+dengan dua cara: (i) sebagai memaksimalkan likelihood dari data yang diamati;
+dan (ii) sebagai meminimalkan keterkejutan kita (dan dengan demikian jumlah bit)
+yang dibutuhkan untuk mengomunikasikan label.
 
-In short, we can think of the cross-entropy classification objective
-in two ways: (i) as maximizing the likelihood of the observed data;
-and (ii) as minimizing our surprisal (and thus the number of bits)
-required to communicate the labels.
+## Ringkasan dan Diskusi
 
-## Summary and Discussion
+Pada bagian ini, kita menemukan fungsi loss pertama yang non-trivial,
+yang memungkinkan kita untuk mengoptimalkan ruang output *diskret*.
+Kunci dari desainnya adalah pendekatan probabilistik yang kita ambil,
+memperlakukan kategori diskret sebagai contoh pengambilan sampel dari distribusi probabilitas.
+Sebagai efek samping, kita menemukan softmax,
+fungsi aktivasi yang nyaman untuk mentransformasikan
+output dari lapisan jaringan saraf biasa
+menjadi distribusi probabilitas diskret yang valid.
+Kita melihat bahwa turunan dari loss cross-entropy
+ketika digabungkan dengan softmax
+berperilaku sangat mirip
+dengan turunan dari squared error;
+yakni, dengan mengambil selisih antara
+perilaku yang diharapkan dan prediksinya.
+Dan, meskipun kita hanya bisa menyentuh permukaannya,
+kita menemukan hubungan menarik
+dengan fisika statistik dan teori informasi.
 
-In this section, we encountered the first nontrivial loss function,
-allowing us to optimize over *discrete* output spaces.
-Key in its design was that we took a probabilistic approach,
-treating discrete categories as instances of draws from a probability distribution.
-As a side effect, we encountered the softmax,
-a convenient activation function that transforms
-outputs of an ordinary neural network layer
-into valid discrete probability distributions.
-We saw that the derivative of the cross-entropy loss
-when combined with softmax
-behaves very similarly
-to the derivative of squared error;
-namely by taking the difference between
-the expected behavior and its prediction.
-And, while we were only able to
-scratch the very surface of it,
-we encountered exciting connections
-to statistical physics and information theory.
+Meskipun ini cukup untuk memulai Anda,
+dan mudah-mudahan cukup untuk menggugah minat Anda,
+kita tidak mendalami materi di sini.
+Antara lain, kita melewatkan pertimbangan komputasional.
+Secara spesifik, untuk lapisan fully connected dengan $d$ input dan $q$ output,
+parameterisasi dan biaya komputasinya adalah $\mathcal{O}(dq)$,
+yang bisa menjadi sangat mahal dalam praktiknya.
+Untungnya, biaya mengubah $d$ input menjadi $q$ output
+dapat dikurangi melalui pendekatan aproksimasi dan kompresi.
+Sebagai contoh, Deep Fried Convnets :cite:`Yang.Moczulski.Denil.ea.2015`
+menggunakan kombinasi dari permutasi,
+transformasi Fourier, dan skala
+untuk mengurangi biaya dari kuadratik menjadi log-linear.
+Teknik serupa bekerja untuk aproksimasi matriks struktural yang lebih maju :cite:`sindhwani2015structured`.
+Terakhir, kita dapat menggunakan dekomposisi seperti quaternion
+untuk mengurangi biaya menjadi $\mathcal{O}(\frac{dq}{n})$,
+lagi-lagi jika kita bersedia menukar sedikit akurasi
+untuk biaya komputasi dan penyimpanan :cite:`Zhang.Tay.Zhang.ea.2021`
+berdasarkan faktor kompresi $n$.
+Ini adalah area penelitian yang aktif.
+Yang membuatnya menantang adalah
+kita tidak selalu berusaha
+untuk mendapatkan representasi yang paling ringkas
+atau jumlah operasi floating point terkecil,
+tetapi lebih pada solusi
+yang dapat dieksekusi secara efisien di GPU modern.
 
-While this is enough to get you on your way,
-and hopefully enough to whet your appetite,
-we hardly dived deep here.
-Among other things, we skipped over computational considerations.
-Specifically, for any fully connected layer with $d$ inputs and $q$ outputs,
-the parametrization and computational cost is $\mathcal{O}(dq)$,
-which can be prohibitively high in practice.
-Fortunately, this cost of transforming $d$ inputs into $q$ outputs
-can be reduced through approximation and compression.
-For instance Deep Fried Convnets :cite:`Yang.Moczulski.Denil.ea.2015`
-uses a combination of permutations,
-Fourier transforms, and scaling
-to reduce the cost from quadratic to log-linear.
-Similar techniques work for more advanced
-structural matrix approximations :cite:`sindhwani2015structured`.
-Lastly, we can use quaternion-like decompositions
-to reduce the cost to $\mathcal{O}(\frac{dq}{n})$,
-again if we are willing to trade off a small amount of accuracy
-for computational and storage cost :cite:`Zhang.Tay.Zhang.ea.2021`
-based on a compression factor $n$.
-This is an active area of research.
-What makes it challenging is that
-we do not necessarily strive
-for the most compact representation
-or the smallest number of floating point operations
-but rather for the solution
-that can be executed most efficiently on modern GPUs.
+## Latihan
 
-## Exercises
+1. Kita dapat mengeksplorasi hubungan antara family eksponensial dan softmax lebih dalam.
+    1. Hitung turunan kedua dari loss cross-entropy $l(\mathbf{y},\hat{\mathbf{y}})$ untuk softmax.
+    1. Hitung varians dari distribusi yang diberikan oleh $\mathrm{softmax}(\mathbf{o})$ dan tunjukkan bahwa hasilnya sesuai dengan turunan kedua yang dihitung sebelumnya.
+1. Asumsikan kita memiliki tiga kelas yang terjadi dengan probabilitas yang sama, yaitu vektor probabilitas $(\frac{1}{3}, \frac{1}{3}, \frac{1}{3})$.
+    1. Apa masalahnya jika kita mencoba merancang kode biner untuk itu?
+    1. Dapatkah Anda merancang kode yang lebih baik? Petunjuk: apa yang terjadi jika kita mencoba mengkodekan dua pengamatan independen? Bagaimana jika kita mengkodekan $n$ pengamatan secara bersamaan?
+1. Saat mengkodekan sinyal yang ditransmisikan melalui kabel fisik, insinyur tidak selalu menggunakan kode biner. Misalnya, [PAM-3](https://en.wikipedia.org/wiki/Ternary_signal) menggunakan tiga tingkat sinyal $\{-1, 0, 1\}$ dibandingkan dengan dua tingkat $\{0, 1\}$. Berapa banyak unit ternary yang Anda butuhkan untuk mengirimkan bilangan bulat dalam rentang $\{0, \ldots, 7\}$? Mengapa ini mungkin lebih baik dalam hal elektronik?
+1. Model [Bradley--Terry](https://en.wikipedia.org/wiki/Bradley%E2%80%93Terry_model) menggunakan
+model logistik untuk menangkap preferensi. Misalkan seorang pengguna memilih antara apel dan jeruk dengan skor $o_{\textrm{apel}}$ dan $o_{\textrm{jeruk}}$. Kita ingin skor yang lebih besar mengarah pada kemungkinan lebih tinggi dalam memilih item terkait dan bahwa
+item dengan skor terbesar adalah yang paling mungkin dipilih :cite:`Bradley.Terry.1952`.
+    1. Buktikan bahwa softmax memenuhi persyaratan ini.
+    1. Apa yang terjadi jika Anda ingin memberikan opsi default untuk tidak memilih baik apel maupun jeruk? Petunjuk: sekarang pengguna memiliki tiga pilihan.
+1. Softmax mendapatkan namanya dari pemetaan berikut: $\textrm{RealSoftMax}(a, b) = \log (\exp(a) + \exp(b))$.
+    1. Buktikan bahwa $\textrm{RealSoftMax}(a, b) > \mathrm{max}(a, b)$.
+    1. Seberapa kecil Anda dapat membuat perbedaan antara kedua fungsi ini? Petunjuk: tanpa kehilangan generalitas Anda bisa mengatur $b = 0$ dan $a \geq b$.
+    1. Buktikan bahwa ini berlaku untuk $\lambda^{-1} \textrm{RealSoftMax}(\lambda a, \lambda b)$, asalkan $\lambda > 0$.
+    1. Tunjukkan bahwa untuk $\lambda \to \infty$ kita memiliki $\lambda^{-1} \textrm{RealSoftMax}(\lambda a, \lambda b) \to \mathrm{max}(a, b)$.
+    1. Konstruksi fungsi softmin yang serupa.
+    1. Perluas ini untuk lebih dari dua angka.
+1. Fungsi $g(\mathbf{x}) \stackrel{\textrm{def}}{=} \log \sum_i \exp x_i$ kadang-kadang juga disebut sebagai [fungsi partisi log](https://en.wikipedia.org/wiki/Partition_function_(mathematics)).
+    1. Buktikan bahwa fungsi ini konveks. Petunjuk: untuk melakukannya, gunakan fakta bahwa turunan pertama berjumlah pada probabilitas dari fungsi softmax dan tunjukkan bahwa turunan kedua adalah varians.
+    1. Tunjukkan bahwa $g$ adalah invarian translasi, yaitu, $g(\mathbf{x} + b) = g(\mathbf{x})$.
+    1. Apa yang terjadi jika beberapa koordinat $x_i$ sangat besar? Apa yang terjadi jika semuanya sangat kecil?
+    1. Tunjukkan bahwa jika kita memilih $b = \mathrm{max}_i x_i$ kita mendapatkan implementasi yang stabil secara numerik.
+1. Asumsikan kita memiliki distribusi probabilitas $P$. Misalkan kita memilih distribusi lain $Q$ dengan $Q(i) \propto P(i)^\alpha$ untuk $\alpha > 0$.
+    1. Pilihan $\alpha$ yang mana yang sesuai dengan menggandakan temperatur? Pilihan mana yang sesuai dengan membaginya dua?
+    1. Apa yang terjadi jika kita membiarkan temperatur mendekati $0$?
+    1. Apa yang terjadi jika kita membiarkan temperatur mendekati $\infty$?
 
-1. We can explore the connection between exponential families and softmax in some more depth.
-    1. Compute the second derivative of the cross-entropy loss $l(\mathbf{y},\hat{\mathbf{y}})$ for softmax.
-    1. Compute the variance of the distribution given by $\mathrm{softmax}(\mathbf{o})$ and show that it matches the second derivative computed above.
-1. Assume that we have three classes which occur with equal probability, i.e., the probability vector is $(\frac{1}{3}, \frac{1}{3}, \frac{1}{3})$.
-    1. What is the problem if we try to design a binary code for it?
-    1. Can you design a better code? Hint: what happens if we try to encode two independent observations? What if we encode $n$ observations jointly?
-1. When encoding signals transmitted over a physical wire, engineers do not always use binary codes. For instance, [PAM-3](https://en.wikipedia.org/wiki/Ternary_signal) uses three signal levels $\{-1, 0, 1\}$ as opposed to two levels $\{0, 1\}$. How many ternary units do you need to transmit an integer in the range $\{0, \ldots, 7\}$? Why might this be a better idea in terms of electronics?
-1. The [Bradley--Terry model](https://en.wikipedia.org/wiki/Bradley%E2%80%93Terry_model) uses
-a logistic model to capture preferences. For a user to choose between apples and oranges one
-assumes scores $o_{\textrm{apple}}$ and $o_{\textrm{orange}}$. Our requirements are that larger scores should lead to a higher likelihood in choosing the associated item and that
-the item with the largest score is the most likely one to be chosen :cite:`Bradley.Terry.1952`.
-    1. Prove that softmax satisfies this requirement.
-    1. What happens if you want to allow for a default option of choosing neither apples nor oranges? Hint: now the user has three choices.
-1. Softmax gets its name from the following mapping: $\textrm{RealSoftMax}(a, b) = \log (\exp(a) + \exp(b))$.
-    1. Prove that $\textrm{RealSoftMax}(a, b) > \mathrm{max}(a, b)$.
-    1. How small can you make the difference between both functions? Hint: without loss of
-    generality you can set $b = 0$ and $a \geq b$.
-    1. Prove that this holds for $\lambda^{-1} \textrm{RealSoftMax}(\lambda a, \lambda b)$, provided that $\lambda > 0$.
-    1. Show that for $\lambda \to \infty$ we have $\lambda^{-1} \textrm{RealSoftMax}(\lambda a, \lambda b) \to \mathrm{max}(a, b)$.
-    1. Construct an analogous softmin function.
-    1. Extend this to more than two numbers.
-1. The function $g(\mathbf{x}) \stackrel{\textrm{def}}{=} \log \sum_i \exp x_i$ is sometimes also referred to as the [log-partition function](https://en.wikipedia.org/wiki/Partition_function_(mathematics)).
-    1. Prove that the function is convex. Hint: to do so, use the fact that the first derivative amounts to the probabilities from the softmax function and show that the second derivative is the variance.
-    1. Show that $g$ is translation invariant, i.e., $g(\mathbf{x} + b) = g(\mathbf{x})$.
-    1. What happens if some of the coordinates $x_i$ are very large? What happens if they're all very small?
-    1. Show that if we choose $b = \mathrm{max}_i x_i$ we end up with a numerically stable implementation.
-1. Assume that we have some probability distribution $P$. Suppose we pick another distribution $Q$ with $Q(i) \propto P(i)^\alpha$ for $\alpha > 0$.
-    1. Which choice of $\alpha$ corresponds to doubling the temperature? Which choice corresponds to halving it?
-    1. What happens if we let the temperature approach $0$?
-    1. What happens if we let the temperature approach $\infty$?
-
-[Discussions](https://discuss.d2l.ai/t/46)
+[Diskusi](https://discuss.d2l.ai/t/46)
