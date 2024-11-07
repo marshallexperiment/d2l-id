@@ -43,13 +43,13 @@
 # 4 - chapter_linear-classification
 
 - [x] ./chapter_linear-classification/generalization-classification.md
-- [ ] ./chapter_linear-classification/softmax-regression-concise.md
-- [ ] ./chapter_linear-classification/softmax-regression.md
-- [ ] ./chapter_linear-classification/softmax-regression-scratch.md
-- [ ] ./chapter_linear-classification/classification.md
-- [ ] ./chapter_linear-classification/image-classification-dataset.md
-- [ ] ./chapter_linear-classification/index.md
-- [ ] ./chapter_linear-classification/environment-and-distribution-shift.md
+- [x] ./chapter_linear-classification/softmax-regression-concise.md
+- [x] ./chapter_linear-classification/softmax-regression.md
+- [x] ./chapter_linear-classification/softmax-regression-scratch.md
+- [x] ./chapter_linear-classification/classification.md
+- [x] ./chapter_linear-classification/image-classification-dataset.md
+- [x] ./chapter_linear-classification/index.md
+- [x] ./chapter_linear-classification/environment-and-distribution-shift.md
 
 # 5 - chapter_multilayer-perceptrons
 
