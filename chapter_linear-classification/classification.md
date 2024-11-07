@@ -3,10 +3,14 @@
 tab.interact_select(['mxnet', 'pytorch', 'tensorflow', 'jax'])
 ```
 
-# The Base Classification Model
+# Model Klasifikasi Dasar
 :label:`sec_classification`
 
-You may have noticed that the implementations from scratch and the concise implementation using framework functionality were quite similar in the case of regression. The same is true for classification. Since many models in this book deal with classification, it is worth adding functionalities to support this setting specifically. This section provides a base class for classification models to simplify future code.
+Anda mungkin telah memperhatikan bahwa implementasi dari awal dan implementasi ringkas menggunakan fungsionalitas framework cukup mirip dalam kasus regresi.
+Hal yang sama juga berlaku untuk klasifikasi. Karena banyak model dalam buku ini berurusan dengan klasifikasi, 
+ada baiknya menambahkan fungsionalitas untuk mendukung pengaturan ini secara khusus. 
+Bagian ini menyediakan kelas dasar untuk model klasifikasi guna menyederhanakan kode di masa mendatang.
+
 
 ```{.python .input}
 %%tab mxnet
@@ -36,28 +40,33 @@ import jax
 import optax
 ```
 
-## The `Classifier` Class
+## Kelas `Classifier`
 
 :begin_tab:`pytorch, mxnet, tensorflow`
-We define the `Classifier` class below. In the `validation_step` we report both the loss value and the classification accuracy on a validation batch. We draw an update for every `num_val_batches` batches. This has the benefit of generating the averaged loss and accuracy on the whole validation data. These average numbers are not exactly correct if the final batch contains fewer examples, but we ignore this minor difference to keep the code simple.
+Kami mendefinisikan kelas `Classifier` di bawah ini. Pada `validation_step` kami melaporkan nilai loss dan akurasi klasifikasi pada batch validasi. 
+Kami mengambil pembaruan untuk setiap `num_val_batches` batch. Hal ini memiliki keuntungan menghasilkan rata-rata loss dan akurasi pada seluruh data validasi.
+Angka rata-rata ini mungkin tidak sepenuhnya akurat jika batch terakhir berisi lebih sedikit contoh, 
+tetapi kami mengabaikan perbedaan kecil ini demi menjaga kesederhanaan kode.
 :end_tab:
-
 
 :begin_tab:`jax`
-We define the `Classifier` class below. In the `validation_step` we report both the loss value and the classification accuracy on a validation batch. We draw an update for every `num_val_batches` batches. This has the benefit of generating the averaged loss and accuracy on the whole validation data. These average numbers are not exactly correct if the last batch contains fewer examples, but we ignore this minor difference to keep the code simple.
+Kami mendefinisikan kelas `Classifier` di bawah ini. Pada `validation_step` kami melaporkan nilai loss dan akurasi klasifikasi pada batch validasi. 
+Kami mengambil pembaruan untuk setiap `num_val_batches` batch. Hal ini memiliki keuntungan menghasilkan rata-rata loss dan akurasi pada seluruh data validasi.
+Angka rata-rata ini mungkin tidak sepenuhnya akurat jika batch terakhir berisi lebih sedikit contoh, tetapi kami mengabaikan perbedaan kecil ini demi menjaga kesederhanaan kode.
 
-We also redefine the `training_step` method for JAX since all models that will
-subclass `Classifier` later will have a loss that returns auxiliary data.
-This auxiliary data can be used for models with batch normalization
-(to be explained in :numref:`sec_batch_norm`), while in all other cases
-we will make the loss also return a placeholder (empty dictionary) to
-represent the auxiliary data.
+Kami juga mendefinisikan ulang metode `training_step` untuk JAX karena semua model yang akan
+menjadi subclass `Classifier` nanti akan memiliki loss yang mengembalikan data tambahan.
+Data tambahan ini dapat digunakan untuk model dengan batch normalization
+(akan dijelaskan di :numref:`sec_batch_norm`), sementara dalam semua kasus lainnya,
+kami juga akan membuat loss mengembalikan placeholder (kamus kosong) untuk
+mewakili data tambahan.
 :end_tab:
+
 
 ```{.python .input}
 %%tab pytorch, mxnet, tensorflow
 class Classifier(d2l.Module):  #@save
-    """The base class of classification models."""
+    """Kelas dasar untuk model klasifikasi."""
     def validation_step(self, batch):
         Y_hat = self(*batch[:-1])
         self.plot('loss', self.loss(Y_hat, batch[-1]), train=False)
@@ -67,10 +76,10 @@ class Classifier(d2l.Module):  #@save
 ```{.python .input}
 %%tab jax
 class Classifier(d2l.Module):  #@save
-    """The base class of classification models."""
+    """Kelas dasar untuk model klasifikasi."""
     def training_step(self, params, batch, state):
-        # Here value is a tuple since models with BatchNorm layers require
-        # the loss to return auxiliary data
+        # Di sini `value` adalah tuple karena model dengan lapisan BatchNorm membutuhkan
+        # loss untuk mengembalikan data tambahan
         value, grads = jax.value_and_grad(
             self.loss, has_aux=True)(params, batch[:-1], batch[-1], state)
         l, _ = value
@@ -78,15 +87,15 @@ class Classifier(d2l.Module):  #@save
         return value, grads
 
     def validation_step(self, params, batch, state):
-        # Discard the second returned value. It is used for training models
-        # with BatchNorm layers since loss also returns auxiliary data
+        # Abaikan nilai kedua yang dikembalikan. Nilai ini digunakan untuk melatih model
+        # dengan lapisan BatchNorm karena loss juga mengembalikan data tambahan
         l, _ = self.loss(params, batch[:-1], batch[-1], state)
         self.plot('loss', l, train=False)
         self.plot('acc', self.accuracy(params, batch[:-1], batch[-1], state),
                   train=False)
 ```
 
-By default we use a stochastic gradient descent optimizer, operating on minibatches, just as we did in the context of linear regression.
+Secara default, kita menggunakan optimizer stochastic gradient descent, yang bekerja pada minibatch, seperti yang kita lakukan pada konteks regresi linear.
 
 ```{.python .input}
 %%tab mxnet
@@ -119,37 +128,38 @@ def configure_optimizers(self):
     return optax.sgd(self.lr)
 ```
 
-## Accuracy
+## Akurasi
 
-Given the predicted probability distribution `y_hat`,
-we typically choose the class with the highest predicted probability
-whenever we must output a hard prediction.
-Indeed, many applications require that we make a choice.
-For instance, Gmail must categorize an email into "Primary", "Social", "Updates", "Forums", or "Spam".
-It might estimate probabilities internally,
-but at the end of the day it has to choose one among the classes.
+Diberikan distribusi probabilitas prediksi `y_hat`,
+kita biasanya memilih kelas dengan probabilitas prediksi tertinggi
+setiap kali kita harus memberikan prediksi tegas.
+Memang, banyak aplikasi mengharuskan kita untuk membuat pilihan.
+Misalnya, Gmail harus mengkategorikan email ke dalam "Primary", "Social", "Updates", "Forums", atau "Spam".
+Gmail mungkin memperkirakan probabilitas secara internal,
+tetapi pada akhirnya ia harus memilih salah satu dari kelas-kelas tersebut.
 
-When predictions are consistent with the label class `y`, they are correct.
-The classification accuracy is the fraction of all predictions that are correct.
-Although it can be difficult to optimize accuracy directly (it is not differentiable),
-it is often the performance measure that we care about the most. It is often *the*
-relevant quantity in benchmarks. As such, we will nearly always report it when training classifiers.
+Ketika prediksi konsisten dengan kelas label `y`, prediksi tersebut benar.
+Akurasi klasifikasi adalah fraksi dari semua prediksi yang benar.
+Meskipun bisa sulit untuk mengoptimalkan akurasi secara langsung (karena tidak terdiferensiasi),
+ini sering kali menjadi ukuran kinerja yang paling kita perhatikan. Ini sering kali *merupakan*
+kuantitas relevan dalam benchmark. Oleh karena itu, kita hampir selalu melaporkannya saat melatih classifier.
 
-Accuracy is computed as follows.
-First, if `y_hat` is a matrix,
-we assume that the second dimension stores prediction scores for each class.
-We use `argmax` to obtain the predicted class by the index for the largest entry in each row.
-Then we [**compare the predicted class with the ground truth `y` elementwise.**]
-Since the equality operator `==` is sensitive to data types,
-we convert `y_hat`'s data type to match that of `y`.
-The result is a tensor containing entries of 0 (false) and 1 (true).
-Taking the sum yields the number of correct predictions.
+Akurasi dihitung sebagai berikut.
+Pertama, jika `y_hat` adalah matriks,
+kita mengasumsikan bahwa dimensi kedua menyimpan skor prediksi untuk setiap kelas.
+Kita menggunakan `argmax` untuk mendapatkan kelas prediksi melalui indeks dari entri terbesar di setiap baris.
+Kemudian kita [**membandingkan kelas prediksi dengan `y` yang sebenarnya secara elementwise.**]
+Karena operator kesetaraan `==` sensitif terhadap jenis data,
+kita mengonversi jenis data `y_hat` agar sesuai dengan `y`.
+Hasilnya adalah tensor yang berisi entri 0 (salah) dan 1 (benar).
+Mengambil jumlahnya akan menghasilkan jumlah prediksi yang benar.
+
 
 ```{.python .input  n=9}
 %%tab pytorch, mxnet, tensorflow
 @d2l.add_to_class(Classifier)  #@save
 def accuracy(self, Y_hat, Y, averaged=True):
-    """Compute the number of correct predictions."""
+    """Menghitung jumlah prediksi yang benar."""
     Y_hat = d2l.reshape(Y_hat, (-1, Y_hat.shape[-1]))
     preds = d2l.astype(d2l.argmax(Y_hat, axis=1), Y.dtype)
     compare = d2l.astype(preds == d2l.reshape(Y, -1), d2l.float32)
@@ -161,7 +171,7 @@ def accuracy(self, Y_hat, Y, averaged=True):
 @d2l.add_to_class(Classifier)  #@save
 @partial(jax.jit, static_argnums=(0, 5))
 def accuracy(self, params, X, Y, state, averaged=True):
-    """Compute the number of correct predictions."""
+    """Menghitung jumlah prediksi yang benar."""
     Y_hat = state.apply_fn({'params': params,
                             'batch_stats': state.batch_stats},  # BatchNorm Only
                            *X)
@@ -192,29 +202,33 @@ def parameters(self):
         params.keys()) else self.get_scratch_params()
 ```
 
-## Summary
+## Ringkasan
 
-Classification is a sufficiently common problem that it warrants its own convenience functions. Of central importance in classification is the *accuracy* of the classifier. Note that while we often care primarily about accuracy, we train classifiers to optimize a variety of other objectives for statistical and computational reasons. However, regardless of which loss function was minimized during training, it is useful to have a convenience method for assessing the accuracy of our classifier empirically. 
+Klasifikasi adalah masalah yang cukup umum sehingga memerlukan fungsi-fungsi tambahan yang memudahkan. Hal yang sangat penting dalam klasifikasi adalah *akurasi* dari classifier. 
+Perlu dicatat bahwa meskipun kita sering kali sangat peduli terhadap akurasi, 
+kita melatih classifier untuk mengoptimalkan berbagai tujuan lain karena alasan statistik dan komputasi. 
+Namun, terlepas dari fungsi loss mana yang diminimalkan selama pelatihan, 
+akan sangat berguna memiliki metode tambahan untuk menilai akurasi classifier kita secara empiris.
 
+## Latihan
 
-## Exercises
-
-1. Denote by $L_\textrm{v}$ the validation loss, and let $L_\textrm{v}^\textrm{q}$ be its quick and dirty estimate computed by the loss function averaging in this section. Lastly, denote by $l_\textrm{v}^\textrm{b}$ the loss on the last minibatch. Express $L_\textrm{v}$ in terms of $L_\textrm{v}^\textrm{q}$, $l_\textrm{v}^\textrm{b}$, and the sample and minibatch sizes.
-1. Show that the quick and dirty estimate $L_\textrm{v}^\textrm{q}$ is unbiased. That is, show that $E[L_\textrm{v}] = E[L_\textrm{v}^\textrm{q}]$. Why would you still want to use $L_\textrm{v}$ instead?
-1. Given a multiclass classification loss, denoting by $l(y,y')$ the penalty of estimating $y'$ when we see $y$ and given a probabilty $p(y \mid x)$, formulate the rule for an optimal selection of $y'$. Hint: express the expected loss, using $l$ and $p(y \mid x)$.
+1. Diberikan $L_\textrm{v}$ sebagai loss validasi, dan biarkan $L_\textrm{v}^\textrm{q}$ sebagai perkiraan kasar yang dihitung melalui rata-rata fungsi loss dalam bagian ini. Terakhir, berikan $l_\textrm{v}^\textrm{b}$ sebagai loss pada minibatch terakhir. Ekspresikan $L_\textrm{v}$ dalam hal $L_\textrm{v}^\textrm{q}$, $l_\textrm{v}^\textrm{b}$, serta ukuran sampel dan minibatch.
+2. Tunjukkan bahwa perkiraan cepat $L_\textrm{v}^\textrm{q}$ tidak bias. Artinya, tunjukkan bahwa $E[L_\textrm{v}] = E[L_\textrm{v}^\textrm{q}]$. Mengapa Anda mungkin masih ingin menggunakan $L_\textrm{v}$?
+3. Diberikan sebuah loss klasifikasi multikelas, di mana $l(y,y')$ adalah penalti dalam memperkirakan $y'$ ketika kita melihat $y$ dan diberikan probabilitas $p(y \mid x)$, rumuskan aturan untuk pemilihan optimal dari $y'$. Petunjuk: ekspresikan loss ekspektasi, menggunakan $l$ dan $p(y \mid x)$.
 
 :begin_tab:`mxnet`
-[Discussions](https://discuss.d2l.ai/t/6808)
+[Diskusi](https://discuss.d2l.ai/t/6808)
 :end_tab:
 
 :begin_tab:`pytorch`
-[Discussions](https://discuss.d2l.ai/t/6809)
+[Diskusi](https://discuss.d2l.ai/t/6809)
 :end_tab:
 
 :begin_tab:`tensorflow`
-[Discussions](https://discuss.d2l.ai/t/6810)
+[Diskusi](https://discuss.d2l.ai/t/6810)
 :end_tab:
 
 :begin_tab:`jax`
-[Discussions](https://discuss.d2l.ai/t/17981)
+[Diskusi](https://discuss.d2l.ai/t/17981)
 :end_tab:
+
