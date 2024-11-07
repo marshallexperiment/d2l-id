@@ -182,7 +182,7 @@ seringkali merupakan praktik yang baik untuk mempertahankan beberapa test set se
 test set lama dapat diturunkan menjadi validation set.
 
 
-## Teori Pembelajaran Statistik
+## Teori Pembelajaran Statistik (_Statistical Learning_)
 
 Sederhananya, *test set adalah satu-satunya yang kita miliki*, 
 namun fakta ini terasa kurang memuaskan. Pertama, jarang sekali kita 
