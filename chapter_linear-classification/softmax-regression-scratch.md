@@ -298,7 +298,7 @@ def loss(self, params, X, y, state):
     def cross_entropy(y_hat, y):
         return -d2l.reduce_mean(d2l.log(y_hat[list(range(len(y_hat))), y]))
     y_hat = state.apply_fn({'params': params}, *X)
-    # Dictionary kosong yang dikembalikan adalah placeholder untuk data tambahan,
+    # Dictionary kosong yang dikembalikan merupakan placeholder untuk data tambahan,
     # yang akan digunakan nanti (misalnya, untuk batch normalization)
     return cross_entropy(y_hat, y), {}
 ```
