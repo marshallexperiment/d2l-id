@@ -3,20 +3,19 @@
 tab.interact_select(['mxnet', 'pytorch', 'tensorflow', 'jax'])
 ```
 
-# The Image Classification Dataset
+# Dataset Klasifikasi Gambar
 :label:`sec_fashion_mnist`
 
-(~~The MNIST dataset is one of the widely used dataset for image classification, while it is too simple as a benchmark dataset. We will use the similar, but more complex Fashion-MNIST dataset ~~)
+(~~ Dataset MNIST adalah salah satu dataset yang banyak digunakan untuk klasifikasi gambar, namun terlalu sederhana sebagai dataset acuan. Kita akan menggunakan dataset Fashion-MNIST yang serupa, tetapi lebih kompleks ~~)
 
-One widely used dataset for image classification is the  [MNIST dataset](https://en.wikipedia.org/wiki/MNIST_database) :cite:`LeCun.Bottou.Bengio.ea.1998` of handwritten digits. At the time of its release in the 1990s it posed a formidable challenge to most machine learning algorithms, consisting of 60,000 images of $28 \times 28$ pixels resolution (plus a test dataset of 10,000 images). To put things into perspective, back in 1995, a Sun SPARCStation 5 with a whopping 64MB of RAM and a blistering 5 MFLOPs was considered state of the art equipment for machine learning at AT&T Bell Laboratories. Achieving high accuracy on digit recognition was a key component in automating letter sorting for the USPS in the 1990s. Deep networks such as LeNet-5 :cite:`LeCun.Jackel.Bottou.ea.1995`, support vector machines with invariances :cite:`Scholkopf.Burges.Vapnik.1996`, and tangent distance classifiers :cite:`Simard.LeCun.Denker.ea.1998` all could reach error rates below 1%. 
+Salah satu dataset yang banyak digunakan untuk klasifikasi gambar adalah [dataset MNIST](https://en.wikipedia.org/wiki/MNIST_database) :cite:`LeCun.Bottou.Bengio.ea.1998` yang berisi gambar digit tulisan tangan. Saat dirilis pada 1990-an, dataset ini menimbulkan tantangan besar bagi sebagian besar algoritma machine learning, yang terdiri dari 60.000 gambar dengan resolusi $28 \times 28$ piksel (ditambah dataset uji dengan 10.000 gambar). Sebagai perspektif, pada tahun 1995, Sun SPARCStation 5 dengan RAM sebesar 64MB dan 5 MFLOPs dianggap sebagai peralatan canggih untuk machine learning di AT&T Bell Laboratories. Mencapai akurasi tinggi dalam pengenalan digit adalah komponen utama dalam otomatisasi pengurutan surat untuk USPS pada 1990-an. Jaringan deep seperti LeNet-5 :cite:`LeCun.Jackel.Bottou.ea.1995`, support vector machines dengan invariansi :cite:`Scholkopf.Burges.Vapnik.1996`, dan tangent distance classifiers :cite:`Simard.LeCun.Denker.ea.1998` semuanya berhasil mencapai tingkat kesalahan di bawah 1%.
 
-For over a decade, MNIST served as *the* point of reference for comparing machine learning algorithms. 
-While it had a good run as a benchmark dataset,
-even simple models by today's standards achieve classification accuracy over 95%,
-making it unsuitable for distinguishing between strong models and weaker ones. Even more, the dataset allows for *very* high levels of accuracy, not typically seen in many classification problems. This skewed algorithmic development towards specific families of algorithms that can take advantage of clean datasets, such as active set methods and boundary-seeking active set algorithms.
-Today, MNIST serves as more of a sanity check than as a benchmark. ImageNet :cite:`Deng.Dong.Socher.ea.2009` poses a much 
-more relevant challenge. Unfortunately, ImageNet is too large for many of the examples and illustrations in this book, as it would take too long to train to make the examples interactive. As a substitute we will focus our discussion in the coming sections on the qualitatively similar, but much smaller Fashion-MNIST
-dataset :cite:`Xiao.Rasul.Vollgraf.2017` which was released in 2017. It contains images of 10 categories of clothing at $28 \times 28$ pixels resolution.
+Selama lebih dari satu dekade, MNIST berfungsi sebagai *acuan* untuk membandingkan algoritma machine learning. 
+Meskipun telah berjalan lama sebagai dataset benchmark,
+bahkan model sederhana menurut standar saat ini dapat mencapai akurasi klasifikasi di atas 95%,
+menjadikannya tidak cocok untuk membedakan antara model yang kuat dan yang lebih lemah. Selain itu, dataset ini memungkinkan tingkat akurasi yang *sangat* tinggi, yang jarang terlihat dalam banyak masalah klasifikasi. Hal ini membuat perkembangan algoritmik terarah pada keluarga algoritma tertentu yang dapat memanfaatkan dataset yang bersih, seperti metode active set dan algoritma active set yang mencari batas-batas.
+Saat ini, MNIST lebih berfungsi sebagai pemeriksaan sederhana daripada benchmark. ImageNet :cite:`Deng.Dong.Socher.ea.2009` menawarkan tantangan yang jauh lebih relevan. Sayangnya, ImageNet terlalu besar untuk banyak contoh dan ilustrasi dalam buku ini, karena akan memakan waktu terlalu lama untuk pelatihan sehingga contoh tidak akan interaktif. Sebagai gantinya, kita akan fokus pada pembahasan di bagian berikutnya menggunakan dataset yang serupa secara kualitatif, tetapi jauh lebih kecil yaitu dataset Fashion-MNIST :cite:`Xiao.Rasul.Vollgraf.2017` yang dirilis pada 2017. Dataset ini berisi gambar 10 kategori pakaian dengan resolusi $28 \times 28$ piksel.
+
 
 ```{.python .input}
 %%tab mxnet
@@ -66,14 +65,16 @@ import tensorflow_datasets as tfds
 d2l.use_svg_display()
 ```
 
-## Loading the Dataset
+## Memuat Dataset
 
-Since the Fashion-MNIST dataset is so useful, all major frameworks provide preprocessed versions of it. We can  [**download and read it into memory using built-in framework utilities.**]
+Karena dataset Fashion-MNIST sangat berguna, semua framework utama menyediakan versi yang sudah diproses. 
+Kita dapat [**mengunduh dan membacanya ke dalam memori menggunakan utilitas bawaan dari framework.**]
+
 
 ```{.python .input}
 %%tab mxnet
 class FashionMNIST(d2l.DataModule):  #@save
-    """The Fashion-MNIST dataset."""
+    """Dataset Fashion-MNIST."""
     def __init__(self, batch_size=64, resize=(28, 28)):
         super().__init__()
         self.save_hyperparameters()
@@ -103,18 +104,19 @@ class FashionMNIST(d2l.DataModule):  #@save
 ```{.python .input}
 %%tab tensorflow, jax
 class FashionMNIST(d2l.DataModule):  #@save
-    """The Fashion-MNIST dataset."""
+    """dataset Fashion-MNIST."""
     def __init__(self, batch_size=64, resize=(28, 28)):
         super().__init__()
         self.save_hyperparameters()
         self.train, self.val = tf.keras.datasets.fashion_mnist.load_data()
 ```
 
-Fashion-MNIST consists of images from 10 categories, each represented
-by 6000 images in the training dataset and by 1000 in the test dataset.
-A *test dataset* is used for evaluating model performance (it must not be used for training).
-Consequently the training set and the test set
-contain 60,000 and 10,000 images, respectively.
+Fashion-MNIST terdiri dari gambar dari 10 kategori, masing-masing diwakili
+oleh 6000 gambar dalam dataset pelatihan dan 1000 gambar dalam dataset uji.
+*Dataset uji* digunakan untuk mengevaluasi performa model (dataset ini tidak boleh digunakan untuk pelatihan).
+Akibatnya, set pelatihan dan set uji
+masing-masing berisi 60.000 dan 10.000 gambar.
+
 
 ```{.python .input}
 %%tab mxnet, pytorch
@@ -128,8 +130,10 @@ data = FashionMNIST(resize=(32, 32))
 len(data.train[0]), len(data.val[0])
 ```
 
-The images are grayscale and upscaled to $32 \times 32$ pixels in resolution above. This is similar to the original MNIST dataset which consisted of (binary) black and white images. Note, though, that most modern image data has three channels (red, green, blue) and that hyperspectral images can have in excess of 100 channels (the HyMap sensor has 126 channels).
-By convention we store an image as a $c \times h \times w$ tensor, where $c$ is the number of color channels, $h$ is the height and $w$ is the width.
+Gambar-gambar ini adalah grayscale dan di-upscale menjadi resolusi $32 \times 32$ piksel seperti di atas. 
+Hal ini mirip dengan dataset MNIST asli yang terdiri dari gambar hitam putih (biner). Perlu dicatat bahwa sebagian besar data gambar modern memiliki tiga channel (merah, hijau, biru) dan bahwa gambar hiperspektral dapat memiliki lebih dari 100 channel (sensor HyMap memiliki 126 channel).
+Secara konvensional, kita menyimpan gambar sebagai tensor $c \times h \times w$, di mana $c$ adalah jumlah channel warna, $h$ adalah tinggi, dan $w$ adalah lebar.
+
 
 ```{.python .input}
 %%tab all
@@ -138,8 +142,10 @@ data.train[0][0].shape
 
 [~~Two utility functions to visualize the dataset~~]
 
-The categories of Fashion-MNIST have human-understandable names. 
-The following convenience method converts between numeric labels and their names.
+Kategori Fashion-MNIST memiliki nama yang mudah dipahami oleh manusia. 
+Metode tambahan berikut ini mengonversi antara label numerik dan nama-nama mereka.
+
+
 
 ```{.python .input}
 %%tab all
@@ -151,13 +157,14 @@ def text_labels(self, indices):
     return [labels[int(i)] for i in indices]
 ```
 
-## Reading a Minibatch
+## Membaca Minibatch
 
-To make our life easier when reading from the training and test sets,
-we use the built-in data iterator rather than creating one from scratch.
-Recall that at each iteration, a data iterator
-[**reads a minibatch of data with size `batch_size`.**]
-We also randomly shuffle the examples for the training data iterator.
+Untuk mempermudah proses membaca dari set pelatihan dan set uji,
+kita menggunakan data iterator bawaan daripada membuatnya dari awal.
+Ingat bahwa pada setiap iterasi, sebuah data iterator
+[**membaca sebuah minibatch data dengan ukuran `batch_size`.**]
+Kita juga mengacak contoh-contoh secara acak untuk data iterator pelatihan.
+
 
 ```{.python .input}
 %%tab mxnet
@@ -195,7 +202,7 @@ def get_dataloader(self, train):
                 self.batch_size).map(resize_fn).shuffle(shuffle_buf))
 ```
 
-To see how this works, let's load a minibatch of images by invoking the `train_dataloader` method. It contains 64 images.
+Untuk melihat cara kerjanya, mari kita muat satu minibatch gambar dengan memanggil metode `train_dataloader`. Minibatch ini berisi 64 gambar.
 
 ```{.python .input}
 %%tab all
@@ -203,7 +210,9 @@ X, y = next(iter(data.train_dataloader()))
 print(X.shape, X.dtype, y.shape, y.dtype)
 ```
 
-Let's look at the time it takes to read the images. Even though it is a built-in loader, it is not blazingly fast. Nonetheless, this is sufficient since processing images with a deep network takes quite a bit longer. Hence it is good enough that training a network will not be I/O constrained.
+Mari kita lihat waktu yang diperlukan untuk membaca gambar. Meskipun ini adalah loader bawaan, kecepatannya tidak terlalu cepat. 
+Meskipun demikian, ini sudah cukup karena memproses gambar dengan jaringan deep membutuhkan waktu yang lebih lama.
+Oleh karena itu, ini sudah cukup baik sehingga pelatihan jaringan tidak akan dibatasi oleh I/O.
 
 ```{.python .input}
 %%tab all
@@ -213,22 +222,23 @@ for X, y in data.train_dataloader():
 f'{time.time() - tic:.2f} sec'
 ```
 
-## Visualization
+## Visualisasi
 
-We will often be using the Fashion-MNIST dataset. A convenience function `show_images` can be used to visualize the images and the associated labels. 
-Skipping implementation details, we just show the interface below: we only need to know how to invoke `d2l.show_images` rather than how it works
-for such utility functions.
+Kita akan sering menggunakan dataset Fashion-MNIST. Sebuah fungsi tambahan `show_images` dapat digunakan untuk memvisualisasikan gambar-gambar beserta label yang terkait. 
+Mengabaikan detail implementasi, kita hanya menunjukkan antarmuka di bawah ini: kita hanya perlu mengetahui cara memanggil `d2l.show_images` tanpa harus memahami cara kerjanya
+untuk fungsi-fungsi utilitas semacam ini.
+
 
 ```{.python .input}
 %%tab all
 def show_images(imgs, num_rows, num_cols, titles=None, scale=1.5):  #@save
-    """Plot a list of images."""
+    """Plot  list dari gambar."""
     raise NotImplementedError
 ```
 
-Let's put it to good use. In general, it is a good idea to visualize and inspect data that you are training on. 
-Humans are very good at spotting oddities and because of that, visualization serves as an additional safeguard against mistakes and errors in the design of experiments. Here are [**the images and their corresponding labels**] (in text)
-for the first few examples in the training dataset.
+Mari kita manfaatkan fungsi ini dengan baik. Secara umum, adalah ide yang baik untuk memvisualisasikan dan memeriksa data yang Anda gunakan untuk pelatihan. 
+Manusia sangat pandai dalam mendeteksi keanehan dan karena itu, visualisasi berfungsi sebagai pengaman tambahan terhadap kesalahan dan kekeliruan dalam desain eksperimen. Berikut adalah [**gambar-gambar dan label yang terkait**] (dalam bentuk teks)
+untuk beberapa contoh pertama dalam dataset pelatihan.
 
 ```{.python .input}
 %%tab all
@@ -248,33 +258,32 @@ batch = next(iter(data.val_dataloader()))
 data.visualize(batch)
 ```
 
-We are now ready to work with the Fashion-MNIST dataset in the sections that follow.
+Sekarang kita siap bekerja dengan dataset Fashion-MNIST di bagian yang akan datang.
 
-## Summary
+## Ringkasan
 
-We now have a slightly more realistic dataset to use for classification. Fashion-MNIST is an apparel classification dataset consisting of images representing 10 categories. We will use this dataset in subsequent sections and chapters to evaluate various network designs, from a simple linear model to advanced residual networks. As we commonly do with images, we read them as a tensor of shape (batch size, number of channels, height, width). For now, we only have one channel as the images are grayscale (the visualization above uses a false color palette for improved visibility). 
+Kita sekarang memiliki dataset yang sedikit lebih realistis untuk digunakan dalam klasifikasi. Fashion-MNIST adalah dataset klasifikasi pakaian yang terdiri dari gambar yang mewakili 10 kategori. Kita akan menggunakan dataset ini pada bagian dan bab berikutnya untuk mengevaluasi berbagai desain jaringan, mulai dari model linear sederhana hingga jaringan residual yang lebih canggih. Seperti yang biasa kita lakukan dengan gambar, kita membacanya sebagai tensor dengan bentuk (ukuran batch, jumlah channel, tinggi, lebar). Untuk saat ini, kita hanya memiliki satu channel karena gambar adalah grayscale (visualisasi di atas menggunakan palet warna palsu untuk meningkatkan visibilitas).
 
-Lastly, data iterators are a key component for efficient performance. For instance, we might use GPUs for efficient image decompression, video transcoding, or other preprocessing. Whenever possible, you should rely on well-implemented data iterators that exploit high-performance computing to avoid slowing down your training loop.
+Terakhir, data iterator adalah komponen kunci untuk kinerja yang efisien. Misalnya, kita mungkin menggunakan GPU untuk dekompresi gambar yang efisien, transcoding video, atau prapemrosesan lainnya. Jika memungkinkan, Anda harus mengandalkan data iterator yang diimplementasikan dengan baik yang memanfaatkan komputasi berkinerja tinggi untuk menghindari memperlambat loop pelatihan Anda.
 
+## Latihan
 
-## Exercises
-
-1. Does reducing the `batch_size` (for instance, to 1) affect the reading performance?
-1. The data iterator performance is important. Do you think the current implementation is fast enough? Explore various options to improve it. Use a system profiler to find out where the bottlenecks are.
-1. Check out the framework's online API documentation. Which other datasets are available?
+1. Apakah mengurangi `batch_size` (misalnya, menjadi 1) mempengaruhi kinerja pembacaan?
+2. Kinerja data iterator penting. Apakah menurut Anda implementasi saat ini cukup cepat? Jelajahi berbagai opsi untuk meningkatkannya. Gunakan profiler sistem untuk mencari tahu di mana letak bottleneck-nya.
+3. Periksa dokumentasi API framework secara online. Dataset lain apa yang tersedia?
 
 :begin_tab:`mxnet`
-[Discussions](https://discuss.d2l.ai/t/48)
+[Diskusi](https://discuss.d2l.ai/t/48)
 :end_tab:
 
 :begin_tab:`pytorch`
-[Discussions](https://discuss.d2l.ai/t/49)
+[Diskusi](https://discuss.d2l.ai/t/49)
 :end_tab:
 
 :begin_tab:`tensorflow`
-[Discussions](https://discuss.d2l.ai/t/224)
+[Diskusi](https://discuss.d2l.ai/t/224)
 :end_tab:
 
 :begin_tab:`jax`
-[Discussions](https://discuss.d2l.ai/t/17980)
+[Diskusi](https://discuss.d2l.ai/t/17980)
 :end_tab:
