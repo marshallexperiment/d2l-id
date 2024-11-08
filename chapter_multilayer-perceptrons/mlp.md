@@ -3,7 +3,7 @@
 tab.interact_select(['mxnet', 'pytorch', 'tensorflow', 'jax'])
 ```
 
-# Multilayer Perceptrons
+# Multilayer Perceptrons 
 :label:`sec_mlp`
 
 Di :numref:`sec_softmax`, kita memperkenalkan
@@ -55,7 +55,7 @@ from jax import numpy as jnp
 from jax import grad, vmap
 ```
 
-## Hidden Layers
+## Hidden Layers (lapisan tersembunyi)
 
 Kita mendeskripsikan transformasi afine di
 :numref:`subsec_linear_model` sebagai
@@ -71,7 +71,7 @@ dengan data input melalui transformasi afine sederhana,
 pendekatan ini akan cukup.
 Namun, linearitas (dalam transformasi afine) adalah asumsi yang *kuat*.
 
-### Limitations of Linear Models
+### kekurangan dari Linear Models
 
 Misalnya, linearitas menyiratkan asumsi yang lebih *lemah*
 yaitu *monotonisitas*, yaitu,
