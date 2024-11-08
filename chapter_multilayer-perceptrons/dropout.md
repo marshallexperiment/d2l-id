@@ -6,104 +6,99 @@ tab.interact_select(['mxnet', 'pytorch', 'tensorflow', 'jax'])
 # Dropout
 :label:`sec_dropout`
 
+Mari kita pikirkan sebentar tentang apa yang kita harapkan dari sebuah model prediktif yang baik.
+Kita menginginkan model tersebut bekerja dengan baik pada data yang belum pernah dilihat.
+Teori generalisasi klasik menunjukkan bahwa untuk menutup kesenjangan antara
+kinerja pada data pelatihan dan data uji,
+kita sebaiknya menggunakan model yang sederhana.
+Kesederhanaan bisa diwujudkan dalam bentuk
+jumlah dimensi yang sedikit.
+Kita mengeksplorasi hal ini ketika mendiskusikan
+fungsi basis monomial dari model linear
+di :numref:`sec_generalization_basics`.
+Selain itu, seperti yang kita lihat saat mendiskusikan weight decay
+($\ell_2$ regularization) di :numref:`sec_weight_decay`,
+(norm invers) dari parameter juga
+merepresentasikan ukuran kesederhanaan yang berguna.
+Konsep lain dari kesederhanaan adalah kelancaran (smoothness),
+yaitu bahwa fungsi tersebut tidak seharusnya sensitif
+terhadap perubahan kecil pada input.
+Misalnya, ketika kita mengklasifikasikan gambar,
+kita mengharapkan bahwa menambahkan sedikit noise acak
+pada piksel seharusnya tidak banyak berpengaruh.
 
-Let's think briefly about what we
-expect from a good predictive model.
-We want it to peform well on unseen data.
-Classical generalization theory
-suggests that to close the gap between
-train and test performance,
-we should aim for a simple model.
-Simplicity can come in the form
-of a small number of dimensions.
-We explored this when discussing the
-monomial basis functions of linear models
-in :numref:`sec_generalization_basics`.
-Additionally, as we saw when discussing weight decay
-($\ell_2$ regularization) in :numref:`sec_weight_decay`,
-the (inverse) norm of the parameters also
-represents a useful measure of simplicity.
-Another useful notion of simplicity is smoothness,
-i.e., that the function should not be sensitive
-to small changes to its inputs.
-For instance, when we classify images,
-we would expect that adding some random noise
-to the pixels should be mostly harmless.
+:citet:`Bishop.1995` meresmikan
+gagasan ini ketika ia membuktikan bahwa pelatihan dengan input noise
+setara dengan regularisasi Tikhonov.
+Pekerjaan ini membuat hubungan matematis yang jelas
+antara persyaratan bahwa sebuah fungsi harus halus (dan oleh karena itu sederhana),
+dan persyaratan bahwa fungsi tersebut harus tahan
+terhadap gangguan pada input.
 
-:citet:`Bishop.1995` formalized
-this idea when he proved that training with input noise
-is equivalent to Tikhonov regularization.
-This work drew a clear mathematical connection
-between the requirement that a function be smooth (and thus simple),
-and the requirement that it be resilient
-to perturbations in the input.
+Kemudian, :citet:`Srivastava.Hinton.Krizhevsky.ea.2014`
+mengembangkan ide cerdas tentang bagaimana menerapkan gagasan Bishop
+pada lapisan-lapisan internal dari sebuah jaringan.
+Ide mereka, yang disebut *dropout*, melibatkan
+penyuntikan noise saat menghitung
+setiap lapisan internal selama forward propagation,
+dan ini telah menjadi teknik standar
+untuk melatih neural networks.
+Metode ini disebut *dropout* karena kita benar-benar
+*menghapus* beberapa neuron selama pelatihan.
+Selama pelatihan, pada setiap iterasi,
+dropout standar terdiri dari menghapus
+beberapa fraksi node di setiap lapisan
+sebelum menghitung lapisan berikutnya.
 
-Then, :citet:`Srivastava.Hinton.Krizhevsky.ea.2014`
-developed a clever idea for how to apply Bishop's idea
-to the internal layers of a network, too.
-Their idea, called *dropout*, involves
-injecting noise while computing
-each internal layer during forward propagation,
-and it has become a standard technique
-for training neural networks.
-The method is called *dropout* because we literally
-*drop out* some neurons during training.
-Throughout training, on each iteration,
-standard dropout consists of zeroing out
-some fraction of the nodes in each layer
-before calculating the subsequent layer.
+Untuk lebih jelasnya, kami menyajikan
+narasi kami sendiri terkait Bishop.
+Makalah asli tentang dropout
+menawarkan intuisi melalui analogi yang mengejutkan
+dengan reproduksi seksual.
+Para penulis berpendapat bahwa overfitting pada neural networks
+dikarakterisasi oleh keadaan di mana
+setiap lapisan bergantung pada pola aktivasi tertentu pada lapisan sebelumnya,
+menyebut kondisi ini sebagai *co-adaptation*.
+Dropout, klaim mereka, memecah co-adaptation
+sebagaimana reproduksi seksual diklaim memecah gen-gen yang co-adapted.
+Meskipun pembenaran teori ini tentunya dapat diperdebatkan,
+teknik dropout itu sendiri telah terbukti bertahan lama,
+dan berbagai bentuk dropout diterapkan
+di sebagian besar library deep learning.
 
-To be clear, we are imposing
-our own narrative with the link to Bishop.
-The original paper on dropout
-offers intuition through a surprising
-analogy to sexual reproduction.
-The authors argue that neural network overfitting
-is characterized by a state in which
-each layer relies on a specific
-pattern of activations in the previous layer,
-calling this condition *co-adaptation*.
-Dropout, they claim, breaks up co-adaptation
-just as sexual reproduction is argued to
-break up co-adapted genes.
-While such an justification of this theory is certainly up for debate,
-the dropout technique itself has proved enduring,
-and various forms of dropout are implemented
-in most deep learning libraries. 
+Tantangan utamanya adalah bagaimana menyuntikkan noise ini.
+Salah satu idenya adalah menyuntikkannya secara *unbiased*
+sehingga nilai harapan dari setiap lapisan—saat memperbaiki yang lain—
+sama dengan nilai yang akan diambilnya jika tidak ada noise.
+Dalam pekerjaan Bishop, ia menambahkan Gaussian noise
+pada input dari model linear.
+Pada setiap iterasi pelatihan, ia menambahkan noise
+yang diambil dari distribusi dengan rata-rata nol
+$\epsilon \sim \mathcal{N}(0,\sigma^2)$ ke input $\mathbf{x}$,
+menghasilkan titik terganggu $\mathbf{x}' = \mathbf{x} + \epsilon$.
+Dalam ekspektasi, $E[\mathbf{x}'] = \mathbf{x}$.
 
-
-The key challenge is how to inject this noise.
-One idea is to inject it in an *unbiased* manner
-so that the expected value of each layer---while fixing
-the others---equals the value it would have taken absent noise.
-In Bishop's work, he added Gaussian noise
-to the inputs to a linear model.
-At each training iteration, he added noise
-sampled from a distribution with mean zero
-$\epsilon \sim \mathcal{N}(0,\sigma^2)$ to the input $\mathbf{x}$,
-yielding a perturbed point $\mathbf{x}' = \mathbf{x} + \epsilon$.
-In expectation, $E[\mathbf{x}'] = \mathbf{x}$.
-
-In standard dropout regularization,
-one zeros out some fraction of the nodes in each layer
-and then *debiases* each layer by normalizing
-by the fraction of nodes that were retained (not dropped out).
-In other words,
-with *dropout probability* $p$,
-each intermediate activation $h$ is replaced by
-a random variable $h'$ as follows:
+Pada regularisasi dropout standar,
+kita meniadakan beberapa fraksi node di setiap lapisan
+dan kemudian *menyesuaikan bias* pada setiap lapisan dengan melakukan normalisasi
+berdasarkan fraksi node yang dipertahankan (tidak dihapus).
+Dengan kata lain,
+dengan *dropout probability* $p$,
+setiap aktivasi antara $h$ digantikan oleh
+variabel acak $h'$ sebagai berikut:
 
 $$
 \begin{aligned}
 h' =
 \begin{cases}
-    0 & \textrm{ with probability } p \\
-    \frac{h}{1-p} & \textrm{ otherwise}
+    0 & \textrm{ dengan probabilitas } p \\
+    \frac{h}{1-p} & \textrm{ selain itu}
 \end{cases}
 \end{aligned}
 $$
 
-By design, the expectation remains unchanged, i.e., $E[h'] = h$.
+Dengan desain ini, ekspektasinya tetap tidak berubah, yaitu $E[h'] = h$.
+
 
 ```{.python .input}
 %%tab mxnet
@@ -138,52 +133,51 @@ import optax
 
 ## Dropout in Practice
 
-Recall the MLP with a hidden layer and five hidden units
-from :numref:`fig_mlp`.
-When we apply dropout to a hidden layer,
-zeroing out each hidden unit with probability $p$,
-the result can be viewed as a network
-containing only a subset of the original neurons.
-In :numref:`fig_dropout2`, $h_2$ and $h_5$ are removed.
-Consequently, the calculation of the outputs
-no longer depends on $h_2$ or $h_5$
-and their respective gradient also vanishes
-when performing backpropagation.
-In this way, the calculation of the output layer
-cannot be overly dependent on any
-one element of $h_1, \ldots, h_5$.
+Ingat kembali MLP dengan satu hidden layer dan lima unit tersembunyi dari :numref:`fig_mlp`.
+Ketika kita menerapkan dropout pada hidden layer,
+menghapus setiap unit tersembunyi dengan probabilitas $p$,
+hasilnya dapat dilihat sebagai jaringan
+yang hanya mengandung sebagian dari neuron asli.
+Pada :numref:`fig_dropout2`, $h_2$ dan $h_5$ dihapus.
+Akibatnya, perhitungan output
+tidak lagi bergantung pada $h_2$ atau $h_5$,
+dan gradiennya juga menjadi nol
+saat melakukan backpropagation.
+Dengan cara ini, perhitungan output layer
+tidak dapat terlalu bergantung pada salah satu elemen dari $h_1, \ldots, h_5$.
 
-![MLP before and after dropout.](../img/dropout2.svg)
+![MLP sebelum dan sesudah dropout.](../img/dropout2.svg)
 :label:`fig_dropout2`
 
-Typically, we disable dropout at test time.
-Given a trained model and a new example,
-we do not drop out any nodes
-and thus do not need to normalize.
-However, there are some exceptions:
-some researchers use dropout at test time as a heuristic
-for estimating the *uncertainty* of neural network predictions:
-if the predictions agree across many different dropout outputs,
-then we might say that the network is more confident.
+Biasanya, kita menonaktifkan dropout pada saat pengujian (test time).
+Dengan model yang sudah terlatih dan contoh baru,
+kita tidak menghapus node apa pun
+dan oleh karena itu tidak perlu melakukan normalisasi.
+Namun, ada beberapa pengecualian:
+beberapa peneliti menggunakan dropout pada saat pengujian sebagai heuristik
+untuk mengestimasi *ketidakpastian* prediksi neural network:
+jika prediksi konsisten di berbagai hasil dropout,
+maka kita dapat mengatakan bahwa jaringan lebih yakin.
 
-## Implementation from Scratch
+## Implementasi dari Awal
 
-To implement the dropout function for a single layer,
-we must draw as many samples
-from a Bernoulli (binary) random variable
-as our layer has dimensions,
-where the random variable takes value $1$ (keep)
-with probability $1-p$ and $0$ (drop) with probability $p$.
-One easy way to implement this is to first draw samples
-from the uniform distribution $U[0, 1]$.
-Then we can keep those nodes for which the corresponding
-sample is greater than $p$, dropping the rest.
+Untuk mengimplementasikan fungsi dropout untuk satu lapisan,
+kita harus mengambil sampel sebanyak mungkin
+dari variabel acak Bernoulli (biner)
+seperti jumlah dimensi pada lapisan kita,
+di mana variabel acak ini bernilai $1$ (dipertahankan)
+dengan probabilitas $1-p$ dan $0$ (dihapus) dengan probabilitas $p$.
+Cara mudah untuk mengimplementasikannya adalah dengan terlebih dahulu mengambil sampel
+dari distribusi uniform $U[0, 1]$.
+Kemudian kita mempertahankan node-node di mana sampel terkait
+lebih besar dari $p$, dan menghapus sisanya.
 
-In the following code, we (**implement a `dropout_layer` function
-that drops out the elements in the tensor input `X`
-with probability `dropout`**),
-rescaling the remainder as described above:
-dividing the survivors by `1.0-dropout`.
+Dalam kode berikut, kita (**mengimplementasikan fungsi `dropout_layer`
+yang menghapus elemen-elemen dalam tensor input `X`
+dengan probabilitas `dropout`**),
+dan menskalakan ulang elemen yang tersisa seperti dijelaskan di atas:
+membagi elemen yang tersisa dengan `1.0-dropout`.
+
 
 ```{.python .input}
 %%tab mxnet
@@ -222,10 +216,10 @@ def dropout_layer(X, dropout, key=d2l.get_key()):
     return jnp.asarray(mask, dtype=jnp.float32) * X / (1.0 - dropout)
 ```
 
-We can [**test out the `dropout_layer` function on a few examples**].
-In the following lines of code,
-we pass our input `X` through the dropout operation,
-with probabilities 0, 0.5, and 1, respectively.
+Kita dapat [**menguji fungsi `dropout_layer` pada beberapa contoh**].
+Pada baris kode berikut,
+kita melewatkan input `X` melalui operasi dropout,
+dengan probabilitas 0, 0.5, dan 1, secara berurutan.
 
 ```{.python .input}
 %%tab all
@@ -242,14 +236,15 @@ print('dropout_p = 0.5:', dropout_layer(X, 0.5))
 print('dropout_p = 1:', dropout_layer(X, 1))
 ```
 
-### Defining the Model
+### Mendefinisikan Model
 
-The model below applies dropout to the output
-of each hidden layer (following the activation function).
-We can set dropout probabilities for each layer separately.
-A common choice is to set
-a lower dropout probability closer to the input layer.
-We ensure that dropout is only active during training.
+Model di bawah ini menerapkan dropout pada output
+dari setiap hidden layer (setelah fungsi aktivasi).
+Kita dapat mengatur probabilitas dropout untuk setiap lapisan secara terpisah.
+Pilihan umum adalah menetapkan
+probabilitas dropout yang lebih rendah semakin dekat ke input layer.
+Kita memastikan bahwa dropout hanya aktif selama pelatihan.
+
 
 ```{.python .input}
 %%tab mxnet
@@ -345,7 +340,8 @@ class DropoutMLPScratch(d2l.Classifier):
 
 ### [**Training**]
 
-The following is similar to the training of MLPs described previously.
+Bagian berikut mirip dengan pelatihan MLP yang telah dijelaskan sebelumnya.
+
 
 ```{.python .input}
 %%tab all
@@ -357,18 +353,18 @@ trainer = d2l.Trainer(max_epochs=10)
 trainer.fit(model, data)
 ```
 
-## [**Concise Implementation**]
+## [**Implementasi Singkat**]
 
-With high-level APIs, all we need to do is add a `Dropout` layer
-after each fully connected layer,
-passing in the dropout probability
-as the only argument to its constructor.
-During training, the `Dropout` layer will randomly
-drop out outputs of the previous layer
-(or equivalently, the inputs to the subsequent layer)
-according to the specified dropout probability.
-When not in training mode,
-the `Dropout` layer simply passes the data through during testing.
+Dengan API tingkat tinggi, yang perlu kita lakukan hanyalah menambahkan lapisan `Dropout`
+setelah setiap fully connected layer,
+dengan memasukkan probabilitas dropout
+sebagai satu-satunya argumen ke konstruktor.
+Selama pelatihan, lapisan `Dropout` secara acak
+akan menghapus output dari lapisan sebelumnya
+(atau setara dengan menghapus input ke lapisan berikutnya)
+sesuai dengan probabilitas dropout yang ditentukan.
+Saat tidak dalam mode pelatihan,
+lapisan `Dropout` hanya akan meneruskan data selama pengujian.
 
 ```{.python .input}
 %%tab mxnet
@@ -436,19 +432,20 @@ class DropoutMLP(d2l.Classifier):
 ```
 
 :begin_tab:`jax`
-Note that we need to redefine the loss function since a network
-with a dropout layer needs a PRNGKey when using `Module.apply()`,
-and this RNG seed should be explicitly named `dropout`. This key is
-used by the `dropout` layer in Flax to generate the random dropout
-mask internally. It is important to use a unique `dropout_rng` key
-with every epoch in the training loop, otherwise the generated dropout
-mask will not be stochastic and different between the epoch runs.
-This `dropout_rng` can be stored in the
-`TrainState` object (in the `d2l.Trainer` class defined in
-:numref:`oo-design-training`) as an attribute and with every epoch
-it is replaced with a new `dropout_rng`. We already handled this with the
-`fit_epoch` method defined in :numref:`sec_linear_scratch`.
+Perhatikan bahwa kita perlu mendefinisikan ulang fungsi loss karena jaringan
+dengan lapisan dropout membutuhkan PRNGKey saat menggunakan `Module.apply()`,
+dan RNG seed ini harus diberi nama `dropout` secara eksplisit. Kunci ini
+digunakan oleh lapisan `dropout` dalam Flax untuk menghasilkan
+masker dropout acak secara internal. Penting untuk menggunakan kunci `dropout_rng` yang unik
+pada setiap epoch dalam loop pelatihan, jika tidak, masker dropout yang dihasilkan
+tidak akan bersifat stokastik dan akan berbeda antar setiap epoch.
+Kunci `dropout_rng` ini dapat disimpan dalam objek
+`TrainState` (dalam kelas `d2l.Trainer` yang didefinisikan di
+:numref:`oo-design-training`) sebagai atribut dan pada setiap epoch
+kunci ini diganti dengan `dropout_rng` baru. Kami telah menangani ini dengan
+metode `fit_epoch` yang didefinisikan di :numref:`sec_linear_scratch`.
 :end_tab:
+
 
 ```{.python .input}
 %%tab jax
@@ -466,7 +463,8 @@ def loss(self, params, X, Y, state, averaged=True):
     return (fn(Y_hat, Y).mean(), {}) if averaged else (fn(Y_hat, Y), {})
 ```
 
-Next, we [**train the model**].
+Selanjutnya, kita [**melatih model**].
+
 
 ```{.python .input}
 %%tab all
@@ -476,34 +474,34 @@ trainer.fit(model, data)
 
 ## Summary
 
-Beyond controlling the number of dimensions and the size of the weight vector, dropout is yet another tool for avoiding overfitting. Often tools are used jointly.
-Note that dropout is
-used only during training:
-it replaces an activation $h$ with a random variable with expected value $h$.
+Selain mengontrol jumlah dimensi dan ukuran vektor bobot, dropout adalah alat lain untuk menghindari overfitting. Seringkali alat-alat ini digunakan secara bersama-sama.
+Perlu diperhatikan bahwa dropout
+hanya digunakan selama pelatihan:
+dropout menggantikan aktivasi $h$ dengan variabel acak yang memiliki nilai harapan $h$.
 
 
 ## Exercises
 
-1. What happens if you change the dropout probabilities for the first and second layers? In particular, what happens if you switch the ones for both layers? Design an experiment to answer these questions, describe your results quantitatively, and summarize the qualitative takeaways.
-1. Increase the number of epochs and compare the results obtained when using dropout with those when not using it.
-1. What is the variance of the activations in each hidden layer when dropout is and is not applied? Draw a plot to show how this quantity evolves over time for both models.
-1. Why is dropout not typically used at test time?
-1. Using the model in this section as an example, compare the effects of using dropout and weight decay. What happens when dropout and weight decay are used at the same time? Are the results additive? Are there diminished returns (or worse)? Do they cancel each other out?
-1. What happens if we apply dropout to the individual weights of the weight matrix rather than the activations?
-1. Invent another technique for injecting random noise at each layer that is different from the standard dropout technique. Can you develop a method that outperforms dropout on the Fashion-MNIST dataset (for a fixed architecture)?
+1. Apa yang terjadi jika Anda mengubah probabilitas dropout untuk lapisan pertama dan kedua? Secara khusus, apa yang terjadi jika Anda menukar probabilitas dropout untuk kedua lapisan tersebut? Rancang eksperimen untuk menjawab pertanyaan ini, gambarkan hasil Anda secara kuantitatif, dan ringkas kesimpulan kualitatif yang diperoleh.
+2. Tingkatkan jumlah epoch dan bandingkan hasil yang diperoleh saat menggunakan dropout dengan saat tidak menggunakannya.
+3. Berapakah variansi aktivasi pada setiap hidden layer ketika dropout diterapkan dan tidak diterapkan? Gambarkan plot untuk menunjukkan bagaimana kuantitas ini berkembang seiring waktu untuk kedua model.
+4. Mengapa dropout biasanya tidak digunakan pada saat pengujian?
+5. Menggunakan model di bagian ini sebagai contoh, bandingkan efek menggunakan dropout dan weight decay. Apa yang terjadi ketika dropout dan weight decay digunakan bersamaan? Apakah hasilnya aditif? Apakah ada keuntungan yang menurun (atau lebih buruk)? Apakah keduanya saling meniadakan?
+6. Apa yang terjadi jika kita menerapkan dropout pada bobot individual dari matriks bobot daripada pada aktivasi?
+7. Ciptakan teknik lain untuk menyuntikkan noise acak pada setiap lapisan yang berbeda dari teknik dropout standar. Bisakah Anda mengembangkan metode yang mengungguli dropout pada dataset Fashion-MNIST (untuk arsitektur yang sama)?
 
 :begin_tab:`mxnet`
-[Discussions](https://discuss.d2l.ai/t/100)
+[Diskusi](https://discuss.d2l.ai/t/100)
 :end_tab:
 
 :begin_tab:`pytorch`
-[Discussions](https://discuss.d2l.ai/t/101)
+[Diskusi](https://discuss.d2l.ai/t/101)
 :end_tab:
 
 :begin_tab:`tensorflow`
-[Discussions](https://discuss.d2l.ai/t/261)
+[Diskusi](https://discuss.d2l.ai/t/261)
 :end_tab:
 
 :begin_tab:`jax`
-[Discussions](https://discuss.d2l.ai/t/17987)
+[Diskusi](https://discuss.d2l.ai/t/17987)
 :end_tab:
