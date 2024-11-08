@@ -53,14 +53,14 @@
 
 # 5 - chapter_multilayer-perceptrons
 
-- [ ] ./chapter_multilayer-perceptrons/backprop.md
-- [ ] ./chapter_multilayer-perceptrons/mlp-implementation.md
-- [ ] ./chapter_multilayer-perceptrons/dropout.md
-- [ ] ./chapter_multilayer-perceptrons/index.md
-- [ ] ./chapter_multilayer-perceptrons/kaggle-house-price.md
-- [ ] ./chapter_multilayer-perceptrons/numerical-stability-and-init.md
-- [ ] ./chapter_multilayer-perceptrons/mlp.md
-- [ ] ./chapter_multilayer-perceptrons/generalization-deep.md
+- [x] ./chapter_multilayer-perceptrons/backprop.md
+- [x] ./chapter_multilayer-perceptrons/mlp-implementation.md
+- [x] ./chapter_multilayer-perceptrons/dropout.md
+- [x] ./chapter_multilayer-perceptrons/index.md
+- [x] ./chapter_multilayer-perceptrons/kaggle-house-price.md
+- [x] ./chapter_multilayer-perceptrons/numerical-stability-and-init.md
+- [x] ./chapter_multilayer-perceptrons/mlp.md
+- [x] ./chapter_multilayer-perceptrons/generalization-deep.md
 
 # 6 - chapter_builders-guide
 
