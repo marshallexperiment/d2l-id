@@ -1,180 +1,177 @@
-# Forward Propagation, Backward Propagation, and Computational Graphs
+# Forward Propagation, Backward Propagation, dan Computational Graphs
 :label:`sec_backprop`
 
-So far, we have trained our models
-with minibatch stochastic gradient descent.
-However, when we implemented the algorithm,
-we only worried about the calculations involved
-in *forward propagation* through the model.
-When it came time to calculate the gradients,
-we just invoked the backpropagation function provided by the deep learning framework.
+Sejauh ini, kita telah melatih model kita
+dengan minibatch stochastic gradient descent.
+Namun, ketika kita mengimplementasikan algoritma tersebut,
+kita hanya berfokus pada perhitungan yang terlibat dalam
+*forward propagation* melalui model.
+Ketika tiba saatnya menghitung gradien,
+kita cukup memanggil fungsi backpropagation yang disediakan oleh framework deep learning.
 
-The automatic calculation of gradients
-profoundly simplifies
-the implementation of deep learning algorithms.
-Before automatic differentiation,
-even small changes to complicated models required
-recalculating complicated derivatives by hand.
-Surprisingly often, academic papers had to allocate
-numerous pages to deriving update rules.
-While we must continue to rely on automatic differentiation
-so we can focus on the interesting parts,
-you ought to know how these gradients
-are calculated under the hood
-if you want to go beyond a shallow
-understanding of deep learning.
+Perhitungan otomatis gradien
+secara signifikan menyederhanakan
+implementasi algoritma deep learning.
+Sebelum adanya diferensiasi otomatis,
+bahkan perubahan kecil pada model yang rumit mengharuskan
+penghitungan ulang turunan yang rumit secara manual.
+Cukup sering, makalah akademis harus mengalokasikan
+banyak halaman untuk menurunkan aturan pembaruan.
+Meskipun kita harus terus bergantung pada diferensiasi otomatis
+agar kita dapat fokus pada bagian yang lebih menarik,
+Anda sebaiknya tahu bagaimana gradien ini
+dihitung di balik layar
+jika Anda ingin memahami lebih dalam
+tentang deep learning.
 
-In this section, we take a deep dive
-into the details of *backward propagation*
-(more commonly called *backpropagation*).
-To convey some insight for both the
-techniques and their implementations,
-we rely on some basic mathematics and computational graphs.
-To start, we focus our exposition on
-a one-hidden-layer MLP
-with weight decay ($\ell_2$ regularization, to be described in subsequent chapters).
+Pada bagian ini, kita akan mendalami
+detail dari *backward propagation*
+(yang lebih umum disebut *backpropagation*).
+Untuk memberikan pemahaman baik tentang
+teknik maupun implementasinya,
+kita akan menggunakan beberapa konsep matematika dasar dan computational graphs.
+Untuk memulai, kita akan fokus pada
+MLP dengan satu hidden layer
+dengan *weight decay* ($\ell_2$ regularization, yang akan dijelaskan pada bab-bab selanjutnya).
 
 ## Forward Propagation
 
-*Forward propagation* (or *forward pass*) refers to the calculation and storage
-of intermediate variables (including outputs)
-for a neural network in order
-from the input layer to the output layer.
-We now work step-by-step through the mechanics
-of a neural network with one hidden layer.
-This may seem tedious but in the eternal words
-of funk virtuoso James Brown,
-you must "pay the cost to be the boss".
+*Forward propagation* (atau *forward pass*) mengacu pada perhitungan dan penyimpanan
+variabel-variabel antara (termasuk keluaran)
+untuk jaringan saraf secara berurutan
+dari lapisan input hingga lapisan output.
+Sekarang kita akan menjelajahi mekanisme
+dari jaringan saraf dengan satu hidden layer secara mendetail.
+Mungkin ini terasa membosankan tetapi seperti yang dikatakan
+oleh musisi funk terkenal James Brown,
+Anda harus "membayar harga untuk menjadi bos."
 
+Untuk menyederhanakan, mari kita asumsikan
+bahwa contoh input adalah $\mathbf{x} \in \mathbb{R}^d$
+dan hidden layer kita tidak memiliki bias.
+Di sini variabel antara adalah:
 
-For the sake of simplicity, let's assume
-that the input example is $\mathbf{x}\in \mathbb{R}^d$
-and that our hidden layer does not include a bias term.
-Here the intermediate variable is:
+$$\mathbf{z} = \mathbf{W}^{(1)} \mathbf{x},$$
 
-$$\mathbf{z}= \mathbf{W}^{(1)} \mathbf{x},$$
+dengan $\mathbf{W}^{(1)} \in \mathbb{R}^{h \times d}$
+sebagai parameter bobot dari hidden layer.
+Setelah menjalankan variabel antara
+$\mathbf{z} \in \mathbb{R}^h$ melalui
+fungsi aktivasi $\phi$,
+kita memperoleh vektor aktivasi hidden dengan panjang $h$:
 
-where $\mathbf{W}^{(1)} \in \mathbb{R}^{h \times d}$
-is the weight parameter of the hidden layer.
-After running the intermediate variable
-$\mathbf{z}\in \mathbb{R}^h$ through the
-activation function $\phi$
-we obtain our hidden activation vector of length $h$:
+$$\mathbf{h} = \phi(\mathbf{z}).$$
 
-$$\mathbf{h}= \phi (\mathbf{z}).$$
-
-The hidden layer output $\mathbf{h}$
-is also an intermediate variable.
-Assuming that the parameters of the output layer
-possess only a weight of
+Keluaran dari hidden layer $\mathbf{h}$
+juga merupakan variabel antara.
+Dengan mengasumsikan bahwa parameter dari output layer
+hanya memiliki bobot sebesar
 $\mathbf{W}^{(2)} \in \mathbb{R}^{q \times h}$,
-we can obtain an output layer variable
-with a vector of length $q$:
+kita dapat memperoleh variabel output layer
+dengan vektor panjang $q$:
 
-$$\mathbf{o}= \mathbf{W}^{(2)} \mathbf{h}.$$
+$$\mathbf{o} = \mathbf{W}^{(2)} \mathbf{h}.$$
 
-Assuming that the loss function is $l$
-and the example label is $y$,
-we can then calculate the loss term
-for a single data example,
+Dengan mengasumsikan bahwa fungsi loss adalah $l$
+dan label dari contoh data adalah $y$,
+kita kemudian dapat menghitung nilai loss
+untuk satu contoh data,
 
 $$L = l(\mathbf{o}, y).$$
 
-As we will see the definition of $\ell_2$ regularization
-to be introduced later,
-given the hyperparameter $\lambda$,
-the regularization term is
+Seperti yang akan kita lihat pada definisi $\ell_2$ regularization
+yang akan diperkenalkan kemudian,
+dengan hyperparameter $\lambda$,
+term regularisasi adalah
 
 $$s = \frac{\lambda}{2} \left(\|\mathbf{W}^{(1)}\|_\textrm{F}^2 + \|\mathbf{W}^{(2)}\|_\textrm{F}^2\right),$$
 :eqlabel:`eq_forward-s`
 
-where the Frobenius norm of the matrix
-is simply the $\ell_2$ norm applied
-after flattening the matrix into a vector.
-Finally, the model's regularized loss
-on a given data example is:
+di mana Frobenius norm dari matriks
+adalah $\ell_2$ norm yang diterapkan
+setelah meratakan matriks menjadi vektor.
+Akhirnya, loss yang telah diregularisasi dari model
+pada contoh data yang diberikan adalah:
 
 $$J = L + s.$$
 
-We refer to $J$ as the *objective function*
-in the following discussion.
+Kita menyebut $J$ sebagai *objective function*
+dalam diskusi berikut.
 
 
-## Computational Graph of Forward Propagation
+## Computational Graph dari Forward Propagation
 
-Plotting *computational graphs* helps us visualize
-the dependencies of operators
-and variables within the calculation.
-:numref:`fig_forward` contains the graph associated
-with the simple network described above,
-where squares denote variables and circles denote operators.
-The lower-left corner signifies the input
-and the upper-right corner is the output.
-Notice that the directions of the arrows
-(which illustrate data flow)
-are primarily rightward and upward.
+Menggambar *computational graphs* membantu kita memvisualisasikan
+ketergantungan antara operator
+dan variabel dalam perhitungan.
+:numref:`fig_forward` menunjukkan grafik yang terkait
+dengan jaringan sederhana yang dijelaskan di atas,
+di mana persegi mewakili variabel dan lingkaran mewakili operator.
+Sudut kiri bawah menunjukkan input
+dan sudut kanan atas adalah output.
+Perhatikan bahwa arah panah
+(yang menggambarkan aliran data)
+terutama mengarah ke kanan dan ke atas.
 
-![Computational graph of forward propagation.](../img/forward.svg)
+![Computational graph dari forward propagation.](../img/forward.svg)
 :label:`fig_forward`
 
 ## Backpropagation
 
-*Backpropagation* refers to the method of calculating
-the gradient of neural network parameters.
-In short, the method traverses the network in reverse order,
-from the output to the input layer,
-according to the *chain rule* from calculus.
-The algorithm stores any intermediate variables
-(partial derivatives)
-required while calculating the gradient
-with respect to some parameters.
-Assume that we have functions
+*Backpropagation* mengacu pada metode perhitungan
+gradien dari parameter jaringan saraf.
+Secara singkat, metode ini menjelajahi jaringan secara terbalik,
+dari lapisan output ke lapisan input,
+berdasarkan *chain rule* dari kalkulus.
+Algoritma ini menyimpan setiap variabel antara
+(partial derivatives) yang dibutuhkan saat menghitung gradien
+terhadap beberapa parameter.
+Misalkan kita memiliki fungsi
 $\mathsf{Y}=f(\mathsf{X})$
-and $\mathsf{Z}=g(\mathsf{Y})$,
-in which the input and the output
+dan $\mathsf{Z}=g(\mathsf{Y})$,
+di mana input dan output
 $\mathsf{X}, \mathsf{Y}, \mathsf{Z}$
-are tensors of arbitrary shapes.
-By using the chain rule,
-we can compute the derivative
-of $\mathsf{Z}$ with respect to $\mathsf{X}$ via
+adalah tensor dengan bentuk sembarang.
+Dengan menggunakan chain rule,
+kita dapat menghitung turunan
+dari $\mathsf{Z}$ terhadap $\mathsf{X}$ melalui
 
 $$\frac{\partial \mathsf{Z}}{\partial \mathsf{X}} = \textrm{prod}\left(\frac{\partial \mathsf{Z}}{\partial \mathsf{Y}}, \frac{\partial \mathsf{Y}}{\partial \mathsf{X}}\right).$$
 
-Here we use the $\textrm{prod}$ operator
-to multiply its arguments
-after the necessary operations,
-such as transposition and swapping input positions,
-have been carried out.
-For vectors, this is straightforward:
-it is simply matrix--matrix multiplication.
-For higher dimensional tensors,
-we use the appropriate counterpart.
-The operator $\textrm{prod}$ hides all the notational overhead.
+Di sini kita menggunakan operator $\textrm{prod}$
+untuk mengalikan argumennya
+setelah operasi yang diperlukan,
+seperti transposisi dan menukar posisi input, telah dilakukan.
+Untuk vektor, ini sederhana:
+hanya perkalian matriks-matriks.
+Untuk tensor berdimensi lebih tinggi,
+kita menggunakan padanan yang sesuai.
+Operator $\textrm{prod}$ menyembunyikan semua notasi tambahan.
 
-Recall that
-the parameters of the simple network with one hidden layer,
-whose computational graph is in :numref:`fig_forward`,
-are $\mathbf{W}^{(1)}$ and $\mathbf{W}^{(2)}$.
-The objective of backpropagation is to
-calculate the gradients $\partial J/\partial \mathbf{W}^{(1)}$
-and $\partial J/\partial \mathbf{W}^{(2)}$.
-To accomplish this, we apply the chain rule
-and calculate, in turn, the gradient of
-each intermediate variable and parameter.
-The order of calculations are reversed
-relative to those performed in forward propagation,
-since we need to start with the outcome of the computational graph
-and work our way towards the parameters.
-The first step is to calculate the gradients
-of the objective function $J=L+s$
-with respect to the loss term $L$
-and the regularization term $s$:
+Ingat bahwa
+parameter dari jaringan sederhana dengan satu hidden layer,
+yang computational graph-nya ada pada :numref:`fig_forward`,
+adalah $\mathbf{W}^{(1)}$ dan $\mathbf{W}^{(2)}$.
+Tujuan dari backpropagation adalah untuk
+menghitung gradien $\partial J/\partial \mathbf{W}^{(1)}$
+dan $\partial J/\partial \mathbf{W}^{(2)}$.
+Untuk mencapai ini, kita menerapkan chain rule
+dan menghitung, secara bergantian, gradien dari
+setiap variabel antara dan parameter.
+Urutan perhitungan terbalik
+relatif terhadap yang dilakukan pada forward propagation,
+karena kita perlu memulai dari hasil computational graph
+dan berlanjut ke arah parameter.
+Langkah pertama adalah menghitung gradien
+dari fungsi objektif $J=L+s$
+terhadap nilai loss $L$
+dan nilai regularisasi $s$:
 
-$$\frac{\partial J}{\partial L} = 1 \; \textrm{and} \; \frac{\partial J}{\partial s} = 1.$$
+$$\frac{\partial J}{\partial L} = 1 \; \textrm{dan} \; \frac{\partial J}{\partial s} = 1.$$
 
-Next, we compute the gradient of the objective function
-with respect to variable of the output layer $\mathbf{o}$
-according to the chain rule:
+Selanjutnya, kita menghitung gradien dari fungsi objektif
+terhadap variabel dari output layer $\mathbf{o}$
+sesuai dengan chain rule:
 
 $$
 \frac{\partial J}{\partial \mathbf{o}}
@@ -183,28 +180,27 @@ $$
 \in \mathbb{R}^q.
 $$
 
-Next, we calculate the gradients
-of the regularization term
-with respect to both parameters:
+Berikutnya, kita menghitung gradien
+dari term regularisasi
+terhadap kedua parameter:
 
 $$\frac{\partial s}{\partial \mathbf{W}^{(1)}} = \lambda \mathbf{W}^{(1)}
-\; \textrm{and} \;
+\; \textrm{dan} \;
 \frac{\partial s}{\partial \mathbf{W}^{(2)}} = \lambda \mathbf{W}^{(2)}.$$
 
-Now we are able to calculate the gradient
+Sekarang kita dapat menghitung gradien
 $\partial J/\partial \mathbf{W}^{(2)} \in \mathbb{R}^{q \times h}$
-of the model parameters closest to the output layer.
-Using the chain rule yields:
+dari parameter model yang paling dekat dengan output layer.
+Dengan menggunakan chain rule kita peroleh:
 
 $$\frac{\partial J}{\partial \mathbf{W}^{(2)}}= \textrm{prod}\left(\frac{\partial J}{\partial \mathbf{o}}, \frac{\partial \mathbf{o}}{\partial \mathbf{W}^{(2)}}\right) + \textrm{prod}\left(\frac{\partial J}{\partial s}, \frac{\partial s}{\partial \mathbf{W}^{(2)}}\right)= \frac{\partial J}{\partial \mathbf{o}} \mathbf{h}^\top + \lambda \mathbf{W}^{(2)}.$$
 :eqlabel:`eq_backprop-J-h`
 
-To obtain the gradient with respect to $\mathbf{W}^{(1)}$
-we need to continue backpropagation
-along the output layer to the hidden layer.
-The gradient with respect to the hidden layer output
-$\partial J/\partial \mathbf{h} \in \mathbb{R}^h$ is given by
-
+Untuk mendapatkan gradien terhadap $\mathbf{W}^{(1)}$
+kita perlu melanjutkan backpropagation
+dari output layer ke hidden layer.
+Gradien terhadap output hidden layer
+$\partial J/\partial \mathbf{h} \in \mathbb{R}^h$ diberikan oleh
 
 $$
 \frac{\partial J}{\partial \mathbf{h}}
@@ -212,11 +208,11 @@ $$
 = {\mathbf{W}^{(2)}}^\top \frac{\partial J}{\partial \mathbf{o}}.
 $$
 
-Since the activation function $\phi$ applies elementwise,
-calculating the gradient $\partial J/\partial \mathbf{z} \in \mathbb{R}^h$
-of the intermediate variable $\mathbf{z}$
-requires that we use the elementwise multiplication operator,
-which we denote by $\odot$:
+Karena fungsi aktivasi $\phi$ diterapkan secara elemen-per-elemen,
+menghitung gradien $\partial J/\partial \mathbf{z} \in \mathbb{R}^h$
+dari variabel antara $\mathbf{z}$
+membutuhkan kita menggunakan operator perkalian elemen-per-elemen,
+yang kita nyatakan dengan $\odot$:
 
 $$
 \frac{\partial J}{\partial \mathbf{z}}
@@ -224,10 +220,10 @@ $$
 = \frac{\partial J}{\partial \mathbf{h}} \odot \phi'\left(\mathbf{z}\right).
 $$
 
-Finally, we can obtain the gradient
+Akhirnya, kita dapat memperoleh gradien
 $\partial J/\partial \mathbf{W}^{(1)} \in \mathbb{R}^{h \times d}$
-of the model parameters closest to the input layer.
-According to the chain rule, we get
+dari parameter model yang paling dekat dengan input layer.
+Menurut chain rule, kita mendapatkan
 
 $$
 \frac{\partial J}{\partial \mathbf{W}^{(1)}}
@@ -237,62 +233,61 @@ $$
 
 
 
-## Training Neural Networks
+## Melatih _Neural Networks_
 
-When training neural networks,
-forward and backward propagation depend on each other.
-In particular, for forward propagation,
-we traverse the computational graph in the direction of dependencies
-and compute all the variables on its path.
-These are then used for backpropagation
-where the compute order on the graph is reversed.
+Saat melatih neural networks,
+forward dan backward propagation saling bergantung satu sama lain.
+Secara khusus, dalam forward propagation,
+kita menjelajahi computational graph mengikuti arah ketergantungan
+dan menghitung semua variabel pada jalurnya.
+Variabel-variabel ini kemudian digunakan untuk backpropagation,
+di mana urutan perhitungan pada grafik tersebut dibalik.
 
-Take the aforementioned simple network as an illustrative example.
-On the one hand,
-computing the regularization term :eqref:`eq_forward-s`
-during forward propagation
-depends on the current values of model parameters $\mathbf{W}^{(1)}$ and $\mathbf{W}^{(2)}$.
-They are given by the optimization algorithm according to backpropagation in the most recent iteration.
-On the other hand,
-the gradient calculation for the parameter
-:eqref:`eq_backprop-J-h` during backpropagation
-depends on the current value of the hidden layer output $\mathbf{h}$,
-which is given by forward propagation.
+Ambil jaringan sederhana yang telah disebutkan sebagai contoh ilustratif.
+Di satu sisi,
+perhitungan regularization term :eqref:`eq_forward-s`
+selama forward propagation
+bergantung pada nilai parameter model saat ini $\mathbf{W}^{(1)}$ dan $\mathbf{W}^{(2)}$.
+Parameter ini diberikan oleh algoritma optimisasi menurut backpropagation pada iterasi terbaru.
+Di sisi lain,
+perhitungan gradien untuk parameter
+:eqref:`eq_backprop-J-h` selama backpropagation
+bergantung pada nilai saat ini dari output hidden layer $\mathbf{h}$,
+yang diberikan oleh forward propagation.
 
-
-Therefore when training neural networks, once model parameters are initialized,
-we alternate forward propagation with backpropagation,
-updating model parameters using gradients given by backpropagation.
-Note that backpropagation reuses the stored intermediate values from forward propagation to avoid duplicate calculations.
-One of the consequences is that we need to retain
-the intermediate values until backpropagation is complete.
-This is also one of the reasons why training
-requires significantly more memory than plain prediction.
-Besides, the size of such intermediate values is roughly
-proportional to the number of network layers and the batch size.
-Thus,
-training deeper networks using larger batch sizes
-more easily leads to *out-of-memory* errors.
-
-
-## Summary
-
-Forward propagation sequentially calculates and stores intermediate variables within the computational graph defined by the neural network. It proceeds from the input to the output layer.
-Backpropagation sequentially calculates and stores the gradients of intermediate variables and parameters within the neural network in the reversed order.
-When training deep learning models, forward propagation and backpropagation are interdependent,
-and training requires significantly more memory than prediction.
+Oleh karena itu, saat melatih neural networks, setelah parameter model diinisialisasi,
+kita bergantian antara forward propagation dengan backpropagation,
+memperbarui parameter model menggunakan gradien yang diberikan oleh backpropagation.
+Perlu dicatat bahwa backpropagation menggunakan kembali nilai antara yang disimpan dari forward propagation untuk menghindari perhitungan yang berulang.
+Salah satu konsekuensinya adalah kita perlu menyimpan
+nilai antara tersebut sampai backpropagation selesai.
+Ini juga merupakan salah satu alasan mengapa pelatihan
+membutuhkan lebih banyak memori secara signifikan dibandingkan prediksi.
+Selain itu, ukuran dari nilai-nilai antara ini kira-kira
+sebanding dengan jumlah lapisan jaringan dan ukuran batch.
+Dengan demikian,
+pelatihan jaringan yang lebih dalam dengan ukuran batch yang lebih besar
+lebih mudah menyebabkan terjadinya kesalahan *out-of-memory*.
 
 
-## Exercises
+## Ringkasan
 
-1. Assume that the inputs $\mathbf{X}$ to some scalar function $f$ are $n \times m$ matrices. What is the dimensionality of the gradient of $f$ with respect to $\mathbf{X}$?
-1. Add a bias to the hidden layer of the model described in this section (you do not need to include bias in the regularization term).
-    1. Draw the corresponding computational graph.
-    1. Derive the forward and backward propagation equations.
-1. Compute the memory footprint for training and prediction in the model described in this section.
-1. Assume that you want to compute second derivatives. What happens to the computational graph? How long do you expect the calculation to take?
-1. Assume that the computational graph is too large for your GPU.
-    1. Can you partition it over more than one GPU?
-    1. What are the advantages and disadvantages over training on a smaller minibatch?
+Forward propagation secara berurutan menghitung dan menyimpan variabel antara dalam computational graph yang didefinisikan oleh neural network. Proses ini berlangsung dari lapisan input ke lapisan output.
+Backpropagation secara berurutan menghitung dan menyimpan gradien dari variabel antara dan parameter dalam neural network dalam urutan yang dibalik.
+Saat melatih model deep learning, forward propagation dan backpropagation saling bergantung,
+dan pelatihan membutuhkan memori yang jauh lebih besar dibandingkan dengan prediksi.
 
-[Discussions](https://discuss.d2l.ai/t/102)
+
+## Latihan
+
+1. Asumsikan bahwa input $\mathbf{X}$ ke suatu fungsi skalar $f$ adalah matriks berukuran $n \times m$. Berapakah dimensi dari gradien $f$ terhadap $\mathbf{X}$?
+2. Tambahkan bias ke hidden layer pada model yang dijelaskan dalam bagian ini (Anda tidak perlu menyertakan bias dalam term regularisasi).
+    1. Gambar computational graph yang sesuai.
+    2. Turunkan persamaan forward dan backward propagation.
+3. Hitung penggunaan memori untuk pelatihan dan prediksi dalam model yang dijelaskan di bagian ini.
+4. Asumsikan bahwa Anda ingin menghitung turunan kedua. Apa yang terjadi pada computational graph? Berapa lama kira-kira waktu yang dibutuhkan untuk perhitungan tersebut?
+5. Asumsikan bahwa computational graph terlalu besar untuk GPU Anda.
+    1. Dapatkah Anda mempartisinya pada lebih dari satu GPU?
+    2. Apa keuntungan dan kerugian dari pelatihan pada minibatch yang lebih kecil?
+
+[Diskusi](https://discuss.d2l.ai/t/102)
