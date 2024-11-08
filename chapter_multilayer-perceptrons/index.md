@@ -1,28 +1,29 @@
 # Multilayer Perceptrons
 :label:`chap_perceptrons`
 
-In this chapter, we will introduce your first truly *deep* network.
-The simplest deep networks are called *multilayer perceptrons*,
-and they consist of multiple layers of neurons
-each fully connected to those in the layer below
-(from which they receive input)
-and those above (which they, in turn, influence).
-Although automatic differentiation
-significantly simplifies the implementation of deep learning algorithms,
-we will dive deep into how these gradients
-are calculated in deep networks.
-Then we will
-be ready to
-discuss issues relating to numerical stability and parameter initialization
-that are key to successfully training deep networks.
-When we train such high-capacity models we run the risk of overfitting. Thus, we will
-revisit regularization and generalization
-for deep networks.
-Throughout, we aim
-to give you a firm grasp not just of the concepts but also of the practice of using deep networks.
-At the end of this chapter, we apply what we have introduced so far to a real case: house price
-prediction. We punt matters relating to the computational performance, scalability, and efficiency
-of our models to subsequent chapters.
+Dalam bab ini, kita akan memperkenalkan jaringan pertama Anda yang benar-benar *dalam*.
+Jaringan dalam yang paling sederhana disebut *multilayer perceptrons*,
+dan jaringan ini terdiri dari beberapa lapisan neuron
+yang masing-masing terhubung penuh dengan lapisan di bawahnya
+(dari mana mereka menerima input)
+dan lapisan di atasnya (yang kemudian mereka pengaruhi).
+Meskipun diferensiasi otomatis
+secara signifikan menyederhanakan implementasi algoritma deep learning,
+kita akan mendalami cara perhitungan gradien ini
+dalam jaringan yang dalam.
+Kemudian kita akan
+siap untuk
+membahas masalah yang berkaitan dengan stabilitas numerik dan inisialisasi parameter
+yang menjadi kunci dalam melatih jaringan dalam dengan sukses.
+Ketika kita melatih model dengan kapasitas tinggi seperti ini, kita berisiko mengalami overfitting. Oleh karena itu, kita akan
+meninjau kembali regularisasi dan generalisasi
+untuk jaringan dalam.
+Sepanjang pembahasan ini, kami bertujuan
+memberikan pemahaman yang kuat, tidak hanya tentang konsep-konsep ini tetapi juga tentang praktik penggunaan jaringan dalam.
+Di akhir bab ini, kita akan menerapkan apa yang telah kita pelajari sejauh ini pada kasus nyata: prediksi harga rumah.
+Masalah terkait kinerja komputasi, skalabilitas, dan efisiensi
+model kita akan dibahas pada bab-bab selanjutnya.
+
 
 ```toc
 :maxdepth: 2
