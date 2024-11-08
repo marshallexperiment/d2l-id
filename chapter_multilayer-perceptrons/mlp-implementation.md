@@ -303,14 +303,14 @@ model = MLP(num_outputs=10, num_hiddens=256, lr=0.1)
 trainer.fit(model, data)
 ```
 
-## Summary
+## Rangkuman
 
 Sekarang kita telah memiliki lebih banyak latihan dalam merancang jaringan yang dalam, langkah dari satu lapisan menjadi beberapa lapisan jaringan dalam tidak lagi menjadi tantangan yang begitu signifikan. Secara khusus, kita dapat menggunakan kembali algoritma pelatihan dan data loader. Namun, perlu dicatat bahwa mengimplementasikan MLP dari awal tetaplah rumit: memberi nama dan melacak parameter model membuatnya sulit untuk memperluas model. Misalnya, bayangkan ingin menambahkan lapisan lain di antara lapisan 42 dan 43. Lapisan ini mungkin menjadi lapisan 42b, kecuali jika kita bersedia melakukan penamaan ulang secara berurutan. Selain itu, jika kita mengimplementasikan jaringan dari awal, akan lebih sulit bagi framework untuk melakukan optimisasi kinerja yang bermakna.
 
 Namun demikian, Anda kini telah mencapai tingkat teknologi tercanggih pada akhir 1980-an ketika fully connected deep networks adalah metode pilihan untuk pemodelan jaringan saraf. Langkah konseptual kita berikutnya adalah mempertimbangkan gambar. Sebelum kita melakukannya, kita perlu meninjau sejumlah dasar statistik dan detail tentang cara menghitung model secara efisien.
 
 
-## Exercises
+## Latihan
 
 1. Ubah jumlah unit tersembunyi `num_hiddens` dan buat plot bagaimana jumlah ini memengaruhi akurasi model. Berapakah nilai terbaik dari hyperparameter ini?
 2. Coba tambahkan satu hidden layer untuk melihat bagaimana hal ini memengaruhi hasil.
