@@ -1,3 +1,4 @@
+# NOTE!!! SAMPE CHAPTER 14 (Computer Vision aja, soalnya check progress ini lama)
 # README
 
 - [x] ./README.md
