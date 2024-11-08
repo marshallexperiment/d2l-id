@@ -3,11 +3,12 @@
 tab.interact_select(['mxnet', 'pytorch', 'tensorflow', 'jax'])
 ```
 
-# Implementation of Multilayer Perceptrons
+# Implementasi Multilayer Perceptrons
 :label:`sec_mlp-implementation`
 
-Multilayer perceptrons (MLPs) are not much more complex to implement than simple linear models. The key conceptual
-difference is that we now concatenate multiple layers.
+Multilayer perceptrons (MLPs) tidak jauh lebih rumit untuk diimplementasikan dibandingkan dengan model linear sederhana. 
+Perbedaan konseptual utama adalah bahwa kita sekarang menggabungkan beberapa lapisan.
+
 
 ```{.python .input}
 %%tab mxnet
@@ -38,53 +39,53 @@ import jax
 from jax import numpy as jnp
 ```
 
-## Implementation from Scratch
+## Implementasi dari Awal
 
-Let's begin again by implementing such a network from scratch.
+Mari kita mulai lagi dengan mengimplementasikan jaringan seperti ini dari awal.
 
-### Initializing Model Parameters
+### Inisialisasi Parameter Model
 
-Recall that Fashion-MNIST contains 10 classes,
-and that each image consists of a $28 \times 28 = 784$
-grid of grayscale pixel values.
-As before we will disregard the spatial structure
-among the pixels for now,
-so we can think of this as a classification dataset
-with 784 input features and 10 classes.
-To begin, we will [**implement an MLP
-with one hidden layer and 256 hidden units.**]
-Both the number of layers and their width are adjustable
-(they are considered hyperparameters).
-Typically, we choose the layer widths to be divisible by larger powers of 2.
-This is computationally efficient due to the way
-memory is allocated and addressed in hardware.
+Ingat bahwa Fashion-MNIST memiliki 10 kelas,
+dan setiap gambar terdiri dari grid pixel grayscale sebesar $28 \times 28 = 784$.
+Seperti sebelumnya, kita akan mengabaikan struktur spasial
+di antara pixel untuk saat ini,
+sehingga kita dapat menganggapnya sebagai dataset klasifikasi
+dengan 784 fitur input dan 10 kelas.
+Untuk memulai, kita akan [**mengimplementasikan sebuah MLP
+dengan satu hidden layer dan 256 unit tersembunyi.**]
+Baik jumlah lapisan maupun lebar lapisan dapat disesuaikan
+(keduanya dianggap sebagai hyperparameter).
+Biasanya, kita memilih lebar lapisan agar dapat dibagi oleh pangkat dua yang lebih besar.
+Ini efisien secara komputasi karena cara
+memori dialokasikan dan diakses pada perangkat keras.
 
-Again, we will represent our parameters with several tensors.
-Note that *for every layer*, we must keep track of
-one weight matrix and one bias vector.
-As always, we allocate memory
-for the gradients of the loss with respect to these parameters.
+Sekali lagi, kita akan merepresentasikan parameter kita dengan beberapa tensor.
+Perhatikan bahwa *untuk setiap lapisan*, kita harus melacak
+satu matriks bobot dan satu vektor bias.
+Seperti biasa, kita mengalokasikan memori
+untuk gradien dari loss terhadap parameter ini.
 
 :begin_tab:`mxnet`
-In the code below, we first define and initialize the parameters
-and then enable gradient tracking.
+Dalam kode di bawah ini, kita pertama-tama mendefinisikan dan menginisialisasi parameter
+dan kemudian mengaktifkan pelacakan gradien.
 :end_tab:
 
 :begin_tab:`pytorch`
-In the code below we use `nn.Parameter`
-to automatically register
-a class attribute as a parameter to be tracked by `autograd` (:numref:`sec_autograd`).
+Dalam kode di bawah ini, kita menggunakan `nn.Parameter`
+untuk secara otomatis mendaftarkan
+atribut kelas sebagai parameter yang akan dilacak oleh `autograd` (:numref:`sec_autograd`).
 :end_tab:
 
 :begin_tab:`tensorflow`
-In the code below we use `tf.Variable`
-to define the model parameter.
+Dalam kode di bawah ini, kita menggunakan `tf.Variable`
+untuk mendefinisikan parameter model.
 :end_tab:
 
 :begin_tab:`jax`
-In the code below we use `flax.linen.Module.param`
-to define the model parameter.
+Dalam kode di bawah ini, kita menggunakan `flax.linen.Module.param`
+untuk mendefinisikan parameter model.
 :end_tab:
+
 
 ```{.python .input}
 %%tab mxnet
@@ -146,9 +147,10 @@ class MLPScratch(d2l.Classifier):
 
 ### Model
 
-To make sure we know how everything works,
-we will [**implement the ReLU activation**] ourselves
-rather than invoking the built-in `relu` function directly.
+Untuk memastikan kita memahami cara kerja setiap bagian,
+kita akan [**mengimplementasikan fungsi aktivasi ReLU**] sendiri
+alih-alih langsung menggunakan fungsi `relu` bawaan.
+
 
 ```{.python .input}
 %%tab mxnet
@@ -175,11 +177,11 @@ def relu(X):
     return jnp.maximum(X, 0)
 ```
 
-Since we are disregarding spatial structure,
-we `reshape` each two-dimensional image into
-a flat vector of length  `num_inputs`.
-Finally, we (**implement our model**)
-with just a few lines of code. Since we use the framework built-in autograd this is all that it takes.
+Karena kita mengabaikan struktur spasial,
+kita akan `reshape` setiap gambar dua dimensi menjadi
+vektor datar dengan panjang `num_inputs`.
+Terakhir, kita (**mengimplementasikan model kita**)
+dengan hanya beberapa baris kode. Karena kita menggunakan autograd bawaan framework, inilah semua yang diperlukan.
 
 ```{.python .input}
 %%tab all
@@ -192,8 +194,9 @@ def forward(self, X):
 
 ### Training
 
-Fortunately, [**the training loop for MLPs
-is exactly the same as for softmax regression.**] We define the model, data, and trainer, then finally invoke the `fit` method on model and data.
+Untungnya, [**loop pelatihan untuk MLP
+sama persis seperti pada softmax regression.**] Kita mendefinisikan model, data, dan pelatih (trainer), lalu akhirnya memanggil metode `fit` pada model dan data.
+
 
 ```{.python .input}
 %%tab all
@@ -203,19 +206,20 @@ trainer = d2l.Trainer(max_epochs=10)
 trainer.fit(model, data)
 ```
 
-## Concise Implementation
+## Implementasi Singkat
 
-As you might expect, by relying on the high-level APIs, we can implement MLPs even more concisely.
+Seperti yang mungkin Anda harapkan, dengan mengandalkan API tingkat tinggi, kita dapat mengimplementasikan MLP dengan lebih ringkas.
 
 ### Model
 
-Compared with our concise implementation
-of softmax regression implementation
+Dibandingkan dengan implementasi singkat
+dari softmax regression
 (:numref:`sec_softmax_concise`),
-the only difference is that we add
-*two* fully connected layers where we previously added only *one*.
-The first is [**the hidden layer**],
-the second is the output layer.
+satu-satunya perbedaan adalah bahwa kita menambahkan
+*dua* fully connected layers di mana sebelumnya kita hanya menambahkan *satu*.
+Yang pertama adalah [**hidden layer**],
+sedangkan yang kedua adalah output layer.
+
 
 ```{.python .input}
 %%tab mxnet
@@ -267,31 +271,31 @@ class MLP(d2l.Classifier):
         return X
 ```
 
-Previously, we defined `forward` methods for models to transform input using the model parameters.
-These operations are essentially a pipeline:
-you take an input and
-apply a transformation (e.g.,
-matrix multiplication with weights followed by bias addition),
-then repetitively use the output of the current transformation as
-input to the next transformation.
-However, you may have noticed that 
-no `forward` method is defined here.
-In fact, `MLP` inherits the `forward` method from the `Module` class (:numref:`subsec_oo-design-models`) to 
-simply invoke `self.net(X)` (`X` is input),
-which is now defined as a sequence of transformations
-via the `Sequential` class.
-The `Sequential` class abstracts the forward process
-enabling us to focus on the transformations.
-We will further discuss how the `Sequential` class works in :numref:`subsec_model-construction-sequential`.
-
+Sebelumnya, kita mendefinisikan metode `forward` untuk model untuk mentransformasi input menggunakan parameter model.
+Operasi ini pada dasarnya adalah sebuah pipeline:
+kita mengambil sebuah input dan
+menerapkan transformasi (misalnya,
+perkalian matriks dengan bobot diikuti dengan penambahan bias),
+kemudian secara berulang menggunakan output dari transformasi saat ini sebagai
+input untuk transformasi berikutnya.
+Namun, Anda mungkin memperhatikan bahwa 
+tidak ada metode `forward` yang didefinisikan di sini.
+Faktanya, `MLP` mewarisi metode `forward` dari kelas `Module` (:numref:`subsec_oo-design-models`) untuk
+cukup memanggil `self.net(X)` (`X` adalah input),
+yang sekarang didefinisikan sebagai rangkaian transformasi
+melalui kelas `Sequential`.
+Kelas `Sequential` mengabstraksi proses forward
+sehingga kita dapat fokus pada transformasi-transformasi tersebut.
+Kita akan membahas lebih lanjut cara kerja kelas `Sequential` di :numref:`subsec_model-construction-sequential`.
 
 ### Training
 
-[**The training loop**] is exactly the same
-as when we implemented softmax regression.
-This modularity enables us to separate
-matters concerning the model architecture
-from orthogonal considerations.
+[**Loop pelatihan**] persis sama
+seperti saat kita mengimplementasikan softmax regression.
+Modularitas ini memungkinkan kita untuk memisahkan
+permasalahan terkait arsitektur model
+dari pertimbangan lain yang terpisah.
+
 
 ```{.python .input}
 %%tab all
@@ -301,40 +305,40 @@ trainer.fit(model, data)
 
 ## Summary
 
-Now that we have more practice in designing deep networks, the step from a single to multiple layers of deep networks does not pose such a significant challenge any longer. In particular, we can reuse the training algorithm and data loader. Note, though, that implementing MLPs from scratch is nonetheless messy: naming and keeping track of the model parameters makes it difficult to extend models. For instance, imagine wanting to insert another layer between layers 42 and 43. This might now be layer 42b, unless we are willing to perform sequential renaming. Moreover, if we implement the network from scratch, it is much more difficult for the framework to perform meaningful performance optimizations.
+Sekarang kita telah memiliki lebih banyak latihan dalam merancang jaringan yang dalam, langkah dari satu lapisan menjadi beberapa lapisan jaringan dalam tidak lagi menjadi tantangan yang begitu signifikan. Secara khusus, kita dapat menggunakan kembali algoritma pelatihan dan data loader. Namun, perlu dicatat bahwa mengimplementasikan MLP dari awal tetaplah rumit: memberi nama dan melacak parameter model membuatnya sulit untuk memperluas model. Misalnya, bayangkan ingin menambahkan lapisan lain di antara lapisan 42 dan 43. Lapisan ini mungkin menjadi lapisan 42b, kecuali jika kita bersedia melakukan penamaan ulang secara berurutan. Selain itu, jika kita mengimplementasikan jaringan dari awal, akan lebih sulit bagi framework untuk melakukan optimisasi kinerja yang bermakna.
 
-Nonetheless, you have now reached the state of the art of the late 1980s when fully connected deep networks were the method of choice for neural network modeling. Our next conceptual step will be to consider images. Before we do so, we need to review a number of statistical basics and details on how to compute models efficiently.
+Namun demikian, Anda kini telah mencapai tingkat teknologi tercanggih pada akhir 1980-an ketika fully connected deep networks adalah metode pilihan untuk pemodelan jaringan saraf. Langkah konseptual kita berikutnya adalah mempertimbangkan gambar. Sebelum kita melakukannya, kita perlu meninjau sejumlah dasar statistik dan detail tentang cara menghitung model secara efisien.
 
 
 ## Exercises
 
-1. Change the number of hidden units `num_hiddens` and plot how its number affects the accuracy of the model. What is the best value of this hyperparameter?
-1. Try adding a hidden layer to see how it affects the results.
-1. Why is it a bad idea to insert a hidden layer with a single neuron? What could go wrong?
-1. How does changing the learning rate alter your results? With all other parameters fixed, which learning rate gives you the best results? How does this relate to the number of epochs?
-1. Let's optimize over all hyperparameters jointly, i.e., learning rate, number of epochs, number of hidden layers, and number of hidden units per layer.
-    1. What is the best result you can get by optimizing over all of them?
-    1. Why it is much more challenging to deal with multiple hyperparameters?
-    1. Describe an efficient strategy for optimizing over multiple parameters jointly.
-1. Compare the speed of the framework and the from-scratch implementation for a challenging problem. How does it change with the complexity of the network?
-1. Measure the speed of tensor--matrix multiplications for well-aligned and misaligned matrices. For instance, test for matrices with dimension 1024, 1025, 1026, 1028, and 1032.
-    1. How does this change between GPUs and CPUs?
-    1. Determine the memory bus width of your CPU and GPU.
-1. Try out different activation functions. Which one works best?
-1. Is there a difference between weight initializations of the network? Does it matter?
+1. Ubah jumlah unit tersembunyi `num_hiddens` dan buat plot bagaimana jumlah ini memengaruhi akurasi model. Berapakah nilai terbaik dari hyperparameter ini?
+2. Coba tambahkan satu hidden layer untuk melihat bagaimana hal ini memengaruhi hasil.
+3. Mengapa ide yang buruk untuk memasukkan hidden layer dengan satu neuron? Apa yang bisa salah?
+4. Bagaimana perubahan pada learning rate memengaruhi hasil Anda? Dengan semua parameter lain tetap, learning rate mana yang memberikan hasil terbaik? Bagaimana ini terkait dengan jumlah epoch?
+5. Mari kita optimalkan seluruh hyperparameter secara bersama-sama, yaitu, learning rate, jumlah epoch, jumlah hidden layer, dan jumlah unit tersembunyi per lapisan.
+    1. Apa hasil terbaik yang bisa Anda dapatkan dengan mengoptimalkan semua hyperparameter ini?
+    2. Mengapa menangani banyak hyperparameter jauh lebih menantang?
+    3. Jelaskan strategi yang efisien untuk mengoptimalkan banyak parameter secara bersama-sama.
+6. Bandingkan kecepatan framework dan implementasi dari awal untuk masalah yang menantang. Bagaimana perbedaannya seiring dengan kompleksitas jaringan?
+7. Ukur kecepatan perkalian tensor--matriks untuk matriks yang selaras dan tidak selaras. Misalnya, uji matriks dengan dimensi 1024, 1025, 1026, 1028, dan 1032.
+    1. Bagaimana perbedaan ini antara GPU dan CPU?
+    2. Tentukan lebar bus memori CPU dan GPU Anda.
+8. Cobalah berbagai fungsi aktivasi. Mana yang bekerja paling baik?
+9. Apakah ada perbedaan antara inisialisasi bobot jaringan? Apakah ini penting?
 
 :begin_tab:`mxnet`
-[Discussions](https://discuss.d2l.ai/t/92)
+[Diskusi](https://discuss.d2l.ai/t/92)
 :end_tab:
 
 :begin_tab:`pytorch`
-[Discussions](https://discuss.d2l.ai/t/93)
+[Diskusi](https://discuss.d2l.ai/t/93)
 :end_tab:
 
 :begin_tab:`tensorflow`
-[Discussions](https://discuss.d2l.ai/t/227)
+[Diskusi](https://discuss.d2l.ai/t/227)
 :end_tab:
 
 :begin_tab:`jax`
-[Discussions](https://discuss.d2l.ai/t/17985)
+[Diskusi](https://discuss.d2l.ai/t/17985)
 :end_tab:
