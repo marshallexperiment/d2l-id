@@ -1,372 +1,370 @@
-# Generalization in Deep Learning
+# generalisasi dari _Deep Learning_
+
+Di :numref:`chap_regression` dan :numref:`chap_classification`,
+kita menyelesaikan masalah regresi dan klasifikasi
+dengan menyesuaikan model linear terhadap data pelatihan.
+Dalam kedua kasus, kita menyediakan algoritma praktis
+untuk menemukan parameter yang memaksimalkan
+kemungkinan label pelatihan yang diamati.
+Dan kemudian, di akhir setiap bab,
+kita mengingatkan bahwa menyesuaikan data pelatihan
+hanyalah tujuan antara.
+Pencarian utama kita sejak awal adalah menemukan *pola umum*
+sebagai dasar untuk membuat prediksi yang akurat
+bahkan pada contoh baru yang diambil dari populasi yang sama.
+Para peneliti machine learning adalah *konsumen* dari algoritma optimisasi.
+Kadang-kadang, kita bahkan harus mengembangkan algoritma optimisasi baru.
+Namun pada akhirnya, optimisasi hanyalah sarana untuk mencapai tujuan.
+Pada intinya, machine learning adalah disiplin statistik
+dan kita ingin mengoptimalkan *training loss* hanya sejauh
+prinsip statistik tertentu (dikenal atau tidak diketahui)
+membuat model yang dihasilkan dapat digeneralisasi melebihi data pelatihan.
 
 
-In :numref:`chap_regression` and :numref:`chap_classification`,
-we tackled regression and classification problems
-by fitting linear models to training data.
-In both cases, we provided practical algorithms
-for finding the parameters that maximized
-the likelihood of the observed training labels.
-And then, towards the end of each chapter,
-we recalled that fitting the training data
-was only an intermediate goal.
-Our real quest all along was to discover *general patterns*
-on the basis of which we can make accurate predictions
-even on new examples drawn from the same underlying population.
-Machine learning researchers are *consumers* of optimization algorithms.
-Sometimes, we must even develop new optimization algorithms.
-But at the end of the day, optimization is merely a means to an end.
-At its core, machine learning is a statistical discipline
-and we wish to optimize training loss only insofar
-as some statistical principle (known or unknown)
-leads the resulting models to generalize beyond the training set.
+Di sisi positif, ternyata jaringan neural dalam
+yang dilatih dengan stochastic gradient descent dapat digeneralisasi dengan sangat baik
+pada berbagai masalah prediksi, termasuk visi komputer;
+pemrosesan bahasa alami; data deret waktu; sistem rekomendasi;
+rekam medis elektronik; pelipatan protein;
+pendekatan fungsi nilai dalam permainan video
+dan permainan papan; serta banyak domain lainnya.
+Di sisi negatif, jika Anda mencari penjelasan yang langsung
+tentang baik cerita optimisasi
+(mengapa kita bisa menyesuaikan mereka dengan data pelatihan)
+atau cerita generalisasi
+(mengapa model yang dihasilkan dapat digeneralisasi ke contoh yang belum pernah dilihat),
+maka Anda mungkin perlu menyeduh minuman.
+Sementara prosedur kita untuk mengoptimalkan model linear
+dan sifat statistik dari solusinya
+sudah dijelaskan dengan baik oleh teori komprehensif,
+pemahaman kita tentang deep learning
+masih seperti dunia yang liar di kedua aspek tersebut.
+
+Baik teori maupun praktik deep learning
+sedang berkembang pesat,
+dengan para ahli teori yang mengadopsi strategi baru
+untuk menjelaskan apa yang sedang terjadi,
+sementara para praktisi terus
+berinovasi dengan kecepatan luar biasa,
+membangun sekumpulan heuristik untuk melatih jaringan dalam
+dan intuisi serta pengetahuan yang berkembang
+yang memberi panduan untuk memutuskan
+teknik mana yang diterapkan dalam situasi tertentu.
+
+Ringkasan dari momen saat ini adalah bahwa teori deep learning
+telah menghasilkan beberapa serangan yang menjanjikan dan hasil yang menarik,
+namun masih jauh dari pemahaman yang komprehensif
+tentang (i) mengapa kita dapat mengoptimalkan jaringan neural
+dan (ii) bagaimana model yang dipelajari oleh gradient descent
+dapat digeneralisasi dengan sangat baik, bahkan pada tugas berdimensi tinggi.
+Namun, dalam praktiknya, (i) jarang menjadi masalah
+(kita selalu dapat menemukan parameter yang sesuai dengan semua data pelatihan kita)
+dan karenanya pemahaman tentang generalisasi menjadi masalah yang jauh lebih besar.
+Di sisi lain, bahkan tanpa kenyamanan teori ilmiah yang koheren,
+para praktisi telah mengembangkan kumpulan teknik yang luas
+yang dapat membantu Anda menghasilkan model yang dapat digeneralisasi dengan baik dalam praktik.
+Meskipun tidak ada ringkasan singkat yang bisa menggambarkan
+topik generalisasi dalam deep learning yang sangat luas,
+dan meskipun kondisi penelitian secara keseluruhan jauh dari terselesaikan,
+kami berharap, dalam bagian ini, untuk menyajikan gambaran umum
+tentang kondisi penelitian dan praktik saat ini.
 
 
-On the bright side, it turns out that deep neural networks
-trained by stochastic gradient descent generalize remarkably well
-across myriad prediction problems, spanning computer vision;
-natural language processing; time series data; recommender systems;
-electronic health records; protein folding;
-value function approximation in video games
-and board games; and numerous other domains.
-On the downside, if you were looking
-for a straightforward account
-of either the optimization story
-(why we can fit them to training data)
-or the generalization story
-(why the resulting models generalize to unseen examples),
-then you might want to pour yourself a drink.
-While our procedures for optimizing linear models
-and the statistical properties of the solutions
-are both described well by a comprehensive body of theory,
-our understanding of deep learning
-still resembles the wild west on both fronts.
+## Revisiting Overfitting dan Regularization
 
-Both the theory and practice of deep learning
-are rapidly evolving,
-with theorists adopting new strategies
-to explain what's going on,
-even as practitioners continue
-to innovate at a blistering pace,
-building arsenals of heuristics for training deep networks
-and a body of intuitions and folk knowledge
-that provide guidance for deciding
-which techniques to apply in which situations.
+Menurut "no free lunch" theorem dari :citet:`wolpert1995no`,
+algoritma pembelajaran apapun menghasilkan generalisasi yang lebih baik pada data dengan distribusi tertentu, dan lebih buruk pada distribusi lainnya.
+Oleh karena itu, dengan data pelatihan yang terbatas,
+sebuah model bergantung pada asumsi tertentu:
+untuk mencapai performa setara manusia
+mungkin berguna untuk mengidentifikasi *inductive biases*
+yang mencerminkan cara manusia berpikir tentang dunia.
+Bias induktif seperti itu menunjukkan preferensi
+untuk solusi dengan sifat tertentu.
+Misalnya,
+MLP yang dalam memiliki bias induktif
+menuju pembentukan fungsi yang rumit melalui komposisi fungsi yang lebih sederhana.
 
-The summary of the present moment is that the theory of deep learning
-has produced promising lines of attack and scattered fascinating results,
-but still appears far from a comprehensive account
-of both (i) why we are able to optimize neural networks
-and (ii) how models learned by gradient descent
-manage to generalize so well, even on high-dimensional tasks.
-However, in practice, (i) is seldom a problem
-(we can always find parameters that will fit all of our training data)
-and thus understanding generalization is far the bigger problem.
-On the other hand, even absent the comfort of a coherent scientific theory,
-practitioners have developed a large collection of techniques
-that may help you to produce models that generalize well in practice.
-While no pithy summary can possibly do justice
-to the vast topic of generalization in deep learning,
-and while the overall state of research is far from resolved,
-we hope, in this section, to present a broad overview
-of the state of research and practice.
-
-
-## Revisiting Overfitting and Regularization
-
-According to the "no free lunch" theorem of :citet:`wolpert1995no`,
-any learning algorithm generalizes better on data with certain distributions, and worse with other distributions.
-Thus, given a finite training set,
-a model relies on certain assumptions: 
-to achieve human-level performance
-it may be useful to identify *inductive biases* 
-that reflect how humans think about the world.
-Such inductive biases show preferences 
-for solutions with certain properties.
-For example,
-a deep MLP has an inductive bias
-towards building up a complicated function by the composition of simpler functions.
-
-With machine learning models encoding inductive biases,
-our approach to training them
-typically consists of two phases: (i) fit the training data;
-and (ii) estimate the *generalization error*
-(the true error on the underlying population)
-by evaluating the model on holdout data.
-The difference between our fit on the training data
-and our fit on the test data is called the *generalization gap* and when this is large,
-we say that our models *overfit* to the training data.
-In extreme cases of overfitting,
-we might exactly fit the training data,
-even when the test error remains significant.
-And in the classical view,
-the interpretation is that our models are too complex,
-requiring that we either shrink the number of features,
-the number of nonzero parameters learned,
-or the size of the parameters as quantified.
-Recall the plot of model complexity compared with loss
+Dengan model machine learning yang mengkodekan bias induktif,
+pendekatan kita untuk melatih model ini
+biasanya terdiri dari dua fase: (i) menyesuaikan data pelatihan;
+dan (ii) memperkirakan *generalization error*
+(kesalahan sejati pada populasi yang mendasarinya)
+dengan mengevaluasi model pada data holdout.
+Perbedaan antara kecocokan kita pada data pelatihan
+dan kecocokan kita pada data uji disebut *generalization gap* dan ketika ini besar,
+kita mengatakan bahwa model kita *overfit* pada data pelatihan.
+Dalam kasus overfitting yang ekstrem,
+kita mungkin sangat menyesuaikan data pelatihan,
+bahkan ketika kesalahan uji tetap signifikan.
+Dan dalam pandangan klasik,
+interpretasinya adalah bahwa model kita terlalu kompleks,
+membutuhkan kita untuk mengurangi jumlah fitur,
+jumlah parameter yang tidak nol yang dipelajari,
+atau ukuran parameter sebagaimana dihitung.
+Ingat grafik kompleksitas model dibandingkan dengan loss
 (:numref:`fig_capacity_vs_error`)
-from :numref:`sec_generalization_basics`.
+dari :numref:`sec_generalization_basics`.
 
 
-However deep learning complicates this picture in counterintuitive ways.
-First, for classification problems,
-our models are typically expressive enough
-to perfectly fit every training example,
-even in datasets consisting of millions
+Namun deep learning memperumit gambaran ini dengan cara yang tidak intuitif.
+Pertama, untuk masalah klasifikasi,
+model kita biasanya cukup ekspresif
+untuk benar-benar menyesuaikan setiap contoh pelatihan,
+bahkan dalam dataset yang terdiri dari jutaan
 :cite:`zhang2021understanding`.
-In the classical picture, we might think
-that this setting lies on the far right extreme
-of the model complexity axis,
-and that any improvements in generalization error
-must come by way of regularization,
-either by reducing the complexity of the model class,
-or by applying a penalty, severely constraining
-the set of values that our parameters might take.
-But that is where things start to get weird.
+Dalam pandangan klasik, kita mungkin berpikir
+bahwa pengaturan ini terletak pada ekstrem kanan
+dari sumbu kompleksitas model,
+dan bahwa setiap peningkatan pada *generalization error*
+harus dilakukan melalui regularisasi,
+baik dengan mengurangi kompleksitas kelas model,
+atau dengan menerapkan penalti, sangat membatasi
+set nilai yang mungkin diambil oleh parameter kita.
+Namun, di sinilah hal-hal mulai menjadi aneh.
 
-Strangely, for many deep learning tasks
-(e.g., image recognition and text classification)
-we are typically choosing among model architectures,
-all of which can achieve arbitrarily low training loss
-(and zero training error).
-Because all models under consideration achieve zero training error,
-*the only avenue for further gains is to reduce overfitting*.
-Even stranger, it is often the case that
-despite fitting the training data perfectly,
-we can actually *reduce the generalization error*
-further by making the model *even more expressive*,
-e.g., adding layers, nodes, or training
-for a larger number of epochs.
-Stranger yet, the pattern relating the generalization gap
-to the *complexity* of the model (as captured, for example, in the depth or width of the networks)
-can be non-monotonic,
-with greater complexity hurting at first
-but subsequently helping in a so-called "double-descent" pattern
+Anehnya, untuk banyak tugas deep learning
+(misalnya, pengenalan gambar dan klasifikasi teks)
+kita biasanya memilih di antara arsitektur model,
+semua di antaranya dapat mencapai *training loss* yang sangat rendah
+(dan *training error* yang nol).
+Karena semua model yang dipertimbangkan mencapai *training error* yang nol,
+*satu-satunya jalan untuk meningkatkan lebih jauh adalah dengan mengurangi overfitting*.
+Yang lebih aneh lagi, sering kali
+meskipun menyesuaikan data pelatihan secara sempurna,
+kita sebenarnya bisa *mengurangi generalization error*
+lebih jauh dengan membuat model *lebih ekspresif*,
+misalnya, menambahkan lapisan, node, atau melatih
+untuk jumlah epoch yang lebih besar.
+Yang lebih aneh lagi, pola yang menghubungkan generalization gap
+dengan *kompleksitas* model (seperti kedalaman atau lebar jaringan)
+bisa menjadi non-monoton,
+dengan peningkatan kompleksitas yang awalnya merugikan
+namun kemudian membantu dalam pola "double-descent" yang disebutkan
 :cite:`nakkiran2021deep`.
-Thus the deep learning practitioner possesses a bag of tricks,
-some of which seemingly restrict the model in some fashion
-and others that seemingly make it even more expressive,
-and all of which, in some sense, are applied to mitigate overfitting.
+Oleh karena itu, praktisi deep learning memiliki sekumpulan trik,
+beberapa di antaranya tampaknya membatasi model dalam beberapa cara
+dan yang lainnya tampaknya membuatnya lebih ekspresif,
+dan semua ini, dalam beberapa hal, diterapkan untuk mengurangi overfitting.
 
-Complicating things even further,
-while the guarantees provided by classical learning theory
-can be conservative even for classical models,
-they appear powerless to explain why it is
-that deep neural networks generalize in the first place.
-Because deep neural networks are capable of fitting
-arbitrary labels even for large datasets,
-and despite the use of familiar methods such as $\ell_2$ regularization,
-traditional complexity-based generalization bounds,
-e.g., those based on the VC dimension
-or Rademacher complexity of a hypothesis class
-cannot explain why neural networks generalize.
-
-## Inspiration from Nonparametrics
-
-Approaching deep learning for the first time,
-it is tempting to think of them as parametric models.
-After all, the models *do* have millions of parameters.
-When we update the models, we update their parameters.
-When we save the models, we write their parameters to disk.
-However, mathematics and computer science are riddled
-with counterintuitive changes of perspective,
-and surprising isomorphisms between seemingly different problems.
-While neural networks clearly *have* parameters,
-in some ways it can be more fruitful
-to think of them as behaving like nonparametric models.
-So what precisely makes a model nonparametric?
-While the name covers a diverse set of approaches,
-one common theme is that nonparametric methods
-tend to have a level of complexity that grows
-as the amount of available data grows.
-
-Perhaps the simplest example of a nonparametric model
-is the $k$-nearest neighbor algorithm (we will cover more nonparametric models later, for example in :numref:`sec_attention-pooling`).
-Here, at training time,
-the learner simply memorizes the dataset.
-Then, at prediction time,
-when confronted with a new point $\mathbf{x}$,
-the learner looks up the $k$ nearest neighbors
-(the $k$ points $\mathbf{x}_i'$ that minimize
-some distance $d(\mathbf{x}, \mathbf{x}_i')$).
-When $k=1$, this algorithm is called $1$-nearest neighbors,
-and the algorithm will always achieve a training error of zero.
-That however, does not mean that the algorithm will not generalize.
-In fact, it turns out that under some mild conditions,
-the 1-nearest neighbor algorithm is consistent
-(eventually converging to the optimal predictor).
+Menambah kerumitan, sementara jaminan yang diberikan oleh teori pembelajaran klasik
+bisa konservatif bahkan untuk model klasik,
+mereka tampaknya tidak berdaya untuk menjelaskan mengapa
+jaringan neural dalam bisa melakukan generalisasi.
+Karena jaringan neural dalam mampu menyesuaikan
+label yang sewenang-wenang bahkan untuk dataset besar,
+dan meskipun menggunakan metode yang familier seperti $\ell_2$ regularisasi,
+batas generalisasi berbasis kompleksitas tradisional,
+misalnya, yang didasarkan pada dimensi VC
+atau kompleksitas Rademacher dari kelas hipotesis
+tidak dapat menjelaskan mengapa jaringan neural dapat melakukan generalisasi.
 
 
-Note that $1$-nearest neighbor requires that we specify
-some distance function $d$, or equivalently,
-that we specify some vector-valued basis function $\phi(\mathbf{x})$
-for featurizing our data.
-For any choice of the distance metric,
-we will achieve zero training error
-and eventually reach an optimal predictor,
-but different distance metrics $d$
-encode different inductive biases
-and with a finite amount of available data
-will yield different predictors.
-Different choices of the distance metric $d$
-represent different assumptions about the underlying patterns
-and the performance of the different predictors
-will depend on how compatible the assumptions
-are with the observed data.
+## Inspirasi dari _Nonparametrics_
 
-In a sense, because neural networks are over-parametrized,
-possessing many more parameters than are needed to fit the training data,
-they tend to *interpolate* the training data (fitting it perfectly)
-and thus behave, in some ways, more like nonparametric models.
-More recent theoretical research has established
-deep connection between large neural networks
-and nonparametric methods, notably kernel methods.
-In particular, :citet:`Jacot.Grabriel.Hongler.2018`
-demonstrated that in the limit, as multilayer perceptrons
-with randomly initialized weights grow infinitely wide,
-they become equivalent to (nonparametric) kernel methods
-for a specific choice of the kernel function
-(essentially, a distance function),
-which they call the neural tangent kernel.
-While current neural tangent kernel models may not fully explain
-the behavior of modern deep networks,
-their success as an analytical tool
-underscores the usefulness of nonparametric modeling
-for understanding the behavior of over-parametrized deep networks.
+Mendekati deep learning untuk pertama kalinya,
+mungkin tergoda untuk menganggapnya sebagai model parametrik.
+Bagaimanapun, model *memiliki* jutaan parameter.
+Ketika kita memperbarui model, kita memperbarui parameternya.
+Ketika kita menyimpan model, kita menulis parameternya ke disk.
+Namun, matematika dan ilmu komputer penuh
+dengan perubahan perspektif yang tidak intuitif,
+dan isomorfisme yang mengejutkan antara masalah yang tampaknya berbeda.
+Meskipun jaringan neural jelas *memiliki* parameter,
+dalam beberapa hal bisa lebih bermanfaat
+untuk menganggapnya sebagai model nonparametrik.
+Jadi, apa sebenarnya yang membuat model menjadi nonparametrik?
+Meskipun istilah ini mencakup berbagai pendekatan,
+satu tema umum adalah bahwa metode nonparametrik
+cenderung memiliki tingkat kompleksitas yang meningkat
+seiring dengan bertambahnya data yang tersedia.
+
+Contoh model nonparametrik yang paling sederhana
+mungkin adalah algoritma $k$-nearest neighbor (kita akan membahas lebih banyak model nonparametrik nanti, misalnya di :numref:`sec_attention-pooling`).
+Di sini, pada saat pelatihan,
+pembelajar hanya menghafal dataset.
+Kemudian, pada saat prediksi,
+ketika dihadapkan dengan titik baru $\mathbf{x}$,
+pembelajar mencari $k$ tetangga terdekat
+($k$ titik $\mathbf{x}_i'$ yang meminimalkan
+jarak tertentu $d(\mathbf{x}, \mathbf{x}_i')$).
+Ketika $k=1$, algoritma ini disebut $1$-nearest neighbor,
+dan algoritma ini akan selalu mencapai *training error* sebesar nol.
+Namun, itu tidak berarti bahwa algoritma ini tidak bisa digeneralisasi.
+Faktanya, ternyata di bawah beberapa kondisi ringan,
+algoritma 1-nearest neighbor konsisten
+(pada akhirnya akan menyatu dengan prediktor optimal).
 
 
-## Early Stopping
+Perhatikan bahwa $1$-nearest neighbor membutuhkan kita untuk menentukan
+beberapa fungsi jarak $d$, atau setara,
+kita menentukan beberapa fungsi basis yang bernilai vektor $\phi(\mathbf{x})$
+untuk melakukan featurisasi data kita.
+Untuk pilihan metrik jarak apapun,
+kita akan mencapai *training error* nol
+dan akhirnya mencapai prediktor optimal,
+tetapi metrik jarak yang berbeda $d$
+mengkodekan bias induktif yang berbeda
+dan dengan jumlah data yang tersedia yang terbatas
+akan menghasilkan prediktor yang berbeda.
+Pilihan metrik jarak $d$ yang berbeda
+mewakili asumsi yang berbeda tentang pola dasar
+dan kinerja prediktor yang berbeda
+akan bergantung pada seberapa kompatibel asumsi tersebut
+dengan data yang diamati.
 
-While deep neural networks are capable of fitting arbitrary labels,
-even when labels are assigned incorrectly or randomly
+Dalam arti tertentu, karena jaringan neural berlebihan parametriknya,
+memiliki banyak parameter lebih banyak daripada yang diperlukan untuk menyesuaikan data pelatihan,
+jaringan ini cenderung *menginterpolasi* data pelatihan (mencocokkannya dengan sempurna)
+dan karenanya berperilaku, dalam beberapa hal, lebih seperti model nonparametrik.
+Penelitian teoretis yang lebih baru telah menetapkan
+hubungan yang mendalam antara jaringan neural besar
+dan metode nonparametrik, terutama metode kernel.
+Secara khusus, :citet:`Jacot.Grabriel.Hongler.2018`
+menunjukkan bahwa dalam batas tertentu, saat multilayer perceptron
+dengan bobot yang diinisialisasi secara acak menjadi sangat lebar,
+mereka menjadi setara dengan metode kernel (nonparametrik)
+untuk pilihan fungsi kernel tertentu
+(pada dasarnya, fungsi jarak),
+yang mereka sebut neural tangent kernel.
+Meskipun model neural tangent kernel saat ini mungkin belum sepenuhnya menjelaskan
+perilaku jaringan dalam modern,
+kesuksesan mereka sebagai alat analisis
+menyoroti kegunaan pemodelan nonparametrik
+untuk memahami perilaku jaringan neural yang berlebihan parametriknya.
+
+
+
+## Early Stopping (Pemberhentian Awal)
+
+Meskipun jaringan neural dalam mampu menyesuaikan label secara sewenang-wenang,
+bahkan ketika label ditetapkan secara salah atau acak
 :cite:`zhang2021understanding`,
-this capability only emerges over many iterations of training.
-A new line of work :cite:`Rolnick.Veit.Belongie.Shavit.2017`
-has revealed that in the setting of label noise,
-neural networks tend to fit cleanly labeled data first
-and only subsequently to interpolate the mislabeled data.
-Moreover, it has been established that this phenomenon
-translates directly into a guarantee on generalization:
-whenever a model has fitted the cleanly labeled data
-but not randomly labeled examples included in the training set,
-it has in fact generalized :cite:`Garg.Balakrishnan.Kolter.Lipton.2021`.
+kemampuan ini hanya muncul setelah banyak iterasi pelatihan.
+Sebuah jalur penelitian baru :cite:`Rolnick.Veit.Belongie.Shavit.2017`
+menunjukkan bahwa dalam pengaturan noise label,
+jaringan neural cenderung menyesuaikan data dengan label yang bersih terlebih dahulu
+dan hanya kemudian menginterpolasi data yang diberi label salah.
+Lebih lanjut, telah ditetapkan bahwa fenomena ini
+langsung diterjemahkan menjadi jaminan generalisasi:
+kapanpun sebuah model telah menyesuaikan data yang berlabel bersih
+tetapi tidak menyesuaikan contoh dengan label acak dalam data pelatihan,
+maka model tersebut sebenarnya telah digeneralisasi :cite:`Garg.Balakrishnan.Kolter.Lipton.2021`.
 
-Together these findings help to motivate *early stopping*,
-a classic technique for regularizing deep neural networks.
-Here, rather than directly constraining the values of the weights,
-one constrains the number of epochs of training.
-The most common way to determine the stopping criterion
-is to monitor validation error throughout training
-(typically by checking once after each epoch)
-and to cut off training when the validation error
-has not decreased by more than some small amount $\epsilon$
-for some number of epochs.
-This is sometimes called a *patience criterion*.
-As well as the potential to lead to better generalization
-in the setting of noisy labels,
-another benefit of early stopping is the time saved.
-Once the patience criterion is met, one can terminate training.
-For large models that might require days of training
-simultaneously across eight or more GPUs,
-well-tuned early stopping can save researchers days of time
-and can save their employers many thousands of dollars.
+Temuan ini membantu memotivasi teknik *early stopping*,
+sebuah teknik klasik untuk regularisasi jaringan neural dalam.
+Di sini, alih-alih secara langsung membatasi nilai bobot,
+kita membatasi jumlah epoch pelatihan.
+Cara yang paling umum untuk menentukan kriteria berhenti
+adalah dengan memonitor kesalahan validasi selama pelatihan
+(dengan mengecek setelah setiap epoch)
+dan menghentikan pelatihan ketika kesalahan validasi
+tidak berkurang lebih dari jumlah kecil $\epsilon$
+selama beberapa epoch.
+Ini kadang-kadang disebut sebagai *patience criterion*.
+Selain memiliki potensi untuk menghasilkan generalisasi yang lebih baik
+dalam pengaturan noise label,
+keuntungan lain dari early stopping adalah waktu yang dihemat.
+Setelah patience criterion terpenuhi, kita dapat menghentikan pelatihan.
+Untuk model besar yang mungkin memerlukan waktu pelatihan berhari-hari
+secara bersamaan di delapan atau lebih GPU,
+early stopping yang disetel dengan baik dapat menghemat waktu berhari-hari
+dan menghemat biaya penelitian yang sangat besar.
 
-Notably, when there is no label noise and datasets are *realizable*
-(the classes are truly separable, e.g., distinguishing cats from dogs),
-early stopping tends not to lead to significant improvements in generalization.
-On the other hand, when there is label noise,
-or intrinsic variability in the label
-(e.g., predicting mortality among patients),
-early stopping is crucial.
-Training models until they interpolate noisy data is typically a bad idea.
-
-
-## Classical Regularization Methods for Deep Networks
-
-In :numref:`chap_regression`, we described
-several  classical regularization techniques
-for constraining the complexity of our models.
-In particular, :numref:`sec_weight_decay`
-introduced a method called weight decay,
-which consists of adding a regularization term to the loss function
-in order to penalize large values of the weights.
-Depending on which weight norm is penalized
-this technique is known either as ridge regularization (for $\ell_2$ penalty)
-or lasso regularization (for an $\ell_1$ penalty).
-In the classical analysis of these regularizers,
-they are considered as sufficiently restrictive on the values
-that the weights can take to prevent the model from fitting arbitrary labels.
-
-In deep learning implementations,
-weight decay remains a popular tool.
-However, researchers have noted
-that typical strengths of $\ell_2$ regularization
-are insufficient to prevent the networks
-from interpolating the data :cite:`zhang2021understanding` and thus the benefits if interpreted
-as regularization might only make sense
-in combination with the early stopping criterion.
-Absent early stopping, it is possible
-that just like the number of layers
-or number of nodes (in deep learning)
-or the distance metric (in 1-nearest neighbor),
-these methods may lead to better generalization
-not because they meaningfully constrain
-the power of the neural network
-but rather because they somehow encode inductive biases
-that are better compatible with the patterns
-found in datasets of interests.
-Thus, classical regularizers remain popular
-in deep learning implementations,
-even if the theoretical rationale
-for their efficacy may be radically different.
-
-Notably, deep learning researchers have also built
-on techniques first popularized
-in classical regularization contexts,
-such as adding noise to model inputs.
-In the next section we will introduce
-the famous dropout technique
-(invented by :citet:`Srivastava.Hinton.Krizhevsky.ea.2014`),
-which has become a mainstay of deep learning,
-even as the theoretical basis for its efficacy
-remains similarly mysterious.
+Perlu dicatat, ketika tidak ada noise label dan dataset *realizable*
+(kelas-kelas benar-benar dapat dipisahkan, misalnya, membedakan kucing dari anjing),
+early stopping biasanya tidak menghasilkan peningkatan signifikan dalam generalisasi.
+Namun, ketika terdapat noise label,
+atau variabilitas intrinsik pada label
+(misalnya, memprediksi mortalitas pada pasien),
+early stopping sangat penting.
+Melatih model hingga menginterpolasi data yang noisy umumnya merupakan ide yang buruk.
 
 
-## Summary
+## Metode Classical Regularization untuk Deep Networks
 
-Unlike classical linear models,
-which tend to have fewer parameters than examples,
-deep networks tend to be over-parametrized,
-and for most tasks are capable
-of perfectly fitting the training set.
-This *interpolation regime* challenges
-many hard fast-held intuitions.
-Functionally, neural networks look like parametric models.
-But thinking of them as nonparametric models
-can sometimes be a more reliable source of intuition.
-Because it is often the case that all deep networks under consideration
-are capable of fitting all of the training labels,
-nearly all gains must come by mitigating overfitting
-(closing the *generalization gap*).
-Paradoxically, the interventions
-that reduce the generalization gap
-sometimes appear to increase model complexity
-and at other times appear to decrease complexity.
-However, these methods seldom decrease complexity
-sufficiently for classical theory
-to explain the generalization of deep networks,
-and *why certain choices lead to improved generalization*
-remains for the most part a massive open question
-despite the concerted efforts of many brilliant researchers.
+Di :numref:`chap_regression`, kita telah mendeskripsikan
+beberapa teknik regularisasi klasik
+untuk membatasi kompleksitas model kita.
+Secara khusus, :numref:`sec_weight_decay`
+memperkenalkan metode yang disebut weight decay,
+yang terdiri dari penambahan istilah regularisasi pada fungsi loss
+untuk menghukum nilai bobot yang besar.
+Tergantung pada norm bobot yang dihukum,
+teknik ini dikenal sebagai ridge regularization (untuk penalti $\ell_2$)
+atau lasso regularization (untuk penalti $\ell_1$).
+Dalam analisis klasik dari regularizer ini,
+mereka dianggap cukup membatasi nilai
+yang dapat diambil oleh bobot untuk mencegah model menyesuaikan label secara sewenang-wenang.
+
+Dalam implementasi deep learning,
+weight decay tetap menjadi alat yang populer.
+Namun, para peneliti telah mencatat
+bahwa kekuatan regulasi $\ell_2$ yang khas
+tidak cukup untuk mencegah jaringan
+menginterpolasi data :cite:`zhang2021understanding` dan karenanya manfaat jika ditafsirkan
+sebagai regularisasi mungkin hanya masuk akal
+jika dikombinasikan dengan kriteria early stopping.
+Tanpa early stopping, dimungkinkan
+bahwa seperti jumlah lapisan
+atau jumlah node (dalam deep learning)
+atau metrik jarak (dalam 1-nearest neighbor),
+metode-metode ini dapat menghasilkan generalisasi yang lebih baik
+bukan karena mereka benar-benar membatasi
+kekuatan jaringan neural,
+tetapi karena mereka mengkodekan bias induktif
+yang lebih kompatibel dengan pola
+yang ditemukan dalam dataset yang menarik.
+Dengan demikian, regularizer klasik tetap populer
+dalam implementasi deep learning,
+meskipun dasar teoretis untuk keefektifannya mungkin sangat berbeda.
+
+Perlu dicatat, para peneliti deep learning juga telah membangun
+teknik yang pertama kali dipopulerkan
+dalam konteks regularisasi klasik,
+seperti menambahkan noise ke input model.
+Pada bagian berikutnya kita akan memperkenalkan
+teknik dropout yang terkenal
+(yang ditemukan oleh :citet:`Srivastava.Hinton.Krizhevsky.ea.2014`),
+yang telah menjadi andalan dalam deep learning,
+meskipun dasar teoritis untuk keefektifannya
+juga masih agak misterius.
 
 
-## Exercises
+## Rangkuman
 
-1. In what sense do traditional complexity-based measures fail to account for generalization of deep neural networks?
-1. Why might *early stopping* be considered a regularization technique?
-1. How do researchers typically determine the stopping criterion?
-1. What important factor seems to differentiate cases when early stopping leads to big improvements in generalization?
-1. Beyond generalization, describe another benefit of early stopping.
+Tidak seperti model linear klasik,
+yang cenderung memiliki parameter lebih sedikit daripada contoh,
+jaringan dalam cenderung memiliki kelebihan parameter,
+dan untuk sebagian besar tugas mampu
+untuk menyesuaikan dataset pelatihan dengan sempurna.
+Regime ini disebut sebagai *interpolation regime*
+dan menantang banyak intuisi yang sudah lama dipegang teguh.
+Secara fungsional, jaringan neural terlihat seperti model parametrik.
+Namun, menganggapnya sebagai model nonparametrik
+kadang-kadang bisa menjadi sumber intuisi yang lebih andal.
+Karena seringkali semua jaringan dalam yang dipertimbangkan
+mampu menyesuaikan semua label pelatihan,
+hampir semua peningkatan harus datang dengan mengurangi overfitting
+(menutup *generalization gap*).
+Secara paradoks, intervensi
+yang mengurangi generalization gap
+kadang-kadang tampak meningkatkan kompleksitas model
+dan di lain waktu tampak mengurangi kompleksitas.
+Namun, metode-metode ini jarang mengurangi kompleksitas
+secara cukup untuk teori klasik
+untuk menjelaskan generalisasi jaringan dalam,
+dan *mengapa pilihan tertentu menghasilkan generalisasi yang lebih baik*
+sebagian besar tetap menjadi pertanyaan terbuka yang besar
+meskipun ada upaya bersama dari banyak peneliti brilian.
+
+
+## Latihan
+
+1. Dalam hal apa ukuran kompleksitas tradisional gagal menjelaskan generalisasi jaringan neural dalam?
+2. Mengapa *early stopping* bisa dianggap sebagai teknik regularisasi?
+3. Bagaimana para peneliti biasanya menentukan kriteria berhenti?
+4. Faktor penting apa yang tampaknya membedakan kasus ketika early stopping menghasilkan peningkatan besar dalam generalisasi?
+5. Selain generalisasi, jelaskan manfaat lain dari early stopping.
 
 [Discussions](https://discuss.d2l.ai/t/7473)
