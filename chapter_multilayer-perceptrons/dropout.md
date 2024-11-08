@@ -472,7 +472,7 @@ model = DropoutMLP(**hparams)
 trainer.fit(model, data)
 ```
 
-## Summary
+## Rangkuman
 
 Selain mengontrol jumlah dimensi dan ukuran vektor bobot, dropout adalah alat lain untuk menghindari overfitting. Seringkali alat-alat ini digunakan secara bersama-sama.
 Perlu diperhatikan bahwa dropout
@@ -480,7 +480,7 @@ hanya digunakan selama pelatihan:
 dropout menggantikan aktivasi $h$ dengan variabel acak yang memiliki nilai harapan $h$.
 
 
-## Exercises
+## Latihan
 
 1. Apa yang terjadi jika Anda mengubah probabilitas dropout untuk lapisan pertama dan kedua? Secara khusus, apa yang terjadi jika Anda menukar probabilitas dropout untuk kedua lapisan tersebut? Rancang eksperimen untuk menjawab pertanyaan ini, gambarkan hasil Anda secara kuantitatif, dan ringkas kesimpulan kualitatif yang diperoleh.
 2. Tingkatkan jumlah epoch dan bandingkan hasil yang diperoleh saat menggunakan dropout dengan saat tidak menggunakannya.
