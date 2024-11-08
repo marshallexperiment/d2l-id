@@ -6,22 +6,23 @@ tab.interact_select(['mxnet', 'pytorch', 'tensorflow', 'jax'])
 # Multilayer Perceptrons
 :label:`sec_mlp`
 
-In :numref:`sec_softmax`, we introduced
+Di :numref:`sec_softmax`, kita memperkenalkan
 softmax regression,
-implementing the algorithm from scratch
-(:numref:`sec_softmax_scratch`) and using high-level APIs
-(:numref:`sec_softmax_concise`). This allowed us to
-train classifiers capable of recognizing
-10 categories of clothing from low-resolution images.
-Along the way, we learned how to wrangle data,
-coerce our outputs into a valid probability distribution,
-apply an appropriate loss function,
-and minimize it with respect to our model's parameters.
-Now that we have mastered these mechanics
-in the context of simple linear models,
-we can launch our exploration of deep neural networks,
-the comparatively rich class of models
-with which this book is primarily concerned.
+mengimplementasikan algoritma dari awal
+(:numref:`sec_softmax_scratch`) dan menggunakan API tingkat tinggi
+(:numref:`sec_softmax_concise`). Ini memungkinkan kita
+melatih classifier yang mampu mengenali
+10 kategori pakaian dari gambar beresolusi rendah.
+Sepanjang perjalanan, kita belajar cara mengelola data,
+mengubah output menjadi distribusi probabilitas yang valid,
+menerapkan fungsi loss yang sesuai,
+dan meminimalkannya terhadap parameter model kita.
+Sekarang setelah kita menguasai mekanisme ini
+dalam konteks model linear sederhana,
+kita dapat memulai eksplorasi kita tentang deep neural network,
+kelas model yang lebih kaya secara komparatif
+yang menjadi fokus utama dari buku ini.
+
 
 ```{.python .input}
 %%tab mxnet
@@ -56,144 +57,142 @@ from jax import grad, vmap
 
 ## Hidden Layers
 
-We described affine transformations in
-:numref:`subsec_linear_model` as
-linear transformations with added bias.
-To begin, recall the model architecture
-corresponding to our softmax regression example,
-illustrated in  :numref:`fig_softmaxreg`.
-This model maps inputs directly to outputs
-via a single affine transformation,
-followed by a softmax operation.
-If our labels truly were related
-to the input data by a simple affine transformation,
-then this approach would be sufficient.
-However, linearity (in affine transformations) is a *strong* assumption.
+Kita mendeskripsikan transformasi afine di
+:numref:`subsec_linear_model` sebagai
+transformasi linear dengan penambahan bias.
+Untuk memulai, ingat kembali arsitektur model
+yang sesuai dengan contoh softmax regression kita,
+seperti yang diilustrasikan pada :numref:`fig_softmaxreg`.
+Model ini memetakan input langsung ke output
+melalui satu transformasi afine,
+diikuti dengan operasi softmax.
+Jika label kita benar-benar terkait
+dengan data input melalui transformasi afine sederhana,
+pendekatan ini akan cukup.
+Namun, linearitas (dalam transformasi afine) adalah asumsi yang *kuat*.
 
 ### Limitations of Linear Models
 
-For example, linearity implies the *weaker*
-assumption of *monotonicity*, i.e.,
-that any increase in our feature must
-either always cause an increase in our model's output
-(if the corresponding weight is positive),
-or always cause a decrease in our model's output
-(if the corresponding weight is negative).
-Sometimes that makes sense.
-For example, if we were trying to predict
-whether an individual will repay a loan,
-we might reasonably assume that all other things being equal,
-an applicant with a higher income
-would always be more likely to repay
-than one with a lower income.
-While monotonic, this relationship likely
-is not linearly associated with the probability of
-repayment. An increase in income from \$0 to \$50,000
-likely corresponds to a bigger increase
-in likelihood of repayment
-than an increase from \$1 million to \$1.05 million.
-One way to handle this might be to postprocess our outcome
-such that linearity becomes more plausible,
-by using the logistic map (and thus the logarithm of the probability of outcome).
+Misalnya, linearitas menyiratkan asumsi yang lebih *lemah*
+yaitu *monotonisitas*, yaitu,
+bahwa peningkatan dalam fitur kita
+selalu menyebabkan peningkatan dalam output model kita
+(jika bobot yang sesuai positif),
+atau selalu menyebabkan penurunan dalam output model kita
+(jika bobot yang sesuai negatif).
+Kadang-kadang asumsi ini masuk akal.
+Sebagai contoh, jika kita mencoba memprediksi
+apakah seseorang akan membayar kembali pinjaman,
+kita mungkin berasumsi bahwa semua hal lain sama,
+pelamar dengan penghasilan yang lebih tinggi
+selalu akan lebih mungkin untuk membayar kembali
+dibandingkan dengan yang berpenghasilan lebih rendah.
+Walaupun monoton, hubungan ini mungkin
+tidak secara linear terkait dengan probabilitas
+pembayaran kembali. Peningkatan penghasilan dari \$0 menjadi \$50.000
+kemungkinan besar berhubungan dengan peningkatan yang lebih besar
+dalam kemungkinan pembayaran kembali
+dibandingkan dengan peningkatan dari \$1 juta menjadi \$1,05 juta.
+Salah satu cara untuk menangani ini mungkin adalah dengan memproses ulang hasil kita
+sehingga linearitas menjadi lebih masuk akal,
+dengan menggunakan peta logistik (dan dengan demikian logaritma dari probabilitas hasil).
 
-Note that we can easily come up with examples
-that violate monotonicity.
-Say for example that we want to predict health as a function
-of body temperature.
-For individuals with a normal body temperature
-above 37°C (98.6°F),
-higher temperatures indicate greater risk.
-However, if the body temperatures drops
-below 37°C, lower temperatures indicate greater risk!
-Again, we might resolve the problem
-with some clever preprocessing, such as using the distance from 37°C
-as a feature.
+Perhatikan bahwa kita dapat dengan mudah menemukan contoh
+yang melanggar monotonisitas.
+Misalnya jika kita ingin memprediksi kesehatan berdasarkan
+suhu tubuh.
+Untuk individu dengan suhu tubuh normal
+di atas 37°C (98,6°F),
+suhu yang lebih tinggi menunjukkan risiko yang lebih besar.
+Namun, jika suhu tubuh turun
+di bawah 37°C, suhu yang lebih rendah menunjukkan risiko yang lebih besar!
+Sekali lagi, kita bisa menyelesaikan masalah ini
+dengan pra-pemrosesan yang cerdas, seperti menggunakan jarak dari 37°C
+sebagai fitur.
 
 
-But what about classifying images of cats and dogs?
-Should increasing the intensity
-of the pixel at location (13, 17)
-always increase (or always decrease)
-the likelihood that the image depicts a dog?
-Reliance on a linear model corresponds to the implicit
-assumption that the only requirement
-for differentiating cats and dogs is to assess
-the brightness of individual pixels.
-This approach is doomed to fail in a world
-where inverting an image preserves the category.
+Tetapi bagaimana dengan mengklasifikasikan gambar kucing dan anjing?
+Apakah meningkatkan intensitas
+piksel pada lokasi (13, 17)
+selalu meningkatkan (atau selalu menurunkan)
+kemungkinan bahwa gambar tersebut menunjukkan anjing?
+Ketergantungan pada model linear berhubungan dengan asumsi implisit
+bahwa satu-satunya persyaratan
+untuk membedakan kucing dan anjing adalah menilai
+kecerahan dari setiap piksel.
+Pendekatan ini pasti akan gagal di dunia
+di mana membalikkan gambar mempertahankan kategori.
 
-And yet despite the apparent absurdity of linearity here,
-as compared with our previous examples,
-it is less obvious that we could address the problem
-with a simple preprocessing fix.
-That is, because the significance of any pixel
-depends in complex ways on its context
-(the values of the surrounding pixels).
-While there might exist a representation of our data
-that would take into account
-the relevant interactions among our features,
-on top of which a linear model would be suitable,
-we simply do not know how to calculate it by hand.
-With deep neural networks, we used observational data
-to jointly learn both a representation via hidden layers
-and a linear predictor that acts upon that representation.
+Dan meskipun ketidakmasukakalan linearitas terlihat jelas di sini,
+dibandingkan dengan contoh-contoh sebelumnya,
+tidak terlalu jelas bahwa kita bisa menyelesaikan masalah ini
+dengan pra-pemrosesan sederhana.
+Artinya, karena signifikansi dari setiap piksel
+bergantung dengan cara yang kompleks pada konteksnya
+(nilai piksel-piksel di sekitarnya).
+Meskipun mungkin ada representasi dari data kita
+yang memperhitungkan
+interaksi relevan di antara fitur-fitur kita,
+di atasnya model linear akan cocok,
+kita tidak tahu cara menghitungnya secara manual.
+Dengan jaringan saraf dalam, kita menggunakan data observasi
+untuk secara bersama-sama belajar baik representasi melalui hidden layer
+maupun prediktor linear yang bekerja pada representasi tersebut.
 
-This problem of nonlinearity has been studied for at least a
-century :cite:`Fisher.1928`. For instance, decision trees
-in their most basic form use a sequence of binary decisions to
-decide upon class membership :cite:`quinlan2014c4`. Likewise, kernel
-methods have been used for many decades to model nonlinear dependencies
-:cite:`Aronszajn.1950`. This has found its way into
-nonparametric spline models :cite:`Wahba.1990` and kernel methods
-:cite:`Scholkopf.Smola.2002`. It is also something that the brain solves
-quite naturally. After all, neurons feed into other neurons which,
-in turn, feed into other neurons again :cite:`Cajal.Azoulay.1894`.
-Consequently we have a sequence of relatively simple transformations.
+Masalah non-linearitas ini telah dipelajari setidaknya
+selama satu abad :cite:`Fisher.1928`. Misalnya, pohon keputusan
+dalam bentuk paling dasarnya menggunakan serangkaian keputusan biner untuk
+memutuskan keanggotaan kelas :cite:`quinlan2014c4`. Demikian juga, metode kernel
+telah digunakan selama beberapa dekade untuk memodelkan ketergantungan non-linear
+:cite:`Aronszajn.1950`. Hal ini telah ditemukan dalam
+model spline nonparametrik :cite:`Wahba.1990` dan metode kernel
+:cite:`Scholkopf.Smola.2002`. Hal ini juga sesuatu yang secara alami dipecahkan oleh otak. Bagaimanapun, neuron-neuron memberi input ke neuron-neuron lain yang,
+kemudian, memberi input lagi ke neuron-neuron lain :cite:`Cajal.Azoulay.1894`.
+Akibatnya, kita memiliki serangkaian transformasi yang relatif sederhana.
 
 ### Incorporating Hidden Layers
 
-We can overcome the limitations of linear models
-by incorporating one or more hidden layers.
-The easiest way to do this is to stack
-many fully connected layers on top of one another.
-Each layer feeds into the layer above it,
-until we generate outputs.
-We can think of the first $L-1$ layers
-as our representation and the final layer
-as our linear predictor.
-This architecture is commonly called
-a *multilayer perceptron*,
-often abbreviated as *MLP* (:numref:`fig_mlp`).
+Kita dapat mengatasi keterbatasan model linear
+dengan memasukkan satu atau lebih hidden layer.
+Cara termudah untuk melakukan ini adalah dengan menumpuk
+banyak fully connected layer di atas satu sama lain.
+Setiap lapisan memberi input ke lapisan di atasnya,
+hingga kita menghasilkan output.
+Kita dapat menganggap $L-1$ lapisan pertama
+sebagai representasi dan lapisan terakhir
+sebagai prediktor linear.
+Arsitektur ini sering disebut
+sebagai *multilayer perceptron*,
+yang sering disingkat sebagai *MLP* (:numref:`fig_mlp`).
 
-![An MLP with a hidden layer of five hidden units.](../img/mlp.svg)
+![MLP dengan satu hidden layer berisi lima unit tersembunyi.](../img/mlp.svg)
 :label:`fig_mlp`
 
-This MLP has four inputs, three outputs,
-and its hidden layer contains five hidden units.
-Since the input layer does not involve any calculations,
-producing outputs with this network
-requires implementing the computations
-for both the hidden and output layers;
-thus, the number of layers in this MLP is two.
-Note that both layers are fully connected.
-Every input influences every neuron in the hidden layer,
-and each of these in turn influences
-every neuron in the output layer. Alas, we are not quite
-done yet.
+MLP ini memiliki empat input, tiga output,
+dan hidden layer-nya berisi lima unit tersembunyi.
+Karena lapisan input tidak melibatkan perhitungan,
+menghasilkan output dengan jaringan ini
+memerlukan implementasi perhitungan
+untuk hidden dan output layer;
+dengan demikian, jumlah lapisan dalam MLP ini adalah dua.
+Perhatikan bahwa kedua lapisan ini terhubung penuh.
+Setiap input mempengaruhi setiap neuron di hidden layer,
+dan masing-masing dari ini pada gilirannya mempengaruhi
+setiap neuron di output layer. Namun, kita belum selesai.
+
 
 ### From Linear to Nonlinear
 
-As before, we denote by the matrix $\mathbf{X} \in \mathbb{R}^{n \times d}$
-a minibatch of $n$ examples where each example has $d$ inputs (features).
-For a one-hidden-layer MLP whose hidden layer has $h$ hidden units,
-we denote by $\mathbf{H} \in \mathbb{R}^{n \times h}$
-the outputs of the hidden layer, which are
-*hidden representations*.
-Since the hidden and output layers are both fully connected,
-we have hidden-layer weights $\mathbf{W}^{(1)} \in \mathbb{R}^{d \times h}$ and biases $\mathbf{b}^{(1)} \in \mathbb{R}^{1 \times h}$
-and output-layer weights $\mathbf{W}^{(2)} \in \mathbb{R}^{h \times q}$ and biases $\mathbf{b}^{(2)} \in \mathbb{R}^{1 \times q}$.
-This allows us to calculate the outputs $\mathbf{O} \in \mathbb{R}^{n \times q}$
-of the one-hidden-layer MLP as follows:
+Seperti sebelumnya, kita menggunakan matriks $\mathbf{X} \in \mathbb{R}^{n \times d}$
+untuk merepresentasikan sebuah minibatch yang berisi $n$ contoh di mana setiap contoh memiliki $d$ input (fitur).
+Untuk MLP satu-hidden-layer di mana hidden layer memiliki $h$ unit tersembunyi,
+kita menyatakan output dari hidden layer sebagai $\mathbf{H} \in \mathbb{R}^{n \times h}$
+yang merupakan *representasi tersembunyi*.
+Karena hidden dan output layer keduanya terhubung penuh,
+kita memiliki bobot hidden layer $\mathbf{W}^{(1)} \in \mathbb{R}^{d \times h}$ dan bias $\mathbf{b}^{(1)} \in \mathbb{R}^{1 \times h}$,
+serta bobot output layer $\mathbf{W}^{(2)} \in \mathbb{R}^{h \times q}$ dan bias $\mathbf{b}^{(2)} \in \mathbb{R}^{1 \times q}$.
+Dengan demikian, kita dapat menghitung output $\mathbf{O} \in \mathbb{R}^{n \times q}$
+dari MLP satu-hidden-layer sebagai berikut:
 
 $$
 \begin{aligned}
@@ -202,42 +201,41 @@ $$
 \end{aligned}
 $$
 
-Note that after adding the hidden layer,
-our model now requires us to track and update
-additional sets of parameters.
-So what have we gained in exchange?
-You might be surprised to find out
-that---in the model defined above---*we
-gain nothing for our troubles*!
-The reason is plain.
-The hidden units above are given by
-an affine function of the inputs,
-and the outputs (pre-softmax) are just
-an affine function of the hidden units.
-An affine function of an affine function
-is itself an affine function.
-Moreover, our linear model was already
-capable of representing any affine function.
+Perhatikan bahwa setelah menambahkan hidden layer,
+model kita sekarang membutuhkan kita untuk melacak dan memperbarui
+sekumpulan parameter tambahan.
+Jadi apa yang kita dapatkan sebagai gantinya?
+Anda mungkin akan terkejut mengetahui bahwa—dalam model yang didefinisikan di atas—*kita
+tidak mendapatkan apa-apa dari usaha kita*!
+Alasannya jelas.
+Unit tersembunyi di atas diberikan oleh
+fungsi afine dari input,
+dan output (sebelum softmax) hanya
+merupakan fungsi afine dari unit tersembunyi.
+Fungsi afine dari fungsi afine
+sendiri adalah fungsi afine.
+Selain itu, model linear kita sudah
+mampu merepresentasikan setiap fungsi afine.
 
-To see this formally we can just collapse out the hidden layer in the above definition,
-yielding an equivalent single-layer model with parameters
-$\mathbf{W} = \mathbf{W}^{(1)}\mathbf{W}^{(2)}$ and $\mathbf{b} = \mathbf{b}^{(1)} \mathbf{W}^{(2)} + \mathbf{b}^{(2)}$:
+Untuk melihat ini secara formal, kita cukup menyederhanakan hidden layer dalam definisi di atas,
+menghasilkan model satu-lapisan yang setara dengan parameter
+$\mathbf{W} = \mathbf{W}^{(1)}\mathbf{W}^{(2)}$ dan $\mathbf{b} = \mathbf{b}^{(1)} \mathbf{W}^{(2)} + \mathbf{b}^{(2)}$:
 
 $$
 \mathbf{O} = (\mathbf{X} \mathbf{W}^{(1)} + \mathbf{b}^{(1)})\mathbf{W}^{(2)} + \mathbf{b}^{(2)} = \mathbf{X} \mathbf{W}^{(1)}\mathbf{W}^{(2)} + \mathbf{b}^{(1)} \mathbf{W}^{(2)} + \mathbf{b}^{(2)} = \mathbf{X} \mathbf{W} + \mathbf{b}.
 $$
 
-In order to realize the potential of multilayer architectures,
-we need one more key ingredient: a
-nonlinear *activation function* $\sigma$
-to be applied to each hidden unit
-following the affine transformation. For instance, a popular
-choice is the ReLU (rectified linear unit) activation function :cite:`Nair.Hinton.2010`
-$\sigma(x) = \mathrm{max}(0, x)$ operating on its arguments elementwise.
-The outputs of activation functions $\sigma(\cdot)$
-are called *activations*.
-In general, with activation functions in place,
-it is no longer possible to collapse our MLP into a linear model:
+Untuk mewujudkan potensi arsitektur multilayer,
+kita memerlukan satu elemen penting tambahan: sebuah
+fungsi aktivasi *nonlinear* $\sigma$
+yang diterapkan pada setiap unit tersembunyi
+setelah transformasi afine. Sebagai contoh,
+fungsi aktivasi ReLU (rectified linear unit) populer digunakan :cite:`Nair.Hinton.2010`
+$\sigma(x) = \mathrm{max}(0, x)$ yang beroperasi pada argumennya secara elementwise.
+Output dari fungsi aktivasi $\sigma(\cdot)$
+disebut *aktivasi*.
+Secara umum, dengan fungsi aktivasi di tempatnya,
+kita tidak bisa lagi menyederhanakan MLP kita menjadi model linear:
 
 $$
 \begin{aligned}
@@ -246,81 +244,82 @@ $$
 \end{aligned}
 $$
 
-Since each row in $\mathbf{X}$ corresponds to an example in the minibatch,
-with some abuse of notation, we define the nonlinearity
-$\sigma$ to apply to its inputs in a rowwise fashion,
-i.e., one example at a time.
-Note that we used the same notation for softmax
-when we denoted a rowwise operation in :numref:`subsec_softmax_vectorization`.
-Quite frequently the activation functions we use apply not merely rowwise but
-elementwise. That means that after computing the linear portion of the layer,
-we can calculate each activation
-without looking at the values taken by the other hidden units.
+Karena setiap baris dalam $\mathbf{X}$ sesuai dengan satu contoh dalam minibatch,
+dengan sedikit penyalahgunaan notasi, kita mendefinisikan non-linearitas
+$\sigma$ yang diterapkan pada inputnya secara baris demi baris,
+yaitu satu contoh pada satu waktu.
+Perhatikan bahwa kita menggunakan notasi yang sama untuk softmax
+saat kita menyatakan operasi baris demi baris di :numref:`subsec_softmax_vectorization`.
+Fungsi aktivasi yang kita gunakan cukup sering diterapkan bukan hanya secara baris demi baris, tetapi
+elementwise. Artinya, setelah menghitung bagian linear dari lapisan,
+kita dapat menghitung setiap aktivasi
+tanpa memperhatikan nilai yang diambil oleh unit tersembunyi lainnya.
 
-To build more general MLPs, we can continue stacking
-such hidden layers,
-e.g., $\mathbf{H}^{(1)} = \sigma_1(\mathbf{X} \mathbf{W}^{(1)} + \mathbf{b}^{(1)})$
-and $\mathbf{H}^{(2)} = \sigma_2(\mathbf{H}^{(1)} \mathbf{W}^{(2)} + \mathbf{b}^{(2)})$,
-one atop another, yielding ever more expressive models.
+Untuk membangun MLP yang lebih umum, kita dapat terus menumpuk
+hidden layer seperti itu,
+misalnya, $\mathbf{H}^{(1)} = \sigma_1(\mathbf{X} \mathbf{W}^{(1)} + \mathbf{b}^{(1)})$
+dan $\mathbf{H}^{(2)} = \sigma_2(\mathbf{H}^{(1)} \mathbf{W}^{(2)} + \mathbf{b}^{(2)})$,
+satu di atas yang lain, menghasilkan model yang semakin ekspresif.
+
 
 ### Universal Approximators
 
-We know that the brain is capable of very sophisticated statistical analysis. As such,
-it is worth asking, just *how powerful* a deep network could be. This question
-has been answered multiple times, e.g., in :citet:`Cybenko.1989` in the context
-of MLPs, and in :citet:`micchelli1984interpolation` in the context of reproducing kernel
-Hilbert spaces in a way that could be seen as radial basis function (RBF) networks with a single hidden layer.
-These (and related results) suggest that even with a single-hidden-layer network,
-given enough nodes (possibly absurdly many),
-and the right set of weights,
-we can model any function.
-Actually learning that function is the hard part, though.
-You might think of your neural network
-as being a bit like the C programming language.
-The language, like any other modern language,
-is capable of expressing any computable program.
-But actually coming up with a program
-that meets your specifications is the hard part.
+Kita tahu bahwa otak mampu melakukan analisis statistik yang sangat canggih. Karena itu,
+perlu kita tanyakan, seberapa *kuat* jaringan dalam bisa menjadi. Pertanyaan ini
+telah dijawab beberapa kali, misalnya, dalam konteks MLP oleh :citet:`Cybenko.1989`,
+dan dalam konteks ruang Hilbert kernel reproduksi oleh :citet:`micchelli1984interpolation` dengan cara yang bisa dilihat sebagai jaringan fungsi dasar radial (RBF) dengan satu hidden layer.
+Hasil-hasil ini (dan hasil terkait lainnya) menunjukkan bahwa bahkan dengan jaringan satu-hidden-layer,
+dengan jumlah node yang cukup (mungkin dalam jumlah yang sangat besar),
+dan sekumpulan bobot yang tepat,
+kita dapat memodelkan fungsi apapun.
+Namun, mempelajari fungsi tersebut adalah bagian yang sulit.
+Anda mungkin menganggap jaringan neural Anda
+sedikit seperti bahasa pemrograman C.
+Bahasa tersebut, seperti bahasa modern lainnya,
+mampu mengekspresikan program yang dapat dihitung.
+Namun, merancang program
+yang memenuhi spesifikasi Anda adalah bagian yang sulit.
 
-Moreover, just because a single-hidden-layer network
-*can* learn any function
-does not mean that you should try
-to solve all of your problems
-with one. In fact, in this case kernel methods
-are way more effective, since they are capable of solving the problem
-*exactly* even in infinite dimensional spaces :cite:`Kimeldorf.Wahba.1971,Scholkopf.Herbrich.Smola.2001`.
-In fact, we can approximate many functions
-much more compactly by using deeper (rather than wider) networks :cite:`Simonyan.Zisserman.2014`.
-We will touch upon more rigorous arguments in subsequent chapters.
+Selain itu, hanya karena jaringan satu-hidden-layer
+*bisa* mempelajari fungsi apapun
+bukan berarti Anda harus mencoba
+menyelesaikan semua masalah Anda
+dengan satu hidden layer. Faktanya, dalam kasus ini metode kernel
+jauh lebih efektif, karena mereka mampu menyelesaikan masalah
+*secara tepat* bahkan dalam ruang berdimensi tak hingga :cite:`Kimeldorf.Wahba.1971,Scholkopf.Herbrich.Smola.2001`.
+Kita dapat mendekati banyak fungsi
+dengan lebih efisien menggunakan jaringan yang lebih dalam (daripada lebih lebar) :cite:`Simonyan.Zisserman.2014`.
+Kita akan membahas argumen yang lebih mendalam di bab-bab selanjutnya.
 
 
 ## Activation Functions
 :label:`subsec_activation-functions`
 
-Activation functions decide whether a neuron should be activated or not by
-calculating the weighted sum and further adding bias to it.
-They are differentiable operators for transforming input signals to outputs,
-while most of them add nonlinearity.
-Because activation functions are fundamental to deep learning,
-(**let's briefly survey some common ones**).
+Fungsi aktivasi memutuskan apakah sebuah neuron harus diaktifkan atau tidak
+dengan menghitung jumlah bobot dan menambahkan bias padanya.
+Fungsi ini merupakan operator diferensial untuk mentransformasi sinyal input menjadi output,
+dengan sebagian besar dari mereka menambahkan non-linearitas.
+Karena fungsi aktivasi sangat mendasar bagi deep learning,
+(**mari kita tinjau secara singkat beberapa yang umum**).
 
 ### ReLU Function
 
-The most popular choice,
-due to both simplicity of implementation and
-its good performance on a variety of predictive tasks,
-is the *rectified linear unit* (*ReLU*) :cite:`Nair.Hinton.2010`.
-[**ReLU provides a very simple nonlinear transformation**].
-Given an element $x$, the function is defined
-as the maximum of that element and $0$:
+Pilihan yang paling populer,
+karena kesederhanaan implementasinya dan
+kinerjanya yang baik pada berbagai tugas prediktif,
+adalah *rectified linear unit* (*ReLU*) :cite:`Nair.Hinton.2010`.
+[**ReLU memberikan transformasi non-linear yang sangat sederhana**].
+Diberikan elemen $x$, fungsi ini didefinisikan
+sebagai nilai maksimum dari elemen tersebut dan 0:
 
 $$\operatorname{ReLU}(x) = \max(x, 0).$$
 
-Informally, the ReLU function retains only positive
-elements and discards all negative elements
-by setting the corresponding activations to 0.
-To gain some intuition, we can plot the function.
-As you can see, the activation function is piecewise linear.
+Secara informal, fungsi ReLU hanya mempertahankan elemen-elemen positif
+dan mengabaikan semua elemen negatif
+dengan menetapkan aktivasi yang bersangkutan menjadi 0.
+Untuk mendapatkan intuisi, kita bisa memplot fungsi ini.
+Seperti yang Anda lihat, fungsi aktivasi ini berbentuk linear secara bertahap.
+
 
 ```{.python .input}
 %%tab mxnet
@@ -352,22 +351,23 @@ y = jax.nn.relu(x)
 d2l.plot(x, y, 'x', 'relu(x)', figsize=(5, 2.5))
 ```
 
-When the input is negative,
-the derivative of the ReLU function is 0,
-and when the input is positive,
-the derivative of the ReLU function is 1.
-Note that the ReLU function is not differentiable
-when the input takes value precisely equal to 0.
-In these cases, we default to the left-hand-side
-derivative and say that the derivative is 0 when the input is 0.
-We can get away with this because
-the input may never actually be zero (mathematicians would
-say that it is nondifferentiable on a set of measure zero).
-There is an old adage that if subtle boundary conditions matter,
-we are probably doing (*real*) mathematics, not engineering.
-That conventional wisdom may apply here, or at least, the fact that
-we are not performing constrained optimization :cite:`Mangasarian.1965,Rockafellar.1970`.
-We plot the derivative of the ReLU function below.
+Ketika input negatif,
+turunan fungsi ReLU adalah 0,
+dan ketika input positif,
+turunan fungsi ReLU adalah 1.
+Perhatikan bahwa fungsi ReLU tidak terdiferensiasi
+ketika input memiliki nilai yang tepat sama dengan 0.
+Dalam kasus ini, kita menggunakan turunan sisi kiri
+dan menyatakan bahwa turunan adalah 0 ketika inputnya adalah 0.
+Kita bisa mengabaikannya karena
+input mungkin tidak pernah benar-benar nol (ahli matematika akan
+mengatakan bahwa ia tidak terdiferensiasi pada himpunan dengan ukuran nol).
+Ada sebuah pepatah lama yang mengatakan bahwa jika kondisi batas yang halus penting,
+kita mungkin sedang melakukan (*matematika*) yang nyata, bukan rekayasa.
+Kebijaksanaan konvensional tersebut mungkin berlaku di sini, atau paling tidak, fakta bahwa
+kita tidak melakukan optimisasi terbatas :cite:`Mangasarian.1965,Rockafellar.1970`.
+Kami memplot turunan dari fungsi ReLU di bawah ini.
+
 
 ```{.python .input}
 %%tab mxnet
@@ -395,67 +395,67 @@ grad_relu = vmap(grad(jax.nn.relu))
 d2l.plot(x, grad_relu(x), 'x', 'grad of relu', figsize=(5, 2.5))
 ```
 
-The reason for using ReLU is that
-its derivatives are particularly well behaved:
-either they vanish or they just let the argument through.
-This makes optimization better behaved
-and it mitigated the well-documented problem
-of vanishing gradients that plagued
-previous versions of neural networks (more on this later).
+Alasan penggunaan ReLU adalah bahwa
+turunannya sangat baik:
+baik menghilang atau hanya meneruskan argumennya.
+Hal ini membuat optimisasi menjadi lebih stabil
+dan mengurangi masalah vanishing gradient yang terdokumentasi dengan baik
+yang mengganggu versi jaringan saraf sebelumnya (lebih lanjut tentang ini nanti).
 
-Note that there are many variants to the ReLU function,
-including the *parametrized ReLU* (*pReLU*) function :cite:`He.Zhang.Ren.ea.2015`.
-This variation adds a linear term to ReLU,
-so some information still gets through,
-even when the argument is negative:
+Perlu dicatat bahwa ada banyak varian fungsi ReLU,
+termasuk *parametrized ReLU* (*pReLU*) :cite:`He.Zhang.Ren.ea.2015`.
+Varian ini menambahkan komponen linear ke ReLU,
+sehingga beberapa informasi masih bisa diteruskan,
+bahkan ketika argumennya negatif:
 
 $$\operatorname{pReLU}(x) = \max(0, x) + \alpha \min(0, x).$$
 
 ### Sigmoid Function
 
-[**The *sigmoid function* transforms those inputs**]
-whose values lie in the domain $\mathbb{R}$,
-(**to outputs that lie on the interval (0, 1).**)
-For that reason, the sigmoid is
-often called a *squashing function*:
-it squashes any input in the range (-inf, inf)
-to some value in the range (0, 1):
+[**Fungsi *sigmoid* mentransformasi input**]
+yang memiliki nilai dalam domain $\mathbb{R}$,
+(**ke output dalam interval (0, 1).**)
+Karena alasan itu, sigmoid sering disebut sebagai
+fungsi *squashing*:
+fungsi ini "memadatkan" setiap input dalam rentang (-inf, inf)
+ke suatu nilai dalam rentang (0, 1):
 
 $$\operatorname{sigmoid}(x) = \frac{1}{1 + \exp(-x)}.$$
 
-In the earliest neural networks, scientists
-were interested in modeling biological neurons
-that either *fire* or *do not fire*.
-Thus the pioneers of this field,
-going all the way back to McCulloch and Pitts,
-the inventors of the artificial neuron,
-focused on thresholding units :cite:`McCulloch.Pitts.1943`.
-A thresholding activation takes value 0
-when its input is below some threshold
-and value 1 when the input exceeds the threshold.
+Pada jaringan saraf awal, para ilmuwan
+tertarik untuk memodelkan neuron biologis
+yang *menembak* atau *tidak menembak*.
+Oleh karena itu, pionir di bidang ini,
+sejak zaman McCulloch dan Pitts,
+pencipta neuron buatan,
+fokus pada unit thresholding :cite:`McCulloch.Pitts.1943`.
+Aktivasi thresholding bernilai 0
+ketika inputnya berada di bawah ambang tertentu
+dan bernilai 1 ketika input melebihi ambang batas.
 
-When attention shifted to gradient-based learning,
-the sigmoid function was a natural choice
-because it is a smooth, differentiable
-approximation to a thresholding unit.
-Sigmoids are still widely used as
-activation functions on the output units
-when we want to interpret the outputs as probabilities
-for binary classification problems: you can think of the sigmoid as a special case of the softmax.
-However, the sigmoid has largely been replaced
-by the simpler and more easily trainable ReLU
-for most use in hidden layers. Much of this has to do
-with the fact that the sigmoid poses challenges for optimization
-:cite:`LeCun.Bottou.Orr.ea.1998` since its gradient vanishes for large positive *and* negative arguments.
-This can lead to plateaus that are difficult to escape from.
-Nonetheless sigmoids are important. In later chapters (e.g., :numref:`sec_lstm`) on recurrent neural networks,
-we will describe architectures that leverage sigmoid units
-to control the flow of information across time.
+Ketika perhatian beralih ke pembelajaran berbasis gradien,
+fungsi sigmoid menjadi pilihan alami
+karena fungsi ini merupakan aproksimasi yang halus dan diferensiabel
+terhadap unit thresholding.
+Sigmoid masih banyak digunakan sebagai
+fungsi aktivasi pada unit output
+ketika kita ingin menafsirkan output sebagai probabilitas
+untuk masalah klasifikasi biner: Anda bisa menganggap sigmoid sebagai kasus khusus dari softmax.
+Namun, sigmoid sebagian besar telah digantikan
+oleh ReLU yang lebih sederhana dan lebih mudah dilatih
+untuk sebagian besar penggunaan di hidden layer. Banyak hal ini terkait
+dengan kenyataan bahwa sigmoid menghadirkan tantangan untuk optimisasi
+:cite:`LeCun.Bottou.Orr.ea.1998` karena gradiennya menghilang untuk argumen yang positif *dan* negatif besar.
+Hal ini dapat menyebabkan plateau yang sulit diatasi.
+Meski demikian, sigmoid tetap penting. Pada bab-bab selanjutnya (misalnya, :numref:`sec_lstm`) tentang jaringan saraf berulang,
+kami akan menjelaskan arsitektur yang memanfaatkan unit sigmoid
+untuk mengontrol aliran informasi dari waktu ke waktu.
 
-Below, we plot the sigmoid function.
-Note that when the input is close to 0,
-the sigmoid function approaches
-a linear transformation.
+Di bawah ini, kami memplot fungsi sigmoid.
+Perhatikan bahwa ketika input mendekati 0,
+fungsi sigmoid mendekati
+transformasi linear.
+
 
 ```{.python .input}
 %%tab mxnet
@@ -482,17 +482,17 @@ y = jax.nn.sigmoid(x)
 d2l.plot(x, y, 'x', 'sigmoid(x)', figsize=(5, 2.5))
 ```
 
-The derivative of the sigmoid function is given by the following equation:
+Turunan dari fungsi sigmoid diberikan oleh persamaan berikut:
 
 $$\frac{d}{dx} \operatorname{sigmoid}(x) = \frac{\exp(-x)}{(1 + \exp(-x))^2} = \operatorname{sigmoid}(x)\left(1-\operatorname{sigmoid}(x)\right).$$
 
+Turunan dari fungsi sigmoid diplot di bawah ini.
+Perhatikan bahwa ketika input bernilai 0,
+turunan dari fungsi sigmoid
+mencapai maksimum sebesar 0.25.
+Ketika input bergerak menjauh dari 0 ke arah positif atau negatif,
+turunan mendekati 0.
 
-The derivative of the sigmoid function is plotted below.
-Note that when the input is 0,
-the derivative of the sigmoid function
-reaches a maximum of 0.25.
-As the input diverges from 0 in either direction,
-the derivative approaches 0.
 
 ```{.python .input}
 %%tab mxnet
@@ -502,7 +502,7 @@ d2l.plot(x, x.grad, 'x', 'grad of sigmoid', figsize=(5, 2.5))
 
 ```{.python .input}
 %%tab pytorch
-# Clear out previous gradients
+# Clear out gradients sebelumnya
 x.grad.data.zero_()
 y.backward(torch.ones_like(x),retain_graph=True)
 d2l.plot(x.detach(), x.grad, 'x', 'grad of sigmoid', figsize=(5, 2.5))
@@ -525,13 +525,15 @@ d2l.plot(x, grad_sigmoid(x), 'x', 'grad of sigmoid', figsize=(5, 2.5))
 ### Tanh Function
 :label:`subsec_tanh`
 
-Like the sigmoid function, [**the tanh (hyperbolic tangent)
-function also squashes its inputs**],
-transforming them into elements on the interval (**between $-1$ and $1$**):
+Seperti fungsi sigmoid, [**fungsi tanh (tangen hiperbolik)
+juga memadatkan inputnya**],
+mentransformasinya menjadi elemen dalam interval (**antara $-1$ dan $1$**):
 
 $$\operatorname{tanh}(x) = \frac{1 - \exp(-2x)}{1 + \exp(-2x)}.$$
 
-We plot the tanh function below. Note that as input nears 0, the tanh function approaches a linear transformation. Although the shape of the function is similar to that of the sigmoid function, the tanh function exhibits point symmetry about the origin of the coordinate system :cite:`Kalman.Kwasny.1992`.
+Kami memplot fungsi tanh di bawah ini. Perhatikan bahwa ketika input mendekati 0, fungsi tanh mendekati transformasi linear. 
+Meskipun bentuk fungsinya mirip dengan fungsi sigmoid, fungsi tanh menunjukkan simetri titik terhadap asal sistem koordinat :cite:`Kalman.Kwasny.1992`.
+
 
 ```{.python .input}
 %%tab mxnet
@@ -558,16 +560,17 @@ y = jax.nn.tanh(x)
 d2l.plot(x, y, 'x', 'tanh(x)', figsize=(5, 2.5))
 ```
 
-The derivative of the tanh function is:
+Turunan dari fungsi tanh adalah:
 
 $$\frac{d}{dx} \operatorname{tanh}(x) = 1 - \operatorname{tanh}^2(x).$$
 
-It is plotted below.
-As the input nears 0,
-the derivative of the tanh function approaches a maximum of 1.
-And as we saw with the sigmoid function,
-as input moves away from 0 in either direction,
-the derivative of the tanh function approaches 0.
+Grafik turunan ini ditampilkan di bawah.
+Ketika input mendekati 0,
+turunan dari fungsi tanh mendekati maksimum sebesar 1.
+Dan seperti yang kita lihat pada fungsi sigmoid,
+ketika input bergerak menjauh dari 0 ke arah positif atau negatif,
+turunan dari fungsi tanh mendekati 0.
+
 
 ```{.python .input}
 %%tab mxnet
@@ -599,61 +602,58 @@ d2l.plot(x, grad_tanh(x), 'x', 'grad of tanh', figsize=(5, 2.5))
 
 ## Summary and Discussion
 
-We now know how to incorporate nonlinearities
-to build expressive multilayer neural network architectures.
-As a side note, your knowledge already
-puts you in command of a similar toolkit
-to a practitioner circa 1990.
-In some ways, you have an advantage
-over anyone working back then,
-because you can leverage powerful
-open-source deep learning frameworks
-to build models rapidly, using only a few lines of code.
-Previously, training these networks
-required researchers to code up layers and derivatives
-explicitly in C, Fortran, or even Lisp (in the case of LeNet).
+Sekarang kita tahu cara memasukkan non-linearitas
+untuk membangun arsitektur jaringan saraf multilayer yang ekspresif.
+Sebagai catatan tambahan, pengetahuan Anda sekarang
+sudah memberi Anda toolkit yang mirip dengan
+praktisi sekitar tahun 1990.
+Dalam beberapa hal, Anda memiliki keunggulan
+dibandingkan siapapun yang bekerja pada saat itu,
+karena Anda dapat memanfaatkan framework
+deep learning open-source yang kuat
+untuk membangun model dengan cepat, hanya dengan beberapa baris kode.
+Sebelumnya, melatih jaringan ini
+membutuhkan para peneliti untuk mengkodekan lapisan dan turunannya
+secara eksplisit dalam C, Fortran, atau bahkan Lisp (dalam kasus LeNet).
 
-A secondary benefit is that ReLU is significantly more amenable to
-optimization than the sigmoid or the tanh function. One could argue
-that this was one of the key innovations that helped the resurgence
-of deep learning over the past decade. Note, though, that research in
-activation functions has not stopped.
-For instance, 
-the GELU (Gaussian error linear unit)
-activation function $x \Phi(x)$ by :citet:`Hendrycks.Gimpel.2016` ($\Phi(x)$
-is the standard Gaussian cumulative distribution function) 
-and
-the Swish activation
-function $\sigma(x) = x \operatorname{sigmoid}(\beta x)$ as proposed in :citet:`Ramachandran.Zoph.Le.2017` can yield better accuracy
-in many cases.
+Keuntungan tambahan adalah bahwa ReLU jauh lebih mudah
+untuk dioptimalkan dibandingkan dengan fungsi sigmoid atau tanh. Bisa dikatakan bahwa ini adalah salah satu inovasi kunci yang membantu kebangkitan kembali deep learning selama dekade terakhir. Namun, penelitian tentang
+fungsi aktivasi belum berhenti.
+Misalnya,
+fungsi aktivasi GELU (Gaussian error linear unit)
+$x \Phi(x)$ oleh :citet:`Hendrycks.Gimpel.2016` ($\Phi(x)$
+adalah fungsi distribusi kumulatif Gaussian standar) dan
+fungsi aktivasi Swish
+$\sigma(x) = x \operatorname{sigmoid}(\beta x)$ seperti yang diusulkan dalam :citet:`Ramachandran.Zoph.Le.2017` dapat memberikan akurasi yang lebih baik
+dalam banyak kasus.
 
 ## Exercises
 
-1. Show that adding layers to a *linear* deep network, i.e., a network without
-   nonlinearity $\sigma$ can never increase the expressive power of the network.
-   Give an example where it actively reduces it.
-1. Compute the derivative of the pReLU activation function.
-1. Compute the derivative of the Swish activation function $x \operatorname{sigmoid}(\beta x)$.
-1. Show that an MLP using only ReLU (or pReLU) constructs a
-   continuous piecewise linear function.
-1. Sigmoid and tanh are very similar.
-    1. Show that $\operatorname{tanh}(x) + 1 = 2 \operatorname{sigmoid}(2x)$.
-    1. Prove that the function classes parametrized by both nonlinearities are identical. Hint: affine layers have bias terms, too.
-1. Assume that we have a nonlinearity that applies to one minibatch at a time, such as the batch normalization :cite:`Ioffe.Szegedy.2015`. What kinds of problems do you expect this to cause?
-1. Provide an example where the gradients vanish for the sigmoid activation function.
+1. Tunjukkan bahwa menambahkan lapisan ke jaringan *linear* yang dalam, yaitu jaringan tanpa
+   non-linearitas $\sigma$ tidak akan pernah meningkatkan kekuatan ekspresif jaringan.
+   Berikan contoh di mana ini secara aktif menguranginya.
+2. Hitung turunan dari fungsi aktivasi pReLU.
+3. Hitung turunan dari fungsi aktivasi Swish $x \operatorname{sigmoid}(\beta x)$.
+4. Tunjukkan bahwa sebuah MLP yang hanya menggunakan ReLU (atau pReLU) membentuk fungsi
+   linear secara piecewise yang kontinyu.
+5. Sigmoid dan tanh sangat mirip.
+    1. Tunjukkan bahwa $\operatorname{tanh}(x) + 1 = 2 \operatorname{sigmoid}(2x)$.
+    2. Buktikan bahwa kelas fungsi yang diparameterisasi oleh kedua non-linearitas ini identik. Petunjuk: lapisan afine juga memiliki bias.
+6. Anggap bahwa kita memiliki non-linearitas yang berlaku untuk satu minibatch dalam satu waktu, seperti batch normalization :cite:`Ioffe.Szegedy.2015`. Jenis masalah apa yang Anda perkirakan akan terjadi?
+7. Berikan contoh di mana gradien menghilang untuk fungsi aktivasi sigmoid.
 
 :begin_tab:`mxnet`
-[Discussions](https://discuss.d2l.ai/t/90)
+[Diskusi](https://discuss.d2l.ai/t/90)
 :end_tab:
 
 :begin_tab:`pytorch`
-[Discussions](https://discuss.d2l.ai/t/91)
+[Diskusi](https://discuss.d2l.ai/t/91)
 :end_tab:
 
 :begin_tab:`tensorflow`
-[Discussions](https://discuss.d2l.ai/t/226)
+[Diskusi](https://discuss.d2l.ai/t/226)
 :end_tab:
 
 :begin_tab:`jax`
-[Discussions](https://discuss.d2l.ai/t/17984)
+[Diskusi](https://discuss.d2l.ai/t/17984)
 :end_tab:
