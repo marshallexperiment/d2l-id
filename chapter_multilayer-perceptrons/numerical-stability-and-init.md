@@ -6,27 +6,25 @@ tab.interact_select(['mxnet', 'pytorch', 'tensorflow', 'jax'])
 # Numerical Stability and Initialization
 :label:`sec_numerical_stability`
 
-
-Thus far, every model that we have implemented
-required that we initialize its parameters
-according to some pre-specified distribution.
-Until now, we took the initialization scheme for granted,
-glossing over the details of how these choices are made.
-You might have even gotten the impression that these choices
-are not especially important.
-On the contrary, the choice of initialization scheme
-plays a significant role in neural network learning,
-and it can be crucial for maintaining numerical stability.
-Moreover, these choices can be tied up in interesting ways
-with the choice of the nonlinear activation function.
-Which function we choose and how we initialize parameters
-can determine how quickly our optimization algorithm converges.
-Poor choices here can cause us to encounter
-exploding or vanishing gradients while training.
-In this section, we delve into these topics in greater detail
-and discuss some useful heuristics
-that you will find useful
-throughout your career in deep learning.
+Sejauh ini, setiap model yang telah kita implementasikan
+memerlukan inisialisasi parameter
+sesuai dengan distribusi yang telah ditentukan sebelumnya.
+Sampai saat ini, kita menerima begitu saja skema inisialisasi ini,
+tanpa membahas detail mengenai cara pengambilan keputusan ini.
+Anda mungkin bahkan mendapat kesan bahwa pilihan ini
+tidak terlalu penting.
+Sebaliknya, pemilihan skema inisialisasi
+memainkan peran penting dalam pembelajaran jaringan saraf,
+dan hal ini bisa sangat krusial untuk menjaga stabilitas numerik.
+Lebih jauh lagi, pilihan ini dapat berkaitan erat
+dengan pemilihan fungsi aktivasi non-linear.
+Fungsi aktivasi yang kita pilih dan cara kita menginisialisasi parameter
+dapat menentukan seberapa cepat algoritma optimisasi kita berkonvergensi.
+Pilihan yang buruk di sini dapat menyebabkan kita menghadapi
+gradien yang meledak atau menghilang saat pelatihan.
+Pada bagian ini, kita akan mendalami topik-topik ini lebih jauh
+dan membahas beberapa heuristik yang berguna
+yang akan bermanfaat sepanjang karir Anda dalam deep learning.
 
 ```{.python .input}
 %%tab mxnet
@@ -59,66 +57,65 @@ from jax import numpy as jnp
 from jax import grad, vmap
 ```
 
-## Vanishing and Exploding Gradients
+## Vanishing dan Exploding Gradients
 
-Consider a deep network with $L$ layers,
-input $\mathbf{x}$ and output $\mathbf{o}$.
-With each layer $l$ defined by a transformation $f_l$
-parametrized by weights $\mathbf{W}^{(l)}$,
-whose hidden layer output is $\mathbf{h}^{(l)}$ (let $\mathbf{h}^{(0)} = \mathbf{x}$),
-our network can be expressed as:
+Pertimbangkan jaringan dalam dengan $L$ lapisan,
+input $\mathbf{x}$ dan output $\mathbf{o}$.
+Dengan setiap lapisan $l$ didefinisikan oleh transformasi $f_l$
+yang diparameterisasi oleh bobot $\mathbf{W}^{(l)}$,
+dengan output hidden layer $\mathbf{h}^{(l)}$ (dengan asumsi $\mathbf{h}^{(0)} = \mathbf{x}$),
+jaringan kita dapat dinyatakan sebagai:
 
-$$\mathbf{h}^{(l)} = f_l (\mathbf{h}^{(l-1)}) \textrm{ and thus } \mathbf{o} = f_L \circ \cdots \circ f_1(\mathbf{x}).$$
+$$\mathbf{h}^{(l)} = f_l (\mathbf{h}^{(l-1)}) \textrm{ dan dengan demikian } \mathbf{o} = f_L \circ \cdots \circ f_1(\mathbf{x}).$$
 
-If all the hidden layer output and the input are vectors,
-we can write the gradient of $\mathbf{o}$ with respect to
-any set of parameters $\mathbf{W}^{(l)}$ as follows:
+Jika semua output hidden layer dan input adalah vektor,
+kita dapat menulis gradien dari $\mathbf{o}$ terhadap
+sekumpulan parameter $\mathbf{W}^{(l)}$ sebagai berikut:
 
 $$\partial_{\mathbf{W}^{(l)}} \mathbf{o} = \underbrace{\partial_{\mathbf{h}^{(L-1)}} \mathbf{h}^{(L)}}_{ \mathbf{M}^{(L)} \stackrel{\textrm{def}}{=}} \cdots \underbrace{\partial_{\mathbf{h}^{(l)}} \mathbf{h}^{(l+1)}}_{ \mathbf{M}^{(l+1)} \stackrel{\textrm{def}}{=}} \underbrace{\partial_{\mathbf{W}^{(l)}} \mathbf{h}^{(l)}}_{ \mathbf{v}^{(l)} \stackrel{\textrm{def}}{=}}.$$
 
-In other words, this gradient is
-the product of $L-l$ matrices
+Dengan kata lain, gradien ini adalah
+produk dari $L-l$ matriks
 $\mathbf{M}^{(L)} \cdots \mathbf{M}^{(l+1)}$
-and the gradient vector $\mathbf{v}^{(l)}$.
-Thus we are susceptible to the same
-problems of numerical underflow that often crop up
-when multiplying together too many probabilities.
-When dealing with probabilities, a common trick is to
-switch into log-space, i.e., shifting
-pressure from the mantissa to the exponent
-of the numerical representation.
-Unfortunately, our problem above is more serious:
-initially the matrices $\mathbf{M}^{(l)}$ may have a wide variety of eigenvalues.
-They might be small or large, and
-their product might be *very large* or *very small*.
+dan vektor gradien $\mathbf{v}^{(l)}$.
+Dengan demikian, kita rentan terhadap masalah
+underflow numerik yang sering muncul
+saat mengalikan terlalu banyak probabilitas bersama-sama.
+Saat menangani probabilitas, trik umum adalah beralih ke log-space, yaitu, menggeser
+tekanan dari mantissa ke eksponen dalam representasi numerik.
+Sayangnya, masalah kita di atas lebih serius:
+matriks $\mathbf{M}^{(l)}$ pada awalnya mungkin memiliki berbagai nilai eigen.
+Nilai-nilai tersebut bisa kecil atau besar,
+dan hasil perkaliannya bisa menjadi *sangat besar* atau *sangat kecil*.
 
-The risks posed by unstable gradients
-go beyond numerical representation.
-Gradients of unpredictable magnitude
-also threaten the stability of our optimization algorithms.
-We may be facing parameter updates that are either
-(i) excessively large, destroying our model
-(the *exploding gradient* problem);
-or (ii) excessively small
-(the *vanishing gradient* problem),
-rendering learning impossible as parameters
-hardly move on each update.
+Risiko yang disebabkan oleh gradien yang tidak stabil
+melampaui masalah representasi numerik.
+Gradien dengan besar yang tidak dapat diprediksi
+juga mengancam stabilitas algoritma optimisasi kita.
+Kita mungkin menghadapi pembaruan parameter yang
+(i) sangat besar, yang dapat merusak model kita
+(masalah *exploding gradient*);
+atau (ii) sangat kecil
+(masalah *vanishing gradient*),
+yang membuat pembelajaran menjadi mustahil karena parameter
+nyaris tidak bergerak pada setiap pembaruan.
 
 
 ### (**Vanishing Gradients**)
 
-One frequent culprit causing the vanishing gradient problem
-is the choice of the activation function $\sigma$
-that is appended following each layer's linear operations.
-Historically, the sigmoid function
-$1/(1 + \exp(-x))$ (introduced in :numref:`sec_mlp`)
-was popular because it resembles a thresholding function.
-Since early artificial neural networks were inspired
-by biological neural networks,
-the idea of neurons that fire either *fully* or *not at all*
-(like biological neurons) seemed appealing.
-Let's take a closer look at the sigmoid
-to see why it can cause vanishing gradients.
+Salah satu penyebab umum masalah vanishing gradient
+adalah pemilihan fungsi aktivasi $\sigma$
+yang ditambahkan setelah setiap operasi linear dari lapisan.
+Secara historis, fungsi sigmoid
+$1/(1 + \exp(-x))$ (diperkenalkan di :numref:`sec_mlp`)
+populer karena mirip dengan fungsi ambang batas.
+Karena jaringan saraf tiruan awal terinspirasi
+oleh jaringan saraf biologis,
+gagasan tentang neuron yang menembak secara *penuh* atau *tidak sama sekali*
+(seperti neuron biologis) tampak menarik.
+Mari kita lihat lebih dekat sigmoid
+untuk memahami mengapa fungsi ini bisa menyebabkan vanishing gradients.
+
 
 ```{.python .input}
 %%tab mxnet
@@ -159,34 +156,36 @@ d2l.plot(x, [y, grad_sigmoid(x)],
          legend=['sigmoid', 'gradient'], figsize=(4.5, 2.5))
 ```
 
-As you can see, (**the sigmoid's gradient vanishes
-both when its inputs are large and when they are small**).
-Moreover, when backpropagating through many layers,
-unless we are in the Goldilocks zone, where
-the inputs to many of the sigmoids are close to zero,
-the gradients of the overall product may vanish.
-When our network boasts many layers,
-unless we are careful, the gradient
-will likely be cut off at some layer.
-Indeed, this problem used to plague deep network training.
-Consequently, ReLUs, which are more stable
-(but less neurally plausible),
-have emerged as the default choice for practitioners.
+Seperti yang Anda lihat, (**gradien sigmoid akan menghilang
+baik ketika inputnya besar maupun kecil**).
+Selain itu, ketika melakukan backpropagation melalui banyak lapisan,
+kecuali kita berada dalam zona "Goldilocks", di mana
+input ke banyak fungsi sigmoid mendekati nol,
+gradien dari keseluruhan produk mungkin akan hilang.
+Ketika jaringan kita memiliki banyak lapisan,
+kecuali kita berhati-hati, gradien
+kemungkinan besar akan terputus pada beberapa lapisan.
+Masalah ini memang sering menjadi hambatan
+dalam pelatihan jaringan yang dalam di masa lalu.
+Akibatnya, ReLU, yang lebih stabil
+(tetapi kurang mendekati neuron biologis),
+muncul sebagai pilihan default bagi praktisi.
 
 
 ### [**Exploding Gradients**]
 
-The opposite problem, when gradients explode,
-can be similarly vexing.
-To illustrate this a bit better,
-we draw 100 Gaussian random matrices
-and multiply them with some initial matrix.
-For the scale that we picked
-(the choice of the variance $\sigma^2=1$),
-the matrix product explodes.
-When this happens because of the initialization
-of a deep network, we have no chance of getting
-a gradient descent optimizer to converge.
+Masalah yang berlawanan, yaitu saat gradien meledak,
+bisa sama menjengkelkannya.
+Untuk mengilustrasikan ini dengan lebih baik,
+kita menggambar 100 matriks acak Gaussian
+dan mengalikan matriks-matriks tersebut dengan matriks awal.
+Untuk skala yang kita pilih
+(variansi $\sigma^2=1$),
+produk matriks meledak.
+Ketika hal ini terjadi karena inisialisasi
+dari jaringan yang dalam, kita tidak memiliki peluang
+untuk mendapatkan konvergensi pada optimizer gradient descent.
+
 
 ```{.python .input}
 %%tab mxnet
@@ -217,7 +216,7 @@ print('after multiplying 100 matrices\n', M.numpy())
 
 ```{.python .input}
 %%tab jax
-get_key = lambda: jax.random.PRNGKey(d2l.get_seed())  # Generate PRNG keys
+get_key = lambda: jax.random.PRNGKey(d2l.get_seed())  # men-generate PRNG keys
 M = jax.random.normal(get_key(), (4, 4))
 print('a single matrix \n', M)
 for i in range(100):
@@ -227,96 +226,89 @@ print('after multiplying 100 matrices\n', M)
 
 ### Breaking the Symmetry
 
-Another problem in neural network design
-is the symmetry inherent in their parametrization.
-Assume that we have a simple MLP
-with one hidden layer and two units.
-In this case, we could permute the weights $\mathbf{W}^{(1)}$
-of the first layer and likewise permute
-the weights of the output layer
-to obtain the same function.
-There is nothing special differentiating
-the first and second hidden units.
-In other words, we have permutation symmetry
-among the hidden units of each layer.
+Masalah lain dalam desain neural network
+adalah simetri yang melekat dalam parameterisasi mereka.
+Misalkan kita memiliki MLP sederhana
+dengan satu hidden layer dan dua unit.
+Dalam kasus ini, kita bisa menukar bobot $\mathbf{W}^{(1)}$
+dari lapisan pertama dan menukar
+bobot dari lapisan output
+untuk mendapatkan fungsi yang sama.
+Tidak ada yang membedakan
+unit tersembunyi pertama dan kedua.
+Dengan kata lain, kita memiliki simetri permutasi
+di antara unit-unit tersembunyi dari setiap lapisan.
 
-This is more than just a theoretical nuisance.
-Consider the aforementioned one-hidden-layer MLP
-with two hidden units.
-For illustration,
-suppose that the output layer transforms the two hidden units into only one output unit.
-Imagine what would happen if we initialized
-all the parameters of the hidden layer
-as $\mathbf{W}^{(1)} = c$ for some constant $c$.
-In this case, during forward propagation
-either hidden unit takes the same inputs and parameters
-producing the same activation
-which is fed to the output unit.
-During backpropagation,
-differentiating the output unit with respect to parameters $\mathbf{W}^{(1)}$ gives a gradient all of whose elements take the same value.
-Thus, after gradient-based iteration (e.g., minibatch stochastic gradient descent),
-all the elements of $\mathbf{W}^{(1)}$ still take the same value.
-Such iterations would
-never *break the symmetry* on their own
-and we might never be able to realize
-the network's expressive power.
-The hidden layer would behave
-as if it had only a single unit.
-Note that while minibatch stochastic gradient descent would not break this symmetry,
-dropout regularization (to be introduced later) would!
+Ini lebih dari sekadar gangguan teoretis.
+Pertimbangkan MLP satu-hidden-layer yang disebutkan sebelumnya
+dengan dua unit tersembunyi.
+Sebagai ilustrasi,
+anggap bahwa lapisan output mengubah dua unit tersembunyi menjadi satu unit output.
+Bayangkan apa yang akan terjadi jika kita menginisialisasi
+semua parameter lapisan tersembunyi sebagai $\mathbf{W}^{(1)} = c$ untuk beberapa konstanta $c$.
+Dalam kasus ini, selama forward propagation,
+kedua unit tersembunyi menerima input dan parameter yang sama,
+menghasilkan aktivasi yang sama
+yang diteruskan ke unit output.
+Selama backpropagation,
+mendiferensiasi unit output terhadap parameter $\mathbf{W}^{(1)}$ memberikan gradien di mana semua elemennya memiliki nilai yang sama.
+Oleh karena itu, setelah iterasi berbasis gradien (misalnya, stochastic gradient descent minibatch),
+semua elemen dari $\mathbf{W}^{(1)}$ masih memiliki nilai yang sama.
+Iterasi seperti ini tidak akan pernah *memecahkan simetri* dengan sendirinya
+dan kita mungkin tidak akan pernah bisa mewujudkan
+kekuatan ekspresif dari jaringan tersebut.
+Lapisan tersembunyi akan bertindak
+seolah-olah hanya memiliki satu unit.
+Perhatikan bahwa sementara stochastic gradient descent minibatch tidak akan memecah simetri ini,
+regularisasi dropout (yang akan diperkenalkan nanti) bisa!
 
 
-## Parameter Initialization
+## Inisialisasi Parameter 
 
-One way of addressing---or at least mitigating---the
-issues raised above is through careful initialization.
-As we will see later,
-additional care during optimization
-and suitable regularization can further enhance stability.
-
-
-### Default Initialization
-
-In the previous sections, e.g., in :numref:`sec_linear_concise`,
-we used a normal distribution
-to initialize the values of our weights.
-If we do not specify the initialization method, the framework will
-use a default random initialization method, which often works well in practice
-for moderate problem sizes.
+Salah satu cara untuk mengatasi---atau setidaknya mengurangi---masalah-masalah yang disebutkan di atas adalah melalui inisialisasi yang hati-hati.
+Seperti yang akan kita lihat nanti,
+perhatian tambahan selama optimasi
+dan regularisasi yang sesuai dapat lebih meningkatkan stabilitas.
 
 
+### Insisialisasi _Default_
+
+Di bagian sebelumnya, misalnya di :numref:`sec_linear_concise`,
+kita menggunakan distribusi normal
+untuk menginisialisasi nilai bobot kita.
+Jika kita tidak menentukan metode inisialisasi, framework akan
+menggunakan metode inisialisasi acak default, yang sering kali bekerja dengan baik dalam praktik
+untuk masalah berukuran sedang.
 
 
-
-
-### Xavier Initialization
+### Inisialisasi Xavier 
 :label:`subsec_xavier`
 
-Let's look at the scale distribution of
-an output $o_{i}$ for some fully connected layer
-*without nonlinearities*.
-With $n_\textrm{in}$ inputs $x_j$
-and their associated weights $w_{ij}$ for this layer,
-an output is given by
+Mari kita lihat distribusi skala
+output $o_{i}$ untuk beberapa fully connected layer
+*tanpa nonlinearitas*.
+Dengan $n_\textrm{in}$ input $x_j$
+dan bobot yang terkait $w_{ij}$ untuk lapisan ini,
+sebuah output diberikan oleh
 
 $$o_{i} = \sum_{j=1}^{n_\textrm{in}} w_{ij} x_j.$$
 
-The weights $w_{ij}$ are all drawn
-independently from the same distribution.
-Furthermore, let's assume that this distribution
-has zero mean and variance $\sigma^2$.
-Note that this does not mean that the distribution has to be Gaussian,
-just that the mean and variance need to exist.
-For now, let's assume that the inputs to the layer $x_j$
-also have zero mean and variance $\gamma^2$
-and that they are independent of $w_{ij}$ and independent of each other.
-In this case, we can compute the mean of $o_i$:
+Bobot $w_{ij}$ semuanya diambil
+secara independen dari distribusi yang sama.
+Selain itu, mari kita asumsikan bahwa distribusi ini
+memiliki rata-rata nol dan variansi $\sigma^2$.
+Perhatikan bahwa ini tidak berarti bahwa distribusi tersebut harus Gaussian,
+hanya bahwa rata-rata dan variansi harus ada.
+Untuk saat ini, mari kita asumsikan bahwa input ke lapisan $x_j$
+juga memiliki rata-rata nol dan variansi $\gamma^2$
+dan bahwa input-input ini independen dari $w_{ij}$ dan saling independen.
+Dalam kasus ini, kita dapat menghitung rata-rata dari $o_i$:
 
 $$
 \begin{aligned}
     E[o_i] & = \sum_{j=1}^{n_\textrm{in}} E[w_{ij} x_j] \\&= \sum_{j=1}^{n_\textrm{in}} E[w_{ij}] E[x_j] \\&= 0, \end{aligned}$$
 
-and the variance:
+dan variansi:
 
 $$
 \begin{aligned}
@@ -327,100 +319,102 @@ $$
 \end{aligned}
 $$
 
-One way to keep the variance fixed
-is to set $n_\textrm{in} \sigma^2 = 1$.
-Now consider backpropagation.
-There we face a similar problem,
-albeit with gradients being propagated from the layers closer to the output.
-Using the same reasoning as for forward propagation,
-we see that the gradients' variance can blow up
-unless $n_\textrm{out} \sigma^2 = 1$,
-where $n_\textrm{out}$ is the number of outputs of this layer.
-This leaves us in a dilemma:
-we cannot possibly satisfy both conditions simultaneously.
-Instead, we simply try to satisfy:
+Salah satu cara untuk menjaga variansi tetap konstan
+adalah dengan menetapkan $n_\textrm{in} \sigma^2 = 1$.
+Sekarang pertimbangkan backpropagation.
+Di sana kita menghadapi masalah serupa,
+walaupun gradien disebarkan dari lapisan yang lebih dekat ke output.
+Menggunakan alasan yang sama seperti pada forward propagation,
+kita melihat bahwa variansi gradien bisa meledak
+kecuali jika $n_\textrm{out} \sigma^2 = 1$,
+di mana $n_\textrm{out}$ adalah jumlah output dari lapisan ini.
+Ini membawa kita pada dilema:
+kita tidak mungkin memenuhi kedua kondisi secara bersamaan.
+Sebagai gantinya, kita mencoba memenuhi:
 
 $$
 \begin{aligned}
-\frac{1}{2} (n_\textrm{in} + n_\textrm{out}) \sigma^2 = 1 \textrm{ or equivalently }
+\frac{1}{2} (n_\textrm{in} + n_\textrm{out}) \sigma^2 = 1 \textrm{ atau dengan kata lain }
 \sigma = \sqrt{\frac{2}{n_\textrm{in} + n_\textrm{out}}}.
 \end{aligned}
 $$
 
-This is the reasoning underlying the now-standard
-and practically beneficial *Xavier initialization*,
-named after the first author of its creators :cite:`Glorot.Bengio.2010`.
-Typically, the Xavier initialization
-samples weights from a Gaussian distribution
-with zero mean and variance
+Ini adalah alasan mendasar dari *Xavier initialization*
+yang sekarang menjadi standar dan sangat bermanfaat secara praktis,
+dinamai sesuai dengan penulis utama dari pembuatnya :cite:`Glorot.Bengio.2010`.
+Biasanya, inisialisasi Xavier
+mengambil bobot dari distribusi Gaussian
+dengan rata-rata nol dan variansi
 $\sigma^2 = \frac{2}{n_\textrm{in} + n_\textrm{out}}$.
-We can also adapt this to
-choose the variance when sampling weights
-from a uniform distribution.
-Note that the uniform distribution $U(-a, a)$ has variance $\frac{a^2}{3}$.
-Plugging $\frac{a^2}{3}$ into our condition on $\sigma^2$
-prompts us to initialize according to
+Kita juga dapat menyesuaikan ini untuk
+memilih variansi saat mengambil bobot
+dari distribusi uniform.
+Perhatikan bahwa distribusi uniform $U(-a, a)$ memiliki variansi $\frac{a^2}{3}$.
+Dengan memasukkan $\frac{a^2}{3}$ ke dalam kondisi kita untuk $\sigma^2$,
+kita memperoleh inisialisasi menurut
 
 $$U\left(-\sqrt{\frac{6}{n_\textrm{in} + n_\textrm{out}}}, \sqrt{\frac{6}{n_\textrm{in} + n_\textrm{out}}}\right).$$
 
-Though the assumption for nonexistence of nonlinearities
-in the above mathematical reasoning
-can be easily violated in neural networks,
-the Xavier initialization method
-turns out to work well in practice.
+Meskipun asumsi untuk non-eksistensi nonlinearitas
+dalam alasan matematis di atas
+dapat dengan mudah dilanggar dalam neural network,
+metode Xavier initialization
+ternyata bekerja dengan baik dalam praktik.
+
 
 
 ### Beyond
 
-The reasoning above barely scratches the surface
-of modern approaches to parameter initialization.
-A deep learning framework often implements over a dozen different heuristics.
-Moreover, parameter initialization continues to be
-a hot area of fundamental research in deep learning.
-Among these are heuristics specialized for
-tied (shared) parameters, super-resolution,
-sequence models, and other situations.
-For instance,
-:citet:`Xiao.Bahri.Sohl-Dickstein.ea.2018` demonstrated the possibility of training
-10,000-layer neural networks without architectural tricks
-by using a carefully-designed initialization method.
+Penjelasan di atas baru menggores permukaan
+pendekatan modern untuk inisialisasi parameter.
+Framework deep learning sering kali mengimplementasikan lebih dari selusin heuristik yang berbeda.
+Selain itu, inisialisasi parameter masih menjadi
+area penelitian fundamental yang panas dalam deep learning.
+Di antaranya ada heuristik khusus untuk
+parameter yang terikat (terbagi), super-resolution,
+model urutan (sequence models), dan situasi lainnya.
+Misalnya,
+:citet:`Xiao.Bahri.Sohl-Dickstein.ea.2018` menunjukkan kemungkinan melatih
+neural network dengan 10.000 lapisan tanpa trik arsitektural
+dengan menggunakan metode inisialisasi yang dirancang dengan hati-hati.
 
-If the topic interests you we suggest
-a deep dive into this module's offerings,
-reading the papers that proposed and analyzed each heuristic,
-and then exploring the latest publications on the topic.
-Perhaps you will stumble across or even invent
-a clever idea and contribute an implementation to deep learning frameworks.
+Jika topik ini menarik bagi Anda, kami sarankan
+untuk menyelami penawaran modul ini,
+membaca makalah yang mengusulkan dan menganalisis setiap heuristik,
+dan kemudian menjelajahi publikasi terbaru tentang topik ini.
+Mungkin Anda akan menemukan atau bahkan menemukan
+ide cerdas dan memberikan kontribusi implementasi ke dalam framework deep learning.
 
 
-## Summary
+## Ringkasan
 
-Vanishing and exploding gradients are common issues in deep networks. Great care in parameter initialization is required to ensure that gradients and parameters remain well controlled.
-Initialization heuristics are needed to ensure that the initial gradients are neither too large nor too small.
-Random initialization is key to ensuring that symmetry is broken before optimization.
-Xavier initialization suggests that, for each layer, variance of any output is not affected by the number of inputs, and variance of any gradient is not affected by the number of outputs.
-ReLU activation functions mitigate the vanishing gradient problem. This can accelerate convergence.
+Vanishing dan exploding gradient adalah masalah umum dalam jaringan dalam. Perhatian besar diperlukan dalam inisialisasi parameter untuk memastikan bahwa gradien dan parameter tetap terkontrol dengan baik.
+Heuristik inisialisasi diperlukan untuk memastikan bahwa gradien awal tidak terlalu besar atau terlalu kecil.
+Inisialisasi acak penting untuk memastikan bahwa simetri terpecah sebelum optimasi dimulai.
+Xavier initialization menyarankan bahwa, untuk setiap lapisan, variansi output tidak dipengaruhi oleh jumlah input, dan variansi gradien tidak dipengaruhi oleh jumlah output.
+Fungsi aktivasi ReLU membantu mengurangi masalah vanishing gradient, yang dapat mempercepat konvergensi.
 
-## Exercises
 
-1. Can you design other cases where a neural network might exhibit symmetry that needs breaking, besides the permutation symmetry in an MLP's layers?
-1. Can we initialize all weight parameters in linear regression or in softmax regression to the same value?
-1. Look up analytic bounds on the eigenvalues of the product of two matrices. What does this tell you about ensuring that gradients are well conditioned?
-1. If we know that some terms diverge, can we fix this after the fact? Look at the paper on layerwise adaptive rate scaling  for inspiration :cite:`You.Gitman.Ginsburg.2017`.
+## Latihan
+
+1. Dapatkah Anda merancang kasus lain di mana neural network mungkin menunjukkan simetri yang perlu dipecahkan, selain simetri permutasi pada lapisan MLP?
+2. Bisakah kita menginisialisasi semua parameter bobot dalam linear regression atau softmax regression dengan nilai yang sama?
+3. Cari batasan analitik pada nilai eigen dari produk dua matriks. Apa yang dikatakan ini tentang memastikan bahwa gradien memiliki kondisi yang baik?
+4. Jika kita tahu bahwa beberapa istilah mengalami divergensi, dapatkah kita memperbaikinya setelah kejadian tersebut? Lihat makalah tentang layerwise adaptive rate scaling sebagai inspirasi :cite:`You.Gitman.Ginsburg.2017`.
 
 
 :begin_tab:`mxnet`
-[Discussions](https://discuss.d2l.ai/t/103)
+[Diskusi](https://discuss.d2l.ai/t/103)
 :end_tab:
 
 :begin_tab:`pytorch`
-[Discussions](https://discuss.d2l.ai/t/104)
+[Diskusi](https://discuss.d2l.ai/t/104)
 :end_tab:
 
 :begin_tab:`tensorflow`
-[Discussions](https://discuss.d2l.ai/t/235)
+[Diskusi](https://discuss.d2l.ai/t/235)
 :end_tab:
 
 :begin_tab:`jax`
-[Discussions](https://discuss.d2l.ai/t/17986)
+[Diskusi](https://discuss.d2l.ai/t/17986)
 :end_tab:
