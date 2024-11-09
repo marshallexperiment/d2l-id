@@ -1,338 +1,317 @@
-# From Fully Connected Layers to Convolutions
+# Dari Lapisan Fully Connected ke Konvolusi
 :label:`sec_why-conv`
 
-To this day,
-the models that we have discussed so far
-remain appropriate options
-when we are dealing with tabular data.
-By tabular, we mean that the data consist
-of rows corresponding to examples
-and columns corresponding to features.
-With tabular data, we might anticipate
-that the patterns we seek could involve
-interactions among the features,
-but we do not assume any structure *a priori*
-concerning how the features interact.
+Hingga saat ini,
+model yang telah kita bahas sejauh ini
+tetap menjadi pilihan yang sesuai
+ketika kita berhadapan dengan data tabular.
+Dengan data tabular, kita maksudkan bahwa data terdiri dari
+baris yang sesuai dengan contoh dan kolom yang sesuai dengan fitur.
+Pada data tabular, kita mungkin memperkirakan bahwa pola yang kita cari
+dapat melibatkan interaksi antar fitur,
+tetapi kita tidak mengasumsikan adanya struktur *a priori*
+mengenai cara fitur tersebut berinteraksi.
 
-Sometimes, we truly lack the knowledge to be able to guide the construction of fancier architectures.
-In these cases, an MLP
-may be the best that we can do.
-However, for high-dimensional perceptual data,
-such structureless networks can grow unwieldy.
+Kadang-kadang, kita benar-benar kekurangan pengetahuan untuk dapat membimbing pembuatan arsitektur yang lebih kompleks.
+Dalam kasus ini, MLP mungkin merupakan pilihan terbaik yang dapat kita lakukan.
+Namun, untuk data perseptual berdimensi tinggi,
+jaringan tanpa struktur ini bisa menjadi sangat besar.
 
-For instance, let's return to our running example
-of distinguishing cats from dogs.
-Say that we do a thorough job in data collection,
-collecting an annotated dataset of one-megapixel photographs.
-This means that each input to the network has one million dimensions.
-Even an aggressive reduction to one thousand hidden dimensions
-would require a fully connected layer
-characterized by $10^6 \times 10^3 = 10^9$ parameters.
-Unless we have lots of GPUs, a talent
-for distributed optimization,
-and an extraordinary amount of patience,
-learning the parameters of this network
-may turn out to be infeasible.
+Sebagai contoh, mari kita kembali ke contoh kita
+tentang membedakan kucing dari anjing.
+Misalkan kita melakukan pengumpulan data secara menyeluruh,
+mengumpulkan dataset foto beranotasi dengan resolusi satu megapiksel.
+Ini berarti bahwa setiap input ke jaringan memiliki satu juta dimensi.
+Bahkan jika kita mengurangi secara agresif menjadi seribu dimensi tersembunyi,
+lapisan fully connected akan membutuhkan $10^6 \times 10^3 = 10^9$ parameter.
+Kecuali kita memiliki banyak GPU, bakat untuk optimasi terdistribusi,
+dan kesabaran yang luar biasa, mempelajari parameter dari jaringan ini
+mungkin tidak dapat dilakukan.
 
-A careful reader might object to this argument
-on the basis that one megapixel resolution may not be necessary.
-However, while we might be able
-to get away with one hundred thousand pixels,
-our hidden layer of size 1000 grossly underestimates
-the number of hidden units that it takes
-to learn good representations of images,
-so a practical system will still require billions of parameters.
-Moreover, learning a classifier by fitting so many parameters
-might require collecting an enormous dataset.
-And yet today both humans and computers are able
-to distinguish cats from dogs quite well,
-seemingly contradicting these intuitions.
-That is because images exhibit rich structure
-that can be exploited by humans
-and machine learning models alike.
-Convolutional neural networks (CNNs) are one creative way
-that machine learning has embraced for exploiting
-some of the known structure in natural images.
+Pembaca yang teliti mungkin membantah argumen ini
+dengan alasan bahwa resolusi satu megapiksel mungkin tidak diperlukan.
+Namun, meskipun kita bisa mengurangi menjadi seratus ribu piksel,
+lapisan tersembunyi kita yang berukuran 1000 terlalu kecil untuk
+mempelajari representasi gambar yang baik,
+sehingga sistem praktis masih akan membutuhkan miliaran parameter.
+Selain itu, mempelajari classifier dengan menyesuaikan begitu banyak parameter
+mungkin memerlukan pengumpulan dataset yang sangat besar.
+Namun, saat ini baik manusia maupun komputer mampu
+membedakan kucing dari anjing dengan sangat baik,
+seolah-olah bertentangan dengan intuisi tersebut.
+Hal ini karena gambar memiliki struktur kaya yang dapat dimanfaatkan
+oleh manusia maupun model machine learning.
+Convolutional neural networks (CNNs) adalah salah satu cara kreatif
+yang diadopsi machine learning untuk memanfaatkan
+struktur yang dikenal dalam gambar alami.
 
 
-## Invariance
+## Invarian
 
-Imagine that we want to detect an object in an image.
-It seems reasonable that whatever method
-we use to recognize objects should not be overly concerned
-with the precise location of the object in the image.
-Ideally, our system should exploit this knowledge.
-Pigs usually do not fly and planes usually do not swim.
-Nonetheless, we should still recognize
-a pig were one to appear at the top of the image.
-We can draw some inspiration here
-from the children's game "Where's Waldo"
-(which itself has inspired many real-life imitations, such as that depicted in :numref:`img_waldo`).
-The game consists of a number of chaotic scenes
-bursting with activities.
-Waldo shows up somewhere in each,
-typically lurking in some unlikely location.
-The reader's goal is to locate him.
-Despite his characteristic outfit,
-this can be surprisingly difficult,
-due to the large number of distractions.
-However, *what Waldo looks like*
-does not depend upon *where Waldo is located*.
-We could sweep the image with a Waldo detector
-that could assign a score to each patch,
-indicating the likelihood that the patch contains Waldo. 
-In fact, many object detection and segmentation algorithms 
-are based on this approach :cite:`Long.Shelhamer.Darrell.2015`. 
-CNNs systematize this idea of *spatial invariance*,
-exploiting it to learn useful representations
-with fewer parameters.
+Bayangkan kita ingin mendeteksi objek dalam sebuah gambar.
+Tampaknya wajar bahwa metode apa pun yang kita gunakan untuk mengenali objek
+tidak perlu terlalu peduli dengan lokasi tepat objek dalam gambar.
+Idealnya, sistem kita harus memanfaatkan pengetahuan ini.
+Babi biasanya tidak terbang dan pesawat biasanya tidak berenang.
+Namun demikian, kita harus tetap mengenali babi
+jika muncul di bagian atas gambar.
+Kita bisa mengambil inspirasi dari permainan anak-anak "Di mana Waldo"
+(yang sendiri telah menginspirasi banyak tiruan kehidupan nyata, seperti yang digambarkan dalam :numref:`img_waldo`).
+Permainan ini terdiri dari beberapa adegan kacau
+penuh dengan aktivitas.
+Waldo muncul di suatu tempat dalam setiap adegan,
+biasanya bersembunyi di lokasi yang tidak biasa.
+Tujuan pembaca adalah menemukannya.
+Meskipun pakaian khasnya,
+ini bisa sangat sulit,
+karena ada begitu banyak gangguan.
+Namun, *penampilan Waldo*
+tidak bergantung pada *lokasi Waldo*.
+Kita bisa menyapu gambar dengan detektor Waldo
+yang dapat memberikan skor pada setiap patch,
+yang menunjukkan kemungkinan bahwa patch tersebut berisi Waldo.
+Faktanya, banyak algoritma deteksi dan segmentasi objek
+berbasis pada pendekatan ini :cite:`Long.Shelhamer.Darrell.2015`.
+CNNs mengatur ide *invarian spasial* ini secara sistematis,
+memanfaatkannya untuk mempelajari representasi yang berguna
+dengan lebih sedikit parameter.
 
-![Can you find Waldo (image courtesy of William Murphy (Infomatique))?](../img/waldo-football.jpg)
+![Bisakah Anda menemukan Waldo (gambar milik William Murphy (Infomatique))?](../img/waldo-football.jpg)
 :width:`400px`
 :label:`img_waldo`
 
-We can now make these intuitions more concrete 
-by enumerating a few desiderata to guide our design
-of a neural network architecture suitable for computer vision:
 
-1. In the earliest layers, our network
-   should respond similarly to the same patch,
-   regardless of where it appears in the image. This principle is called *translation invariance* (or *translation equivariance*).
-1. The earliest layers of the network should focus on local regions,
-   without regard for the contents of the image in distant regions. This is the *locality* principle.
-   Eventually, these local representations can be aggregated
-   to make predictions at the whole image level.
-1. As we proceed, deeper layers should be able to capture longer-range features of the 
-   image, in a way similar to higher level vision in nature. 
+Sekarang kita dapat membuat intuisi ini lebih konkret
+dengan merinci beberapa kriteria untuk memandu desain
+arsitektur jaringan saraf yang sesuai untuk computer vision:
 
-Let's see how this translates into mathematics.
+1. Pada lapisan-lapisan awal, jaringan kita
+   harus merespons secara serupa terhadap patch yang sama,
+   terlepas dari di mana patch tersebut muncul dalam gambar. Prinsip ini disebut *translation invariance* (atau *translation equivariance*).
+1. Lapisan-lapisan awal dari jaringan harus berfokus pada wilayah lokal,
+   tanpa memperhatikan isi gambar di wilayah yang jauh. Ini adalah prinsip *locality*.
+   Pada akhirnya, representasi lokal ini dapat digabungkan
+   untuk membuat prediksi di level gambar keseluruhan.
+1. Seiring berjalannya waktu, lapisan-lapisan yang lebih dalam harus mampu menangkap fitur yang memiliki jangkauan lebih jauh dalam gambar, dengan cara yang mirip dengan tingkat penglihatan yang lebih tinggi di alam.
+
+Mari kita lihat bagaimana ini diterjemahkan ke dalam matematika.
 
 
-## Constraining the MLP
+## Membatasi MLP
 
-To start off, we can consider an MLP
-with two-dimensional images $\mathbf{X}$ as inputs
-and their immediate hidden representations
-$\mathbf{H}$ similarly represented as matrices (they are two-dimensional tensors in code), where both $\mathbf{X}$ and $\mathbf{H}$ have the same shape.
-Let that sink in.
-We now imagine that not only the inputs but
-also the hidden representations possess spatial structure.
+Untuk memulai, kita dapat mempertimbangkan sebuah MLP
+dengan gambar dua dimensi $\mathbf{X}$ sebagai input
+dan representasi tersembunyinya $\mathbf{H}$ yang juga direpresentasikan sebagai matriks (mereka adalah tensor dua dimensi dalam kode), di mana $\mathbf{X}$ dan $\mathbf{H}$ memiliki bentuk yang sama.
+Pahami ini sejenak.
+Sekarang kita membayangkan bahwa tidak hanya input tetapi
+juga representasi tersembunyi memiliki struktur spasial.
 
-Let $[\mathbf{X}]_{i, j}$ and $[\mathbf{H}]_{i, j}$ denote the pixel
-at location $(i,j)$
-in the input image and hidden representation, respectively.
-Consequently, to have each of the hidden units
-receive input from each of the input pixels,
-we would switch from using weight matrices
-(as we did previously in MLPs)
-to representing our parameters
-as fourth-order weight tensors $\mathsf{W}$.
-Suppose that $\mathbf{U}$ contains biases,
-we could formally express the fully connected layer as
+Misalkan $[\mathbf{X}]_{i, j}$ dan $[\mathbf{H}]_{i, j}$ masing-masing adalah piksel
+di lokasi $(i,j)$
+dalam gambar input dan representasi tersembunyi.
+Akibatnya, agar setiap unit tersembunyi
+menerima input dari setiap piksel input,
+kita akan beralih dari menggunakan matriks bobot
+(seperti yang kita lakukan sebelumnya pada MLP)
+ke representasi parameter kita
+sebagai tensor bobot ordo keempat $\mathsf{W}$.
+Misalkan $\mathbf{U}$ mengandung bias,
+kita dapat mengekspresikan lapisan fully connected secara formal sebagai
 
 $$\begin{aligned} \left[\mathbf{H}\right]_{i, j} &= [\mathbf{U}]_{i, j} + \sum_k \sum_l[\mathsf{W}]_{i, j, k, l}  [\mathbf{X}]_{k, l}\\ &=  [\mathbf{U}]_{i, j} +
 \sum_a \sum_b [\mathsf{V}]_{i, j, a, b}  [\mathbf{X}]_{i+a, j+b}.\end{aligned}$$
 
-The switch from $\mathsf{W}$ to $\mathsf{V}$ is entirely cosmetic for now
-since there is a one-to-one correspondence
-between coefficients in both fourth-order tensors.
-We simply re-index the subscripts $(k, l)$
-such that $k = i+a$ and $l = j+b$.
-In other words, we set $[\mathsf{V}]_{i, j, a, b} = [\mathsf{W}]_{i, j, i+a, j+b}$.
-The indices $a$ and $b$ run over both positive and negative offsets,
-covering the entire image.
-For any given location ($i$, $j$) in the hidden representation $[\mathbf{H}]_{i, j}$,
-we compute its value by summing over pixels in $x$,
-centered around $(i, j)$ and weighted by $[\mathsf{V}]_{i, j, a, b}$. Before we carry on, let's consider the total number of parameters required for a *single* layer in this parametrization: a $1000 \times 1000$ image (1 megapixel) is mapped to a $1000 \times 1000$ hidden representation. This requires $10^{12}$ parameters, far beyond what computers currently can handle.  
+Peralihan dari $\mathsf{W}$ ke $\mathsf{V}$ adalah kosmetik saja untuk saat ini
+karena ada korespondensi satu-ke-satu
+antara koefisien dalam kedua tensor ordo keempat.
+Kita cukup mengindeks ulang subscripts $(k, l)$
+sehingga $k = i+a$ dan $l = j+b$.
+Dengan kata lain, kita menetapkan $[\mathsf{V}]_{i, j, a, b} = [\mathsf{W}]_{i, j, i+a, j+b}$.
+Indeks $a$ dan $b$ mencakup offset positif dan negatif,
+meliputi seluruh gambar.
+Untuk lokasi ($i$, $j$) dalam representasi tersembunyi $[\mathbf{H}]_{i, j}$,
+kita menghitung nilainya dengan menjumlahkan piksel di $x$,
+yang berpusat di sekitar $(i, j)$ dan ditimbang oleh $[\mathsf{V}]_{i, j, a, b}$. Sebelum kita melanjutkan, mari kita pertimbangkan total jumlah parameter yang dibutuhkan untuk *satu* lapisan dalam parametrisasi ini: gambar $1000 \times 1000$ (1 megapiksel) dipetakan ke representasi tersembunyi $1000 \times 1000$. Ini memerlukan $10^{12}$ parameter, jauh melebihi kemampuan komputer saat ini.
 
 ### Translation Invariance
 
-Now let's invoke the first principle
-established above: translation invariance :cite:`Zhang.ea.1988`.
-This implies that a shift in the input $\mathbf{X}$
-should simply lead to a shift in the hidden representation $\mathbf{H}$.
-This is only possible if $\mathsf{V}$ and $\mathbf{U}$ do not actually depend on $(i, j)$. As such,
-we have $[\mathsf{V}]_{i, j, a, b} = [\mathbf{V}]_{a, b}$ and $\mathbf{U}$ is a constant, say $u$.
-As a result, we can simplify the definition for $\mathbf{H}$:
+Sekarang mari kita gunakan prinsip pertama
+yang sudah kita tetapkan di atas: translation invariance :cite:`Zhang.ea.1988`.
+Ini menyiratkan bahwa pergeseran dalam input $\mathbf{X}$
+hanya akan menyebabkan pergeseran dalam representasi tersembunyi $\mathbf{H}$.
+Ini hanya mungkin jika $\mathsf{V}$ dan $\mathbf{U}$ sebenarnya tidak bergantung pada $(i, j)$. Dengan demikian,
+kita memiliki $[\mathsf{V}]_{i, j, a, b} = [\mathbf{V}]_{a, b}$ dan $\mathbf{U}$ adalah konstanta, misalnya $u$.
+Akibatnya, kita dapat menyederhanakan definisi $\mathbf{H}$:
 
 $$[\mathbf{H}]_{i, j} = u + \sum_a\sum_b [\mathbf{V}]_{a, b}  [\mathbf{X}]_{i+a, j+b}.$$
 
 
-This is a *convolution*!
-We are effectively weighting pixels at $(i+a, j+b)$
-in the vicinity of location $(i, j)$ with coefficients $[\mathbf{V}]_{a, b}$
-to obtain the value $[\mathbf{H}]_{i, j}$.
-Note that $[\mathbf{V}]_{a, b}$ needs many fewer coefficients than $[\mathsf{V}]_{i, j, a, b}$ since it
-no longer depends on the location within the image. Consequently, the number of parameters required is no longer $10^{12}$ but a much more reasonable $4 \times 10^6$: we still have the dependency on $a, b \in (-1000, 1000)$. In short, we have made significant progress. Time-delay neural networks (TDNNs) are some of the first examples to exploit this idea :cite:`Waibel.Hanazawa.Hinton.ea.1989`.
+Ini adalah sebuah *konvolusi*!
+Kita secara efektif memberi bobot pada piksel di $(i+a, j+b)$
+di sekitar lokasi $(i, j)$ dengan koefisien $[\mathbf{V}]_{a, b}$
+untuk mendapatkan nilai $[\mathbf{H}]_{i, j}$.
+Perhatikan bahwa $[\mathbf{V}]_{a, b}$ membutuhkan jauh lebih sedikit koefisien daripada $[\mathsf{V}]_{i, j, a, b}$ karena bobot ini
+tidak lagi bergantung pada lokasi dalam gambar. Akibatnya, jumlah parameter yang dibutuhkan tidak lagi $10^{12}$ tetapi lebih masuk akal $4 \times 10^6$: kita masih memiliki ketergantungan pada $a, b \in (-1000, 1000)$. Singkatnya, kita telah membuat kemajuan yang signifikan. Time-delay neural networks (TDNNs) adalah beberapa contoh pertama yang memanfaatkan ide ini :cite:`Waibel.Hanazawa.Hinton.ea.1989`.
 
-###  Locality
 
-Now let's invoke the second principle: locality.
-As motivated above, we believe that we should not have
-to look very far away from location $(i, j)$
-in order to glean relevant information
-to assess what is going on at $[\mathbf{H}]_{i, j}$.
-This means that outside some range $|a|> \Delta$ or $|b| > \Delta$,
-we should set $[\mathbf{V}]_{a, b} = 0$.
-Equivalently, we can rewrite $[\mathbf{H}]_{i, j}$ as
+### Locality
+
+Sekarang mari kita gunakan prinsip kedua: locality.
+Seperti yang dijelaskan sebelumnya, kita percaya bahwa kita tidak perlu melihat terlalu jauh dari lokasi $(i, j)$ untuk memperoleh informasi yang relevan dalam menilai apa yang terjadi di $[\mathbf{H}]_{i, j}$.
+Ini berarti bahwa di luar jangkauan tertentu $|a|> \Delta$ atau $|b| > \Delta$,
+kita harus menetapkan $[\mathbf{V}]_{a, b} = 0$.
+Dengan demikian, kita dapat menulis ulang $[\mathbf{H}]_{i, j}$ sebagai
 
 $$[\mathbf{H}]_{i, j} = u + \sum_{a = -\Delta}^{\Delta} \sum_{b = -\Delta}^{\Delta} [\mathbf{V}]_{a, b}  [\mathbf{X}]_{i+a, j+b}.$$
 :eqlabel:`eq_conv-layer`
 
-This reduces the number of parameters from $4 \times 10^6$ to $4 \Delta^2$, where $\Delta$ is typically smaller than $10$. As such, we reduced the number of parameters by another four orders of magnitude. Note that :eqref:`eq_conv-layer`, is what is called, in a nutshell, a *convolutional layer*. 
+Ini mengurangi jumlah parameter dari $4 \times 10^6$ menjadi $4 \Delta^2$, di mana $\Delta$ biasanya lebih kecil dari $10$. Dengan demikian, kita mengurangi jumlah parameter sebesar empat kali lipat lagi. Perhatikan bahwa :eqref:`eq_conv-layer`, adalah apa yang disebut sebagai *lapisan konvolusi*.
 *Convolutional neural networks* (CNNs)
-are a special family of neural networks that contain convolutional layers.
-In the deep learning research community,
-$\mathbf{V}$ is referred to as a *convolution kernel*,
-a *filter*, or simply the layer's *weights* that are learnable parameters.
+adalah keluarga khusus dari jaringan saraf yang mengandung lapisan konvolusi.
+Dalam komunitas riset deep learning,
+$\mathbf{V}$ disebut sebagai *kernel konvolusi*,
+sebuah *filter*, atau hanya sebagai *bobot* lapisan yang merupakan parameter yang dapat dipelajari.
 
-While previously, we might have required billions of parameters
-to represent just a single layer in an image-processing network,
-we now typically need just a few hundred, without
-altering the dimensionality of either
-the inputs or the hidden representations.
-The price paid for this drastic reduction in parameters
-is that our features are now translation invariant
-and that our layer can only incorporate local information,
-when determining the value of each hidden activation.
-All learning depends on imposing inductive bias.
-When that bias agrees with reality,
-we get sample-efficient models
-that generalize well to unseen data.
-But of course, if those biases do not agree with reality,
-e.g., if images turned out not to be translation invariant,
-our models might struggle even to fit our training data.
+Sementara sebelumnya, kita mungkin memerlukan miliaran parameter
+untuk mewakili hanya satu lapisan dalam jaringan pemrosesan gambar,
+kita sekarang biasanya hanya memerlukan beberapa ratus parameter, tanpa
+mengubah dimensi input atau representasi tersembunyi.
+Harga yang dibayar untuk pengurangan drastis dalam parameter ini
+adalah bahwa fitur kita sekarang menjadi translation invariant
+dan lapisan kita hanya dapat memasukkan informasi lokal
+ketika menentukan nilai setiap aktivasi tersembunyi.
+Semua pembelajaran bergantung pada penerapan bias induktif.
+Ketika bias tersebut sesuai dengan kenyataan,
+kita mendapatkan model yang efisien dalam penggunaan sampel
+yang dapat digeneralisasi dengan baik ke data yang belum pernah dilihat.
+Namun, tentu saja, jika bias tersebut tidak sesuai dengan kenyataan,
+misalnya jika gambar ternyata tidak translation invariant,
+model kita mungkin kesulitan untuk menyesuaikan bahkan dengan data pelatihan.
 
-This dramatic reduction in parameters brings us to our last desideratum, 
-namely that deeper layers should represent larger and more complex aspects 
-of an image. This can be achieved by interleaving nonlinearities and convolutional 
-layers repeatedly. 
+Pengurangan dramatis dalam parameter ini membawa kita ke kriteria terakhir,
+yaitu bahwa lapisan yang lebih dalam harus mewakili aspek yang lebih besar dan lebih kompleks dari sebuah gambar. Hal ini dapat dicapai dengan menggabungkan lapisan nonlinearitas dan lapisan konvolusi secara berulang kali.
 
-## Convolutions
 
-Let's briefly review why :eqref:`eq_conv-layer` is called a convolution. 
-In mathematics, the *convolution* between two functions :cite:`Rudin.1973`,
-say $f, g: \mathbb{R}^d \to \mathbb{R}$ is defined as
+## Konvolusi
+
+Mari kita tinjau secara singkat mengapa :eqref:`eq_conv-layer` disebut sebagai konvolusi.
+Dalam matematika, *konvolusi* antara dua fungsi :cite:`Rudin.1973`,
+misalnya $f, g: \mathbb{R}^d \to \mathbb{R}$, didefinisikan sebagai
 
 $$(f * g)(\mathbf{x}) = \int f(\mathbf{z}) g(\mathbf{x}-\mathbf{z}) d\mathbf{z}.$$
 
-That is, we measure the overlap between $f$ and $g$
-when one function is "flipped" and shifted by $\mathbf{x}$.
-Whenever we have discrete objects, the integral turns into a sum.
-For instance, for vectors from
-the set of square-summable infinite-dimensional vectors
-with index running over $\mathbb{Z}$ we obtain the following definition:
+Artinya, kita mengukur seberapa besar overlap antara $f$ dan $g$
+ketika salah satu fungsi di "balik" dan digeser oleh $\mathbf{x}$.
+Setiap kali kita memiliki objek diskret, integral tersebut berubah menjadi penjumlahan.
+Sebagai contoh, untuk vektor dari
+himpunan vektor berdimensi tak hingga yang dapat dijumlahkan dengan indeks yang menjalankan $\mathbb{Z}$, kita memperoleh definisi berikut:
 
 $$(f * g)(i) = \sum_a f(a) g(i-a).$$
 
-For two-dimensional tensors, we have a corresponding sum
-with indices $(a, b)$ for $f$ and $(i-a, j-b)$ for $g$, respectively:
+Untuk tensor dua dimensi, kita memiliki penjumlahan yang sesuai
+dengan indeks $(a, b)$ untuk $f$ dan $(i-a, j-b)$ untuk $g$, masing-masing:
 
 $$(f * g)(i, j) = \sum_a\sum_b f(a, b) g(i-a, j-b).$$
 :eqlabel:`eq_2d-conv-discrete`
 
-This looks similar to :eqref:`eq_conv-layer`, with one major difference.
-Rather than using $(i+a, j+b)$, we are using the difference instead.
-Note, though, that this distinction is mostly cosmetic
-since we can always match the notation between
-:eqref:`eq_conv-layer` and :eqref:`eq_2d-conv-discrete`.
-Our original definition in :eqref:`eq_conv-layer` more properly
-describes a *cross-correlation*.
-We will come back to this in the following section.
+Ini tampak mirip dengan :eqref:`eq_conv-layer`, dengan satu perbedaan utama.
+Alih-alih menggunakan $(i+a, j+b)$, kita menggunakan perbedaan di antara keduanya.
+Namun, perlu dicatat bahwa perbedaan ini lebih bersifat kosmetik
+karena kita selalu bisa menyamakan notasi antara
+:eqref:`eq_conv-layer` dan :eqref:`eq_2d-conv-discrete`.
+Definisi awal kita dalam :eqref:`eq_conv-layer` lebih tepat menggambarkan sebuah *cross-correlation*.
+Kita akan kembali ke hal ini pada bagian berikutnya.
+
 
 
 ## Channels
 :label:`subsec_why-conv-channels`
 
-Returning to our Waldo detector, let's see what this looks like.
-The convolutional layer picks windows of a given size
-and weighs intensities according to the filter $\mathsf{V}$, as demonstrated in :numref:`fig_waldo_mask`.
-We might aim to learn a model so that
-wherever the "waldoness" is highest,
-we should find a peak in the hidden layer representations.
+Kembali ke detektor Waldo kita, mari kita lihat bagaimana tampilannya.
+Lapisan konvolusi mengambil jendela dengan ukuran tertentu
+dan memberi bobot pada intensitas sesuai dengan filter $\mathsf{V}$, seperti yang ditunjukkan pada :numref:`fig_waldo_mask`.
+Tujuan kita adalah melatih model sedemikian rupa sehingga
+di mana pun "waldo-ness" (keberadaan Waldo) paling tinggi,
+kita akan menemukan puncak pada representasi lapisan tersembunyi.
 
-![Detect Waldo (image courtesy of William Murphy (Infomatique)).](../img/waldo-mask.jpg)
+![Mendeteksi Waldo (gambar milik William Murphy (Infomatique)).](../img/waldo-mask.jpg)
 :width:`400px`
 :label:`fig_waldo_mask`
 
-There is just one problem with this approach.
-So far, we blissfully ignored that images consist
-of three channels: red, green, and blue. 
-In sum, images are not two-dimensional objects
-but rather third-order tensors,
-characterized by a height, width, and channel,
-e.g., with shape $1024 \times 1024 \times 3$ pixels. 
-While the first two of these axes concern spatial relationships,
-the third can be regarded as assigning
-a multidimensional representation to each pixel location.
-We thus index $\mathsf{X}$ as $[\mathsf{X}]_{i, j, k}$.
-The convolutional filter has to adapt accordingly.
-Instead of $[\mathbf{V}]_{a,b}$, we now have $[\mathsf{V}]_{a,b,c}$.
+Namun, ada satu masalah dengan pendekatan ini.
+Sejauh ini, kita dengan santai mengabaikan bahwa gambar terdiri dari
+tiga kanal: merah, hijau, dan biru.
+Singkatnya, gambar bukanlah objek dua dimensi
+melainkan tensor ordo ketiga,
+yang ditandai oleh tinggi, lebar, dan kanal,
+misalnya, dengan bentuk $1024 \times 1024 \times 3$ piksel.
+Sementara dua sumbu pertama berkaitan dengan hubungan spasial,
+sumbu ketiga dapat dianggap sebagai representasi multidimensi untuk setiap lokasi piksel.
+Dengan demikian, kita mengindeks $\mathsf{X}$ sebagai $[\mathsf{X}]_{i, j, k}$.
+Filter konvolusi harus menyesuaikan dengan hal ini.
+Alih-alih $[\mathbf{V}]_{a,b}$, kita sekarang memiliki $[\mathsf{V}]_{a,b,c}$.
 
-Moreover, just as our input consists of a third-order tensor,
-it turns out to be a good idea to similarly formulate
-our hidden representations as third-order tensors $\mathsf{H}$.
-In other words, rather than just having a single hidden representation
-corresponding to each spatial location,
-we want an entire vector of hidden representations
-corresponding to each spatial location.
-We could think of the hidden representations as comprising
-a number of two-dimensional grids stacked on top of each other.
-As in the inputs, these are sometimes called *channels*.
-They are also sometimes called *feature maps*,
-as each provides a spatialized set
-of learned features for the subsequent layer.
-Intuitively, you might imagine that at lower layers that are closer to inputs,
-some channels could become specialized to recognize edges while
-others could recognize textures.
+Selain itu, seperti halnya input kita berupa tensor ordo ketiga,
+ternyata ide yang bagus untuk merumuskan
+representasi tersembunyi kita juga sebagai tensor ordo ketiga $\mathsf{H}$.
+Dengan kata lain, daripada hanya memiliki satu representasi tersembunyi
+yang sesuai dengan setiap lokasi spasial,
+kita menginginkan seluruh vektor representasi tersembunyi
+yang sesuai dengan setiap lokasi spasial.
+Kita dapat membayangkan bahwa representasi tersembunyi ini terdiri dari
+beberapa grid dua dimensi yang ditumpuk satu sama lain.
+Seperti pada input, ini kadang disebut *channels*.
+Mereka juga kadang disebut *feature maps*,
+karena masing-masing menyediakan satu set spasialisasi
+fitur yang dipelajari untuk lapisan berikutnya.
+Secara intuitif, Anda mungkin membayangkan bahwa pada lapisan yang lebih rendah dekat dengan input,
+beberapa kanal bisa menjadi spesialis untuk mengenali tepi sedangkan
+yang lain bisa mengenali tekstur.
 
-To support multiple channels in both inputs ($\mathsf{X}$) and hidden representations ($\mathsf{H}$),
-we can add a fourth coordinate to $\mathsf{V}$: $[\mathsf{V}]_{a, b, c, d}$.
-Putting everything together we have:
+Untuk mendukung beberapa kanal baik pada input ($\mathsf{X}$) maupun representasi tersembunyi ($\mathsf{H}$),
+kita dapat menambahkan koordinat keempat ke $\mathsf{V}$: $[\mathsf{V}]_{a, b, c, d}$.
+Dengan menggabungkan semuanya kita memiliki:
 
 $$[\mathsf{H}]_{i,j,d} = \sum_{a = -\Delta}^{\Delta} \sum_{b = -\Delta}^{\Delta} \sum_c [\mathsf{V}]_{a, b, c, d} [\mathsf{X}]_{i+a, j+b, c},$$
 :eqlabel:`eq_conv-layer-channels`
 
-where $d$ indexes the output channels in the hidden representations $\mathsf{H}$. The subsequent convolutional layer will go on to take a third-order tensor, $\mathsf{H}$, as input.
-We take
-:eqref:`eq_conv-layer-channels`,
-because of its generality, as
-the definition of a convolutional layer for multiple channels, where $\mathsf{V}$ is a kernel or filter of the layer.
+di mana $d$ mengindeks kanal output pada representasi tersembunyi $\mathsf{H}$. Lapisan konvolusi berikutnya akan menerima tensor ordo ketiga, $\mathsf{H}$, sebagai input.
+Kita mengambil :eqref:`eq_conv-layer-channels`,
+karena sifat umum yang dimilikinya, sebagai
+definisi lapisan konvolusi untuk beberapa kanal, di mana $\mathsf{V}$ adalah kernel atau filter dari lapisan tersebut.
 
-There are still many operations that we need to address.
-For instance, we need to figure out how to combine all the hidden representations
-to a single output, e.g., whether there is a Waldo *anywhere* in the image.
-We also need to decide how to compute things efficiently,
-how to combine multiple layers,
-appropriate activation functions,
-and how to make reasonable design choices
-to yield networks that are effective in practice.
-We turn to these issues in the remainder of the chapter.
+Masih ada banyak operasi yang perlu kita bahas.
+Misalnya, kita perlu mencari cara untuk menggabungkan semua representasi tersembunyi
+ke dalam satu output, misalnya, apakah ada Waldo *di mana pun* dalam gambar.
+Kita juga perlu memutuskan cara menghitung semuanya secara efisien,
+cara menggabungkan beberapa lapisan,
+fungsi aktivasi yang tepat,
+dan cara membuat pilihan desain yang masuk akal
+untuk menghasilkan jaringan yang efektif dalam praktik.
+Kita akan membahas masalah ini di sisa bab ini.
 
-## Summary and Discussion
 
-In this section we derived the structure of convolutional neural networks from first principles. While it is unclear whether this was the route taken to the invention of CNNs, it is satisfying to know that they are the *right* choice when applying reasonable principles to how image processing and computer vision algorithms should operate, at least at lower levels. In particular, translation invariance in images implies that all patches of an image will be treated in the same manner. Locality means that only a small neighborhood of pixels will be used to compute the corresponding hidden representations. Some of the earliest references to CNNs are in the form of the Neocognitron :cite:`Fukushima.1982`. 
+## Ringkasan dan Diskusi
 
-A second principle that we encountered in our reasoning is how to reduce the number of parameters in a function class without limiting its expressive power, at least, whenever certain assumptions on the model hold. We saw a dramatic reduction of complexity as a result of this restriction, turning computationally and statistically infeasible problems into tractable models. 
+Dalam bagian ini, kita menurunkan struktur convolutional neural networks (CNN) dari prinsip dasar. Meskipun tidak jelas apakah ini adalah jalur yang diambil dalam penemuan CNN, memuaskan untuk mengetahui bahwa CNN adalah pilihan yang *tepat* ketika menerapkan prinsip yang masuk akal tentang cara kerja algoritma pemrosesan gambar dan computer vision, setidaknya pada level yang lebih rendah. Secara khusus, translation invariance dalam gambar menyiratkan bahwa semua bagian gambar akan diperlakukan dengan cara yang sama. Locality berarti bahwa hanya lingkungan kecil dari piksel yang akan digunakan untuk menghitung representasi tersembunyi yang sesuai. Beberapa referensi paling awal mengenai CNN adalah dalam bentuk Neocognitron :cite:`Fukushima.1982`.
 
-Adding channels allowed us to bring back some of the complexity that was lost due to the restrictions imposed on the convolutional kernel by locality and translation invariance. Note that it is quite natural to add channels other than just red, green, and blue. Many satellite 
-images, in particular for agriculture and meteorology, have tens to hundreds of channels, 
-generating hyperspectral images instead. They report data on many different wavelengths. In the following we will see how to use convolutions effectively to manipulate the dimensionality of the images they operate on, how to move from location-based to channel-based representations, and how to deal with large numbers of categories efficiently. 
+Prinsip kedua yang kita temui dalam penalaran kita adalah bagaimana mengurangi jumlah parameter dalam kelas fungsi tanpa membatasi kekuatan ekspresifnya, setidaknya, selama asumsi tertentu pada model berlaku. Kita melihat pengurangan kompleksitas yang dramatis sebagai hasil dari pembatasan ini, mengubah masalah yang tidak layak secara komputasi dan statistik menjadi model yang dapat diselesaikan.
 
-## Exercises
+Penambahan kanal memungkinkan kita untuk mengembalikan sebagian kompleksitas yang hilang akibat pembatasan yang diberlakukan pada kernel konvolusi oleh locality dan translation invariance. Perlu dicatat bahwa menambahkan kanal selain merah, hijau, dan biru adalah hal yang wajar. Banyak gambar satelit, terutama untuk pertanian dan meteorologi, memiliki puluhan hingga ratusan kanal, menghasilkan gambar hiperspektral. Mereka melaporkan data pada berbagai panjang gelombang. Selanjutnya, kita akan melihat cara menggunakan konvolusi secara efektif untuk memanipulasi dimensi gambar yang mereka operasikan, cara berpindah dari representasi berbasis lokasi ke representasi berbasis kanal, dan cara menangani sejumlah besar kategori secara efisien.
 
-1. Assume that the size of the convolution kernel is $\Delta = 0$.
-   Show that in this case the convolution kernel
-   implements an MLP independently for each set of channels. This leads to the Network in Network 
-   architectures :cite:`Lin.Chen.Yan.2013`. 
-1. Audio data is often represented as a one-dimensional sequence. 
-    1. When might you want to impose locality and translation invariance for audio? 
-    1. Derive the convolution operations for audio.
-    1. Can you treat audio using the same tools as computer vision? Hint: use the spectrogram.
-1. Why might translation invariance not be a good idea after all? Give an example. 
-1. Do you think that convolutional layers might also be applicable for text data?
-   Which problems might you encounter with language?
-1. What happens with convolutions when an object is at the boundary of an image?
-1. Prove that the convolution is symmetric, i.e., $f * g = g * f$.
+## Latihan
 
-[Discussions](https://discuss.d2l.ai/t/64)
+1. Asumsikan bahwa ukuran kernel konvolusi adalah $\Delta = 0$.
+   Tunjukkan bahwa dalam kasus ini kernel konvolusi
+   menerapkan MLP secara independen untuk setiap set kanal. Ini mengarah ke arsitektur Network in Network :cite:`Lin.Chen.Yan.2013`.
+1. Data audio sering diwakili sebagai urutan satu dimensi.
+    1. Kapan Anda mungkin ingin menerapkan locality dan translation invariance pada audio?
+    1. Turunkan operasi konvolusi untuk audio.
+    1. Bisakah Anda memperlakukan audio menggunakan alat yang sama dengan computer vision? Petunjuk: gunakan spektrogram.
+1. Mengapa translation invariance mungkin bukan ide yang baik? Berikan contoh.
+1. Menurut Anda, apakah lapisan konvolusi juga dapat diterapkan untuk data teks?
+   Masalah apa yang mungkin Anda temui dengan bahasa?
+1. Apa yang terjadi dengan konvolusi ketika sebuah objek berada di batas gambar?
+1. Buktikan bahwa konvolusi bersifat simetris, yaitu, $f * g = g * f$.
+
+[Diskusi](https://discuss.d2l.ai/t/64)
