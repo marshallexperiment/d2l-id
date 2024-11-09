@@ -3,15 +3,15 @@
 tab.interact_select(['mxnet', 'pytorch', 'tensorflow', 'jax'])
 ```
 
-# Parameter Initialization
+# Inisialisasi Parameter
 
-Now that we know how to access the parameters,
-let's look at how to initialize them properly.
-We discussed the need for proper initialization in :numref:`sec_numerical_stability`.
-The deep learning framework provides default random initializations to its layers.
-However, we often want to initialize our weights
-according to various other protocols. The framework provides most commonly
-used protocols, and also allows to create a custom initializer.
+Sekarang setelah kita tahu cara mengakses parameter,
+mari kita lihat cara menginisialisasinya dengan benar.
+Kita telah membahas pentingnya inisialisasi yang tepat di :numref:`sec_numerical_stability`.
+Framework deep learning menyediakan inisialisasi acak default untuk lapisannya.
+Namun, sering kali kita ingin menginisialisasi bobot
+sesuai dengan berbagai protokol lainnya. Framework ini menyediakan protokol-protokol yang paling umum digunakan, dan juga memungkinkan kita untuk membuat inisialisasi kustom.
+
 
 ```{.python .input}
 %%tab mxnet
@@ -40,33 +40,31 @@ from jax import numpy as jnp
 ```
 
 :begin_tab:`mxnet`
-By default, MXNet initializes weight parameters by randomly drawing from a uniform distribution $U(-0.07, 0.07)$,
-clearing bias parameters to zero.
-MXNet's `init` module provides a variety
-of preset initialization methods.
+Secara default, MXNet menginisialisasi parameter bobot dengan menggambar secara acak dari distribusi uniform $U(-0.07, 0.07)$,
+dan mengatur parameter bias ke nol.
+Modul `init` pada MXNet menyediakan berbagai metode inisialisasi yang telah disediakan.
 :end_tab:
 
 :begin_tab:`pytorch`
-By default, PyTorch initializes weight and bias matrices
-uniformly by drawing from a range that is computed according to the input and output dimension.
-PyTorch's `nn.init` module provides a variety
-of preset initialization methods.
+Secara default, PyTorch menginisialisasi matriks bobot dan bias
+secara uniform dengan menggambar dari rentang yang dihitung sesuai dengan dimensi input dan output.
+Modul `nn.init` pada PyTorch menyediakan berbagai metode inisialisasi yang telah disediakan.
 :end_tab:
 
 :begin_tab:`tensorflow`
-By default, Keras initializes weight matrices uniformly by drawing from a range that is computed according to the input and output dimension, and the bias parameters are all set to zero.
-TensorFlow provides a variety of initialization methods both in the root module and the `keras.initializers` module.
+Secara default, Keras menginisialisasi matriks bobot secara uniform dengan menggambar dari rentang yang dihitung sesuai dengan dimensi input dan output, dan semua parameter bias diatur ke nol.
+TensorFlow menyediakan berbagai metode inisialisasi baik di modul utama maupun di modul `keras.initializers`.
 :end_tab:
 
 :begin_tab:`jax`
-By default, Flax initializes weights using `jax.nn.initializers.lecun_normal`,
-i.e., by drawing samples from a truncated normal distribution centered on 0 with
-the standard deviation set as the squared root of $1 / \textrm{fan}_{\textrm{in}}$
-where `fan_in` is the number of input units in the weight tensor. The bias
-parameters are all set to zero.
-Jax's `nn.initializers` module provides a variety
-of preset initialization methods.
+Secara default, Flax menginisialisasi bobot menggunakan `jax.nn.initializers.lecun_normal`,
+yaitu dengan menggambar sampel dari distribusi normal terpotong yang berpusat pada 0 dengan
+standar deviasi yang ditetapkan sebagai akar kuadrat dari $1 / \textrm{fan}_{\textrm{in}}$
+di mana `fan_in` adalah jumlah unit input dalam tensor bobot. Parameter bias
+diatur semuanya ke nol.
+Modul `nn.initializers` pada Jax menyediakan berbagai metode inisialisasi yang telah disediakan.
 :end_tab:
+
 
 ```{.python .input}
 %%tab mxnet
@@ -106,17 +104,18 @@ params = net.init(d2l.get_key(), X)
 net.apply(params, X).shape
 ```
 
-## [**Built-in Initialization**]
+## [**Inisialisasi Bawaan**]
 
-Let's begin by calling on built-in initializers.
-The code below initializes all weight parameters
-as Gaussian random variables
-with standard deviation 0.01, while bias parameters are cleared to zero.
+Mari kita mulai dengan memanggil inisialisasi bawaan.
+Kode di bawah ini menginisialisasi semua parameter bobot
+sebagai variabel acak Gaussian
+dengan standar deviasi 0.01, sementara parameter bias diatur ke nol.
+
 
 ```{.python .input}
 %%tab mxnet
-# Here force_reinit ensures that parameters are freshly initialized even if
-# they were already initialized previously
+# Di sini force_reinit memastikan bahwa parameter diinisialisasi ulang meskipun
+# parameter tersebut sudah diinisialisasi sebelumnya
 net.initialize(init=init.Normal(sigma=0.01), force_reinit=True)
 net[0].weight.data()[0]
 ```
@@ -160,8 +159,7 @@ layer_0 = params['params']['layers_0']
 layer_0['kernel'][:, 0], layer_0['bias'][0]
 ```
 
-We can also initialize all the parameters
-to a given constant value (say, 1).
+Kita juga dapat menginisialisasi semua parameter ke nilai konstan tertentu (misalnya, 1).
 
 ```{.python .input}
 %%tab mxnet
@@ -208,11 +206,12 @@ layer_0 = params['params']['layers_0']
 layer_0['kernel'][:, 0], layer_0['bias'][0]
 ```
 
-[**We can also apply different initializers for certain blocks.**]
-For example, below we initialize the first layer
-with the Xavier initializer
-and initialize the second layer
-to a constant value of 42.
+[**Kita juga dapat menerapkan inisialisasi yang berbeda untuk blok tertentu.**]  
+Sebagai contoh, di bawah ini kita menginisialisasi lapisan pertama  
+dengan inisialisasi Xavier  
+dan menginisialisasi lapisan kedua  
+dengan nilai konstan 42.
+
 
 ```{.python .input}
 %%tab mxnet
@@ -267,43 +266,42 @@ params = net.init(jax.random.PRNGKey(d2l.get_seed()), X)
 params['params']['layers_0']['kernel'][:, 0], params['params']['layers_2']['kernel']
 ```
 
-### [**Custom Initialization**]
+### [**Inisialisasi Kustom**]
 
-Sometimes, the initialization methods we need
-are not provided by the deep learning framework.
-In the example below, we define an initializer
-for any weight parameter $w$ using the following strange distribution:
+Terkadang, metode inisialisasi yang kita butuhkan
+tidak disediakan oleh framework deep learning.
+Dalam contoh di bawah ini, kita mendefinisikan inisialisasi
+untuk setiap parameter bobot $w$ menggunakan distribusi unik berikut:
 
 $$
 \begin{aligned}
     w \sim \begin{cases}
-        U(5, 10) & \textrm{ with probability } \frac{1}{4} \\
-            0    & \textrm{ with probability } \frac{1}{2} \\
-        U(-10, -5) & \textrm{ with probability } \frac{1}{4}
+        U(5, 10) & \textrm{ dengan probabilitas } \frac{1}{4} \\
+            0    & \textrm{ dengan probabilitas } \frac{1}{2} \\
+        U(-10, -5) & \textrm{ dengan probabilitas } \frac{1}{4}
     \end{cases}
 \end{aligned}
 $$
 
 :begin_tab:`mxnet`
-Here we define a subclass of the `Initializer` class.
-Usually, we only need to implement the `_init_weight` function
-which takes a tensor argument (`data`)
-and assigns to it the desired initialized values.
+Di sini kita mendefinisikan subclass dari kelas `Initializer`.
+Biasanya, kita hanya perlu mengimplementasikan fungsi `_init_weight`
+yang mengambil argumen tensor (`data`)
+dan menetapkan nilai-nilai yang diinginkan padanya.
 :end_tab:
 
 :begin_tab:`pytorch`
-Again, we implement a `my_init` function to apply to `net`.
+Sekali lagi, kita mengimplementasikan fungsi `my_init` untuk diterapkan pada `net`.
 :end_tab:
 
 :begin_tab:`tensorflow`
-Here we define a subclass of `Initializer` and implement the `__call__`
-function that return a desired tensor given the shape and data type.
+Di sini kita mendefinisikan subclass dari `Initializer` dan mengimplementasikan fungsi `__call__`
+yang mengembalikan tensor yang diinginkan berdasarkan bentuk dan tipe data yang diberikan.
 :end_tab:
 
 :begin_tab:`jax`
-Jax initialization functions take as arguments the `PRNGKey`, `shape` and
-`dtype`. Here we implement the function `my_init` that returns a desired
-tensor given the shape and data type.
+Fungsi inisialisasi Jax menerima `PRNGKey`, `shape`, dan `dtype` sebagai argumen.
+Di sini kita mengimplementasikan fungsi `my_init` yang mengembalikan tensor yang diinginkan berdasarkan bentuk dan tipe data yang diberikan.
 :end_tab:
 
 ```{.python .input}
@@ -365,16 +363,17 @@ print(params['params']['layers_0']['kernel'][:, :2])
 ```
 
 :begin_tab:`mxnet, pytorch, tensorflow`
-Note that we always have the option
-of setting parameters directly.
+Perhatikan bahwa kita selalu memiliki opsi
+untuk mengatur parameter secara langsung.
 :end_tab:
 
 :begin_tab:`jax`
-When initializing parameters in JAX and Flax, the the dictionary of parameters
-returned has a `flax.core.frozen_dict.FrozenDict` type. It is not advisable in
-the Jax ecosystem to directly alter the values of an array, hence the datatypes
-are generally immutable. One might use `params.unfreeze()` to make changes.
+Saat menginisialisasi parameter di JAX dan Flax, dictionary parameter yang dikembalikan
+memiliki tipe `flax.core.frozen_dict.FrozenDict`. Tidak disarankan dalam ekosistem JAX
+untuk mengubah nilai array secara langsung, oleh karena itu tipe data umumnya bersifat immutable.
+Anda dapat menggunakan `params.unfreeze()` untuk melakukan perubahan.
 :end_tab:
+
 
 ```{.python .input}
 %%tab mxnet
@@ -397,26 +396,26 @@ net.layers[1].weights[0][0, 0].assign(42)
 net.layers[1].weights[0]
 ```
 
-## Summary
+## Ringkasan
 
-We can initialize parameters using built-in and custom initializers.
+Kita dapat menginisialisasi parameter menggunakan inisialisasi bawaan dan inisialisasi kustom.
 
-## Exercises
+## Latihan
 
-Look up the online documentation for more built-in initializers.
+Cari dokumentasi online untuk lebih banyak inisialisasi bawaan.
 
 :begin_tab:`mxnet`
-[Discussions](https://discuss.d2l.ai/t/8089)
+[Diskusi](https://discuss.d2l.ai/t/8089)
 :end_tab:
 
 :begin_tab:`pytorch`
-[Discussions](https://discuss.d2l.ai/t/8090)
+[Diskusi](https://discuss.d2l.ai/t/8090)
 :end_tab:
 
 :begin_tab:`tensorflow`
-[Discussions](https://discuss.d2l.ai/t/8091)
+[Diskusi](https://discuss.d2l.ai/t/8091)
 :end_tab:
 
 :begin_tab:`jax`
-[Discussions](https://discuss.d2l.ai/t/17991)
+[Diskusi](https://discuss.d2l.ai/t/17991)
 :end_tab:
