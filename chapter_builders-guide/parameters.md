@@ -3,36 +3,37 @@
 tab.interact_select(['mxnet', 'pytorch', 'tensorflow', 'jax'])
 ```
 
-# Parameter Management
+# Manajemen Parameter
 
-Once we have chosen an architecture
-and set our hyperparameters,
-we proceed to the training loop,
-where our goal is to find parameter values
-that minimize our loss function.
-After training, we will need these parameters
-in order to make future predictions.
-Additionally, we will sometimes wish
-to extract the parameters
-perhaps to reuse them in some other context,
-to save our model to disk so that
-it may be executed in other software,
-or for examination in the hope of
-gaining scientific understanding.
+Setelah kita memilih sebuah arsitektur
+dan menetapkan hyperparameter kita,
+kita lanjut ke loop pelatihan,
+di mana tujuan kita adalah menemukan nilai parameter
+yang meminimalkan fungsi loss kita.
+Setelah pelatihan selesai, kita akan memerlukan parameter-parameter ini
+untuk membuat prediksi di masa depan.
+Selain itu, terkadang kita ingin
+mengekstrak parameter-parameter tersebut
+mungkin untuk digunakan kembali dalam konteks lain,
+menyimpan model kita ke disk sehingga
+dapat dijalankan di perangkat lunak lain,
+atau untuk diperiksa dengan harapan
+mendapatkan pemahaman ilmiah.
 
-Most of the time, we will be able
-to ignore the nitty-gritty details
-of how parameters are declared
-and manipulated, relying on deep learning frameworks
-to do the heavy lifting.
-However, when we move away from
-stacked architectures with standard layers,
-we will sometimes need to get into the weeds
-of declaring and manipulating parameters.
-In this section, we cover the following:
+Sebagian besar waktu, kita dapat
+mengabaikan detail-detail teknis
+tentang bagaimana parameter dideklarasikan
+dan dimanipulasi, dengan mengandalkan framework deep learning
+untuk menangani bagian yang rumit.
+Namun, ketika kita bergerak menjauh dari
+arsitektur bertumpuk dengan lapisan-lapisan standar,
+terkadang kita perlu mendalami detail
+tentang deklarasi dan manipulasi parameter.
+Dalam bagian ini, kita akan membahas hal-hal berikut:
 
-* Accessing parameters for debugging, diagnostics, and visualizations.
-* Sharing parameters across different model components.
+* Mengakses parameter untuk debugging, diagnosis, dan visualisasi.
+* Berbagi parameter di berbagai komponen model yang berbeda.
+
 
 ```{.python .input}
 %%tab mxnet
@@ -60,7 +61,8 @@ import jax
 from jax import numpy as jnp
 ```
 
-(**We start by focusing on an MLP with one hidden layer.**)
+(**Kita mulai dengan berfokus pada MLP dengan satu lapisan tersembunyi.**)
+
 
 ```{.python .input}
 %%tab mxnet
@@ -104,30 +106,31 @@ params = net.init(d2l.get_key(), X)
 net.apply(params, X).shape
 ```
 
-## [**Parameter Access**]
+## [**Akses Parameter**]
 :label:`subsec_param-access`
 
-Let's start with how to access parameters
-from the models that you already know.
+Mari kita mulai dengan cara mengakses parameter
+dari model yang sudah Anda ketahui.
 
 :begin_tab:`mxnet, pytorch, tensorflow`
-When a model is defined via the `Sequential` class,
-we can first access any layer by indexing
-into the model as though it were a list.
-Each layer's parameters are conveniently
-located in its attribute.
+Ketika sebuah model didefinisikan melalui kelas `Sequential`,
+kita dapat mengakses setiap lapisan dengan melakukan indexing
+ke dalam model seolah-olah itu adalah sebuah list.
+Parameter setiap lapisan terletak dengan mudah
+pada atributnya.
 :end_tab:
 
 :begin_tab:`jax`
-Flax and JAX decouple the model and the parameters as you
-might have observed in the models defined previously.
-When a model is defined via the `Sequential` class,
-we first need to initialize the network to generate
-the parameters dictionary. We can access
-any layer's parameters through the keys of this dictionary.
+Flax dan JAX memisahkan model dan parameter seperti yang
+mungkin telah Anda amati pada model yang didefinisikan sebelumnya.
+Ketika sebuah model didefinisikan melalui kelas `Sequential`,
+kita pertama-tama perlu menginisialisasi jaringan untuk menghasilkan
+dictionary parameter. Kita dapat mengakses
+parameter dari setiap lapisan melalui kunci pada dictionary ini.
 :end_tab:
 
-We can inspect the parameters of the second fully connected layer as follows.
+Kita dapat memeriksa parameter dari lapisan fully connected kedua sebagai berikut.
+
 
 ```{.python .input}
 %%tab mxnet
@@ -155,17 +158,18 @@ corresponding to that layer's
 weights and biases, respectively.
 
 
-### [**Targeted Parameters**]
+### [**Parameter yang Ditargetkan**]
 
-Note that each parameter is represented
-as an instance of the parameter class.
-To do anything useful with the parameters,
-we first need to access the underlying numerical values.
-There are several ways to do this.
-Some are simpler while others are more general.
-The following code extracts the bias
-from the second neural network layer, which returns a parameter class instance, and
-further accesses that parameter's value.
+Perhatikan bahwa setiap parameter direpresentasikan
+sebagai sebuah instance dari kelas parameter.
+Untuk melakukan sesuatu yang berguna dengan parameter-parameter ini,
+kita pertama-tama perlu mengakses nilai numerik dasarnya.
+Ada beberapa cara untuk melakukannya.
+Beberapa cara lebih sederhana sementara yang lain lebih umum.
+Kode berikut mengekstrak bias
+dari lapisan kedua jaringan neural, yang mengembalikan sebuah instance kelas parameter,
+dan kemudian mengakses nilai dari parameter tersebut.
+
 
 ```{.python .input}
 %%tab mxnet
@@ -188,21 +192,22 @@ bias = params['params']['layers_2']['bias']
 type(bias), bias
 ```
 
-:begin_tab:`mxnet,pytorch`
-Parameters are complex objects,
-containing values, gradients,
-and additional information.
-That is why we need to request the value explicitly.
+:begin_tab:`mxnet, pytorch`
+Parameter adalah objek yang kompleks,
+mengandung nilai, gradien,
+dan informasi tambahan lainnya.
+Itulah sebabnya kita perlu meminta nilainya secara eksplisit.
 
-In addition to the value, each parameter also allows us to access the gradient. Because we have not invoked backpropagation for this network yet, it is in its initial state.
+Selain nilai, setiap parameter juga memungkinkan kita untuk mengakses gradien. Karena kita belum melakukan backpropagation untuk jaringan ini, gradien masih dalam keadaan awal.
 :end_tab:
 
 :begin_tab:`jax`
-Unlike the other frameworks, JAX does not keep a track of the gradients over the
-neural network parameters, instead the parameters and the network are decoupled.
-It allows the user to express their computation as a
-Python function, and use the `grad` transformation for the same purpose.
+Berbeda dengan framework lainnya, JAX tidak melacak gradien dari
+parameter jaringan neural, melainkan parameter dan jaringan dipisahkan.
+JAX memungkinkan pengguna mengekspresikan perhitungan mereka sebagai
+fungsi Python, dan menggunakan transformasi `grad` untuk tujuan yang sama.
 :end_tab:
+
 
 ```{.python .input}
 %%tab mxnet
@@ -214,15 +219,15 @@ net[1].weight.grad()
 net[2].weight.grad == None
 ```
 
-### [**All Parameters at Once**]
+### [**Semua Parameter Sekaligus**]
 
-When we need to perform operations on all parameters,
-accessing them one-by-one can grow tedious.
-The situation can grow especially unwieldy
-when we work with more complex, e.g., nested, modules,
-since we would need to recurse
-through the entire tree to extract
-each sub-module's parameters. Below we demonstrate accessing the parameters of all layers.
+Ketika kita perlu melakukan operasi pada semua parameter,
+mengaksesnya satu per satu bisa menjadi membosankan.
+Situasi ini bisa menjadi sangat merepotkan
+ketika kita bekerja dengan modul yang lebih kompleks, misalnya, modul yang bersarang,
+karena kita perlu menelusuri seluruh pohon
+untuk mengekstrak parameter dari setiap sub-modul. Di bawah ini kami menunjukkan cara mengakses parameter dari semua lapisan.
+
 
 ```{.python .input}
 %%tab mxnet
@@ -244,21 +249,21 @@ net.get_weights()
 jax.tree_util.tree_map(lambda x: x.shape, params)
 ```
 
-## [**Tied Parameters**]
+## [**Parameter yang Terikat**]
 
-Often, we want to share parameters across multiple layers.
-Let's see how to do this elegantly.
-In the following we allocate a fully connected layer
-and then use its parameters specifically
-to set those of another layer.
-Here we need to run the forward propagation
-`net(X)` before accessing the parameters.
+Seringkali, kita ingin berbagi parameter di beberapa lapisan.
+Mari kita lihat cara melakukannya dengan elegan.
+Di bawah ini kita mengalokasikan sebuah lapisan fully connected
+dan kemudian menggunakan parameter-parameter tersebut secara spesifik
+untuk menetapkan parameter-parameter pada lapisan lain.
+Di sini kita perlu menjalankan propagasi maju
+`net(X)` sebelum mengakses parameter-parameter tersebut.
+
 
 ```{.python .input}
 %%tab mxnet
 net = nn.Sequential()
-# We need to give the shared layer a name so that we can refer to its
-# parameters
+# Kita perlu memberi nama pada layer yang akan dibagikan agar kita bisa merujuk ke parameternya
 shared = nn.Dense(8, activation='relu')
 net.add(nn.Dense(8, activation='relu'),
         shared,
@@ -269,18 +274,16 @@ net.initialize()
 X = np.random.uniform(size=(2, 20))
 
 net(X)
-# Check whether the parameters are the same
+# Memeriksa apakah parameter-parameter tersebut sama
 print(net[1].weight.data()[0] == net[2].weight.data()[0])
 net[1].weight.data()[0, 0] = 100
-# Make sure that they are actually the same object rather than just having the
-# same value
+# Memastikan bahwa parameter tersebut benar-benar objek yang sama, bukan hanya memiliki nilai yang sama
 print(net[1].weight.data()[0] == net[2].weight.data()[0])
 ```
 
 ```{.python .input}
 %%tab pytorch
-# We need to give the shared layer a name so that we can refer to its
-# parameters
+# Kita perlu memberi nama pada layer yang akan dibagikan agar kita bisa merujuk ke parameternya
 shared = nn.LazyLinear(8)
 net = nn.Sequential(nn.LazyLinear(8), nn.ReLU(),
                     shared, nn.ReLU(),
@@ -288,18 +291,16 @@ net = nn.Sequential(nn.LazyLinear(8), nn.ReLU(),
                     nn.LazyLinear(1))
 
 net(X)
-# Check whether the parameters are the same
+# Memeriksa apakah parameter-parameter tersebut sama
 print(net[2].weight.data[0] == net[4].weight.data[0])
 net[2].weight.data[0, 0] = 100
-# Make sure that they are actually the same object rather than just having the
-# same value
+# Memastikan bahwa parameter tersebut benar-benar objek yang sama, bukan hanya memiliki nilai yang sama
 print(net[2].weight.data[0] == net[4].weight.data[0])
 ```
 
 ```{.python .input}
 %%tab tensorflow
-# tf.keras behaves a bit differently. It removes the duplicate layer
-# automatically
+# tf.keras berperilaku sedikit berbeda. Ini secara otomatis menghapus layer duplikat
 shared = tf.keras.layers.Dense(4, activation=tf.nn.relu)
 net = tf.keras.models.Sequential([
     tf.keras.layers.Flatten(),
@@ -309,14 +310,13 @@ net = tf.keras.models.Sequential([
 ])
 
 net(X)
-# Check whether the parameters are different
+# Memeriksa apakah parameter-parameter berbeda
 print(len(net.layers) == 3)
 ```
 
 ```{.python .input}
 %%tab jax
-# We need to give the shared layer a name so that we can refer to its
-# parameters
+# Kita perlu memberi nama pada layer yang akan dibagikan agar kita bisa merujuk ke parameternya
 shared = nn.Dense(8)
 net = nn.Sequential([nn.Dense(8), nn.relu,
                      shared, nn.relu,
@@ -325,51 +325,51 @@ net = nn.Sequential([nn.Dense(8), nn.relu,
 
 params = net.init(jax.random.PRNGKey(d2l.get_seed()), X)
 
-# Check whether the parameters are different
+# Memeriksa apakah parameter-parameter berbeda
 print(len(params['params']) == 3)
 ```
 
-This example shows that the parameters
-of the second and third layer are tied.
-They are not just equal, they are
-represented by the same exact tensor.
-Thus, if we change one of the parameters,
-the other one changes, too.
+Contoh ini menunjukkan bahwa parameter
+dari lapisan kedua dan ketiga terikat.
+Parameter-parameter tersebut tidak hanya sama, tetapi
+diwakili oleh tensor yang sama persis.
+Dengan demikian, jika kita mengubah salah satu dari parameter tersebut,
+parameter yang lain juga ikut berubah.
 
 :begin_tab:`mxnet, pytorch, tensorflow`
-You might wonder,
-when parameters are tied
-what happens to the gradients?
-Since the model parameters contain gradients,
-the gradients of the second hidden layer
-and the third hidden layer are added together
-during backpropagation.
+Anda mungkin bertanya-tanya,
+ketika parameter-parameter terikat,
+apa yang terjadi pada gradiennya?
+Karena parameter model mengandung gradien,
+gradien dari lapisan tersembunyi kedua
+dan lapisan tersembunyi ketiga akan dijumlahkan
+selama proses backpropagation.
 :end_tab:
 
 
-## Summary
+## Ringkasan
 
-We have several ways of accessing and tying model parameters.
+Kita memiliki beberapa cara untuk mengakses dan mengikat parameter model.
 
 
-## Exercises
+## Latihan
 
-1. Use the `NestMLP` model defined in :numref:`sec_model_construction` and access the parameters of the various layers.
-1. Construct an MLP containing a shared parameter layer and train it. During the training process, observe the model parameters and gradients of each layer.
-1. Why is sharing parameters a good idea?
+1. Gunakan model `NestMLP` yang didefinisikan dalam :numref:`sec_model_construction` dan akses parameter dari berbagai lapisan.
+2. Bangun sebuah MLP yang mengandung lapisan parameter bersama dan latih model tersebut. Selama proses pelatihan, amati parameter model dan gradien dari setiap lapisan.
+3. Mengapa berbagi parameter merupakan ide yang baik?
 
 :begin_tab:`mxnet`
-[Discussions](https://discuss.d2l.ai/t/56)
+[Diskusi](https://discuss.d2l.ai/t/56)
 :end_tab:
 
 :begin_tab:`pytorch`
-[Discussions](https://discuss.d2l.ai/t/57)
+[Diskusi](https://discuss.d2l.ai/t/57)
 :end_tab:
 
 :begin_tab:`tensorflow`
-[Discussions](https://discuss.d2l.ai/t/269)
+[Diskusi](https://discuss.d2l.ai/t/269)
 :end_tab:
 
 :begin_tab:`jax`
-[Discussions](https://discuss.d2l.ai/t/17990)
+[Diskusi](https://discuss.d2l.ai/t/17990)
 :end_tab:
