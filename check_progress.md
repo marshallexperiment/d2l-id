@@ -65,14 +65,14 @@
 
 # 6 - chapter_builders-guide
 
-- [ ] ./chapter_builders-guide/parameters.md
-- [ ] ./chapter_builders-guide/lazy-init.md
-- [ ] ./chapter_builders-guide/custom-layer.md
-- [ ] ./chapter_builders-guide/init-param.md
-- [ ] ./chapter_builders-guide/read-write.md
-- [ ] ./chapter_builders-guide/use-gpu.md
-- [ ] ./chapter_builders-guide/index.md
-- [ ] ./chapter_builders-guide/model-construction.md
+- [x] ./chapter_builders-guide/parameters.md
+- [x] ./chapter_builders-guide/lazy-init.md
+- [x] ./chapter_builders-guide/custom-layer.md
+- [x] ./chapter_builders-guide/init-param.md
+- [x] ./chapter_builders-guide/read-write.md
+- [x] ./chapter_builders-guide/use-gpu.md
+- [x] ./chapter_builders-guide/index.md
+- [x] ./chapter_builders-guide/model-construction.md
 
 # 7 - chapter_convolutional-neural-networks
 
