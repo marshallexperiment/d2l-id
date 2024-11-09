@@ -5,19 +5,20 @@ tab.interact_select(['mxnet', 'pytorch', 'tensorflow', 'jax'])
 
 # File I/O
 
-So far we have discussed how to process data and how
-to build, train, and test deep learning models.
-However, at some point we will hopefully be happy enough
-with the learned models that we will want
-to save the results for later use in various contexts
-(perhaps even to make predictions in deployment).
-Additionally, when running a long training process,
-the best practice is to periodically save intermediate results (checkpointing)
-to ensure that we do not lose several days' worth of computation
-if we trip over the power cord of our server.
-Thus it is time to learn how to load and store
-both individual weight vectors and entire models.
-This section addresses both issues.
+Sejauh ini kita telah membahas bagaimana memproses data dan bagaimana
+membangun, melatih, serta menguji model deep learning.
+Namun, pada titik tertentu kita semoga akan cukup puas
+dengan model yang telah dilatih dan ingin
+menyimpan hasilnya untuk digunakan nanti dalam berbagai konteks
+(bahkan mungkin untuk membuat prediksi dalam proses deployment).
+Selain itu, saat menjalankan proses pelatihan yang panjang,
+praktik terbaik adalah secara berkala menyimpan hasil antara (checkpointing)
+untuk memastikan bahwa kita tidak kehilangan hasil komputasi selama beberapa hari
+jika tiba-tiba daya server kita terputus.
+Maka, inilah saatnya untuk mempelajari cara memuat dan menyimpan
+baik vektor bobot individual maupun keseluruhan model.
+Bagian ini membahas kedua hal tersebut.
+
 
 ```{.python .input}
 %%tab mxnet
@@ -49,13 +50,14 @@ import jax
 from jax import numpy as jnp
 ```
 
-## (**Loading and Saving Tensors**)
+## (**Memuat dan Menyimpan Tensor**)
 
-For individual tensors, we can directly
-invoke the `load` and `save` functions
-to read and write them respectively.
-Both functions require that we supply a name,
-and `save` requires as input the variable to be saved.
+Untuk tensor individual, kita dapat langsung
+memanggil fungsi `load` dan `save`
+untuk membacanya dan menulisnya masing-masing.
+Kedua fungsi ini memerlukan kita memberikan sebuah nama,
+dan `save` membutuhkan input berupa variabel yang akan disimpan.
+
 
 ```{.python .input}
 %%tab mxnet
@@ -81,7 +83,7 @@ x = jnp.arange(4)
 jnp.save('x-file.npy', x)
 ```
 
-We can now read the data from the stored file back into memory.
+Kita sekarang dapat membaca data dari file yang tersimpan kembali ke dalam memori.
 
 ```{.python .input}
 %%tab mxnet
@@ -107,7 +109,7 @@ x2 = jnp.load('x-file.npy', allow_pickle=True)
 x2
 ```
 
-We can [**store a list of tensors and read them back into memory.**]
+Kita dapat [**menyimpan daftar tensor dan membacanya kembali ke dalam memori.**]
 
 ```{.python .input}
 %%tab mxnet
@@ -141,10 +143,11 @@ x2, y2 = jnp.load('xy-files.npy', allow_pickle=True)
 (x2, y2)
 ```
 
-We can even [**write and read a dictionary that maps
-from strings to tensors.**]
-This is convenient when we want
-to read or write all the weights in a model.
+Kita bahkan dapat [**menulis dan membaca dictionary yang memetakan
+dari string ke tensor.**]
+Ini sangat berguna ketika kita ingin
+membaca atau menulis semua bobot dalam sebuah model.
+
 
 ```{.python .input}
 %%tab mxnet
@@ -178,25 +181,26 @@ mydict2 = jnp.load('mydict.npy', allow_pickle=True)
 mydict2
 ```
 
-## [**Loading and Saving Model Parameters**]
+## [**Memuat dan Menyimpan Parameter Model**]
 
-Saving individual weight vectors (or other tensors) is useful,
-but it gets very tedious if we want to save
-(and later load) an entire model.
-After all, we might have hundreds of
-parameter groups sprinkled throughout.
-For this reason the deep learning framework provides built-in functionalities
-to load and save entire networks.
-An important detail to note is that this
-saves model *parameters* and not the entire model.
-For example, if we have a 3-layer MLP,
-we need to specify the architecture separately.
-The reason for this is that the models themselves can contain arbitrary code,
-hence they cannot be serialized as naturally.
-Thus, in order to reinstate a model, we need
-to generate the architecture in code
-and then load the parameters from disk.
-(**Let's start with our familiar MLP.**)
+Menyimpan vektor bobot individual (atau tensor lainnya) sangat berguna,
+tetapi bisa menjadi sangat membosankan jika kita ingin menyimpan
+(dan kemudian memuat) keseluruhan model.
+Lagi pula, kita mungkin memiliki ratusan
+kelompok parameter yang tersebar di seluruh model.
+Untuk alasan ini, framework deep learning menyediakan fungsi bawaan
+untuk memuat dan menyimpan keseluruhan jaringan.
+Detail penting yang perlu diperhatikan adalah bahwa ini
+menyimpan *parameter* model dan bukan keseluruhan model.
+Misalnya, jika kita memiliki MLP 3-lapisan,
+kita perlu menentukan arsitekturnya secara terpisah.
+Alasannya adalah karena model itu sendiri dapat berisi kode sembarang,
+sehingga tidak bisa diserialisasi dengan alami.
+Jadi, untuk mengembalikan model, kita perlu
+membuat arsitektur dalam kode
+dan kemudian memuat parameter dari disk.
+(**Mari kita mulai dengan MLP yang sudah kita kenal.**)
+
 
 ```{.python .input}
 %%tab mxnet
@@ -265,7 +269,7 @@ X = jax.random.normal(jax.random.PRNGKey(d2l.get_seed()), (2, 20))
 Y, params = net.init_with_output(jax.random.PRNGKey(d2l.get_seed()), X)
 ```
 
-Next, we [**store the parameters of the model as a file**] with the name "mlp.params".
+Selanjutnya, kita [**menyimpan parameter model sebagai sebuah file**] dengan nama "mlp.params".
 
 ```{.python .input}
 %%tab mxnet
@@ -287,10 +291,10 @@ net.save_weights('mlp.params')
 checkpoints.save_checkpoint('ckpt_dir', params, step=1, overwrite=True)
 ```
 
-To recover the model, we instantiate a clone
-of the original MLP model.
-Instead of randomly initializing the model parameters,
-we [**read the parameters stored in the file directly**].
+Untuk memulihkan model, kita membuat instans dari
+model MLP asli.
+Alih-alih menginisialisasi parameter model secara acak,
+kita [**membaca parameter yang disimpan dalam file secara langsung**].
 
 ```{.python .input}
 %%tab mxnet
@@ -334,30 +338,30 @@ Y_clone = clone.apply(cloned_params, X)
 Y_clone == Y
 ```
 
-## Summary
+## Ringkasan
 
-The `save` and `load` functions can be used to perform file I/O for tensor objects.
-We can save and load the entire sets of parameters for a network via a parameter dictionary.
-Saving the architecture has to be done in code rather than in parameters.
+Fungsi `save` dan `load` dapat digunakan untuk melakukan operasi I/O file untuk objek tensor.
+Kita dapat menyimpan dan memuat seluruh set parameter untuk jaringan melalui dictionary parameter.
+Menyimpan arsitektur harus dilakukan dalam kode, bukan dalam parameter.
 
-## Exercises
+## Latihan
 
-1. Even if there is no need to deploy trained models to a different device, what are the practical benefits of storing model parameters?
-1. Assume that we want to reuse only parts of a network to be incorporated into a network having a different architecture. How would you go about using, say the first two layers from a previous network in a new network?
-1. How would you go about saving the network architecture and parameters? What restrictions would you impose on the architecture?
+1. Meskipun tidak ada kebutuhan untuk melakukan deployment model terlatih ke perangkat lain, apa manfaat praktis dari menyimpan parameter model?
+2. Misalkan kita ingin menggunakan kembali hanya sebagian dari sebuah jaringan untuk dimasukkan ke dalam jaringan dengan arsitektur yang berbeda. Bagaimana cara Anda menggunakan, misalnya, dua lapisan pertama dari jaringan sebelumnya dalam jaringan baru?
+3. Bagaimana Anda akan menyimpan arsitektur jaringan dan parameternya? Batasan apa yang akan Anda terapkan pada arsitektur tersebut?
 
 :begin_tab:`mxnet`
-[Discussions](https://discuss.d2l.ai/t/60)
+[Diskusi](https://discuss.d2l.ai/t/60)
 :end_tab:
 
 :begin_tab:`pytorch`
-[Discussions](https://discuss.d2l.ai/t/61)
+[Diskusi](https://discuss.d2l.ai/t/61)
 :end_tab:
 
 :begin_tab:`tensorflow`
-[Discussions](https://discuss.d2l.ai/t/327)
+[Diskusi](https://discuss.d2l.ai/t/327)
 :end_tab:
 
 :begin_tab:`jax`
-[Discussions](https://discuss.d2l.ai/t/17994)
+[Diskusi](https://discuss.d2l.ai/t/17994)
 :end_tab:
