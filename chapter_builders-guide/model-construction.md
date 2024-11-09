@@ -3,96 +3,92 @@
 tab.interact_select(['mxnet', 'pytorch', 'tensorflow', 'jax'])
 ```
 
-# Layers and Modules
+# Lapisan dan Modul
 :label:`sec_model_construction`
 
-When we first introduced neural networks,
-we focused on linear models with a single output.
-Here, the entire model consists of just a single neuron.
-Note that a single neuron
-(i) takes some set of inputs;
-(ii) generates a corresponding scalar output;
-and (iii) has a set of associated parameters that can be updated
-to optimize some objective function of interest.
-Then, once we started thinking about networks with multiple outputs,
-we leveraged vectorized arithmetic
-to characterize an entire layer of neurons.
-Just like individual neurons,
-layers (i) take a set of inputs,
-(ii) generate corresponding outputs,
-and (iii) are described by a set of tunable parameters.
-When we worked through softmax regression,
-a single layer was itself the model.
-However, even when we subsequently
-introduced MLPs,
-we could still think of the model as
-retaining this same basic structure.
+Saat pertama kali memperkenalkan jaringan neural,
+kita berfokus pada model linear dengan satu keluaran.
+Di sini, keseluruhan model hanya terdiri dari satu neuron.
+Perhatikan bahwa satu neuron
+(i) menerima beberapa input;
+(ii) menghasilkan keluaran skalar yang sesuai;
+dan (iii) memiliki sekumpulan parameter terkait yang dapat diperbarui
+untuk mengoptimalkan fungsi tujuan tertentu.
+Kemudian, ketika kita mulai berpikir tentang jaringan dengan banyak keluaran,
+kita memanfaatkan aritmatika vektorisasi
+untuk mencirikan seluruh lapisan neuron.
+Seperti halnya neuron individual,
+lapisan (i) menerima sejumlah input,
+(ii) menghasilkan keluaran yang sesuai,
+dan (iii) dijelaskan oleh serangkaian parameter yang dapat disesuaikan.
+Saat kita membahas regresi softmax,
+sebuah lapisan tunggal menjadi model itu sendiri.
+Namun, bahkan ketika kita kemudian memperkenalkan MLP,
+kita masih dapat menganggap model
+memiliki struktur dasar yang sama.
 
-Interestingly, for MLPs,
-both the entire model and its constituent layers
-share this structure.
-The entire model takes in raw inputs (the features),
-generates outputs (the predictions),
-and possesses parameters
-(the combined parameters from all constituent layers).
-Likewise, each individual layer ingests inputs
-(supplied by the previous layer)
-generates outputs (the inputs to the subsequent layer),
-and possesses a set of tunable parameters that are updated
-according to the signal that flows backwards
-from the subsequent layer.
+Menariknya, pada MLP,
+baik model secara keseluruhan maupun lapisan-lapisannya
+memiliki struktur ini.
+Keseluruhan model menerima input mentah (fitur),
+menghasilkan keluaran (prediksi),
+dan memiliki parameter
+(gabungan parameter dari semua lapisan penyusunnya).
+Demikian juga, setiap lapisan individual menerima input
+(diberikan oleh lapisan sebelumnya),
+menghasilkan keluaran (input untuk lapisan berikutnya),
+dan memiliki sekumpulan parameter yang dapat disesuaikan yang diperbarui
+sesuai dengan sinyal yang mengalir mundur
+dari lapisan berikutnya.
 
+Meskipun mungkin Anda berpikir bahwa neuron, lapisan, dan model
+memberikan cukup banyak abstraksi untuk kebutuhan kita,
+ternyata sering kali lebih nyaman
+untuk berbicara tentang komponen yang
+lebih besar dari satu lapisan tetapi lebih kecil dari keseluruhan model.
+Sebagai contoh, arsitektur ResNet-152,
+yang sangat populer di bidang visi komputer,
+memiliki ratusan lapisan.
+Lapisan-lapisan ini terdiri dari pola berulang *kelompok lapisan*. Mengimplementasikan jaringan seperti itu satu lapisan pada satu waktu dapat menjadi sangat melelahkan.
+Kekhawatiran ini bukan sekadar hipotetis—pola desain seperti ini umum digunakan dalam praktik.
+Arsitektur ResNet yang disebutkan di atas
+memenangkan kompetisi visi komputer ImageNet dan COCO 2015
+baik untuk pengenalan maupun deteksi :cite:`He.Zhang.Ren.ea.2016`
+dan tetap menjadi arsitektur pilihan untuk banyak tugas visi komputer.
+Arsitektur serupa, di mana lapisan-lapisan diatur
+dalam berbagai pola berulang,
+sekarang tersebar luas di bidang lain,
+termasuk pemrosesan bahasa alami dan pengenalan suara.
 
-While you might think that neurons, layers, and models
-give us enough abstractions to go about our business,
-it turns out that we often find it convenient
-to speak about components that are
-larger than an individual layer
-but smaller than the entire model.
-For example, the ResNet-152 architecture,
-which is wildly popular in computer vision,
-possesses hundreds of layers.
-These layers consist of repeating patterns of *groups of layers*. Implementing such a network one layer at a time can grow tedious.
-This concern is not just hypothetical---such
-design patterns are common in practice.
-The ResNet architecture mentioned above
-won the 2015 ImageNet and COCO computer vision competitions
-for both recognition and detection :cite:`He.Zhang.Ren.ea.2016`
-and remains a go-to architecture for many vision tasks.
-Similar architectures in which layers are arranged
-in various repeating patterns
-are now ubiquitous in other domains,
-including natural language processing and speech.
+Untuk mengimplementasikan jaringan yang kompleks ini,
+kita memperkenalkan konsep *modul* jaringan neural.
+Sebuah modul bisa menggambarkan satu lapisan,
+komponen yang terdiri dari beberapa lapisan,
+atau keseluruhan model itu sendiri!
+Salah satu manfaat bekerja dengan abstraksi modul
+adalah modul-modul ini dapat digabungkan menjadi artefak yang lebih besar,
+sering kali secara rekursif. Hal ini diilustrasikan pada :numref:`fig_blocks`. Dengan mendefinisikan kode untuk menghasilkan modul
+dengan kompleksitas apa pun sesuai permintaan,
+kita bisa menulis kode yang sangat ringkas
+namun tetap dapat mengimplementasikan jaringan neural yang kompleks.
 
-To implement these complex networks,
-we introduce the concept of a neural network *module*.
-A module could describe a single layer,
-a component consisting of multiple layers,
-or the entire model itself!
-One benefit of working with the module abstraction
-is that they can be combined into larger artifacts,
-often recursively. This is illustrated in :numref:`fig_blocks`. By defining code to generate modules
-of arbitrary complexity on demand,
-we can write surprisingly compact code
-and still implement complex neural networks.
-
-![Multiple layers are combined into modules, forming repeating patterns of larger models.](../img/blocks.svg)
+![Beberapa lapisan digabungkan menjadi modul, membentuk pola berulang dari model yang lebih besar.](../img/blocks.svg)
 :label:`fig_blocks`
 
+Dari sudut pandang pemrograman, modul direpresentasikan oleh *kelas*.
+Setiap subclass dari modul ini harus mendefinisikan metode forward propagation
+yang mengubah input menjadi output
+dan harus menyimpan parameter yang diperlukan.
+Perhatikan bahwa beberapa modul tidak memerlukan parameter sama sekali.
+Terakhir, modul harus memiliki metode backpropagation,
+untuk keperluan menghitung gradien.
+Untungnya, berkat beberapa mekanisme di balik layar
+yang disediakan oleh auto differentiation
+(diperkenalkan pada :numref:`sec_autograd`),
+saat mendefinisikan modul kita sendiri,
+kita hanya perlu memikirkan parameter
+dan metode forward propagation.
 
-From a programming standpoint, a module is represented by a *class*.
-Any subclass of it must define a forward propagation method
-that transforms its input into output
-and must store any necessary parameters.
-Note that some modules do not require any parameters at all.
-Finally a module must possess a backpropagation method,
-for purposes of calculating gradients.
-Fortunately, due to some behind-the-scenes magic
-supplied by the auto differentiation
-(introduced in :numref:`sec_autograd`)
-when defining our own module,
-we only need to worry about parameters
-and the forward propagation method.
 
 ```{.python .input}
 %%tab mxnet
@@ -122,14 +118,15 @@ import jax
 from jax import numpy as jnp
 ```
 
-[**To begin, we revisit the code
-that we used to implement MLPs**]
+[**Untuk memulai, kita meninjau kembali kode
+yang kita gunakan untuk mengimplementasikan MLP**]
 (:numref:`sec_mlp`).
-The following code generates a network
-with one fully connected hidden layer
-with 256 units and ReLU activation,
-followed by a fully connected output layer
-with ten units (no activation function).
+Kode berikut menghasilkan jaringan
+dengan satu lapisan tersembunyi fully connected
+dengan 256 unit dan aktivasi ReLU,
+diikuti oleh lapisan output fully connected
+dengan sepuluh unit (tanpa fungsi aktivasi).
+
 
 ```{.python .input}
 %%tab mxnet
@@ -165,98 +162,96 @@ net(X).shape
 %%tab jax
 net = nn.Sequential([nn.Dense(256), nn.relu, nn.Dense(10)])
 
-# get_key is a d2l saved function returning jax.random.PRNGKey(random_seed)
+# get_key adalah fungsi yang disimpan d2l yang mengembalikan jax.random.PRNGKey(random_seed)
 X = jax.random.uniform(d2l.get_key(), (2, 20))
 params = net.init(d2l.get_key(), X)
 net.apply(params, X).shape
 ```
 
 :begin_tab:`mxnet`
-In this example, we constructed
-our model by instantiating an `nn.Sequential`,
-assigning the returned object to the `net` variable.
-Next, we repeatedly call its `add` method,
-appending layers in the order
-that they should be executed.
-In short, `nn.Sequential` defines a special kind of `Block`,
-the class that presents a *module* in Gluon.
-It maintains an ordered list of constituent `Block`s.
-The `add` method simply facilitates
-the addition of each successive `Block` to the list.
-Note that each layer is an instance of the `Dense` class
-which is itself a subclass of `Block`.
-The forward propagation (`forward`) method is also remarkably simple:
-it chains each `Block` in the list together,
-passing the output of each as input to the next.
-Note that until now, we have been invoking our models
-via the construction `net(X)` to obtain their outputs.
-This is actually just shorthand for `net.forward(X)`,
-a slick Python trick achieved via
-the `Block` class's `__call__` method.
+Dalam contoh ini, kita membangun
+model dengan menginstansiasi `nn.Sequential`,
+dan menetapkan objek yang dikembalikan ke variabel `net`.
+Selanjutnya, kita berulang kali memanggil metode `add`,
+menambahkan lapisan-lapisan dalam urutan
+yang seharusnya dijalankan.
+Singkatnya, `nn.Sequential` mendefinisikan jenis `Block` khusus,
+kelas yang merepresentasikan *modul* dalam Gluon.
+Ini mempertahankan daftar berurutan dari `Block`-`Block` penyusunnya.
+Metode `add` memudahkan
+penambahan setiap `Block` berturut-turut ke dalam daftar.
+Perhatikan bahwa setiap lapisan adalah instance dari kelas `Dense`
+yang merupakan subclass dari `Block`.
+Metode forward propagation (`forward`) juga sangat sederhana:
+ia merangkaikan setiap `Block` dalam daftar,
+mengirimkan output dari satu sebagai input ke yang berikutnya.
+Perhatikan bahwa hingga sekarang, kita telah memanggil model
+melalui konstruksi `net(X)` untuk mendapatkan outputnya.
+Ini sebenarnya adalah singkatan dari `net.forward(X)`,
+trik Python yang rapi yang dicapai melalui
+metode `__call__` pada kelas `Block`.
 :end_tab:
 
 :begin_tab:`pytorch`
-In this example, we constructed
-our model by instantiating an `nn.Sequential`, with layers in the order
-that they should be executed passed as arguments.
-In short, (**`nn.Sequential` defines a special kind of `Module`**),
-the class that presents a module in PyTorch.
-It maintains an ordered list of constituent `Module`s.
-Note that each of the two fully connected layers is an instance of the `Linear` class
-which is itself a subclass of `Module`.
-The forward propagation (`forward`) method is also remarkably simple:
-it chains each module in the list together,
-passing the output of each as input to the next.
-Note that until now, we have been invoking our models
-via the construction `net(X)` to obtain their outputs.
-This is actually just shorthand for `net.__call__(X)`.
+Dalam contoh ini, kita membangun
+model dengan menginstansiasi `nn.Sequential`, dengan lapisan-lapisan yang akan dieksekusi sesuai urutan yang diberikan sebagai argumen.
+Singkatnya, (**`nn.Sequential` mendefinisikan jenis `Module` khusus**),
+kelas yang merepresentasikan modul dalam PyTorch.
+Ini mempertahankan daftar berurutan dari `Module`-`Module` penyusunnya.
+Perhatikan bahwa kedua lapisan fully connected adalah instance dari kelas `Linear`
+yang merupakan subclass dari `Module`.
+Metode forward propagation (`forward`) juga sangat sederhana:
+ia merangkaikan setiap modul dalam daftar,
+mengirimkan output dari satu sebagai input ke yang berikutnya.
+Perhatikan bahwa hingga sekarang, kita telah memanggil model
+melalui konstruksi `net(X)` untuk mendapatkan outputnya.
+Ini sebenarnya adalah singkatan dari `net.__call__(X)`.
 :end_tab:
 
 :begin_tab:`tensorflow`
-In this example, we constructed
-our model by instantiating an `keras.models.Sequential`, with layers in the order
-that they should be executed passed as arguments.
-In short, `Sequential` defines a special kind of `keras.Model`,
-the class that presents a module in Keras.
-It maintains an ordered list of constituent `Model`s.
-Note that each of the two fully connected layers is an instance of the `Dense` class
-which is itself a subclass of `Model`.
-The forward propagation (`call`) method is also remarkably simple:
-it chains each module in the list together,
-passing the output of each as input to the next.
-Note that until now, we have been invoking our models
-via the construction `net(X)` to obtain their outputs.
-This is actually just shorthand for `net.call(X)`,
-a slick Python trick achieved via
-the module class's `__call__` method.
+Dalam contoh ini, kita membangun
+model dengan menginstansiasi `keras.models.Sequential`, dengan lapisan-lapisan yang akan dieksekusi sesuai urutan yang diberikan sebagai argumen.
+Singkatnya, `Sequential` mendefinisikan jenis `keras.Model` khusus,
+kelas yang merepresentasikan modul dalam Keras.
+Ini mempertahankan daftar berurutan dari `Model`-`Model` penyusunnya.
+Perhatikan bahwa kedua lapisan fully connected adalah instance dari kelas `Dense`
+yang merupakan subclass dari `Model`.
+Metode forward propagation (`call`) juga sangat sederhana:
+ia merangkaikan setiap modul dalam daftar,
+mengirimkan output dari satu sebagai input ke yang berikutnya.
+Perhatikan bahwa hingga sekarang, kita telah memanggil model
+melalui konstruksi `net(X)` untuk mendapatkan outputnya.
+Ini sebenarnya adalah singkatan dari `net.call(X)`,
+trik Python yang rapi yang dicapai melalui
+metode `__call__` pada kelas modul.
 :end_tab:
 
-## [**A Custom Module**]
 
-Perhaps the easiest way to develop intuition
-about how a module works
-is to implement one ourselves.
-Before we do that,
-we briefly summarize the basic functionality
-that each module must provide:
+## [**Modul Kustom**]
 
+Mungkin cara termudah untuk mengembangkan intuisi
+tentang bagaimana modul bekerja
+adalah dengan mengimplementasikannya sendiri.
+Sebelum kita melakukannya,
+kami akan merangkum secara singkat fungsionalitas dasar
+yang harus disediakan oleh setiap modul:
 
-1. Ingest input data as arguments to its forward propagation method.
-1. Generate an output by having the forward propagation method return a value. Note that the output may have a different shape from the input. For example, the first fully connected layer in our model above ingests an input of arbitrary dimension but returns an output of dimension 256.
-1. Calculate the gradient of its output with respect to its input, which can be accessed via its backpropagation method. Typically this happens automatically.
-1. Store and provide access to those parameters necessary
-   for executing the forward propagation computation.
-1. Initialize model parameters as needed.
+1. Mengambil data input sebagai argumen untuk metode forward propagation-nya.
+2. Menghasilkan output dengan mengembalikan nilai dari metode forward propagation. Perhatikan bahwa output mungkin memiliki bentuk berbeda dari input. Misalnya, lapisan fully connected pertama dalam model kita di atas menerima input berdimensi sembarang tetapi mengembalikan output dengan dimensi 256.
+3. Menghitung gradien dari output terhadap input, yang dapat diakses melalui metode backpropagation-nya. Biasanya ini terjadi secara otomatis.
+4. Menyimpan dan menyediakan akses ke parameter-parameter yang diperlukan
+   untuk menjalankan perhitungan forward propagation.
+5. Menginisialisasi parameter model sesuai kebutuhan.
 
+Dalam cuplikan berikut,
+kami membuat modul dari awal
+yang sesuai dengan MLP
+dengan satu lapisan tersembunyi berisi 256 unit,
+dan lapisan output berdimensi 10.
+Perhatikan bahwa kelas `MLP` di bawah ini mewarisi kelas yang merepresentasikan modul.
+Kami sangat bergantung pada metode-metode dari kelas induk,
+dengan hanya menyediakan konstruktor kita sendiri (`__init__` dalam Python) dan metode forward propagation.
 
-In the following snippet,
-we code up a module from scratch
-corresponding to an MLP
-with one hidden layer with 256 hidden units,
-and a 10-dimensional output layer.
-Note that the `MLP` class below inherits the class that represents a module.
-We will heavily rely on the parent class's methods,
-supplying only our own constructor (the `__init__` method in Python) and the forward propagation method.
 
 ```{.python .input}
 %%tab mxnet
@@ -268,8 +263,8 @@ class MLP(nn.Block):
         self.hidden = nn.Dense(256, activation='relu')
         self.out = nn.Dense(10)
 
-    # Define the forward propagation of the model, that is, how to return the
-    # required model output based on the input X
+    # Mendefinisikan forward propagation model, yaitu, cara mengembalikan
+    # output model yang diinginkan berdasarkan input X
     def forward(self, X):
         return self.out(self.hidden(X))
 ```
@@ -278,14 +273,14 @@ class MLP(nn.Block):
 %%tab pytorch
 class MLP(nn.Module):
     def __init__(self):
-        # Call the constructor of the parent class nn.Module to perform
-        # the necessary initialization
+        # Memanggil konstruktor dari kelas induk nn.Module untuk melakukan
+        # inisialisasi yang diperlukan
         super().__init__()
         self.hidden = nn.LazyLinear(256)
         self.out = nn.LazyLinear(10)
 
-    # Define the forward propagation of the model, that is, how to return the
-    # required model output based on the input X
+    # Mendefinisikan forward propagation dari model, yaitu, cara mengembalikan
+    # output model yang diinginkan berdasarkan input X
     def forward(self, X):
         return self.out(F.relu(self.hidden(X)))
 ```
@@ -294,14 +289,14 @@ class MLP(nn.Module):
 %%tab tensorflow
 class MLP(tf.keras.Model):
     def __init__(self):
-        # Call the constructor of the parent class tf.keras.Model to perform
-        # the necessary initialization
+        # Memanggil konstruktor dari kelas induk tf.keras.Model untuk melakukan
+        # inisialisasi yang diperlukan
         super().__init__()
         self.hidden = tf.keras.layers.Dense(units=256, activation=tf.nn.relu)
         self.out = tf.keras.layers.Dense(units=10)
 
-    # Define the forward propagation of the model, that is, how to return the
-    # required model output based on the input X
+    # Mendefinisikan forward propagation dari model, yaitu cara mengembalikan
+    # output model yang diinginkan berdasarkan input X
     def call(self, X):
         return self.out(self.hidden((X)))
 ```
@@ -314,42 +309,43 @@ class MLP(nn.Module):
         self.hidden = nn.Dense(256)
         self.out = nn.Dense(10)
 
-    # Define the forward propagation of the model, that is, how to return the
-    # required model output based on the input X
+    # Mendefinisikan forward propagation dari model, yaitu cara mengembalikan
+    # output model yang diinginkan berdasarkan input X
     def __call__(self, X):
         return self.out(nn.relu(self.hidden(X)))
 ```
 
-Let's first focus on the forward propagation method.
-Note that it takes `X` as input,
-calculates the hidden representation
-with the activation function applied,
-and outputs its logits.
-In this `MLP` implementation,
-both layers are instance variables.
-To see why this is reasonable, imagine
-instantiating two MLPs, `net1` and `net2`,
-and training them on different data.
-Naturally, we would expect them
-to represent two different learned models.
+Mari kita fokus terlebih dahulu pada metode forward propagation.
+Perhatikan bahwa metode ini menerima `X` sebagai input,
+menghitung representasi tersembunyi
+dengan fungsi aktivasi yang diterapkan,
+dan menghasilkan output berupa logits.
+Dalam implementasi `MLP` ini,
+kedua lapisan adalah variabel instance.
+Untuk melihat mengapa ini masuk akal, bayangkan
+menginstansiasi dua MLP, `net1` dan `net2`,
+dan melatih mereka pada data yang berbeda.
+Secara alami, kita berharap mereka
+merepresentasikan dua model terlatih yang berbeda.
 
-We [**instantiate the MLP's layers**]
-in the constructor
-(**and subsequently invoke these layers**)
-on each call to the forward propagation method.
-Note a few key details.
-First, our customized `__init__` method
-invokes the parent class's `__init__` method
-via `super().__init__()`
-sparing us the pain of restating
-boilerplate code applicable to most modules.
-We then instantiate our two fully connected layers,
-assigning them to `self.hidden` and `self.out`.
-Note that unless we implement a new layer,
-we need not worry about the backpropagation method
-or parameter initialization.
-The system will generate these methods automatically.
-Let's try this out.
+Kita [**menginstansiasi lapisan-lapisan MLP**]
+di dalam konstruktor
+(**dan kemudian memanggil lapisan-lapisan ini**)
+setiap kali metode forward propagation dipanggil.
+Perhatikan beberapa detail penting.
+Pertama, metode `__init__` yang kita kustomisasi
+memanggil metode `__init__` dari kelas induk
+melalui `super().__init__()`
+sehingga kita tidak perlu menulis ulang
+kode dasar yang berlaku untuk sebagian besar modul.
+Kemudian, kita menginstansiasi dua lapisan fully connected,
+menetapkannya ke `self.hidden` dan `self.out`.
+Perhatikan bahwa kecuali jika kita mengimplementasikan lapisan baru,
+kita tidak perlu khawatir tentang metode backpropagation
+atau inisialisasi parameter.
+Sistem akan menghasilkan metode-metode ini secara otomatis.
+Mari kita coba ini.
+
 
 ```{.python .input}
 %%tab pytorch, mxnet, tensorflow
@@ -366,47 +362,48 @@ params = net.init(d2l.get_key(), X)
 net.apply(params, X).shape
 ```
 
-A key virtue of the module abstraction is its versatility.
-We can subclass a module to create layers
-(such as the fully connected layer class),
-entire models (such as the `MLP` class above),
-or various components of intermediate complexity.
-We exploit this versatility
-throughout the coming chapters,
-such as when addressing
-convolutional neural networks.
+Salah satu keunggulan utama dari abstraksi modul adalah fleksibilitasnya.
+Kita dapat membuat subclass dari modul untuk membuat lapisan
+(seperti kelas fully connected layer),
+keseluruhan model (seperti kelas `MLP` di atas),
+atau berbagai komponen dengan kompleksitas menengah.
+Kita akan memanfaatkan fleksibilitas ini
+di sepanjang bab-bab mendatang,
+seperti saat membahas
+jaringan saraf konvolusional (_convolutional neural networks_).
 
 
-## [**The Sequential Module**]
+## [**Modul Sequential**]
 :label:`subsec_model-construction-sequential`
 
-We can now take a closer look
-at how the `Sequential` class works.
-Recall that `Sequential` was designed
-to daisy-chain other modules together.
-To build our own simplified `MySequential`,
-we just need to define two key methods:
+Sekarang kita dapat melihat lebih dekat
+bagaimana kelas `Sequential` bekerja.
+Ingat bahwa `Sequential` dirancang
+untuk merangkai modul-modul lain secara berurutan.
+Untuk membangun `MySequential` sederhana kita sendiri,
+kita hanya perlu mendefinisikan dua metode kunci:
 
-1. A method for appending modules one by one to a list.
-1. A forward propagation method for passing an input through the chain of modules, in the same order as they were appended.
+1. Metode untuk menambahkan modul satu per satu ke dalam daftar.
+2. Metode forward propagation untuk melewatkan input melalui rantai modul, dalam urutan yang sama dengan ketika modul-modul tersebut ditambahkan.
 
-The following `MySequential` class delivers the same
-functionality of the default `Sequential` class.
+Kelas `MySequential` berikut memberikan fungsi yang sama
+seperti kelas `Sequential` bawaan.
+
 
 ```{.python .input}
 %%tab mxnet
 class MySequential(nn.Block):
     def add(self, block):
-        # Here, block is an instance of a Block subclass, and we assume that
-        # it has a unique name. We save it in the member variable _children of
-        # the Block class, and its type is OrderedDict. When the MySequential
-        # instance calls the initialize method, the system automatically
-        # initializes all members of _children
+        # Di sini, block adalah instance dari subclass Block, dan kita mengasumsikan bahwa
+        # ia memiliki nama yang unik. Kita menyimpannya di dalam variabel anggota _children dari
+        # kelas Block, dan tipe datanya adalah OrderedDict. Ketika instance MySequential
+        # memanggil metode initialize, sistem secara otomatis
+        # menginisialisasi semua anggota dari _children.
         self._children[block.name] = block
 
     def forward(self, X):
-        # OrderedDict guarantees that members will be traversed in the order
-        # they were added
+        # OrderedDict menjamin bahwa anggota akan ditelusuri sesuai urutan
+        # saat mereka ditambahkan.
         for block in self._children.values():
             X = block(X)
         return X
@@ -451,31 +448,32 @@ class MySequential(nn.Module):
 ```
 
 :begin_tab:`mxnet`
-The `add` method adds a single block
-to the ordered dictionary `_children`.
-You might wonder why every Gluon `Block`
-possesses a `_children` attribute
-and why we used it rather than just
-define a Python list ourselves.
-In short the chief advantage of `_children`
-is that during our block's parameter initialization,
-Gluon knows to look inside the `_children`
-dictionary to find sub-blocks whose
-parameters also need to be initialized.
+Metode `add` menambahkan sebuah blok tunggal
+ke dalam dictionary terurut `_children`.
+Anda mungkin bertanya-tanya mengapa setiap `Block` di Gluon
+memiliki atribut `_children`
+dan mengapa kita menggunakannya daripada hanya
+mendefinisikan daftar Python sendiri.
+Singkatnya, keuntungan utama dari `_children`
+adalah bahwa selama inisialisasi parameter blok kita,
+Gluon tahu untuk melihat di dalam dictionary `_children`
+untuk menemukan sub-blok yang
+parameternya juga perlu diinisialisasi.
 :end_tab:
 
 :begin_tab:`pytorch`
-In the `__init__` method, we add every module
-by calling the `add_modules` method. These modules can be accessed by the `children` method at a later date.
-In this way the system knows the added modules,
-and it will properly initialize each module's parameters.
+Dalam metode `__init__`, kita menambahkan setiap modul
+dengan memanggil metode `add_modules`. Modul-modul ini dapat diakses dengan metode `children` di kemudian hari.
+Dengan cara ini, sistem tahu modul-modul yang ditambahkan,
+dan ini akan menginisialisasi parameter setiap modul dengan benar.
 :end_tab:
 
-When our `MySequential`'s forward propagation method is invoked,
-each added module is executed
-in the order in which they were added.
-We can now reimplement an MLP
-using our `MySequential` class.
+Ketika metode forward propagation dari `MySequential` kita dipanggil,
+setiap modul yang ditambahkan dieksekusi
+dalam urutan di mana mereka ditambahkan.
+Sekarang kita dapat mengimplementasikan kembali MLP
+menggunakan kelas `MySequential` kita.
+
 
 ```{.python .input}
 %%tab mxnet
@@ -507,61 +505,61 @@ params = net.init(d2l.get_key(), X)
 net.apply(params, X).shape
 ```
 
-Note that this use of `MySequential`
-is identical to the code we previously wrote
-for the `Sequential` class
-(as described in :numref:`sec_mlp`).
+Perhatikan bahwa penggunaan `MySequential` ini
+identik dengan kode yang sebelumnya kita tulis
+untuk kelas `Sequential`
+(seperti yang dijelaskan pada :numref:`sec_mlp`).
 
 
-## [**Executing Code in the Forward Propagation Method**]
+## [**Menjalankan Kode dalam Metode Forward Propagation**]
 
-The `Sequential` class makes model construction easy,
-allowing us to assemble new architectures
-without having to define our own class.
-However, not all architectures are simple daisy chains.
-When greater flexibility is required,
-we will want to define our own blocks.
-For example, we might want to execute
-Python's control flow within the forward propagation method.
-Moreover, we might want to perform
-arbitrary mathematical operations,
-not simply relying on predefined neural network layers.
+Kelas `Sequential` memudahkan konstruksi model,
+memungkinkan kita untuk menyusun arsitektur baru
+tanpa harus mendefinisikan kelas kita sendiri.
+Namun, tidak semua arsitektur adalah rantai sederhana.
+Ketika fleksibilitas lebih dibutuhkan,
+kita akan ingin mendefinisikan blok kita sendiri.
+Sebagai contoh, kita mungkin ingin mengeksekusi
+aliran kontrol Python dalam metode forward propagation.
+Selain itu, kita mungkin ingin melakukan
+operasi matematika sembarang,
+tidak hanya mengandalkan lapisan jaringan neural yang sudah ditentukan.
 
-You may have noticed that until now,
-all of the operations in our networks
-have acted upon our network's activations
-and its parameters.
-Sometimes, however, we might want to
-incorporate terms
-that are neither the result of previous layers
-nor updatable parameters.
-We call these *constant parameters*.
-Say for example that we want a layer
-that calculates the function
+Anda mungkin telah memperhatikan bahwa hingga sekarang,
+semua operasi dalam jaringan kita
+telah bekerja pada aktivasi jaringan kita
+dan parameter-parameter yang dimilikinya.
+Namun, terkadang kita mungkin ingin
+memasukkan istilah-istilah
+yang bukan hasil dari lapisan sebelumnya
+atau parameter yang dapat diperbarui.
+Kita menyebutnya *parameter konstan*.
+Misalnya, katakanlah kita menginginkan sebuah lapisan
+yang menghitung fungsi
 $f(\mathbf{x},\mathbf{w}) = c \cdot \mathbf{w}^\top \mathbf{x}$,
-where $\mathbf{x}$ is the input, $\mathbf{w}$ is our parameter,
-and $c$ is some specified constant
-that is not updated during optimization.
-So we implement a `FixedHiddenMLP` class as follows.
+di mana $\mathbf{x}$ adalah input, $\mathbf{w}$ adalah parameter kita,
+dan $c$ adalah beberapa konstanta yang ditentukan
+yang tidak diperbarui selama optimisasi.
+Jadi kita mengimplementasikan kelas `FixedHiddenMLP` seperti berikut.
+
 
 ```{.python .input}
 %%tab mxnet
 class FixedHiddenMLP(nn.Block):
     def __init__(self):
         super().__init__()
-        # Random weight parameters created with the get_constant method
-        # are not updated during training (i.e., constant parameters)
+        # Parameter bobot acak yang dibuat dengan metode get_constant
+        # tidak diperbarui selama pelatihan (yaitu, parameter konstan)
         self.rand_weight = self.params.get_constant(
             'rand_weight', np.random.uniform(size=(20, 20)))
         self.dense = nn.Dense(20, activation='relu')
 
     def forward(self, X):
         X = self.dense(X)
-        # Use the created constant parameters, as well as the relu and dot
-        # functions
+        # Gunakan parameter konstan yang telah dibuat, serta fungsi relu dan dot
         X = npx.relu(np.dot(X, self.rand_weight.data()) + 1)
-        # Reuse the fully connected layer. This is equivalent to sharing
-        # parameters with two fully connected layers
+        # Gunakan kembali lapisan fully connected. Ini setara dengan berbagi
+        # parameter antara dua lapisan fully connected
         X = self.dense(X)
         # Control flow
         while np.abs(X).sum() > 1:
@@ -574,16 +572,16 @@ class FixedHiddenMLP(nn.Block):
 class FixedHiddenMLP(nn.Module):
     def __init__(self):
         super().__init__()
-        # Random weight parameters that will not compute gradients and
-        # therefore keep constant during training
+        # Parameter bobot acak yang tidak akan menghitung gradien dan
+        # karena itu tetap konstan selama pelatihan
         self.rand_weight = torch.rand((20, 20))
         self.linear = nn.LazyLinear(20)
 
     def forward(self, X):
         X = self.linear(X)        
         X = F.relu(X @ self.rand_weight + 1)
-        # Reuse the fully connected layer. This is equivalent to sharing
-        # parameters with two fully connected layers
+        # Gunakan kembali lapisan fully connected. Ini setara dengan berbagi
+        # parameter antara dua lapisan fully connected
         X = self.linear(X)
         # Control flow
         while X.abs().sum() > 1:
@@ -597,18 +595,18 @@ class FixedHiddenMLP(tf.keras.Model):
     def __init__(self):
         super().__init__()
         self.flatten = tf.keras.layers.Flatten()
-        # Random weight parameters created with tf.constant are not updated
-        # during training (i.e., constant parameters)
+        # Parameter bobot acak yang dibuat dengan tf.constant tidak diperbarui
+        # selama pelatihan (yaitu, parameter konstan)
         self.rand_weight = tf.constant(tf.random.uniform((20, 20)))
         self.dense = tf.keras.layers.Dense(20, activation=tf.nn.relu)
 
     def call(self, inputs):
         X = self.flatten(inputs)
-        # Use the created constant parameters, as well as the relu and
-        # matmul functions
+        # Gunakan parameter konstan yang telah dibuat, serta fungsi relu dan
+        # matmul
         X = tf.nn.relu(tf.matmul(X, self.rand_weight) + 1)
-        # Reuse the fully connected layer. This is equivalent to sharing
-        # parameters with two fully connected layers
+        # Gunakan kembali lapisan fully connected. Ini setara dengan berbagi
+        # parameter antara dua lapisan fully connected.
         X = self.dense(X)
         # Control flow
         while tf.reduce_sum(tf.math.abs(X)) > 1:
@@ -619,8 +617,8 @@ class FixedHiddenMLP(tf.keras.Model):
 ```{.python .input}
 %%tab jax
 class FixedHiddenMLP(nn.Module):
-    # Random weight parameters that will not compute gradients and
-    # therefore keep constant during training
+    # Parameter bobot acak yang tidak akan menghitung gradien dan
+    # karena itu tetap konstan selama pelatihan.
     rand_weight: jnp.array = jax.random.uniform(d2l.get_key(), (20, 20))
 
     def setup(self):
@@ -629,8 +627,8 @@ class FixedHiddenMLP(nn.Module):
     def __call__(self, X):
         X = self.dense(X)
         X = nn.relu(X @ self.rand_weight + 1)
-        # Reuse the fully connected layer. This is equivalent to sharing
-        # parameters with two fully connected layers
+        # Gunakan kembali lapisan fully connected. Ini setara dengan berbagi
+        # parameter antara dua lapisan fully connected.
         X = self.dense(X)
         # Control flow
         while jnp.abs(X).sum() > 1:
@@ -638,29 +636,30 @@ class FixedHiddenMLP(nn.Module):
         return X.sum()
 ```
 
-In this model,
-we implement a hidden layer whose weights
-(`self.rand_weight`) are initialized randomly
-at instantiation and are thereafter constant.
-This weight is not a model parameter
-and thus it is never updated by backpropagation.
-The network then passes the output of this "fixed" layer
-through a fully connected layer.
+Dalam model ini,
+kami mengimplementasikan lapisan tersembunyi yang bobotnya
+(`self.rand_weight`) diinisialisasi secara acak
+pada saat instansiasi dan kemudian tetap konstan.
+Bobot ini bukan parameter model
+dan karenanya tidak pernah diperbarui oleh backpropagation.
+Jaringan kemudian melewatkan output dari lapisan "tetap" ini
+melalui lapisan fully connected.
 
-Note that before returning the output,
-our model did something unusual.
-We ran a while-loop, testing
-on the condition its $\ell_1$ norm is larger than $1$,
-and dividing our output vector by $2$
-until it satisfied the condition.
-Finally, we returned the sum of the entries in `X`.
-To our knowledge, no standard neural network
-performs this operation.
-Note that this particular operation may not be useful
-in any real-world task.
-Our point is only to show you how to integrate
-arbitrary code into the flow of your
-neural network computations.
+Perhatikan bahwa sebelum mengembalikan output,
+model kami melakukan sesuatu yang tidak biasa.
+Kami menjalankan loop while, menguji
+kondisi bahwa norma $\ell_1$-nya lebih besar dari $1$,
+dan membagi vektor output kami dengan $2$
+hingga memenuhi kondisi tersebut.
+Akhirnya, kami mengembalikan jumlah entri dalam `X`.
+Sejauh yang kami ketahui, tidak ada jaringan neural standar
+yang melakukan operasi ini.
+Perhatikan bahwa operasi khusus ini mungkin tidak berguna
+dalam tugas dunia nyata manapun.
+Poin kami hanya untuk menunjukkan bagaimana mengintegrasikan
+kode sembarang ke dalam alur perhitungan
+neural network Anda.
+
 
 ```{.python .input}
 %%tab pytorch, mxnet, tensorflow
@@ -677,10 +676,11 @@ params = net.init(d2l.get_key(), X)
 net.apply(params, X)
 ```
 
-We can [**mix and match various
-ways of assembling modules together.**]
-In the following example, we nest modules
-in some creative ways.
+Kita dapat [**menggabungkan berbagai cara
+untuk menyusun modul-modul bersama-sama.**]
+Dalam contoh berikut, kita menempatkan modul-modul
+dalam cara yang kreatif.
+
 
 ```{.python .input}
 %%tab mxnet
@@ -754,35 +754,35 @@ params = chimera.init(d2l.get_key(), X)
 chimera.apply(params, X)
 ```
 
-## Summary
+## Ringkasan
 
-Individual layers can be modules.
-Many layers can comprise a module.
-Many modules can comprise a module.
+Lapisan-lapisan individual dapat berupa modul.
+Banyak lapisan dapat membentuk sebuah modul.
+Banyak modul dapat membentuk sebuah modul.
 
-A module can contain code.
-Modules take care of lots of housekeeping, including parameter initialization and backpropagation.
-Sequential concatenations of layers and modules are handled by the `Sequential` module.
+Sebuah modul dapat berisi kode.
+Modul menangani banyak pekerjaan administratif, termasuk inisialisasi parameter dan backpropagation.
+Konkatenasi berurutan dari lapisan dan modul ditangani oleh modul `Sequential`.
 
 
-## Exercises
+## Latihan
 
-1. What kinds of problems will occur if you change `MySequential` to store modules in a Python list?
-1. Implement a module that takes two modules as an argument, say `net1` and `net2` and returns the concatenated output of both networks in the forward propagation. This is also called a *parallel module*.
-1. Assume that you want to concatenate multiple instances of the same network. Implement a factory function that generates multiple instances of the same module and build a larger network from it.
+1. Masalah apa yang akan terjadi jika Anda mengubah `MySequential` untuk menyimpan modul-modul dalam daftar Python?
+2. Implementasikan sebuah modul yang menerima dua modul sebagai argumen, misalnya `net1` dan `net2`, dan mengembalikan output gabungan dari kedua jaringan dalam forward propagation. Ini juga disebut *parallel module*.
+3. Misalkan Anda ingin menggabungkan beberapa instance dari jaringan yang sama. Implementasikan fungsi pembuat (factory function) yang menghasilkan beberapa instance dari modul yang sama dan bangun jaringan yang lebih besar dari modul tersebut.
 
 :begin_tab:`mxnet`
-[Discussions](https://discuss.d2l.ai/t/54)
+[Diskusi](https://discuss.d2l.ai/t/54)
 :end_tab:
 
 :begin_tab:`pytorch`
-[Discussions](https://discuss.d2l.ai/t/55)
+[Diskusi](https://discuss.d2l.ai/t/55)
 :end_tab:
 
 :begin_tab:`tensorflow`
-[Discussions](https://discuss.d2l.ai/t/264)
+[Diskusi](https://discuss.d2l.ai/t/264)
 :end_tab:
 
 :begin_tab:`jax`
-[Discussions](https://discuss.d2l.ai/t/17989)
+[Diskusi](https://discuss.d2l.ai/t/17989)
 :end_tab:
