@@ -6,37 +6,36 @@ tab.interact_select(['mxnet', 'pytorch', 'tensorflow', 'jax'])
 # Pooling
 :label:`sec_pooling`
 
-In many cases our ultimate task asks some global question about the image,
-e.g., *does it contain a cat?* Consequently, the units of our final layer 
-should be sensitive to the entire input.
-By gradually aggregating information, yielding coarser and coarser maps,
-we accomplish this goal of ultimately learning a global representation,
-while keeping all of the advantages of convolutional layers at the intermediate layers of processing.
-The deeper we go in the network,
-the larger the receptive field (relative to the input)
-to which each hidden node is sensitive. Reducing spatial resolution 
-accelerates this process, 
-since the convolution kernels cover a larger effective area. 
+Dalam banyak kasus, tugas akhir kita berkaitan dengan pertanyaan global tentang gambar,
+misalnya, *apakah gambar ini berisi seekor kucing?* Akibatnya, unit pada lapisan akhir 
+harus peka terhadap seluruh input.
+Dengan secara bertahap mengagregasi informasi, menghasilkan representasi peta yang semakin kasar,
+kita mencapai tujuan untuk akhirnya mempelajari representasi global,
+sambil mempertahankan semua keuntungan dari lapisan konvolusi pada lapisan pemrosesan menengah.
+Semakin dalam jaringan, semakin besar receptive field (relatif terhadap input)
+yang dapat dideteksi oleh setiap node tersembunyi. Mengurangi resolusi spasial 
+mempercepat proses ini, 
+karena kernel konvolusi mencakup area efektif yang lebih besar.
 
-Moreover, when detecting lower-level features, such as edges
-(as discussed in :numref:`sec_conv_layer`),
-we often want our representations to be somewhat invariant to translation.
-For instance, if we take the image `X`
-with a sharp delineation between black and white
-and shift the whole image by one pixel to the right,
-i.e., `Z[i, j] = X[i, j + 1]`,
-then the output for the new image `Z` might be vastly different.
-The edge will have shifted by one pixel.
-In reality, objects hardly ever occur exactly at the same place.
-In fact, even with a tripod and a stationary object,
-vibration of the camera due to the movement of the shutter
-might shift everything by a pixel or so
-(high-end cameras are loaded with special features to address this problem).
+Selain itu, ketika mendeteksi fitur level rendah, seperti tepi
+(seperti yang dibahas di :numref:`sec_conv_layer`),
+kita sering kali menginginkan representasi kita agak invarian terhadap translasi.
+Misalnya, jika kita mengambil gambar `X`
+dengan batas tajam antara hitam dan putih
+dan menggeser seluruh gambar satu piksel ke kanan,
+yaitu, `Z[i, j] = X[i, j + 1]`,
+maka output untuk gambar baru `Z` bisa sangat berbeda.
+Tepi akan bergeser satu piksel.
+Pada kenyataannya, objek hampir tidak pernah muncul tepat di tempat yang sama.
+Bahkan dengan tripod dan objek yang tidak bergerak,
+getaran kamera akibat gerakan shutter
+dapat menggeser semuanya sekitar satu piksel
+(kamera kelas atas dilengkapi dengan fitur khusus untuk mengatasi masalah ini).
 
-This section introduces *pooling layers*,
-which serve the dual purposes of
-mitigating the sensitivity of convolutional layers to location
-and of spatially downsampling representations.
+Bagian ini memperkenalkan *lapisan pooling*,
+yang berfungsi untuk dua tujuan:
+mengurangi sensitivitas lapisan konvolusi terhadap lokasi
+dan melakukan downsampling secara spasial pada representasi.
 
 ```{.python .input}
 %%tab mxnet
@@ -61,47 +60,46 @@ import jax
 from jax import numpy as jnp
 ```
 
-## Maximum Pooling and Average Pooling
+## Maximum Pooling dan Average Pooling
 
-Like convolutional layers, *pooling* operators
-consist of a fixed-shape window that is slid over
-all regions in the input according to its stride,
-computing a single output for each location traversed
-by the fixed-shape window (sometimes known as the *pooling window*).
-However, unlike the cross-correlation computation
-of the inputs and kernels in the convolutional layer,
-the pooling layer contains no parameters (there is no *kernel*).
-Instead, pooling operators are deterministic,
-typically calculating either the maximum or the average value
-of the elements in the pooling window.
-These operations are called *maximum pooling* (*max-pooling* for short)
-and *average pooling*, respectively.
+Seperti pada lapisan konvolusi, operator *pooling*
+terdiri dari jendela berbentuk tetap yang digeser
+ke seluruh wilayah pada input sesuai dengan stride-nya,
+menghitung satu output untuk setiap lokasi yang dilalui
+oleh jendela berbentuk tetap (kadang dikenal sebagai *pooling window*).
+Namun, berbeda dengan perhitungan cross-correlation
+antara input dan kernel pada lapisan konvolusi,
+lapisan pooling tidak memiliki parameter (tidak ada *kernel*).
+Sebaliknya, operator pooling bersifat deterministik,
+biasanya menghitung nilai maksimum atau rata-rata
+dari elemen-elemen dalam pooling window.
+Operasi ini disebut *maximum pooling* (disingkat *max-pooling*)
+dan *average pooling*, masing-masing.
 
-*Average pooling* is essentially as old as CNNs. The idea is akin to 
-downsampling an image. Rather than just taking the value of every second (or third) 
-pixel for the lower resolution image, we can average over adjacent pixels to obtain 
-an image with better signal-to-noise ratio since we are combining the information 
-from multiple adjacent pixels. *Max-pooling* was introduced in 
-:citet:`Riesenhuber.Poggio.1999` in the context of cognitive neuroscience to describe 
-how information aggregation might be aggregated hierarchically for the purpose 
-of object recognition; there already was an earlier version in speech recognition :cite:`Yamaguchi.Sakamoto.Akabane.ea.1990`. In almost all cases, max-pooling, as it is also referred to, 
-is preferable to average pooling. 
+*Average pooling* sudah ada sejak awal kemunculan CNN. Idenya mirip dengan 
+downsampling pada gambar. Daripada hanya mengambil nilai setiap piksel kedua (atau ketiga) 
+untuk gambar beresolusi lebih rendah, kita dapat menghitung rata-rata dari piksel yang berdekatan untuk mendapatkan 
+gambar dengan rasio sinyal terhadap noise yang lebih baik karena kita menggabungkan informasi 
+dari beberapa piksel yang berdekatan. *Max-pooling* diperkenalkan dalam 
+:citet:`Riesenhuber.Poggio.1999` dalam konteks ilmu saraf kognitif untuk menggambarkan 
+bagaimana agregasi informasi mungkin disusun secara hierarkis untuk tujuan 
+pengenalan objek; ada versi sebelumnya dalam pengenalan ucapan :cite:`Yamaguchi.Sakamoto.Akabane.ea.1990`. Dalam hampir semua kasus, max-pooling, seperti juga disebut, lebih disukai daripada average pooling.
 
-In both cases, as with the cross-correlation operator,
-we can think of the pooling window
-as starting from the upper-left of the input tensor
-and sliding across it from left to right and top to bottom.
-At each location that the pooling window hits,
-it computes the maximum or average
-value of the input subtensor in the window,
-depending on whether max or average pooling is employed.
+Pada kedua kasus, seperti pada operator cross-correlation,
+kita dapat menganggap pooling window
+mulai dari kiri atas tensor input
+dan menggesernya dari kiri ke kanan dan dari atas ke bawah.
+Pada setiap lokasi yang dilalui pooling window,
+operator ini menghitung nilai maksimum atau rata-rata
+dari subtensor input dalam jendela,
+tergantung apakah max atau average pooling digunakan.
 
 
-![Max-pooling with a pooling window shape of $2\times 2$. The shaded portions are the first output element as well as the input tensor elements used for the output computation: $\max(0, 1, 3, 4)=4$.](../img/pooling.svg)
+![Max-pooling dengan bentuk pooling window $2\times 2$. Bagian yang diarsir adalah elemen output pertama serta elemen tensor input yang digunakan untuk perhitungan output: $\max(0, 1, 3, 4)=4$.](../img/pooling.svg)
 :label:`fig_pooling`
 
-The output tensor in :numref:`fig_pooling`  has a height of 2 and a width of 2.
-The four elements are derived from the maximum value in each pooling window:
+Tensor output pada :numref:`fig_pooling` memiliki tinggi 2 dan lebar 2.
+Keempat elemen berasal dari nilai maksimum pada setiap pooling window:
 
 $$
 \max(0, 1, 3, 4)=4,\\
@@ -110,24 +108,25 @@ $$
 \max(4, 5, 7, 8)=8.\\
 $$
 
-More generally, we can define a $p \times q$ pooling layer by aggregating over 
-a region of said size. Returning to the problem of edge detection, 
-we use the output of the convolutional layer
-as input for $2\times 2$ max-pooling.
-Denote by `X` the input of the convolutional layer input and `Y` the pooling layer output. 
-Regardless of whether or not the values of `X[i, j]`, `X[i, j + 1]`, 
-`X[i+1, j]` and `X[i+1, j + 1]` are different,
-the pooling layer always outputs `Y[i, j] = 1`.
-That is to say, using the $2\times 2$ max-pooling layer,
-we can still detect if the pattern recognized by the convolutional layer
-moves no more than one element in height or width.
+Secara umum, kita dapat mendefinisikan lapisan pooling $p \times q$ dengan mengagregasi pada 
+wilayah dengan ukuran tersebut. Kembali ke masalah deteksi tepi, 
+kita menggunakan output dari lapisan konvolusi
+sebagai input untuk max-pooling $2\times 2$.
+Misalkan `X` adalah input dari lapisan konvolusi dan `Y` adalah output dari lapisan pooling. 
+Terlepas dari apakah nilai `X[i, j]`, `X[i, j + 1]`, 
+`X[i+1, j]`, dan `X[i+1, j + 1]` berbeda atau tidak,
+lapisan pooling selalu memberikan output `Y[i, j] = 1`.
+Artinya, dengan menggunakan lapisan max-pooling $2\times 2$,
+kita masih dapat mendeteksi jika pola yang dikenali oleh lapisan konvolusi
+bergerak tidak lebih dari satu elemen dalam tinggi atau lebar.
 
-In the code below, we (**implement the forward propagation
-of the pooling layer**) in the `pool2d` function.
-This function is similar to the `corr2d` function
-in :numref:`sec_conv_layer`.
-However, no kernel is needed, computing the output
-as either the maximum or the average of each region in the input.
+Pada kode di bawah ini, kita (**mengimplementasikan forward propagation
+untuk lapisan pooling**) dalam fungsi `pool2d`.
+Fungsi ini mirip dengan fungsi `corr2d`
+pada :numref:`sec_conv_layer`.
+Namun, tidak diperlukan kernel, output dihitung
+sebagai nilai maksimum atau rata-rata dari setiap wilayah pada input.
+
 
 ```{.python .input}
 %%tab mxnet, pytorch
@@ -173,7 +172,7 @@ def pool2d(X, pool_size, mode='max'):
     return Y
 ```
 
-We can construct the input tensor `X` in :numref:`fig_pooling` to [**validate the output of the two-dimensional max-pooling layer**].
+Kita dapat membangun tensor input `X` seperti pada :numref:`fig_pooling` untuk [**memvalidasi output dari lapisan max-pooling dua dimensi**].
 
 ```{.python .input}
 %%tab all
@@ -181,28 +180,29 @@ X = d2l.tensor([[0.0, 1.0, 2.0], [3.0, 4.0, 5.0], [6.0, 7.0, 8.0]])
 pool2d(X, (2, 2))
 ```
 
-Also, we can experiment with (**the average pooling layer**).
+Selain itu, kita dapat bereksperimen dengan (**lapisan average pooling**).
 
 ```{.python .input}
 %%tab all
 pool2d(X, (2, 2), 'avg')
 ```
 
-## [**Padding and Stride**]
+## [**Padding dan Stride**]
 
-As with convolutional layers, pooling layers
-change the output shape.
-And as before, we can adjust the operation to achieve a desired output shape
-by padding the input and adjusting the stride.
-We can demonstrate the use of padding and strides
-in pooling layers via the built-in two-dimensional max-pooling layer from the deep learning framework.
-We first construct an input tensor `X` whose shape has four dimensions,
-where the number of examples (batch size) and number of channels are both 1.
+Seperti pada lapisan konvolusi, lapisan pooling
+mengubah bentuk output.
+Dan seperti sebelumnya, kita dapat menyesuaikan operasi ini untuk mencapai bentuk output yang diinginkan
+dengan menambahkan padding pada input dan mengatur stride.
+Kita dapat mendemonstrasikan penggunaan padding dan stride
+pada lapisan pooling melalui lapisan max-pooling dua dimensi bawaan dari framework deep learning.
+Pertama, kita membuat tensor input `X` dengan bentuk empat dimensi,
+di mana jumlah contoh (ukuran batch) dan jumlah kanal keduanya adalah 1.
 
 :begin_tab:`tensorflow`
-Note that unlike other frameworks, TensorFlow
-prefers and is optimized for *channels-last* input.
+Perhatikan bahwa tidak seperti framework lain, TensorFlow
+lebih menyukai dan dioptimalkan untuk input dengan format *channels-last*.
 :end_tab:
+
 
 ```{.python .input}
 %%tab mxnet, pytorch
@@ -216,37 +216,38 @@ X = d2l.reshape(d2l.arange(16, dtype=d2l.float32), (1, 4, 4, 1))
 X
 ```
 
-Since pooling aggregates information from an area, (**deep learning frameworks default to matching pooling window sizes and stride.**) For instance, if we use a pooling window of shape `(3, 3)`
-we get a stride shape of `(3, 3)` by default.
+Karena pooling mengumpulkan informasi dari suatu area, (**framework deep learning secara default menyamakan ukuran pooling window dan stride.**) Sebagai contoh, 
+jika kita menggunakan pooling window dengan bentuk `(3, 3)`, maka secara default kita mendapatkan stride dengan bentuk `(3, 3)`.
+
 
 ```{.python .input}
 %%tab mxnet
 pool2d = nn.MaxPool2D(3)
-# Pooling has no model parameters, hence it needs no initialization
+# Pooling tidak memiliki parameter model, sehingga tidak memerlukan inisialisasi
 pool2d(X)
 ```
 
 ```{.python .input}
 %%tab pytorch
 pool2d = nn.MaxPool2d(3)
-# Pooling has no model parameters, hence it needs no initialization
+# Pooling tidak memiliki parameter model, sehingga tidak memerlukan inisialisasi
 pool2d(X)
 ```
 
 ```{.python .input}
 %%tab tensorflow
 pool2d = tf.keras.layers.MaxPool2D(pool_size=[3, 3])
-# Pooling has no model parameters, hence it needs no initialization
+# Pooling tidak memiliki parameter model, sehingga tidak memerlukan inisialisasi
 pool2d(X)
 ```
 
 ```{.python .input}
 %%tab jax
-# Pooling has no model parameters, hence it needs no initialization
+# Pooling tidak memiliki parameter model, sehingga tidak memerlukan inisialisasi
 nn.max_pool(X, window_shape=(3, 3), strides=(3, 3))
 ```
 
-Needless to say, [**the stride and padding can be manually specified**] to override framework defaults if required.
+Perlu dicatat, [**stride dan padding dapat ditentukan secara manual**] untuk mengesampingkan pengaturan default framework jika diperlukan.
 
 ```{.python .input}
 %%tab mxnet
@@ -275,7 +276,7 @@ X_padded = jnp.pad(X, ((0, 0), (1, 0), (1, 0), (0, 0)), mode='constant')
 nn.max_pool(X_padded, window_shape=(3, 3), padding='VALID', strides=(2, 2))
 ```
 
-Of course, we can specify an arbitrary rectangular pooling window with arbitrary height and width respectively, as the example below shows.
+Tentu saja, kita dapat menentukan pooling window berbentuk persegi panjang dengan tinggi dan lebar yang berbeda, seperti yang ditunjukkan pada contoh di bawah ini.
 
 ```{.python .input}
 %%tab mxnet
@@ -306,20 +307,20 @@ X_padded = jnp.pad(X, ((0, 0), (0, 0), (1, 1), (0, 0)), mode='constant')
 nn.max_pool(X_padded, window_shape=(2, 3), strides=(2, 3), padding='VALID')
 ```
 
-## Multiple Channels
+## Beberapa Kanal (_Multiple Channels_)
 
-When processing multi-channel input data,
-[**the pooling layer pools each input channel separately**],
-rather than summing the inputs up over channels
-as in a convolutional layer.
-This means that the number of output channels for the pooling layer
-is the same as the number of input channels.
-Below, we will concatenate tensors `X` and `X + 1`
-on the channel dimension to construct an input with two channels.
+Saat memproses data input dengan beberapa kanal,
+[**lapisan pooling akan melakukan pooling pada setiap kanal input secara terpisah**],
+bukan menjumlahkan input di seluruh kanal
+seperti pada lapisan konvolusi.
+Ini berarti bahwa jumlah kanal output pada lapisan pooling
+sama dengan jumlah kanal input.
+Di bawah ini, kita akan menggabungkan tensor `X` dan `X + 1`
+pada dimensi kanal untuk membentuk input dengan dua kanal.
 
 :begin_tab:`tensorflow`
-Note that this will require a
-concatenation along the last dimension for TensorFlow due to the channels-last syntax.
+Perhatikan bahwa untuk TensorFlow ini akan membutuhkan
+penggabungan pada dimensi terakhir karena sintaks channels-last.
 :end_tab:
 
 ```{.python .input}
@@ -330,12 +331,12 @@ X
 
 ```{.python .input}
 %%tab tensorflow, jax
-# Concatenate along `dim=3` due to channels-last syntax
+# Gabungkan sepanjang `dim=3` karena sintaks channels-last
 X = d2l.concat([X, X + 1], 3)
 X
 ```
 
-As we can see, the number of output channels is still two after pooling.
+Seperti yang dapat kita lihat, jumlah kanal output tetap dua setelah pooling.
 
 ```{.python .input}
 %%tab mxnet
@@ -366,45 +367,44 @@ nn.max_pool(X_padded, window_shape=(3, 3), padding='VALID', strides=(2, 2))
 ```
 
 :begin_tab:`tensorflow`
-Note that the output for the TensorFlow pooling appears at first glance to be different, however
-numerically the same results are presented as MXNet and PyTorch.
-The difference lies in the dimensionality, and reading the
-output vertically yields the same output as the other implementations.
+Perhatikan bahwa output untuk pooling pada TensorFlow pada awalnya tampak berbeda,
+namun secara numerik menghasilkan hasil yang sama seperti MXNet dan PyTorch.
+Perbedaannya terletak pada dimensi, dan membaca
+output secara vertikal memberikan hasil yang sama dengan implementasi lainnya.
 :end_tab:
 
-## Summary
+## Ringkasan
 
-Pooling is an exceedingly simple operation. It does exactly what its name indicates, aggregate results over a window of values. All convolution semantics, such as strides and padding apply in the same way as they did previously. Note that pooling is indifferent to channels, i.e., it leaves the number of channels unchanged and it applies to each channel separately. Lastly, of the two popular pooling choices, max-pooling is preferable to average pooling, as it confers some degree of invariance to output. A popular choice is to pick a pooling window size of $2 \times 2$ to quarter the spatial resolution of output. 
+Pooling adalah operasi yang sangat sederhana. Pooling melakukan persis seperti namanya, yaitu mengagregasi hasil dari jendela nilai. Semua semantik konvolusi, seperti stride dan padding, berlaku dengan cara yang sama seperti sebelumnya. Perlu dicatat bahwa pooling tidak bergantung pada kanal, yaitu, jumlah kanal tidak berubah dan pooling diterapkan pada setiap kanal secara terpisah. Terakhir, dari dua pilihan pooling yang populer, max-pooling lebih disukai daripada average pooling karena memberikan derajat invariansi tertentu terhadap output. Pilihan yang umum adalah menggunakan ukuran pooling window $2 \times 2$ untuk mengurangi resolusi spasial output menjadi seperempatnya.
 
-Note that there are many more ways of reducing resolution beyond pooling. For instance, in stochastic pooling :cite:`Zeiler.Fergus.2013` and fractional max-pooling :cite:`Graham.2014` aggregation is combined with randomization. This can slightly improve the accuracy in some cases. Lastly, as we will see later with the attention mechanism, there are more refined ways of aggregating over outputs, e.g., by using the alignment between a query and representation vectors. 
+Perlu dicatat bahwa ada banyak cara lain untuk mengurangi resolusi selain pooling. Misalnya, dalam stochastic pooling :cite:`Zeiler.Fergus.2013` dan fractional max-pooling :cite:`Graham.2014`, agregasi digabungkan dengan randomisasi. Ini dapat sedikit meningkatkan akurasi dalam beberapa kasus. Terakhir, seperti yang akan kita lihat nanti dengan mekanisme attention, ada cara yang lebih halus untuk melakukan agregasi pada output, misalnya dengan menggunakan penyelarasan antara vektor query dan representasi.
 
 
-## Exercises
+## Latihan
 
-1. Implement average pooling through a convolution. 
-1. Prove that max-pooling cannot be implemented through a convolution alone. 
-1. Max-pooling can be accomplished using ReLU operations, i.e., $\textrm{ReLU}(x) = \max(0, x)$.
-    1. Express $\max (a, b)$ by using only ReLU operations.
-    1. Use this to implement max-pooling by means of convolutions and ReLU layers. 
-    1. How many channels and layers do you need for a $2 \times 2$ convolution? How many for a $3 \times 3$ convolution?
-1. What is the computational cost of the pooling layer? Assume that the input to the pooling layer is of size $c\times h\times w$, the pooling window has a shape of $p_\textrm{h}\times p_\textrm{w}$ with a padding of $(p_\textrm{h}, p_\textrm{w})$ and a stride of $(s_\textrm{h}, s_\textrm{w})$.
-1. Why do you expect max-pooling and average pooling to work differently?
-1. Do we need a separate minimum pooling layer? Can you replace it with another operation?
-1. We could use the softmax operation for pooling. Why might it not be so popular?
+1. Implementasikan average pooling menggunakan konvolusi.
+1. Buktikan bahwa max-pooling tidak dapat diimplementasikan hanya dengan menggunakan konvolusi.
+1. Max-pooling dapat dicapai menggunakan operasi ReLU, yaitu $\textrm{ReLU}(x) = \max(0, x)$.
+    1. Ekspresikan $\max (a, b)$ hanya dengan menggunakan operasi ReLU.
+    1. Gunakan ini untuk mengimplementasikan max-pooling dengan konvolusi dan lapisan ReLU.
+    1. Berapa banyak kanal dan lapisan yang Anda butuhkan untuk konvolusi $2 \times 2$? Berapa banyak untuk konvolusi $3 \times 3$?
+1. Berapa biaya komputasi untuk lapisan pooling? Asumsikan bahwa input ke lapisan pooling berukuran $c\times h\times w$, pooling window memiliki bentuk $p_\textrm{h}\times p_\textrm{w}$ dengan padding $(p_\textrm{h}, p_\textrm{w})$ dan stride $(s_\textrm{h}, s_\textrm{w})$.
+1. Mengapa Anda berharap max-pooling dan average pooling bekerja secara berbeda?
+1. Apakah kita membutuhkan lapisan minimum pooling yang terpisah? Bisakah Anda menggantinya dengan operasi lain?
+1. Kita bisa menggunakan operasi softmax untuk pooling. Mengapa mungkin ini tidak begitu populer?
 
 :begin_tab:`mxnet`
-[Discussions](https://discuss.d2l.ai/t/71)
+[Diskusi](https://discuss.d2l.ai/t/71)
 :end_tab:
 
 :begin_tab:`pytorch`
-[Discussions](https://discuss.d2l.ai/t/72)
+[Diskusi](https://discuss.d2l.ai/t/72)
 :end_tab:
 
 :begin_tab:`tensorflow`
-[Discussions](https://discuss.d2l.ai/t/274)
+[Diskusi](https://discuss.d2l.ai/t/274)
 :end_tab:
 
 :begin_tab:`jax`
-[Discussions](https://discuss.d2l.ai/t/17999)
+[Diskusi](https://discuss.d2l.ai/t/17999)
 :end_tab:
-
