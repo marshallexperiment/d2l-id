@@ -3,43 +3,43 @@
 tab.interact_select(['mxnet', 'pytorch', 'tensorflow', 'jax'])
 ```
 
-# Lazy Initialization
+# Inisialisasi Tertunda (Lazy Initialization)
 :label:`sec_lazy_init`
 
-So far, it might seem that we got away
-with being sloppy in setting up our networks.
-Specifically, we did the following unintuitive things,
-which might not seem like they should work:
+Sejauh ini, mungkin tampak bahwa kita dapat lolos
+dengan sedikit "ceroboh" dalam menyusun jaringan kita.
+Secara spesifik, kita telah melakukan beberapa hal yang tidak intuitif,
+yang mungkin tampak seolah-olah tidak seharusnya berhasil:
 
-* We defined the network architectures
-  without specifying the input dimensionality.
-* We added layers without specifying
-  the output dimension of the previous layer.
-* We even "initialized" these parameters
-  before providing enough information to determine
-  how many parameters our models should contain.
+* Kita mendefinisikan arsitektur jaringan
+  tanpa menentukan dimensi input.
+* Kita menambahkan lapisan tanpa menentukan
+  dimensi output dari lapisan sebelumnya.
+* Kita bahkan "menginisialisasi" parameter-parameter ini
+  sebelum memberikan informasi yang cukup untuk menentukan
+  berapa banyak parameter yang harus dimiliki oleh model kita.
 
-You might be surprised that our code runs at all.
-After all, there is no way the deep learning framework
-could tell what the input dimensionality of a network would be.
-The trick here is that the framework *defers initialization*,
-waiting until the first time we pass data through the model,
-to infer the sizes of each layer on the fly.
+Anda mungkin terkejut bahwa kode kita dapat berjalan sama sekali.
+Bagaimanapun, tidak ada cara bagi framework deep learning
+untuk mengetahui dimensi input dari sebuah jaringan.
+Triknya di sini adalah bahwa framework *menunda inisialisasi*,
+menunggu sampai pertama kali kita melewatkan data melalui model,
+untuk menyimpulkan ukuran setiap lapisan secara langsung.
 
+Di masa mendatang, saat bekerja dengan jaringan saraf konvolusional,
+teknik ini akan menjadi lebih berguna
+karena dimensi input
+(misalnya, resolusi gambar)
+akan mempengaruhi dimensi
+setiap lapisan berikutnya.
+Kemampuan untuk menetapkan parameter
+tanpa perlu mengetahui,
+pada saat menulis kode,
+nilai dimensi tersebut
+dapat sangat menyederhanakan tugas dalam menentukan
+dan kemudian memodifikasi model kita.
+Selanjutnya, kita akan membahas lebih dalam tentang mekanisme inisialisasi.
 
-Later on, when working with convolutional neural networks,
-this technique will become even more convenient
-since the input dimensionality
-(e.g., the resolution of an image)
-will affect the dimensionality
-of each subsequent layer.
-Hence the ability to set parameters
-without the need to know,
-at the time of writing the code,
-the value of the dimension
-can greatly simplify the task of specifying
-and subsequently modifying our models.
-Next, we go deeper into the mechanics of initialization.
 
 ```{.python .input}
 %%tab mxnet
@@ -68,7 +68,7 @@ import jax
 from jax import numpy as jnp
 ```
 
-To begin, let's instantiate an MLP.
+Untuk memulai, mari kita buat sebuah MLP.
 
 ```{.python .input}
 %%tab mxnet
@@ -95,20 +95,21 @@ net = tf.keras.models.Sequential([
 net = nn.Sequential([nn.Dense(256), nn.relu, nn.Dense(10)])
 ```
 
-At this point, the network cannot possibly know
-the dimensions of the input layer's weights
-because the input dimension remains unknown.
+Pada titik ini, jaringan tidak mungkin mengetahui
+dimensi dari bobot lapisan input
+karena dimensi input masih belum diketahui.
 
 :begin_tab:`mxnet, pytorch, tensorflow`
-Consequently the framework has not yet initialized any parameters.
-We confirm by attempting to access the parameters below.
+Akibatnya, framework belum menginisialisasi parameter apa pun.
+Kita dapat mengonfirmasinya dengan mencoba mengakses parameter di bawah ini.
 :end_tab:
 
 :begin_tab:`jax`
-As mentioned in :numref:`subsec_param-access`, parameters and the network definition are decoupled
-in Jax and Flax, and the user handles both manually. Flax models are stateless
-hence there is no `parameters` attribute.
+Seperti disebutkan dalam :numref:`subsec_param-access`, parameter dan definisi jaringan dipisahkan
+di Jax dan Flax, dan pengguna mengelola keduanya secara manual. Model Flax bersifat stateless
+sehingga tidak ada atribut `parameters`.
 :end_tab:
+
 
 ```{.python .input}
 %%tab mxnet
@@ -127,22 +128,23 @@ net[0].weight
 ```
 
 :begin_tab:`mxnet`
-Note that while the parameter objects exist,
-the input dimension to each layer is listed as -1.
-MXNet uses the special value -1 to indicate
-that the parameter dimension remains unknown.
-At this point, attempts to access `net[0].weight.data()`
-would trigger a runtime error stating that the network
-must be initialized before the parameters can be accessed.
-Now let's see what happens when we attempt to initialize
-parameters via the `initialize` method.
+Perhatikan bahwa meskipun objek parameter sudah ada,
+dimensi input untuk setiap lapisan tercantum sebagai -1.
+MXNet menggunakan nilai khusus -1 untuk menunjukkan
+bahwa dimensi parameter masih belum diketahui.
+Pada titik ini, upaya untuk mengakses `net[0].weight.data()`
+akan memicu kesalahan runtime yang menyatakan bahwa jaringan
+harus diinisialisasi sebelum parameter dapat diakses.
+Sekarang mari kita lihat apa yang terjadi ketika kita mencoba
+menginisialisasi parameter melalui metode `initialize`.
 :end_tab:
 
 :begin_tab:`tensorflow`
-Note that each layer objects exist but the weights are empty.
-Using `net.get_weights()` would throw an error since the weights
-have not been initialized yet.
+Perhatikan bahwa setiap objek lapisan sudah ada, tetapi bobotnya masih kosong.
+Menggunakan `net.get_weights()` akan memunculkan error karena bobot
+belum diinisialisasi.
 :end_tab:
+
 
 ```{.python .input}
 %%tab mxnet
@@ -151,16 +153,17 @@ net.collect_params()
 ```
 
 :begin_tab:`mxnet`
-As we can see, nothing has changed.
-When input dimensions are unknown,
-calls to initialize do not truly initialize the parameters.
-Instead, this call registers to MXNet that we wish
-(and optionally, according to which distribution)
-to initialize the parameters.
+Seperti yang kita lihat, tidak ada yang berubah.
+Ketika dimensi input tidak diketahui,
+pemanggilan `initialize` tidak benar-benar menginisialisasi parameter.
+Sebaliknya, pemanggilan ini mendaftarkan ke MXNet bahwa kita ingin
+(dan opsional, sesuai distribusi tertentu)
+menginisialisasi parameter.
 :end_tab:
 
-Next let's pass data through the network
-to make the framework finally initialize parameters.
+Selanjutnya, mari kita masukkan data ke dalam jaringan
+agar framework akhirnya menginisialisasi parameter.
+
 
 ```{.python .input}
 %%tab mxnet
@@ -191,38 +194,39 @@ params = net.init(d2l.get_key(), jnp.zeros((2, 20)))
 jax.tree_util.tree_map(lambda x: x.shape, params).tree_flatten_with_keys()
 ```
 
-As soon as we know the input dimensionality,
-20,
-the framework can identify the shape of the first layer's weight matrix by plugging in the value of 20.
-Having recognized the first layer's shape, the framework proceeds
-to the second layer,
-and so on through the computational graph
-until all shapes are known.
-Note that in this case,
-only the first layer requires lazy initialization,
-but the framework initializes sequentially.
-Once all parameter shapes are known,
-the framework can finally initialize the parameters.
+Begitu kita mengetahui dimensi input,
+yaitu 20,
+framework dapat mengidentifikasi bentuk matriks bobot lapisan pertama dengan memasukkan nilai 20.
+Setelah mengenali bentuk lapisan pertama, framework melanjutkan
+ke lapisan kedua,
+dan seterusnya melalui grafik komputasi
+hingga semua bentuk diketahui.
+Perhatikan bahwa dalam kasus ini,
+hanya lapisan pertama yang memerlukan inisialisasi tertunda (lazy initialization),
+tetapi framework tetap menginisialisasi secara berurutan.
+Setelah semua bentuk parameter diketahui,
+framework akhirnya dapat menginisialisasi parameter.
 
 :begin_tab:`pytorch`
-The following method
-passes in dummy inputs
-through the network
-for a dry run
-to infer all parameter shapes
-and subsequently initializes the parameters.
-It will be used later when default random initializations are not desired.
+Metode berikut
+memasukkan input dummy
+melalui jaringan
+untuk simulasi awal
+untuk menyimpulkan semua bentuk parameter
+dan kemudian menginisialisasi parameter-parameter tersebut.
+Metode ini akan digunakan nanti saat inisialisasi acak default tidak diinginkan.
 :end_tab:
 
 :begin_tab:`jax`
-Parameter initialization in Flax is always done manually and handled by the
-user. The following method takes a dummy input and a key dictionary as argument.
-This key dictionary has the rngs for initializing the model parameters
-and dropout rng for generating the dropout mask for the models with
-dropout layers. More about dropout will be covered later in :numref:`sec_dropout`.
-Ultimately the method initializes the model returning the parameters.
-We have been using it under the hood in the previous sections as well.
+Inisialisasi parameter dalam Flax selalu dilakukan secara manual dan ditangani oleh
+pengguna. Metode berikut menerima input dummy dan sebuah dictionary kunci sebagai argumen.
+Dictionary kunci ini memiliki rng untuk menginisialisasi parameter model
+dan rng dropout untuk menghasilkan masker dropout bagi model dengan
+lapisan dropout. Lebih lanjut tentang dropout akan dibahas di :numref:`sec_dropout`.
+Pada akhirnya, metode ini menginisialisasi model dan mengembalikan parameter-parameter.
+Kita telah menggunakannya di bagian sebelumnya secara implisit.
 :end_tab:
+
 
 ```{.python .input}
 %%tab pytorch
@@ -241,30 +245,29 @@ def apply_init(self, dummy_input, key):
     return params
 ```
 
-## Summary
+## Ringkasan
 
-Lazy initialization can be convenient, allowing the framework to infer parameter shapes automatically, making it easy to modify architectures and eliminating one common source of errors.
-We can pass data through the model to make the framework finally initialize parameters.
+Inisialisasi tertunda (lazy initialization) dapat menjadi praktis, memungkinkan framework untuk menyimpulkan bentuk parameter secara otomatis, mempermudah modifikasi arsitektur, dan menghilangkan salah satu sumber kesalahan umum.
+Kita dapat memasukkan data melalui model agar framework akhirnya menginisialisasi parameter.
 
+## Latihan
 
-## Exercises
-
-1. What happens if you specify the input dimensions to the first layer but not to subsequent layers? Do you get immediate initialization?
-1. What happens if you specify mismatching dimensions?
-1. What would you need to do if you have input of varying dimensionality? Hint: look at the parameter tying.
+1. Apa yang terjadi jika Anda menentukan dimensi input untuk lapisan pertama tetapi tidak untuk lapisan-lapisan berikutnya? Apakah Anda mendapatkan inisialisasi langsung?
+2. Apa yang terjadi jika Anda menentukan dimensi yang tidak cocok?
+3. Apa yang perlu Anda lakukan jika memiliki input dengan dimensi yang bervariasi? Petunjuk: lihat pada pengikatan parameter (parameter tying).
 
 :begin_tab:`mxnet`
-[Discussions](https://discuss.d2l.ai/t/280)
+[Diskusi](https://discuss.d2l.ai/t/280)
 :end_tab:
 
 :begin_tab:`pytorch`
-[Discussions](https://discuss.d2l.ai/t/8092)
+[Diskusi](https://discuss.d2l.ai/t/8092)
 :end_tab:
 
 :begin_tab:`tensorflow`
-[Discussions](https://discuss.d2l.ai/t/281)
+[Diskusi](https://discuss.d2l.ai/t/281)
 :end_tab:
 
 :begin_tab:`jax`
-[Discussions](https://discuss.d2l.ai/t/17992)
+[Diskusi](https://discuss.d2l.ai/t/17992)
 :end_tab:
