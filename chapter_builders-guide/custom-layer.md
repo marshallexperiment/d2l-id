@@ -3,22 +3,23 @@
 tab.interact_select(['mxnet', 'pytorch', 'tensorflow', 'jax'])
 ```
 
-# Custom Layers
+# Lapisan Kustom
 
-One factor behind deep learning's success
-is the availability of a wide range of layers
-that can be composed in creative ways
-to design architectures suitable
-for a wide variety of tasks.
-For instance, researchers have invented layers
-specifically for handling images, text,
-looping over sequential data,
-and
-performing dynamic programming.
-Sooner or later, you will need
-a layer that does not exist yet in the deep learning framework.
-In these cases, you must build a custom layer.
-In this section, we show you how.
+Salah satu faktor di balik keberhasilan deep learning
+adalah tersedianya berbagai macam lapisan
+yang dapat dikomposisikan secara kreatif
+untuk merancang arsitektur yang sesuai
+untuk berbagai macam tugas.
+Misalnya, para peneliti telah menemukan lapisan-lapisan
+khusus untuk menangani gambar, teks,
+mengulang data berurutan,
+dan
+melakukan pemrograman dinamis.
+Cepat atau lambat, Anda akan membutuhkan
+lapisan yang belum ada di framework deep learning.
+Dalam kasus ini, Anda harus membuat lapisan kustom.
+Pada bagian ini, kami akan menunjukkan caranya.
+
 
 ```{.python .input}
 %%tab mxnet
@@ -50,16 +51,17 @@ import jax
 from jax import numpy as jnp
 ```
 
-## (**Layers without Parameters**)
+## (**Lapisan tanpa Parameter**)
 
-To start, we construct a custom layer
-that does not have any parameters of its own.
-This should look familiar if you recall our
-introduction to modules in :numref:`sec_model_construction`.
-The following `CenteredLayer` class simply
-subtracts the mean from its input.
-To build it, we simply need to inherit
-from the base layer class and implement the forward propagation function.
+Untuk memulai, kita akan membuat lapisan kustom
+yang tidak memiliki parameter sendiri.
+Ini mungkin terlihat familiar jika Anda mengingat
+pengantar modul pada :numref:`sec_model_construction`.
+Kelas `CenteredLayer` berikut ini
+hanya mengurangkan nilai rata-rata dari input-nya.
+Untuk membangunnya, kita hanya perlu mewarisi
+kelas dasar layer dan mengimplementasikan fungsi propagasi maju.
+
 
 ```{.python .input}
 %%tab mxnet
@@ -98,7 +100,7 @@ class CenteredLayer(nn.Module):
         return X - X.mean()
 ```
 
-Let's verify that our layer works as intended by feeding some data through it.
+Mari kita verifikasi bahwa lapisan kita berfungsi sebagaimana mestinya dengan memasukkan beberapa data ke dalamnya.
 
 ```{.python .input}
 %%tab all
@@ -106,8 +108,8 @@ layer = CenteredLayer()
 layer(d2l.tensor([1.0, 2, 3, 4, 5]))
 ```
 
-We can now [**incorporate our layer as a component
-in constructing more complex models.**]
+Kita sekarang dapat [**menggabungkan lapisan kita sebagai komponen
+dalam membangun model yang lebih kompleks.**]
 
 ```{.python .input}
 %%tab mxnet
@@ -131,17 +133,18 @@ net = tf.keras.Sequential([tf.keras.layers.Dense(128), CenteredLayer()])
 net = nn.Sequential([nn.Dense(128), CenteredLayer()])
 ```
 
-As an extra sanity check, we can send random data
-through the network and check that the mean is in fact 0.
-Because we are dealing with floating point numbers,
-we may still see a very small nonzero number
-due to quantization.
+Sebagai pemeriksaan tambahan, kita dapat mengirim data acak
+melalui jaringan dan memeriksa apakah nilai rata-ratanya benar-benar 0.
+Karena kita berurusan dengan angka floating point,
+mungkin masih ada angka kecil yang tidak nol
+karena proses kuantisasi.
 
 :begin_tab:`jax`
-Here we utilize the `init_with_output` method which returns both the output of
-the network as well as the parameters. In this case we only focus on the
+Di sini kita menggunakan metode `init_with_output` yang mengembalikan output dari
+jaringan serta parameter-parameter. Dalam kasus ini kita hanya fokus pada
 output.
 :end_tab:
+
 
 ```{.python .input}
 %%tab pytorch, mxnet
@@ -162,24 +165,25 @@ Y, _ = net.init_with_output(d2l.get_key(), jax.random.uniform(d2l.get_key(),
 Y.mean()
 ```
 
-## [**Layers with Parameters**]
+## [**Lapisan dengan Parameter**]
 
-Now that we know how to define simple layers,
-let's move on to defining layers with parameters
-that can be adjusted through training.
-We can use built-in functions to create parameters, which
-provide some basic housekeeping functionality.
-In particular, they govern access, initialization,
-sharing, saving, and loading model parameters.
-This way, among other benefits, we will not need to write
-custom serialization routines for every custom layer.
+Sekarang setelah kita tahu cara mendefinisikan lapisan sederhana,
+mari kita lanjutkan untuk mendefinisikan lapisan dengan parameter
+yang dapat disesuaikan melalui pelatihan.
+Kita dapat menggunakan fungsi bawaan untuk membuat parameter, yang
+menyediakan beberapa fungsi dasar manajemen parameter.
+Secara khusus, fungsi ini mengatur akses, inisialisasi,
+pembagian, penyimpanan, dan pemuatan parameter model.
+Dengan cara ini, di antara manfaat lainnya, kita tidak perlu menulis
+rutin serialisasi khusus untuk setiap lapisan kustom.
 
-Now let's implement our own version of the  fully connected layer.
-Recall that this layer requires two parameters,
-one to represent the weight and the other for the bias.
-In this implementation, we bake in the ReLU activation as a default.
-This layer requires two input arguments: `in_units` and `units`, which
-denote the number of inputs and outputs, respectively.
+Sekarang mari kita implementasikan versi kita sendiri dari lapisan fully connected.
+Ingat bahwa lapisan ini membutuhkan dua parameter,
+satu untuk merepresentasikan bobot dan satu lagi untuk bias.
+Dalam implementasi ini, kita memasukkan aktivasi ReLU sebagai default.
+Lapisan ini membutuhkan dua argumen input: `in_units` dan `units`, yang
+masing-masing menunjukkan jumlah input dan output.
+
 
 ```{.python .input}
 %%tab mxnet
@@ -245,14 +249,15 @@ class MyDense(nn.Module):
 ```
 
 :begin_tab:`mxnet, tensorflow, jax`
-Next, we instantiate the `MyDense` class
-and access its model parameters.
+Selanjutnya, kita membuat instance dari kelas `MyDense`
+dan mengakses parameter modelnya.
 :end_tab:
 
 :begin_tab:`pytorch`
-Next, we instantiate the `MyLinear` class
-and access its model parameters.
+Selanjutnya, kita membuat instance dari kelas `MyLinear`
+dan mengakses parameter modelnya.
 :end_tab:
+
 
 ```{.python .input}
 %%tab mxnet
@@ -280,7 +285,7 @@ params = dense.init(d2l.get_key(), jnp.zeros((3, 5)))
 params
 ```
 
-We can [**directly carry out forward propagation calculations using custom layers.**]
+Kita dapat [**langsung melakukan perhitungan propagasi maju menggunakan lapisan kustom.**]
 
 ```{.python .input}
 %%tab mxnet
@@ -304,8 +309,8 @@ dense.apply(params, jax.random.uniform(d2l.get_key(),
                                        (2, 5)))
 ```
 
-We can also (**construct models using custom layers.**)
-Once we have that we can use it just like the built-in fully connected layer.
+Kita juga dapat (**membangun model menggunakan lapisan kustom.**)
+Setelah itu, kita dapat menggunakannya seperti lapisan fully connected bawaan.
 
 ```{.python .input}
 %%tab mxnet
@@ -336,31 +341,30 @@ Y, _ = net.init_with_output(d2l.get_key(), jax.random.uniform(d2l.get_key(),
 Y
 ```
 
-## Summary
+## Ringkasan
 
-We can design custom layers via the basic layer class. This allows us to define flexible new layers that behave differently from any existing layers in the library.
-Once defined, custom layers can be invoked in arbitrary contexts and architectures.
-Layers can have local parameters, which can be created through built-in functions.
+Kita dapat merancang lapisan kustom melalui kelas dasar lapisan. Ini memungkinkan kita untuk mendefinisikan lapisan baru yang fleksibel dan berperilaku berbeda dari lapisan apa pun yang ada di dalam pustaka.
+Setelah didefinisikan, lapisan kustom dapat dipanggil dalam konteks dan arsitektur apa pun.
+Lapisan dapat memiliki parameter lokal, yang dapat dibuat melalui fungsi bawaan.
 
+## Latihan
 
-## Exercises
-
-1. Design a layer that takes an input and computes a tensor reduction,
-   i.e., it returns $y_k = \sum_{i, j} W_{ijk} x_i x_j$.
-1. Design a layer that returns the leading half of the Fourier coefficients of the data.
+1. Rancang sebuah lapisan yang menerima input dan menghitung reduksi tensor,
+   yaitu, lapisan tersebut mengembalikan $y_k = \sum_{i, j} W_{ijk} x_i x_j$.
+2. Rancang sebuah lapisan yang mengembalikan setengah koefisien Fourier terdepan dari data.
 
 :begin_tab:`mxnet`
-[Discussions](https://discuss.d2l.ai/t/58)
+[Diskusi](https://discuss.d2l.ai/t/58)
 :end_tab:
 
 :begin_tab:`pytorch`
-[Discussions](https://discuss.d2l.ai/t/59)
+[Diskusi](https://discuss.d2l.ai/t/59)
 :end_tab:
 
 :begin_tab:`tensorflow`
-[Discussions](https://discuss.d2l.ai/t/279)
+[Diskusi](https://discuss.d2l.ai/t/279)
 :end_tab:
 
 :begin_tab:`jax`
-[Discussions](https://discuss.d2l.ai/t/17993)
+[Diskusi](https://discuss.d2l.ai/t/17993)
 :end_tab:
