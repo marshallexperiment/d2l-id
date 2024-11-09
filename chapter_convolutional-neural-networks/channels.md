@@ -3,25 +3,23 @@
 tab.interact_select(['mxnet', 'pytorch', 'tensorflow', 'jax'])
 ```
 
-# Multiple Input and Multiple Output Channels
+# Banyak Kanal Input dan Output
 :label:`sec_channels`
 
-While we described the multiple channels
-that comprise each image (e.g., color images have the standard RGB channels
-to indicate the amount of red, green and blue) and convolutional layers for multiple channels in :numref:`subsec_why-conv-channels`,
-until now, we simplified all of our numerical examples
-by working with just a single input and a single output channel.
-This allowed us to think of our inputs, convolution kernels,
-and outputs each as two-dimensional tensors.
+Meskipun kita telah menjelaskan beberapa kanal yang membentuk setiap gambar (misalnya, gambar berwarna memiliki kanal RGB standar untuk menunjukkan jumlah merah, hijau, dan biru) dan lapisan konvolusi untuk beberapa kanal di :numref:`subsec_why-conv-channels`,
+hingga sekarang, kita menyederhanakan semua contoh numerik kita
+dengan hanya bekerja dengan satu kanal input dan satu kanal output.
+Ini memungkinkan kita memikirkan input, kernel konvolusi,
+dan output masing-masing sebagai tensor dua dimensi.
 
-When we add channels into the mix,
-our inputs and hidden representations
-both become three-dimensional tensors.
-For example, each RGB input image has shape $3\times h\times w$.
-We refer to this axis, with a size of 3, as the *channel* dimension. The notion of
-channels is as old as CNNs themselves: for instance LeNet-5 :cite:`LeCun.Jackel.Bottou.ea.1995` uses them. 
-In this section, we will take a deeper look
-at convolution kernels with multiple input and multiple output channels.
+Ketika kita menambahkan kanal dalam perhitungan,
+input dan representasi tersembunyi kita
+keduanya menjadi tensor tiga dimensi.
+Sebagai contoh, setiap gambar RGB memiliki bentuk $3\times h\times w$.
+Kita merujuk pada sumbu ini, dengan ukuran 3, sebagai dimensi *kanal*. Konsep kanal sudah ada sejak pertama kali CNN diperkenalkan: misalnya, LeNet-5 :cite:`LeCun.Jackel.Bottou.ea.1995` menggunakannya.
+Di bagian ini, kita akan melihat lebih dalam
+pada kernel konvolusi dengan beberapa kanal input dan beberapa kanal output.
+
 
 ```{.python .input}
 %%tab mxnet
@@ -49,63 +47,63 @@ from d2l import tensorflow as d2l
 import tensorflow as tf
 ```
 
-## Multiple Input Channels
+## Multiple Channel Input
 
-When the input data contains multiple channels,
-we need to construct a convolution kernel
-with the same number of input channels as the input data,
-so that it can perform cross-correlation with the input data.
-Assuming that the number of channels for the input data is $c_\textrm{i}$,
-the number of input channels of the convolution kernel also needs to be $c_\textrm{i}$. If our convolution kernel's window shape is $k_\textrm{h}\times k_\textrm{w}$,
-then, when $c_\textrm{i}=1$, we can think of our convolution kernel
-as just a two-dimensional tensor of shape $k_\textrm{h}\times k_\textrm{w}$.
+Ketika data input memiliki beberapa kanal,
+kita perlu membangun kernel konvolusi
+dengan jumlah kanal input yang sama dengan data input,
+sehingga dapat melakukan operasi korelasi silang dengan data input.
+Dengan asumsi bahwa jumlah kanal untuk data input adalah $c_\textrm{i}$,
+maka jumlah kanal input dari kernel konvolusi juga perlu $c_\textrm{i}$. Jika bentuk jendela kernel konvolusi kita adalah $k_\textrm{h}\times k_\textrm{w}$,
+maka, ketika $c_\textrm{i}=1$, kita dapat menganggap kernel konvolusi kita
+sebagai tensor dua dimensi dengan bentuk $k_\textrm{h}\times k_\textrm{w}$.
 
-However, when $c_\textrm{i}>1$, we need a kernel
-that contains a tensor of shape $k_\textrm{h}\times k_\textrm{w}$ for *every* input channel. Concatenating these $c_\textrm{i}$ tensors together
-yields a convolution kernel of shape $c_\textrm{i}\times k_\textrm{h}\times k_\textrm{w}$.
-Since the input and convolution kernel each have $c_\textrm{i}$ channels,
-we can perform a cross-correlation operation
-on the two-dimensional tensor of the input
-and the two-dimensional tensor of the convolution kernel
-for each channel, adding the $c_\textrm{i}$ results together
-(summing over the channels)
-to yield a two-dimensional tensor.
-This is the result of a two-dimensional cross-correlation
-between a multi-channel input and
-a multi-input-channel convolution kernel.
+Namun, ketika $c_\textrm{i}>1$, kita membutuhkan kernel
+yang memiliki tensor berukuran $k_\textrm{h}\times k_\textrm{w}$ untuk *setiap* kanal input. Menggabungkan $c_\textrm{i}$ tensor ini bersama-sama
+menghasilkan kernel konvolusi dengan bentuk $c_\textrm{i}\times k_\textrm{h}\times k_\textrm{w}$.
+Karena input dan kernel konvolusi masing-masing memiliki $c_\textrm{i}$ kanal,
+kita dapat melakukan operasi korelasi silang
+pada tensor dua dimensi dari input
+dan tensor dua dimensi dari kernel konvolusi
+untuk setiap kanal, menambahkan hasil $c_\textrm{i}$ bersama-sama
+(menjumlahkan sepanjang kanal)
+untuk menghasilkan tensor dua dimensi.
+Ini adalah hasil dari korelasi silang dua dimensi
+antara input multi-kanal dan
+kernel konvolusi dengan multi-kanal input.
 
-:numref:`fig_conv_multi_in` provides an example 
-of a two-dimensional cross-correlation with two input channels.
-The shaded portions are the first output element
-as well as the input and kernel tensor elements used for the output computation:
+:numref:`fig_conv_multi_in` memberikan contoh
+korelasi silang dua dimensi dengan dua kanal input.
+Bagian yang diarsir adalah elemen output pertama
+serta elemen tensor input dan kernel yang digunakan untuk perhitungan output:
 $(1\times1+2\times2+4\times3+5\times4)+(0\times0+1\times1+3\times2+4\times3)=56$.
 
-![Cross-correlation computation with two input channels.](../img/conv-multi-in.svg)
+![Perhitungan korelasi silang dengan dua kanal input.](../img/conv-multi-in.svg)
 :label:`fig_conv_multi_in`
 
-
-To make sure we really understand what is going on here,
-we can (**implement cross-correlation operations with multiple input channels**) ourselves.
-Notice that all we are doing is performing a cross-correlation operation
-per channel and then adding up the results.
+Untuk memastikan kita benar-benar memahami apa yang terjadi di sini,
+kita dapat (**mengimplementasikan operasi korelasi silang dengan beberapa kanal input**) sendiri.
+Perhatikan bahwa yang kita lakukan hanyalah melakukan operasi korelasi silang
+untuk setiap kanal dan kemudian menjumlahkan hasilnya.
 
 ```{.python .input}
 %%tab mxnet, pytorch, jax
 def corr2d_multi_in(X, K):
-    # Iterate through the 0th dimension (channel) of K first, then add them up
+    # Iterasi melalui dimensi ke-0 (kanal) dari K terlebih dahulu, kemudian jumlahkan hasilnya
     return sum(d2l.corr2d(x, k) for x, k in zip(X, K))
 ```
 
 ```{.python .input}
 %%tab tensorflow
 def corr2d_multi_in(X, K):
-    # Iterate through the 0th dimension (channel) of K first, then add them up
+    # Iterasi melalui dimensi ke-0 (kanal) dari K terlebih dahulu, kemudian jumlahkan hasilnya
     return tf.reduce_sum([d2l.corr2d(x, k) for x, k in zip(X, K)], axis=0)
 ```
 
-We can construct the input tensor `X` and the kernel tensor `K`
-corresponding to the values in :numref:`fig_conv_multi_in`
-to (**validate the output**) of the cross-correlation operation.
+Kita dapat membangun tensor input `X` dan tensor kernel `K`
+yang sesuai dengan nilai pada :numref:`fig_conv_multi_in`
+untuk (**memvalidasi output**) dari operasi korelasi silang.
+
 
 ```{.python .input}
 %%tab all
@@ -116,55 +114,56 @@ K = d2l.tensor([[[0.0, 1.0], [2.0, 3.0]], [[1.0, 2.0], [3.0, 4.0]]])
 corr2d_multi_in(X, K)
 ```
 
-## Multiple Output Channels
+## Multiple Channel Output
 :label:`subsec_multi-output-channels`
 
-Regardless of the number of input channels,
-so far we always ended up with one output channel.
-However, as we discussed in :numref:`subsec_why-conv-channels`,
-it turns out to be essential to have multiple channels at each layer.
-In the most popular neural network architectures,
-we actually increase the channel dimension
-as we go deeper in the neural network,
-typically downsampling to trade off spatial resolution
-for greater *channel depth*.
-Intuitively, you could think of each channel
-as responding to a different set of features.
-The reality is a bit more complicated than this. A naive interpretation would suggest 
-that representations are learned independently per pixel or per channel. 
-Instead, channels are optimized to be jointly useful.
-This means that rather than mapping a single channel to an edge detector, it may simply mean 
-that some direction in channel space corresponds to detecting edges.
+Terlepas dari jumlah kanal input,
+sejauh ini kita selalu berakhir dengan satu kanal output.
+Namun, seperti yang kita bahas di :numref:`subsec_why-conv-channels`,
+ternyata memiliki beberapa kanal di setiap lapisan adalah penting.
+Pada arsitektur neural network yang paling populer,
+dimensi kanal biasanya ditingkatkan seiring dengan bertambahnya kedalaman jaringan,
+dengan downsampling untuk mengimbangi resolusi spasial
+dengan *kedalaman kanal* yang lebih besar.
+Secara intuitif, kita bisa menganggap setiap kanal
+sebagai respon terhadap serangkaian fitur yang berbeda.
+Kenyataannya sedikit lebih rumit dari ini. Interpretasi naif mungkin menyiratkan 
+bahwa representasi dipelajari secara independen per piksel atau per kanal. 
+Namun, kanal-kanal dioptimalkan untuk menjadi berguna secara bersama-sama.
+Ini berarti bahwa daripada memetakan satu kanal ke detektor tepi, ini mungkin hanya berarti 
+bahwa beberapa arah dalam ruang kanal berkorespondensi dengan pendeteksian tepi.
 
-Denote by $c_\textrm{i}$ and $c_\textrm{o}$ the number
-of input and output channels, respectively,
-and by $k_\textrm{h}$ and $k_\textrm{w}$ the height and width of the kernel.
-To get an output with multiple channels,
-we can create a kernel tensor
-of shape $c_\textrm{i}\times k_\textrm{h}\times k_\textrm{w}$
-for *every* output channel.
-We concatenate them on the output channel dimension,
-so that the shape of the convolution kernel
-is $c_\textrm{o}\times c_\textrm{i}\times k_\textrm{h}\times k_\textrm{w}$.
-In cross-correlation operations,
-the result on each output channel is calculated
-from the convolution kernel corresponding to that output channel
-and takes input from all channels in the input tensor.
+Misalkan $c_\textrm{i}$ dan $c_\textrm{o}$ adalah jumlah
+kanal input dan output, berturut-turut,
+dan $k_\textrm{h}$ dan $k_\textrm{w}$ adalah tinggi dan lebar kernel.
+Untuk mendapatkan output dengan banyak kanal,
+kita bisa membuat tensor kernel
+dengan bentuk $c_\textrm{i}\times k_\textrm{h}\times k_\textrm{w}$
+untuk *setiap* kanal output.
+Kita menggabungkan semua kernel ini pada dimensi kanal output,
+sehingga bentuk kernel konvolusi menjadi
+$c_\textrm{o}\times c_\textrm{i}\times k_\textrm{h}\times k_\textrm{w}$.
+Dalam operasi korelasi silang,
+hasil pada setiap kanal output dihitung
+dari kernel konvolusi yang sesuai dengan kanal output tersebut
+dan mengambil input dari semua kanal dalam tensor input.
 
-We implement a cross-correlation function
-to [**calculate the output of multiple channels**] as shown below.
+Kita mengimplementasikan fungsi korelasi silang
+untuk [**menghitung output dari beberapa kanal**] seperti yang ditunjukkan di bawah ini.
+
 
 ```{.python .input}
 %%tab all
 def corr2d_multi_in_out(X, K):
-    # Iterate through the 0th dimension of K, and each time, perform
-    # cross-correlation operations with input X. All of the results are
-    # stacked together
+    # Iterasi melalui dimensi ke-0 dari K, dan setiap kali, lakukan
+    # operasi korelasi silang dengan input X. Semua hasilnya
+    # ditumpuk bersama
     return d2l.stack([corr2d_multi_in(X, k) for k in K], 0)
 ```
 
-We construct a trivial convolution kernel with three output channels
-by concatenating the kernel tensor for `K` with `K+1` and `K+2`.
+Kita membangun kernel konvolusi sederhana dengan tiga kanal output
+dengan menggabungkan tensor kernel untuk `K` dengan `K+1` dan `K+2`.
+
 
 ```{.python .input}
 %%tab all
@@ -172,63 +171,61 @@ K = d2l.stack((K, K + 1, K + 2), 0)
 K.shape
 ```
 
-Below, we perform cross-correlation operations
-on the input tensor `X` with the kernel tensor `K`.
-Now the output contains three channels.
-The result of the first channel is consistent
-with the result of the previous input tensor `X`
-and the multi-input channel,
-single-output channel kernel.
+Di bawah ini, kita melakukan operasi korelasi silang
+pada tensor input `X` dengan tensor kernel `K`.
+Sekarang output memiliki tiga kanal.
+Hasil pada kanal pertama konsisten
+dengan hasil dari tensor input `X` sebelumnya
+dan kernel dengan banyak kanal input serta satu kanal output.
+
 
 ```{.python .input}
 %%tab all
 corr2d_multi_in_out(X, K)
 ```
 
-## $1\times 1$ Convolutional Layer
+## Lapisan Konvolusi $1\times 1$
 :label:`subsec_1x1`
 
-At first, a [**$1 \times 1$ convolution**], i.e., $k_\textrm{h} = k_\textrm{w} = 1$,
-does not seem to make much sense.
-After all, a convolution correlates adjacent pixels.
-A $1 \times 1$ convolution obviously does not.
-Nonetheless, they are popular operations that are sometimes included
-in the designs of complex deep networks :cite:`Lin.Chen.Yan.2013,Szegedy.Ioffe.Vanhoucke.ea.2017`.
-Let's see in some detail what it actually does.
+Pada awalnya, [**konvolusi $1 \times 1**], yaitu $k_\textrm{h} = k_\textrm{w} = 1$, tampak kurang masuk akal.
+Bagaimanapun, konvolusi biasanya mengkorelasikan piksel yang berdekatan.
+Namun, konvolusi $1 \times 1$ jelas tidak demikian.
+Meski begitu, operasi ini populer dan kadang-kadang dimasukkan
+dalam desain jaringan dalam deep learning yang kompleks :cite:`Lin.Chen.Yan.2013,Szegedy.Ioffe.Vanhoucke.ea.2017`.
+Mari kita lihat secara detail apa yang sebenarnya dilakukan oleh operasi ini.
 
-Because the minimum window is used,
-the $1\times 1$ convolution loses the ability
-of larger convolutional layers
-to recognize patterns consisting of interactions
-among adjacent elements in the height and width dimensions.
-The only computation of the $1\times 1$ convolution occurs
-on the channel dimension.
+Karena menggunakan jendela minimum,
+konvolusi $1\times 1$ kehilangan kemampuan
+lapisan konvolusi yang lebih besar
+untuk mengenali pola yang terdiri dari interaksi
+antara elemen-elemen berdekatan dalam dimensi tinggi dan lebar.
+Satu-satunya perhitungan pada konvolusi $1\times 1$
+terjadi pada dimensi kanal.
 
-:numref:`fig_conv_1x1` shows the cross-correlation computation
-using the $1\times 1$ convolution kernel
-with 3 input channels and 2 output channels.
-Note that the inputs and outputs have the same height and width.
-Each element in the output is derived
-from a linear combination of elements *at the same position*
-in the input image.
-You could think of the $1\times 1$ convolutional layer
-as constituting a fully connected layer applied at every single pixel location
-to transform the $c_\textrm{i}$ corresponding input values into $c_\textrm{o}$ output values.
-Because this is still a convolutional layer,
-the weights are tied across pixel location.
-Thus the $1\times 1$ convolutional layer requires $c_\textrm{o}\times c_\textrm{i}$ weights
-(plus the bias). Also note that convolutional layers are typically followed 
-by nonlinearities. This ensures that $1 \times 1$ convolutions cannot simply be 
-folded into other convolutions. 
+:numref:`fig_conv_1x1` menunjukkan perhitungan korelasi silang
+menggunakan kernel konvolusi $1\times 1$
+dengan 3 kanal input dan 2 kanal output.
+Perhatikan bahwa input dan output memiliki tinggi dan lebar yang sama.
+Setiap elemen pada output dihasilkan
+dari kombinasi linear elemen *pada posisi yang sama*
+dalam gambar input.
+Anda dapat menganggap lapisan konvolusi $1\times 1$
+sebagai lapisan fully connected yang diterapkan pada setiap lokasi piksel,
+untuk mengubah $c_\textrm{i}$ nilai input yang sesuai menjadi $c_\textrm{o}$ nilai output.
+Karena ini masih merupakan lapisan konvolusi,
+bobot digunakan bersama di seluruh lokasi piksel.
+Dengan demikian, lapisan konvolusi $1\times 1$ membutuhkan $c_\textrm{o}\times c_\textrm{i}$ bobot
+(ditambah bias). Selain itu, lapisan konvolusi biasanya diikuti oleh non-linearitas. Ini memastikan bahwa konvolusi $1 \times 1$ tidak dapat begitu saja digabungkan dengan konvolusi lain.
 
-![The cross-correlation computation uses the $1\times 1$ convolution kernel with three input channels and two output channels. The input and output have the same height and width.](../img/conv-1x1.svg)
+![Perhitungan korelasi silang menggunakan kernel konvolusi $1\times 1$ dengan tiga kanal input dan dua kanal output. Input dan output memiliki tinggi dan lebar yang sama.](../img/conv-1x1.svg)
 :label:`fig_conv_1x1`
 
-Let's check whether this works in practice:
-we implement a $1 \times 1$ convolution
-using a fully connected layer.
-The only thing is that we need to make some adjustments
-to the data shape before and after the matrix multiplication.
+Mari kita periksa apakah ini benar-benar berfungsi dalam praktik:
+kita mengimplementasikan konvolusi $1 \times 1$
+menggunakan lapisan fully connected.
+Satu-satunya hal yang perlu kita lakukan adalah menyesuaikan
+bentuk data sebelum dan sesudah perkalian matriks.
+
 
 ```{.python .input}
 %%tab all
@@ -242,9 +239,10 @@ def corr2d_multi_in_out_1x1(X, K):
     return d2l.reshape(Y, (c_o, h, w))
 ```
 
-When performing $1\times 1$ convolutions,
-the above function is equivalent to the previously implemented cross-correlation function `corr2d_multi_in_out`.
-Let's check this with some sample data.
+Ketika melakukan konvolusi $1\times 1$,
+fungsi di atas setara dengan fungsi korelasi silang `corr2d_multi_in_out` yang telah diimplementasikan sebelumnya.
+Mari kita periksa ini dengan beberapa data sampel.
+
 
 ```{.python .input}
 %%tab mxnet, pytorch
@@ -273,50 +271,46 @@ Y2 = corr2d_multi_in_out(X, K)
 assert float(d2l.reduce_sum(d2l.abs(Y1 - Y2))) < 1e-6
 ```
 
-## Discussion
+## Diskusi
 
-Channels allow us to combine the best of both worlds: MLPs that allow for significant nonlinearities and convolutions that allow for *localized* analysis of features. In particular, channels allow the CNN to reason with multiple features, such as edge and shape detectors at the same time. They also offer a practical trade-off between the drastic parameter reduction arising from translation invariance and locality, and the need for expressive and diverse models in computer vision. 
+Kanal memungkinkan kita menggabungkan yang terbaik dari dua dunia: MLP yang memungkinkan non-linearitas signifikan dan konvolusi yang memungkinkan analisis fitur *lokal*. Secara khusus, kanal memungkinkan CNN untuk memproses berbagai fitur secara bersamaan, seperti deteksi tepi dan bentuk. Kanal juga menawarkan keseimbangan praktis antara pengurangan parameter yang drastis akibat translasi invarian dan lokalitas, serta kebutuhan akan model yang ekspresif dan beragam dalam computer vision.
 
-Note, though, that this flexibility comes at a price. Given an image of size $(h \times w)$, the cost for computing a $k \times k$ convolution is $\mathcal{O}(h \cdot w \cdot k^2)$. For $c_\textrm{i}$ and $c_\textrm{o}$ input and output channels respectively this increases to $\mathcal{O}(h \cdot w \cdot k^2 \cdot c_\textrm{i} \cdot c_\textrm{o})$. For a $256 \times 256$ pixel image with a $5 \times 5$ kernel and $128$ input and output channels respectively this amounts to over 53 billion operations (we count multiplications and additions separately). Later on we will encounter effective strategies to cut down on the cost, e.g., by requiring the channel-wise operations to be block-diagonal, leading to architectures such as ResNeXt :cite:`Xie.Girshick.Dollar.ea.2017`. 
+Namun, fleksibilitas ini memiliki harga. Diberikan gambar berukuran $(h \times w)$, biaya untuk menghitung konvolusi $k \times k$ adalah $\mathcal{O}(h \cdot w \cdot k^2)$. Untuk kanal input $c_\textrm{i}$ dan kanal output $c_\textrm{o}$, biaya ini meningkat menjadi $\mathcal{O}(h \cdot w \cdot k^2 \cdot c_\textrm{i} \cdot c_\textrm{o})$. Untuk gambar 256 x 256 piksel dengan kernel 5 x 5 dan masing-masing 128 kanal input dan output, ini menghasilkan lebih dari 53 miliar operasi (dengan perkalian dan penjumlahan dihitung secara terpisah). Nanti, kita akan mempelajari strategi yang efektif untuk mengurangi biaya ini, misalnya, dengan memaksa operasi antar-kanal menjadi berbentuk blok-diagonal, yang menghasilkan arsitektur seperti ResNeXt :cite:`Xie.Girshick.Dollar.ea.2017`.
 
-## Exercises
+## Latihan
 
-1. Assume that we have two convolution kernels of size $k_1$ and $k_2$, respectively 
-   (with no nonlinearity in between).
-    1. Prove that the result of the operation can be expressed by a single convolution.
-    1. What is the dimensionality of the equivalent single convolution?
-    1. Is the converse true, i.e., can you always decompose a convolution into two smaller ones?
-1. Assume an input of shape $c_\textrm{i}\times h\times w$ and a convolution kernel of shape 
-   $c_\textrm{o}\times c_\textrm{i}\times k_\textrm{h}\times k_\textrm{w}$, padding of $(p_\textrm{h}, p_\textrm{w})$, and stride of $(s_\textrm{h}, s_\textrm{w})$.
-    1. What is the computational cost (multiplications and additions) for the forward propagation?
-    1. What is the memory footprint?
-    1. What is the memory footprint for the backward computation?
-    1. What is the computational cost for the backpropagation?
-1. By what factor does the number of calculations increase if we double both the number of input channels 
-   $c_\textrm{i}$ and the number of output channels $c_\textrm{o}$? What happens if we double the padding?
-1. Are the variables `Y1` and `Y2` in the final example of this section exactly the same? Why?
-1. Express convolutions as a matrix multiplication, even when the convolution window is not $1 \times 1$. 
-1. Your task is to implement fast convolutions with a $k \times k$ kernel. One of the algorithm candidates 
-   is to scan horizontally across the source, reading a $k$-wide strip and computing the $1$-wide output strip 
-   one value at a time. The alternative is to read a $k + \Delta$ wide strip and compute a $\Delta$-wide 
-   output strip. Why is the latter preferable? Is there a limit to how large you should choose $\Delta$?
-1. Assume that we have a $c \times c$ matrix. 
-    1. How much faster is it to multiply with a block-diagonal matrix if the matrix is broken up into $b$ blocks?
-    1. What is the downside of having $b$ blocks? How could you fix it, at least partly?
+1. Misalkan kita memiliki dua kernel konvolusi masing-masing berukuran $k_1$ dan $k_2$
+   (tanpa non-linearitas di antaranya).
+    1. Buktikan bahwa hasil operasi ini dapat diekspresikan dengan satu konvolusi tunggal.
+    1. Berapa dimensi konvolusi tunggal yang setara?
+    1. Apakah hal sebaliknya benar, yaitu, bisakah Anda selalu memecah sebuah konvolusi menjadi dua konvolusi yang lebih kecil?
+1. Misalkan input berukuran $c_\textrm{i}\times h\times w$ dan kernel konvolusi berukuran 
+   $c_\textrm{o}\times c_\textrm{i}\times k_\textrm{h}\times k_\textrm{w}$, dengan padding $(p_\textrm{h}, p_\textrm{w})$ dan stride $(s_\textrm{h}, s_\textrm{w})$.
+    1. Berapa biaya komputasi (perkalian dan penjumlahan) untuk propagasi maju?
+    1. Berapa jejak memori yang dibutuhkan?
+    1. Berapa jejak memori untuk komputasi mundur?
+    1. Berapa biaya komputasi untuk backpropagation?
+1. Dengan faktor berapa jumlah perhitungan meningkat jika kita menggandakan jumlah kanal input 
+   $c_\textrm{i}$ dan jumlah kanal output $c_\textrm{o}$? Apa yang terjadi jika kita menggandakan padding?
+1. Apakah variabel `Y1` dan `Y2` dalam contoh akhir bagian ini persis sama? Mengapa?
+1. Ekspresikan konvolusi sebagai perkalian matriks, bahkan ketika jendela konvolusi bukan $1 \times 1$.
+1. Tugas Anda adalah mengimplementasikan konvolusi cepat dengan kernel $k \times k$. Salah satu kandidat algoritma adalah memindai secara horizontal, membaca strip selebar $k$ dan menghitung strip output selebar $1$ satu nilai setiap kali. Alternatifnya adalah membaca strip selebar $k + \Delta$ dan menghitung strip output selebar $\Delta$. Mengapa alternatif kedua lebih disukai? Apakah ada batasan seberapa besar Anda harus memilih $\Delta$?
+1. Misalkan kita memiliki matriks $c \times c$.
+    1. Seberapa cepat perkalian dilakukan dengan matriks blok-diagonal jika matriks dibagi menjadi $b$ blok?
+    1. Apa kekurangan dari memiliki $b$ blok? Bagaimana Anda dapat memperbaikinya, setidaknya sebagian?
 
 :begin_tab:`mxnet`
-[Discussions](https://discuss.d2l.ai/t/69)
+[Diskusi](https://discuss.d2l.ai/t/69)
 :end_tab:
 
 :begin_tab:`pytorch`
-[Discussions](https://discuss.d2l.ai/t/70)
+[Diskusi](https://discuss.d2l.ai/t/70)
 :end_tab:
 
 :begin_tab:`tensorflow`
-[Discussions](https://discuss.d2l.ai/t/273)
+[Diskusi](https://discuss.d2l.ai/t/273)
 :end_tab:
 
 :begin_tab:`jax`
-[Discussions](https://discuss.d2l.ai/t/17998)
+[Diskusi](https://discuss.d2l.ai/t/17998)
 :end_tab:
-
