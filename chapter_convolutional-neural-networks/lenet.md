@@ -6,38 +6,38 @@ tab.interact_select(['mxnet', 'pytorch', 'tensorflow', 'jax'])
 # Convolutional Neural Networks (LeNet)
 :label:`sec_lenet`
 
-We now have all the ingredients required to assemble
-a fully-functional CNN.
-In our earlier encounter with image data, we applied
-a linear model with softmax regression (:numref:`sec_softmax_scratch`)
-and an MLP (:numref:`sec_mlp-implementation`)
-to pictures of clothing in the Fashion-MNIST dataset.
-To make such data amenable we first flattened each image from a $28\times28$ matrix
-into a fixed-length $784$-dimensional vector,
-and thereafter processed them in fully connected layers.
-Now that we have a handle on convolutional layers,
-we can retain the spatial structure in our images.
-As an additional benefit of replacing fully connected layers with convolutional layers,
-we will enjoy more parsimonious models that require far fewer parameters.
+Sekarang kita memiliki semua komponen yang diperlukan untuk merangkai
+sebuah CNN yang berfungsi penuh.
+Dalam pertemuan kita sebelumnya dengan data gambar, kita menerapkan
+model linear dengan regresi softmax (:numref:`sec_softmax_scratch`)
+dan MLP (:numref:`sec_mlp-implementation`)
+untuk gambar pakaian dalam dataset Fashion-MNIST.
+Untuk membuat data tersebut dapat diproses, kita pertama-tama meratakan (flatten) setiap gambar dari matriks $28\times28$
+menjadi vektor berdimensi tetap $784$,
+dan kemudian memprosesnya dalam lapisan fully connected.
+Sekarang, dengan adanya pemahaman tentang lapisan konvolusi,
+kita dapat mempertahankan struktur spasial dalam gambar kita.
+Sebagai keuntungan tambahan dari menggantikan lapisan fully connected dengan lapisan konvolusi,
+kita akan mendapatkan model yang lebih hemat yang memerlukan jauh lebih sedikit parameter.
 
-In this section, we will introduce *LeNet*,
-among the first published CNNs
-to capture wide attention for its performance on computer vision tasks.
-The model was introduced by (and named for) Yann LeCun,
-then a researcher at AT&T Bell Labs,
-for the purpose of recognizing handwritten digits in images :cite:`LeCun.Bottou.Bengio.ea.1998`.
-This work represented the culmination
-of a decade of research developing the technology;
-LeCun's team published the first study to successfully
-train CNNs via backpropagation :cite:`LeCun.Boser.Denker.ea.1989`.
+Di bagian ini, kita akan memperkenalkan *LeNet*,
+salah satu CNN pertama yang dipublikasikan
+dan mendapat perhatian luas berkat performanya dalam tugas-tugas penglihatan komputer.
+Model ini diperkenalkan oleh (dan dinamai untuk) Yann LeCun,
+yang saat itu merupakan peneliti di AT&T Bell Labs,
+untuk tujuan mengenali digit tulisan tangan dalam gambar :cite:`LeCun.Bottou.Bengio.ea.1998`.
+Karya ini merupakan puncak dari satu dekade penelitian dalam pengembangan teknologi tersebut;
+tim LeCun menerbitkan studi pertama yang berhasil
+melatih CNN melalui backpropagation :cite:`LeCun.Boser.Denker.ea.1989`.
 
-At the time LeNet achieved outstanding results
-matching the performance of support vector machines,
-then a dominant approach in supervised learning, achieving an error rate of less than 1% per digit.
-LeNet was eventually adapted to recognize digits
-for processing deposits in ATM machines.
-To this day, some ATMs still run the code
-that Yann LeCun and his colleague Leon Bottou wrote in the 1990s!
+Pada masanya, LeNet mencapai hasil luar biasa
+yang menyaingi kinerja support vector machines,
+yang saat itu merupakan pendekatan dominan dalam pembelajaran terawasi, dengan tingkat kesalahan kurang dari 1% per digit.
+LeNet akhirnya diadaptasi untuk mengenali digit
+untuk memproses setoran di mesin ATM.
+Hingga saat ini, beberapa ATM masih menjalankan kode
+yang ditulis oleh Yann LeCun dan rekannya Leon Bottou pada tahun 1990-an!
+
 
 ```{.python .input}
 %%tab mxnet
@@ -71,58 +71,59 @@ from types import FunctionType
 
 ## LeNet
 
-At a high level, (**LeNet (LeNet-5) consists of two parts:
-(i) a convolutional encoder consisting of two convolutional layers; and
-(ii) a dense block consisting of three fully connected layers**).
-The architecture is summarized in :numref:`img_lenet`.
+Secara umum, (**LeNet (LeNet-5) terdiri dari dua bagian:
+(i) sebuah encoder konvolusi yang terdiri dari dua lapisan konvolusi; dan
+(ii) sebuah blok dense yang terdiri dari tiga lapisan fully connected**).
+Arsitektur ini dirangkum dalam :numref:`img_lenet`.
 
-![Data flow in LeNet. The input is a handwritten digit, the output is a probability over 10 possible outcomes.](../img/lenet.svg)
+![Aliran data dalam LeNet. Inputnya adalah digit tulisan tangan, outputnya adalah probabilitas untuk 10 kemungkinan hasil.](../img/lenet.svg)
 :label:`img_lenet`
 
-The basic units in each convolutional block
-are a convolutional layer, a sigmoid activation function,
-and a subsequent average pooling operation.
-Note that while ReLUs and max-pooling work better,
-they had not yet been discovered.
-Each convolutional layer uses a $5\times 5$ kernel
-and a sigmoid activation function.
-These layers map spatially arranged inputs
-to a number of two-dimensional feature maps, typically
-increasing the number of channels.
-The first convolutional layer has 6 output channels,
-while the second has 16.
-Each $2\times2$ pooling operation (stride 2)
-reduces dimensionality by a factor of $4$ via spatial downsampling.
-The convolutional block emits an output with shape given by
-(batch size, number of channel, height, width).
+Unit dasar dalam setiap blok konvolusi
+adalah lapisan konvolusi, fungsi aktivasi sigmoid,
+dan operasi average pooling berikutnya.
+Perhatikan bahwa meskipun ReLU dan max-pooling bekerja lebih baik,
+mereka belum ditemukan saat itu.
+Setiap lapisan konvolusi menggunakan kernel $5\times 5$
+dan fungsi aktivasi sigmoid.
+Lapisan-lapisan ini memetakan input yang diatur secara spasial
+ke sejumlah feature map dua dimensi, biasanya
+meningkatkan jumlah channel.
+Lapisan konvolusi pertama memiliki 6 output channel,
+sedangkan lapisan kedua memiliki 16.
+Setiap operasi pooling $2\times2$ (stride 2)
+mengurangi dimensi dengan faktor $4$ melalui downsampling spasial.
+Blok konvolusi menghasilkan output dengan bentuk
+(ukuran batch, jumlah channel, tinggi, lebar).
 
-In order to pass output from the convolutional block
-to the dense block,
-we must flatten each example in the minibatch.
-In other words, we take this four-dimensional input and transform it
-into the two-dimensional input expected by fully connected layers:
-as a reminder, the two-dimensional representation that we desire uses the first dimension to index examples in the minibatch
-and the second to give the flat vector representation of each example.
-LeNet's dense block has three fully connected layers,
-with 120, 84, and 10 outputs, respectively.
-Because we are still performing classification,
-the 10-dimensional output layer corresponds
-to the number of possible output classes.
+Agar output dari blok konvolusi dapat diteruskan
+ke blok dense,
+kita harus meratakan (flatten) setiap contoh dalam minibatch.
+Dengan kata lain, kita mengubah input empat dimensi ini menjadi
+input dua dimensi yang diharapkan oleh lapisan fully connected:
+sebagai pengingat, representasi dua dimensi yang kita inginkan menggunakan dimensi pertama untuk mengindeks contoh dalam minibatch
+dan dimensi kedua untuk memberikan representasi vektor datar dari setiap contoh.
+Blok dense LeNet memiliki tiga lapisan fully connected,
+dengan masing-masing 120, 84, dan 10 output.
+Karena kita masih melakukan klasifikasi,
+lapisan output 10 dimensi ini berkorespondensi
+dengan jumlah kelas output yang mungkin.
 
-While getting to the point where you truly understand
-what is going on inside LeNet may have taken a bit of work,
-we hope that the following code snippet will convince you
-that implementing such models with modern deep learning frameworks
-is remarkably simple.
-We need only to instantiate a `Sequential` block
-and chain together the appropriate layers,
-using Xavier initialization as
-introduced in :numref:`subsec_xavier`.
+Meskipun mungkin butuh usaha untuk benar-benar memahami
+apa yang terjadi di dalam LeNet,
+kami harap cuplikan kode berikut akan meyakinkan Anda
+bahwa mengimplementasikan model seperti itu dengan kerangka kerja deep learning modern
+sangatlah sederhana.
+Kita hanya perlu membuat blok `Sequential`
+dan menggabungkan lapisan-lapisan yang sesuai,
+menggunakan inisialisasi Xavier seperti yang
+diperkenalkan di :numref:`subsec_xavier`.
+
 
 ```{.python .input}
 %%tab pytorch
 def init_cnn(module):  #@save
-    """Initialize weights for CNNs."""
+    """Menginisialisasi bobot untuk CNN."""
     if type(module) == nn.Linear or type(module) == nn.Conv2d:
         nn.init.xavier_uniform_(module.weight)
 ```
@@ -130,7 +131,7 @@ def init_cnn(module):  #@save
 ```{.python .input}
 %%tab pytorch, mxnet, tensorflow
 class LeNet(d2l.Classifier):  #@save
-    """The LeNet-5 model."""
+    """Model LeNet-5."""
     def __init__(self, lr=0.1, num_classes=10):
         super().__init__()
         self.save_hyperparameters()
@@ -173,7 +174,7 @@ class LeNet(d2l.Classifier):  #@save
 ```{.python .input}
 %%tab jax
 class LeNet(d2l.Classifier):  #@save
-    """The LeNet-5 model."""
+    """LeNet-5 model."""
     lr: float = 0.1
     num_classes: int = 10
     kernel_init: FunctionType = nn.initializers.xavier_uniform
@@ -197,37 +198,23 @@ class LeNet(d2l.Classifier):  #@save
         ])
 ```
 
-We have taken some liberty in the reproduction of LeNet insofar as we have replaced the Gaussian activation layer by
-a softmax layer. This greatly simplifies the implementation, not least due to the
-fact that the Gaussian decoder is rarely used nowadays. Other than that, this network matches
-the original LeNet-5 architecture.
+Kami telah melakukan beberapa modifikasi dalam reproduksi LeNet sejauh ini, di mana kami menggantikan lapisan aktivasi Gaussian dengan lapisan softmax. Ini sangat menyederhanakan implementasi, 
+terutama karena decoder Gaussian jarang digunakan saat ini. Selain itu, jaringan ini masih sesuai dengan arsitektur asli LeNet-5.
 
 :begin_tab:`pytorch, mxnet, tensorflow`
-Let's see what happens inside the network. By passing a
-single-channel (black and white)
-$28 \times 28$ image through the network
-and printing the output shape at each layer,
-we can [**inspect the model**] to ensure
-that its operations line up with
-what we expect from :numref:`img_lenet_vert`.
+Mari kita lihat apa yang terjadi di dalam jaringan. Dengan melewatkan gambar satu channel (hitam-putih) berukuran
+$28 \times 28$ melalui jaringan dan mencetak bentuk output di setiap lapisan, kita dapat [**memeriksa model**] untuk memastikan bahwa operasinya sesuai dengan yang kita harapkan dari :numref:`img_lenet_vert`.
 :end_tab:
 
 :begin_tab:`jax`
-Let's see what happens inside the network. By passing a
-single-channel (black and white)
-$28 \times 28$ image through the network
-and printing the output shape at each layer,
-we can [**inspect the model**] to ensure
-that its operations line up with
-what we expect from :numref:`img_lenet_vert`.
-Flax provides `nn.tabulate`, a nifty method to summarise the layers and
-parameters in our network. Here we use the `bind` method to create a bounded model.
-The variables are now bound to the `d2l.Module` class, i.e., this bounded model
-becomes a stateful object which can then be used to access the `Sequential`
-object attribute `net` and the `layers` within. Note that the `bind` method should
-only be used for interactive experimentation, and is not a direct
-replacement for the `apply` method.
+Mari kita lihat apa yang terjadi di dalam jaringan. Dengan melewatkan gambar satu channel (hitam-putih) berukuran
+$28 \times 28$ melalui jaringan dan mencetak bentuk output di setiap lapisan, kita dapat [**memeriksa model**] untuk memastikan bahwa operasinya sesuai dengan yang kita harapkan dari :numref:`img_lenet_vert`.
+Flax menyediakan `nn.tabulate`, sebuah metode berguna untuk merangkum lapisan dan parameter dalam jaringan kita. Di sini kita menggunakan metode `bind` untuk membuat model terikat.
+Variabel-variabel sekarang terikat pada kelas `d2l.Module`, yaitu, model terikat ini menjadi objek stateful yang 
+dapat digunakan untuk mengakses atribut objek `Sequential` berupa `net` dan `layers` di dalamnya.
+Perlu dicatat bahwa metode `bind` hanya sebaiknya digunakan untuk eksperimen interaktif, dan bukan merupakan pengganti langsung untuk metode `apply`.
 :end_tab:
+
 
 ![Compressed notation for LeNet-5.](../img/lenet-vert.svg)
 :label:`img_lenet_vert`
@@ -274,47 +261,45 @@ model = LeNet()
 model.layer_summary((1, 28, 28, 1))
 ```
 
-Note that the height and width of the representation
-at each layer throughout the convolutional block
-is reduced (compared with the previous layer).
-The first convolutional layer uses two pixels of padding
-to compensate for the reduction in height and width
-that would otherwise result from using a $5 \times 5$ kernel.
-As an aside, the image size of $28 \times 28$ pixels in the original
-MNIST OCR dataset is a result of *trimming* two pixel rows (and columns) from the
-original scans that measured $32 \times 32$ pixels. This was done primarily to
-save space (a 30% reduction) at a time when megabytes mattered.
+Perhatikan bahwa tinggi dan lebar representasi
+pada setiap lapisan di sepanjang blok konvolusi
+mengalami pengurangan (dibandingkan dengan lapisan sebelumnya).
+Lapisan konvolusi pertama menggunakan padding dua piksel
+untuk mengompensasi pengurangan tinggi dan lebar
+yang akan terjadi jika menggunakan kernel $5 \times 5$ tanpa padding.
+Sebagai informasi tambahan, ukuran gambar $28 \times 28$ piksel pada dataset MNIST OCR asli merupakan hasil *pemotongan* dua baris (dan kolom) piksel dari
+pemindaian asli yang berukuran $32 \times 32$ piksel. Hal ini dilakukan terutama untuk
+menghemat ruang (pengurangan sekitar 30%) pada masa di mana penyimpanan dalam megabyte sangat diperhitungkan.
 
-In contrast, the second convolutional layer forgoes padding,
-and thus the height and width are both reduced by four pixels.
-As we go up the stack of layers,
-the number of channels increases layer-over-layer
-from 1 in the input to 6 after the first convolutional layer
-and 16 after the second convolutional layer.
-However, each pooling layer halves the height and width.
-Finally, each fully connected layer reduces dimensionality,
-finally emitting an output whose dimension
-matches the number of classes.
+Sebaliknya, lapisan konvolusi kedua tidak menggunakan padding,
+sehingga tinggi dan lebar keduanya berkurang sebanyak empat piksel.
+Seiring dengan bertambahnya lapisan,
+jumlah channel meningkat lapis demi lapis
+dari 1 pada input menjadi 6 setelah lapisan konvolusi pertama
+dan 16 setelah lapisan konvolusi kedua.
+Namun, setiap lapisan pooling mengurangi tinggi dan lebar setengahnya.
+Terakhir, setiap lapisan fully connected mengurangi dimensi,
+hingga akhirnya menghasilkan output dengan dimensi
+yang sesuai dengan jumlah kelas.
 
+## Pelatihan
 
-## Training
+Sekarang setelah kita mengimplementasikan modelnya,
+mari kita [**jalankan eksperimen untuk melihat bagaimana performa model LeNet-5 pada Fashion-MNIST**].
 
-Now that we have implemented the model,
-let's [**run an experiment to see how the LeNet-5 model fares on Fashion-MNIST**].
+Meskipun CNN memiliki lebih sedikit parameter,
+mereka bisa tetap lebih mahal secara komputasi
+dibandingkan dengan MLP yang kedalamannya serupa
+karena setiap parameter berpartisipasi dalam lebih banyak
+perkalian.
+Jika Anda memiliki akses ke GPU, ini bisa menjadi waktu yang tepat
+untuk menggunakannya guna mempercepat pelatihan.
+Perlu diperhatikan bahwa
+kelas `d2l.Trainer` menangani semua detail yang diperlukan.
+Secara default, kelas ini menginisialisasi parameter model pada perangkat yang tersedia.
+Seperti halnya dengan MLP, fungsi loss kita adalah cross-entropy,
+dan kita meminimalkannya menggunakan stochastic gradient descent minibatch.
 
-While CNNs have fewer parameters,
-they can still be more expensive to compute
-than similarly deep MLPs
-because each parameter participates in many more
-multiplications.
-If you have access to a GPU, this might be a good time
-to put it into action to speed up training.
-Note that
-the `d2l.Trainer` class takes care of all details.
-By default, it initializes the model parameters on the
-available devices.
-Just as with MLPs, our loss function is cross-entropy,
-and we minimize it via minibatch stochastic gradient descent.
 
 ```{.python .input}
 %%tab pytorch, mxnet, jax
@@ -335,39 +320,39 @@ with d2l.try_gpu():
     trainer.fit(model, data)
 ```
 
-## Summary
+## Ringkasan
 
-We have made significant progress in this chapter. We moved from the MLPs of the 1980s to the CNNs of the 1990s and early 2000s. The architectures proposed, e.g., in the form of LeNet-5 remain meaningful, even to this day. It is worth comparing the error rates on Fashion-MNIST achievable with LeNet-5 both to the very best possible with MLPs (:numref:`sec_mlp-implementation`) and those with significantly more advanced architectures such as ResNet (:numref:`sec_resnet`). LeNet is much more similar to the latter than to the former. One of the primary differences, as we shall see, is that greater amounts of computation enabled significantly more complex architectures.
+Kita telah membuat kemajuan yang signifikan dalam bab ini. Kita beralih dari MLP pada tahun 1980-an ke CNN pada tahun 1990-an dan awal 2000-an. Arsitektur yang diusulkan, misalnya, dalam bentuk LeNet-5, tetap relevan hingga saat ini. Penting untuk membandingkan tingkat kesalahan pada Fashion-MNIST yang dapat dicapai dengan LeNet-5, baik dengan model MLP terbaik (:numref:`sec_mlp-implementation`) maupun dengan arsitektur yang jauh lebih canggih seperti ResNet (:numref:`sec_resnet`). LeNet lebih mirip dengan arsitektur lanjutan daripada dengan MLP. Salah satu perbedaan utama, seperti yang akan kita lihat, adalah bahwa dengan peningkatan komputasi, memungkinkan adanya arsitektur yang jauh lebih kompleks.
 
-A second difference is the relative ease with which we were able to implement LeNet. What used to be an engineering challenge worth months of C++ and assembly code, engineering to improve SN, an early Lisp-based deep learning tool :cite:`Bottou.Le-Cun.1988`, and finally experimentation with models can now be accomplished in minutes. It is this incredible productivity boost that has democratized deep learning model development tremendously. In the next chapter, we will journey down this rabbit hole to see where it takes us.
+Perbedaan kedua adalah kemudahan relatif dalam mengimplementasikan LeNet. Dahulu, ini adalah tantangan rekayasa yang memerlukan berbulan-bulan pemrograman dalam C++ dan kode assembly, mengembangkan SN, alat deep learning berbasis Lisp awal :cite:`Bottou.Le-Cun.1988`, dan akhirnya melakukan eksperimen dengan model. Kini, semua itu dapat dilakukan dalam hitungan menit. Peningkatan produktivitas yang luar biasa ini telah sangat mendemokratisasi pengembangan model deep learning. Dalam bab berikutnya, kita akan melanjutkan perjalanan ini untuk melihat ke mana arah selanjutnya.
 
-## Exercises
+## Latihan
 
-1. Let's modernize LeNet. Implement and test the following changes:
-    1. Replace average pooling with max-pooling.
-    1. Replace the softmax layer with ReLU.
-1. Try to change the size of the LeNet style network to improve its accuracy in addition to max-pooling and ReLU.
-    1. Adjust the convolution window size.
-    1. Adjust the number of output channels.
-    1. Adjust the number of convolution layers.
-    1. Adjust the number of fully connected layers.
-    1. Adjust the learning rates and other training details (e.g., initialization and number of epochs).
-1. Try out the improved network on the original MNIST dataset.
-1. Display the activations of the first and second layer of LeNet for different inputs (e.g., sweaters and coats).
-1. What happens to the activations when you feed significantly different images into the network (e.g., cats, cars, or even random noise)?
+1. Mari modernisasi LeNet. Implementasikan dan uji perubahan berikut:
+    1. Ganti average pooling dengan max-pooling.
+    1. Ganti lapisan softmax dengan ReLU.
+1. Cobalah untuk mengubah ukuran jaringan gaya LeNet untuk meningkatkan akurasinya, selain menggunakan max-pooling dan ReLU.
+    1. Sesuaikan ukuran jendela konvolusi.
+    1. Sesuaikan jumlah output channel.
+    1. Sesuaikan jumlah lapisan konvolusi.
+    1. Sesuaikan jumlah lapisan fully connected.
+    1. Sesuaikan laju pembelajaran (learning rate) dan detail pelatihan lainnya (misalnya, inisialisasi dan jumlah epoch).
+1. Uji jaringan yang telah ditingkatkan pada dataset MNIST asli.
+1. Tampilkan aktivasi dari lapisan pertama dan kedua LeNet untuk input yang berbeda (misalnya, sweater dan jaket).
+1. Apa yang terjadi pada aktivasi ketika Anda memasukkan gambar yang sangat berbeda ke dalam jaringan (misalnya, kucing, mobil, atau bahkan noise acak)?
 
 :begin_tab:`mxnet`
-[Discussions](https://discuss.d2l.ai/t/73)
+[Diskusi](https://discuss.d2l.ai/t/73)
 :end_tab:
 
 :begin_tab:`pytorch`
-[Discussions](https://discuss.d2l.ai/t/74)
+[Diskusi](https://discuss.d2l.ai/t/74)
 :end_tab:
 
 :begin_tab:`tensorflow`
-[Discussions](https://discuss.d2l.ai/t/275)
+[Diskusi](https://discuss.d2l.ai/t/275)
 :end_tab:
 
 :begin_tab:`jax`
-[Discussions](https://discuss.d2l.ai/t/18000)
+[Diskusi](https://discuss.d2l.ai/t/18000)
 :end_tab:
