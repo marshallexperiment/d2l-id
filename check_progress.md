@@ -76,13 +76,13 @@
 
 # 7 - chapter_convolutional-neural-networks
 
-- [ ] ./chapter_convolutional-neural-networks/lenet.md
-- [ ] ./chapter_convolutional-neural-networks/padding-and-strides.md
-- [ ] ./chapter_convolutional-neural-networks/channels.md
-- [ ] ./chapter_convolutional-neural-networks/conv-layer.md
-- [ ] ./chapter_convolutional-neural-networks/index.md
-- [ ] ./chapter_convolutional-neural-networks/why-conv.md
-- [ ] ./chapter_convolutional-neural-networks/pooling.md
+- [x] ./chapter_convolutional-neural-networks/lenet.md
+- [x] ./chapter_convolutional-neural-networks/padding-and-strides.md
+- [x] ./chapter_convolutional-neural-networks/channels.md
+- [x] ./chapter_convolutional-neural-networks/conv-layer.md
+- [x] ./chapter_convolutional-neural-networks/index.md
+- [x] ./chapter_convolutional-neural-networks/why-conv.md
+- [x] ./chapter_convolutional-neural-networks/pooling.md
 
 # 8 - chapter_convolutional-modern
 
