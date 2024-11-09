@@ -3,84 +3,84 @@
 tab.interact_select(['mxnet', 'pytorch', 'tensorflow', 'jax'])
 ```
 
-# GPUs
+# GPU
 :label:`sec_use_gpu`
 
-In :numref:`tab_intro_decade`, we illustrated the rapid growth
-of computation over the past two decades.
-In a nutshell, GPU performance has increased
-by a factor of 1000 every decade since 2000.
-This offers great opportunities but it also suggests
-that there was significant demand for such performance.
+Pada :numref:`tab_intro_decade`, kami mengilustrasikan pertumbuhan pesat
+dalam komputasi selama dua dekade terakhir.
+Secara singkat, performa GPU telah meningkat
+dengan faktor 1000 setiap dekade sejak tahun 2000.
+Ini menawarkan peluang besar, tetapi juga menunjukkan
+bahwa ada permintaan yang signifikan untuk performa semacam itu.
 
+Pada bagian ini, kita mulai membahas bagaimana memanfaatkan
+performa komputasi ini untuk riset Anda.
+Pertama dengan menggunakan satu GPU dan di lain waktu,
+bagaimana menggunakan beberapa GPU dan beberapa server (dengan beberapa GPU).
 
-In this section, we begin to discuss how to harness
-this computational performance for your research.
-First by using a single GPU and at a later point,
-how to use multiple GPUs and multiple servers (with multiple GPUs).
-
-Specifically, we will discuss how
-to use a single NVIDIA GPU for calculations.
-First, make sure you have at least one NVIDIA GPU installed.
-Then, download the [NVIDIA driver and CUDA](https://developer.nvidia.com/cuda-downloads)
-and follow the prompts to set the appropriate path.
-Once these preparations are complete,
-the `nvidia-smi` command can be used
-to (**view the graphics card information**).
+Secara spesifik, kita akan membahas cara
+menggunakan satu GPU NVIDIA untuk perhitungan.
+Pertama, pastikan Anda memiliki setidaknya satu GPU NVIDIA yang terpasang.
+Lalu, unduh [driver NVIDIA dan CUDA](https://developer.nvidia.com/cuda-downloads)
+dan ikuti petunjuknya untuk mengatur path yang sesuai.
+Setelah persiapan ini selesai,
+perintah `nvidia-smi` dapat digunakan
+untuk (**melihat informasi kartu grafis**).
 
 :begin_tab:`mxnet`
-You might have noticed that a MXNet tensor
-looks almost identical to a NumPy `ndarray`.
-But there are a few crucial differences.
-One of the key features that distinguishes MXNet
-from NumPy is its support for diverse hardware devices.
+Anda mungkin menyadari bahwa tensor MXNet
+terlihat hampir identik dengan `ndarray` pada NumPy.
+Namun, ada beberapa perbedaan krusial.
+Salah satu fitur utama yang membedakan MXNet
+dari NumPy adalah dukungannya untuk perangkat keras yang beragam.
 
-In MXNet, every array has a context.
-So far, by default, all variables
-and associated computation
-have been assigned to the CPU.
-Typically, other contexts might be various GPUs.
-Things can get even hairier when
-we deploy jobs across multiple servers.
-By assigning arrays to contexts intelligently,
-we can minimize the time spent
-transferring data between devices.
-For example, when training neural networks on a server with a GPU,
-we typically prefer for the model's parameters to live on the GPU.
+Di MXNet, setiap array memiliki konteks.
+Sejauh ini, secara default, semua variabel
+dan perhitungan terkait
+telah ditetapkan pada CPU.
+Biasanya, konteks lain mungkin adalah berbagai GPU.
+Situasinya bisa menjadi lebih rumit ketika
+kita mendistribusikan pekerjaan di beberapa server.
+Dengan menetapkan array ke konteks secara cerdas,
+kita dapat meminimalkan waktu yang dihabiskan
+untuk mentransfer data antar perangkat.
+Sebagai contoh, saat melatih jaringan saraf di server dengan GPU,
+biasanya kita menginginkan parameter model berada di GPU.
 
-Next, we need to confirm that
-the GPU version of MXNet is installed.
-If a CPU version of MXNet is already installed,
-we need to uninstall it first.
-For example, use the `pip uninstall mxnet` command,
-then install the corresponding MXNet version
-according to your CUDA version.
-Assuming you have CUDA 10.0 installed,
-you can install the MXNet version
-that supports CUDA 10.0 via `pip install mxnet-cu100`.
+Selanjutnya, kita perlu mengonfirmasi bahwa
+versi MXNet untuk GPU sudah terpasang.
+Jika versi CPU MXNet sudah terpasang,
+kita perlu menghapusnya terlebih dahulu.
+Sebagai contoh, gunakan perintah `pip uninstall mxnet`,
+lalu instal versi MXNet yang sesuai
+dengan versi CUDA Anda.
+Misalnya, jika Anda memiliki CUDA 10.0 terpasang,
+Anda dapat memasang versi MXNet
+yang mendukung CUDA 10.0 melalui `pip install mxnet-cu100`.
 :end_tab:
 
 :begin_tab:`pytorch`
-In PyTorch, every array has a device; we often refer it as a *context*.
-So far, by default, all variables
-and associated computation
-have been assigned to the CPU.
-Typically, other contexts might be various GPUs.
-Things can get even hairier when
-we deploy jobs across multiple servers.
-By assigning arrays to contexts intelligently,
-we can minimize the time spent
-transferring data between devices.
-For example, when training neural networks on a server with a GPU,
-we typically prefer for the model's parameters to live on the GPU.
+Dalam PyTorch, setiap array memiliki perangkat; kita sering menyebutnya sebagai *konteks*.
+Sejauh ini, secara default, semua variabel
+dan perhitungan terkait
+telah ditetapkan pada CPU.
+Biasanya, konteks lain mungkin adalah berbagai GPU.
+Situasinya bisa menjadi lebih rumit ketika
+kita mendistribusikan pekerjaan di beberapa server.
+Dengan menetapkan array ke konteks secara cerdas,
+kita dapat meminimalkan waktu yang dihabiskan
+untuk mentransfer data antar perangkat.
+Sebagai contoh, saat melatih jaringan saraf di server dengan GPU,
+biasanya kita menginginkan parameter model berada di GPU.
 :end_tab:
 
-To run the programs in this section,
-you need at least two GPUs.
-Note that this might be extravagant for most desktop computers
-but it is easily available in the cloud, e.g.,
-by using the AWS EC2 multi-GPU instances.
-Almost all other sections do *not* require multiple GPUs, but here we simply wish to illustrate data flow between different devices.
+Untuk menjalankan program dalam bagian ini,
+Anda memerlukan setidaknya dua GPU.
+Perlu dicatat bahwa ini mungkin berlebihan untuk sebagian besar komputer desktop,
+tetapi mudah didapatkan di cloud, misalnya,
+dengan menggunakan instans multi-GPU di AWS EC2.
+Hampir semua bagian lainnya *tidak* memerlukan beberapa GPU, tetapi di sini kami ingin mengilustrasikan aliran data antara berbagai perangkat.
+
 
 ```{.python .input}
 %%tab mxnet
@@ -111,38 +111,38 @@ import jax
 from jax import numpy as jnp
 ```
 
-## [**Computing Devices**]
+## [**Perangkat Komputasi**]
 
-We can specify devices, such as CPUs and GPUs,
-for storage and calculation.
-By default, tensors are created in the main memory
-and then the CPU is used for calculations.
+Kita dapat menentukan perangkat, seperti CPU dan GPU,
+untuk penyimpanan dan perhitungan.
+Secara default, tensor dibuat di memori utama
+dan kemudian CPU digunakan untuk perhitungan.
 
 :begin_tab:`mxnet`
-In MXNet, the CPU and GPU can be indicated by `cpu()` and `gpu()`.
-It should be noted that `cpu()`
-(or any integer in the parentheses)
-means all physical CPUs and memory.
-This means that MXNet's calculations
-will try to use all CPU cores.
-However, `gpu()` only represents one card
-and the corresponding memory.
-If there are multiple GPUs, we use `gpu(i)`
-to represent the $i^\textrm{th}$ GPU ($i$ starts from 0).
-Also, `gpu(0)` and `gpu()` are equivalent.
+Dalam MXNet, CPU dan GPU dapat ditunjukkan dengan `cpu()` dan `gpu()`.
+Perlu dicatat bahwa `cpu()`
+(atau angka apa pun di dalam tanda kurung)
+berarti semua CPU fisik dan memori.
+Ini berarti bahwa perhitungan MXNet
+akan mencoba menggunakan semua inti CPU.
+Namun, `gpu()` hanya mewakili satu kartu
+dan memori yang sesuai.
+Jika ada beberapa GPU, kita menggunakan `gpu(i)`
+untuk mewakili GPU ke-$i$ ($i$ dimulai dari 0).
+Selain itu, `gpu(0)` dan `gpu()` adalah ekuivalen.
 :end_tab:
 
 :begin_tab:`pytorch`
-In PyTorch, the CPU and GPU can be indicated by `torch.device('cpu')` and `torch.device('cuda')`.
-It should be noted that the `cpu` device
-means all physical CPUs and memory.
-This means that PyTorch's calculations
-will try to use all CPU cores.
-However, a `gpu` device only represents one card
-and the corresponding memory.
-If there are multiple GPUs, we use `torch.device(f'cuda:{i}')`
-to represent the $i^\textrm{th}$ GPU ($i$ starts at 0).
-Also, `gpu:0` and `gpu` are equivalent.
+Dalam PyTorch, CPU dan GPU dapat ditunjukkan dengan `torch.device('cpu')` dan `torch.device('cuda')`.
+Perlu dicatat bahwa perangkat `cpu`
+berarti semua CPU fisik dan memori.
+Ini berarti bahwa perhitungan PyTorch
+akan mencoba menggunakan semua inti CPU.
+Namun, perangkat `gpu` hanya mewakili satu kartu
+dan memori yang sesuai.
+Jika ada beberapa GPU, kita menggunakan `torch.device(f'cuda:{i}')`
+untuk mewakili GPU ke-$i$ ($i$ dimulai dari 0).
+Selain itu, `gpu:0` dan `gpu` adalah ekuivalen.
 :end_tab:
 
 ```{.python .input}
@@ -181,7 +181,7 @@ def gpu(i=0):  #@save
 cpu(), gpu(), gpu(1)
 ```
 
-We can (**query the number of available GPUs.**)
+Kita dapat (**memeriksa jumlah GPU yang tersedia.**)
 
 ```{.python .input}
 %%tab pytorch
@@ -209,8 +209,9 @@ def num_gpus():  #@save
 num_gpus()
 ```
 
-Now we [**define two convenient functions that allow us
-to run code even if the requested GPUs do not exist.**]
+Sekarang kita [**mendefinisikan dua fungsi yang memungkinkan kita
+untuk menjalankan kode meskipun GPU yang diminta tidak tersedia.**]
+
 
 ```{.python .input}
 %%tab all
@@ -227,22 +228,22 @@ def try_all_gpus():  #@save
 try_gpu(), try_gpu(10), try_all_gpus()
 ```
 
-## Tensors and GPUs
+## Tensor dan GPU
 
 :begin_tab:`pytorch`
-By default, tensors are created on the CPU.
-We can [**query the device where the tensor is located.**]
+Secara default, tensor dibuat di CPU.
+Kita dapat [**memeriksa perangkat tempat tensor berada.**]
 :end_tab:
 
 :begin_tab:`mxnet`
-By default, tensors are created on the CPU.
-We can [**query the device where the tensor is located.**]
+Secara default, tensor dibuat di CPU.
+Kita dapat [**memeriksa perangkat tempat tensor berada.**]
 :end_tab:
 
 :begin_tab:`tensorflow, jax`
-By default, tensors are created on the GPU/TPU if they are available,
-else CPU is used if not available.
-We can [**query the device where the tensor is located.**]
+Secara default, tensor dibuat di GPU/TPU jika tersedia,
+dan jika tidak tersedia maka akan menggunakan CPU.
+Kita dapat [**memeriksa perangkat tempat tensor berada.**]
 :end_tab:
 
 ```{.python .input}
@@ -269,23 +270,24 @@ x = jnp.array([1, 2, 3])
 x.device()
 ```
 
-It is important to note that whenever we want
-to operate on multiple terms,
-they need to be on the same device.
-For instance, if we sum two tensors,
-we need to make sure that both arguments
-live on the same device---otherwise the framework
-would not know where to store the result
-or even how to decide where to perform the computation.
+Penting untuk dicatat bahwa setiap kali kita ingin
+melakukan operasi pada beberapa term,
+mereka harus berada di perangkat yang sama.
+Misalnya, jika kita menjumlahkan dua tensor,
+kita perlu memastikan bahwa kedua argumen
+berada di perangkat yang sama—jika tidak, framework
+tidak akan tahu di mana harus menyimpan hasilnya
+atau bahkan bagaimana memutuskan tempat melakukan perhitungan.
 
-### Storage on the GPU
+### Penyimpanan di GPU
 
-There are several ways to [**store a tensor on the GPU.**]
-For example, we can specify a storage device when creating a tensor.
-Next, we create the tensor variable `X` on the first `gpu`.
-The tensor created on a GPU only consumes the memory of this GPU.
-We can use the `nvidia-smi` command to view GPU memory usage.
-In general, we need to make sure that we do not create data that exceeds the GPU memory limit.
+Ada beberapa cara untuk [**menyimpan tensor di GPU.**]
+Sebagai contoh, kita dapat menentukan perangkat penyimpanan saat membuat tensor.
+Selanjutnya, kita membuat variabel tensor `X` pada `gpu` pertama.
+Tensor yang dibuat pada GPU hanya mengonsumsi memori GPU tersebut.
+Kita dapat menggunakan perintah `nvidia-smi` untuk melihat penggunaan memori GPU.
+Secara umum, kita perlu memastikan bahwa kita tidak membuat data yang melebihi batas memori GPU.
+
 
 ```{.python .input}
 %%tab mxnet
@@ -313,7 +315,7 @@ X = jax.device_put(jnp.ones((2, 3)), try_gpu())
 X
 ```
 
-Assuming that you have at least two GPUs, the following code will (**create a random tensor, `Y`, on the second GPU.**)
+Dengan asumsi Anda memiliki setidaknya dua GPU, kode berikut akan (**membuat tensor acak, `Y`, pada GPU kedua.**)
 
 ```{.python .input}
 %%tab mxnet
@@ -341,21 +343,21 @@ Y = jax.device_put(jax.random.uniform(jax.random.PRNGKey(0), (2, 3)),
 Y
 ```
 
-### Copying
+### Penyalinan
 
-[**If we want to compute `X + Y`,
-we need to decide where to perform this operation.**]
-For instance, as shown in :numref:`fig_copyto`,
-we can transfer `X` to the second GPU
-and perform the operation there.
-*Do not* simply add `X` and `Y`,
-since this will result in an exception.
-The runtime engine would not know what to do:
-it cannot find data on the same device and it fails.
-Since `Y` lives on the second GPU,
-we need to move `X` there before we can add the two.
+[**Jika kita ingin menghitung `X + Y`,
+kita perlu memutuskan di mana operasi ini akan dilakukan.**]
+Sebagai contoh, seperti yang ditunjukkan pada :numref:`fig_copyto`,
+kita dapat mentransfer `X` ke GPU kedua
+dan melakukan operasi di sana.
+*Jangan* langsung menambahkan `X` dan `Y`,
+karena ini akan menghasilkan kesalahan.
+Mesin runtime tidak akan tahu apa yang harus dilakukan:
+ia tidak dapat menemukan data di perangkat yang sama dan gagal.
+Karena `Y` berada di GPU kedua,
+kita perlu memindahkan `X` ke sana sebelum kita dapat menambahkan keduanya.
 
-![Copy data to perform an operation on the same device.](../img/copyto.svg)
+![Salin data untuk melakukan operasi pada perangkat yang sama.](../img/copyto.svg)
 :label:`fig_copyto`
 
 ```{.python .input}
@@ -387,7 +389,7 @@ print(X)
 print(Z)
 ```
 
-Now that [**the data (both `Z` and `Y`) are on the same GPU), we can add them up.**]
+Sekarang [**data (baik `Z` maupun `Y`) berada di GPU yang sama, kita dapat menjumlahkannya.**]
 
 ```{.python .input}
 %%tab all
@@ -395,38 +397,39 @@ Y + Z
 ```
 
 :begin_tab:`mxnet`
-Imagine that your variable `Z` already lives on your second GPU.
-What happens if we still call  `Z.copyto(gpu(1))`?
-It will make a copy and allocate new memory,
-even though that variable already lives on the desired device.
-There are times where, depending on the environment our code is running in,
-two variables may already live on the same device.
-So we want to make a copy only if the variables
-currently live in different devices.
-In these cases, we can call `as_in_ctx`.
-If the variable already live in the specified device
-then this is a no-op.
-Unless you specifically want to make a copy,
-`as_in_ctx` is the method of choice.
+Bayangkan bahwa variabel `Z` Anda sudah berada di GPU kedua.
+Apa yang terjadi jika kita masih memanggil `Z.copyto(gpu(1))`?
+Ini akan membuat salinan dan mengalokasikan memori baru,
+meskipun variabel tersebut sudah berada di perangkat yang diinginkan.
+Terkadang, tergantung pada lingkungan tempat kode kita dijalankan,
+dua variabel mungkin sudah berada di perangkat yang sama.
+Jadi, kita hanya ingin membuat salinan jika variabel-variabel tersebut
+saat ini berada di perangkat yang berbeda.
+Dalam kasus ini, kita dapat memanggil `as_in_ctx`.
+Jika variabel sudah berada di perangkat yang ditentukan,
+maka ini adalah operasi yang tidak dilakukan.
+Kecuali Anda secara khusus ingin membuat salinan,
+`as_in_ctx` adalah metode yang dipilih.
 :end_tab:
 
 :begin_tab:`pytorch`
-But what if your variable `Z` already lived on your second GPU?
-What happens if we still call `Z.cuda(1)`?
-It will return `Z` instead of making a copy and allocating new memory.
+Namun, bagaimana jika variabel `Z` Anda sudah berada di GPU kedua?
+Apa yang terjadi jika kita tetap memanggil `Z.cuda(1)`?
+Ini akan mengembalikan `Z` alih-alih membuat salinan dan mengalokasikan memori baru.
 :end_tab:
 
 :begin_tab:`tensorflow`
-Imagine that your variable `Z` already lives on your second GPU.
-What happens if we still call `Z2 = Z` under the same device scope?
-It will return `Z` instead of making a copy and allocating new memory.
+Bayangkan bahwa variabel `Z` Anda sudah berada di GPU kedua.
+Apa yang terjadi jika kita tetap memanggil `Z2 = Z` dalam ruang lingkup perangkat yang sama?
+Ini akan mengembalikan `Z` alih-alih membuat salinan dan mengalokasikan memori baru.
 :end_tab:
 
 :begin_tab:`jax`
-Imagine that your variable `Z` already lives on your second GPU.
-What happens if we still call `Z2 = Z` under the same device scope?
-It will return `Z` instead of making a copy and allocating new memory.
+Bayangkan bahwa variabel `Z` Anda sudah berada di GPU kedua.
+Apa yang terjadi jika kita tetap memanggil `Z2 = Z` dalam ruang lingkup perangkat yang sama?
+Ini akan mengembalikan `Z` alih-alih membuat salinan dan mengalokasikan memori baru.
 :end_tab:
+
 
 ```{.python .input}
 %%tab mxnet
@@ -451,44 +454,44 @@ Z2 = jax.device_put(Z, try_gpu(1))
 Z2 is Z
 ```
 
-### Side Notes
+### Catatan Tambahan
 
-People use GPUs to do machine learning
-because they expect them to be fast.
-But transferring variables between devices is slow: much slower than computation.
-So we want you to be 100% certain
-that you want to do something slow before we let you do it.
-If the deep learning framework just did the copy automatically
-without crashing then you might not realize
-that you had written some slow code.
+Orang menggunakan GPU untuk melakukan machine learning
+karena mereka mengharapkan GPU bekerja dengan cepat.
+Namun, mentransfer variabel antar perangkat sangat lambat: jauh lebih lambat daripada perhitungan.
+Jadi, kami ingin Anda benar-benar yakin
+bahwa Anda ingin melakukan sesuatu yang lambat sebelum kami mengizinkannya.
+Jika framework deep learning langsung melakukan penyalinan secara otomatis
+tanpa memberi peringatan, maka Anda mungkin tidak menyadari
+bahwa Anda telah menulis kode yang lambat.
 
-Transferring data is not only slow, it also makes parallelization a lot more difficult,
-since we have to wait for data to be sent (or rather to be received)
-before we can proceed with more operations.
-This is why copy operations should be taken with great care.
-As a rule of thumb, many small operations
-are much worse than one big operation.
-Moreover, several operations at a time
-are much better than many single operations interspersed in the code
-unless you know what you are doing.
-This is the case since such operations can block if one device
-has to wait for the other before it can do something else.
-It is a bit like ordering your coffee in a queue
-rather than pre-ordering it by phone
-and finding out that it is ready when you are.
+Transfer data tidak hanya lambat, tetapi juga membuat paralelisasi menjadi jauh lebih sulit,
+karena kita harus menunggu data untuk dikirim (atau lebih tepatnya diterima)
+sebelum kita dapat melanjutkan ke operasi berikutnya.
+Inilah mengapa operasi penyalinan harus dilakukan dengan sangat hati-hati.
+Sebagai aturan praktis, banyak operasi kecil
+jauh lebih buruk daripada satu operasi besar.
+Selain itu, beberapa operasi sekaligus
+jauh lebih baik daripada banyak operasi tunggal yang tersebar dalam kode
+kecuali jika Anda benar-benar tahu apa yang Anda lakukan.
+Hal ini terjadi karena operasi seperti itu bisa tertunda jika satu perangkat
+harus menunggu perangkat lainnya sebelum dapat melakukan operasi lain.
+Ini mirip dengan memesan kopi dalam antrean
+daripada memesan sebelumnya melalui telepon
+dan mendapati bahwa kopi sudah siap saat Anda tiba.
 
-Last, when we print tensors or convert tensors to the NumPy format,
-if the data is not in the main memory,
-the framework will copy it to the main memory first,
-resulting in additional transmission overhead.
-Even worse, it is now subject to the dreaded global interpreter lock
-that makes everything wait for Python to complete.
+Terakhir, saat kita mencetak tensor atau mengonversinya ke format NumPy,
+jika data tidak ada di memori utama,
+framework akan menyalinnya ke memori utama terlebih dahulu,
+yang menghasilkan overhead transmisi tambahan.
+Bahkan lebih buruk lagi, data ini kini tunduk pada global interpreter lock
+yang membuat semua hal lain harus menunggu Python selesai.
 
+## [**Jaringan Neural dan GPU**]
 
-## [**Neural Networks and GPUs**]
+Demikian juga, model jaringan neural dapat menentukan perangkat.
+Kode berikut menempatkan parameter model pada GPU.
 
-Similarly, a neural network model can specify devices.
-The following code puts the model parameters on the GPU.
 
 ```{.python .input}
 %%tab mxnet
@@ -520,11 +523,12 @@ x = jax.random.normal(key1, (10,))  # Dummy input
 params = net.init(key2, x)  # Initialization call
 ```
 
-We will see many more examples of
-how to run models on GPUs in the following chapters,
-simply because the models will become somewhat more computationally intensive.
+Kita akan melihat lebih banyak contoh
+cara menjalankan model di GPU pada bab-bab berikut,
+karena modelnya akan menjadi lebih intensif secara komputasi.
 
-For example, when the input is a tensor on the GPU, the model will calculate the result on the same GPU.
+Sebagai contoh, ketika input berupa tensor di GPU, model akan menghitung hasilnya di GPU yang sama.
+
 
 ```{.python .input}
 %%tab mxnet, pytorch, tensorflow
@@ -536,7 +540,7 @@ net(X)
 net.apply(params, x)
 ```
 
-Let's (**confirm that the model parameters are stored on the same GPU.**)
+Mari kita (**konfirmasi bahwa parameter model disimpan di GPU yang sama.**)
 
 ```{.python .input}
 %%tab mxnet
@@ -558,7 +562,7 @@ net.layers[0].weights[0].device, net.layers[0].weights[1].device
 print(jax.tree_util.tree_map(lambda x: x.device(), params))
 ```
 
-Let the trainer support GPU.
+Buat agar pelatih (trainer) mendukung GPU.
 
 ```{.python .input}
 %%tab mxnet
@@ -617,49 +621,49 @@ def prepare_batch(self, batch):
     return batch
 ```
 
-In short, as long as all data and parameters are on the same device, we can learn models efficiently. In the following chapters we will see several such examples.
+Singkatnya, selama semua data dan parameter berada di perangkat yang sama, kita dapat melatih model secara efisien. Pada bab-bab berikutnya, kita akan melihat beberapa contoh seperti ini.
 
-## Summary
+## Ringkasan
 
-We can specify devices for storage and calculation, such as the CPU or GPU.
-  By default, data is created in the main memory
-  and then uses the CPU for calculations.
-The deep learning framework requires all input data for calculation
-  to be on the same device,
-  be it CPU or the same GPU.
-You can lose significant performance by moving data without care.
-  A typical mistake is as follows: computing the loss
-  for every minibatch on the GPU and reporting it back
-  to the user on the command line (or logging it in a NumPy `ndarray`)
-  will trigger a global interpreter lock which stalls all GPUs.
-  It is much better to allocate memory
-  for logging inside the GPU and only move larger logs.
+- Kita dapat menentukan perangkat untuk penyimpanan dan perhitungan, seperti CPU atau GPU.
+  Secara default, data dibuat di memori utama
+  dan menggunakan CPU untuk perhitungan.
+- Framework deep learning memerlukan semua data input untuk perhitungan
+  berada di perangkat yang sama,
+  baik itu CPU atau GPU yang sama.
+- Anda bisa kehilangan performa yang signifikan dengan memindahkan data tanpa perencanaan yang matang.
+  Kesalahan yang umum terjadi adalah sebagai berikut: menghitung loss
+  untuk setiap minibatch pada GPU dan melaporkannya kembali
+  kepada pengguna di command line (atau mencatatnya dalam `ndarray` NumPy)
+  akan memicu global interpreter lock yang menghentikan semua GPU.
+  Lebih baik menyediakan memori
+  untuk pencatatan di dalam GPU dan hanya memindahkan log yang lebih besar.
 
-## Exercises
+## Latihan
 
-1. Try a larger computation task, such as the multiplication of large matrices,
-   and see the difference in speed between the CPU and GPU.
-   What about a task with a small number of calculations?
-1. How should we read and write model parameters on the GPU?
-1. Measure the time it takes to compute 1000
-   matrix--matrix multiplications of $100 \times 100$ matrices
-   and log the Frobenius norm of the output matrix one result at a time. Compare it with keeping a log on the GPU and transferring only the final result.
-1. Measure how much time it takes to perform two matrix--matrix multiplications
-   on two GPUs at the same time. Compare it with computing in in sequence
-   on one GPU. Hint: you should see almost linear scaling.
+1. Coba tugas komputasi yang lebih besar, seperti perkalian matriks besar,
+   dan lihat perbedaan kecepatan antara CPU dan GPU.
+   Bagaimana dengan tugas dengan jumlah perhitungan yang kecil?
+2. Bagaimana cara membaca dan menulis parameter model di GPU?
+3. Ukur waktu yang diperlukan untuk menghitung 1000
+   perkalian matriks--matriks berukuran $100 \times 100$
+   dan log norm Frobenius dari matriks keluaran satu per satu. Bandingkan dengan mencatat log di GPU dan hanya mentransfer hasil akhirnya.
+4. Ukur berapa waktu yang diperlukan untuk melakukan dua perkalian matriks--matriks
+   pada dua GPU secara bersamaan. Bandingkan dengan menghitungnya secara berurutan
+   pada satu GPU. Petunjuk: Anda seharusnya melihat skala yang hampir linear.
 
 :begin_tab:`mxnet`
-[Discussions](https://discuss.d2l.ai/t/62)
+[Diskusi](https://discuss.d2l.ai/t/62)
 :end_tab:
 
 :begin_tab:`pytorch`
-[Discussions](https://discuss.d2l.ai/t/63)
+[Diskusi](https://discuss.d2l.ai/t/63)
 :end_tab:
 
 :begin_tab:`tensorflow`
-[Discussions](https://discuss.d2l.ai/t/270)
+[Diskusi](https://discuss.d2l.ai/t/270)
 :end_tab:
 
 :begin_tab:`jax`
-[Discussions](https://discuss.d2l.ai/t/17995)
+[Diskusi](https://discuss.d2l.ai/t/17995)
 :end_tab:
