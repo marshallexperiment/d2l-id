@@ -86,7 +86,7 @@
 
 # 8 - chapter_convolutional-modern
 
-- [ ] ./chapter_convolutional-modern/batch-norm.md
+- [x] ./chapter_convolutional-modern/batch-norm.md
 - [ ] ./chapter_convolutional-modern/resnet.md
 - [ ] ./chapter_convolutional-modern/alexnet.md
 - [ ] ./chapter_convolutional-modern/index.md
