@@ -6,13 +6,14 @@ tab.interact_select(['mxnet', 'pytorch', 'tensorflow', 'jax'])
 # Batch Normalization
 :label:`sec_batch_norm`
 
-Training deep neural networks is difficult.
-Getting them to converge in a reasonable amount of time can be tricky.
-In this section, we describe *batch normalization*, a popular and effective technique
-that consistently accelerates the convergence of deep networks :cite:`Ioffe.Szegedy.2015`.
-Together with residual blocks---covered later in :numref:`sec_resnet`---batch normalization
-has made it possible for practitioners to routinely train networks with over 100 layers.
-A secondary (serendipitous) benefit of batch normalization lies in its inherent regularization.
+Melatih deep neural networks adalah hal yang sulit.
+Mendapatkan jaringan untuk konvergen dalam waktu yang wajar bisa menjadi tantangan.
+Dalam bagian ini, kita membahas *batch normalization*, sebuah teknik yang populer dan efektif
+yang secara konsisten mempercepat konvergensi jaringan yang dalam :cite:`Ioffe.Szegedy.2015`.
+Bersama dengan residual blocks---yang akan dibahas lebih lanjut di :numref:`sec_resnet`---batch normalization
+telah memungkinkan praktisi untuk secara rutin melatih jaringan dengan lebih dari 100 lapisan.
+Manfaat tambahan (serendipitous) dari batch normalization adalah sifatnya yang secara inheren memberikan regularisasi.
+
 
 ```{.python .input}
 %%tab mxnet
@@ -45,301 +46,296 @@ import jax
 import optax
 ```
 
-## Training Deep Networks
+## Pelatihan Jaringan Dalam
 
-When working with data, we often preprocess before training.
-Choices regarding data preprocessing often make an enormous difference in the final results.
-Recall our application of MLPs to predicting house prices (:numref:`sec_kaggle_house`).
-Our first step when working with real data
-was to standardize our input features to have
-zero mean $\boldsymbol{\mu} = 0$ and unit variance $\boldsymbol{\Sigma} = \boldsymbol{1}$ across multiple observations :cite:`friedman1987exploratory`, frequently rescaling the latter so  that the diagonal is unity, i.e., $\Sigma_{ii} = 1$.
-Yet another strategy is to rescale vectors to unit length, possibly zero mean *per observation*.
-This can work well, e.g., for spatial sensor data. These preprocessing techniques and many others, are
-beneficial for keeping the estimation problem well controlled. 
-For a review of feature selection and extraction see the article of :citet:`guyon2008feature`, for example.
-Standardizing vectors also has the nice side-effect of constraining the function complexity of functions that act upon it. For instance, the celebrated radius-margin bound :cite:`Vapnik95` in support vector machines and the Perceptron Convergence Theorem :cite:`Novikoff62` rely on inputs of bounded norm. 
+Saat bekerja dengan data, kita sering melakukan prapemrosesan sebelum pelatihan.
+Pilihan terkait prapemrosesan data sering kali memberikan perbedaan besar pada hasil akhir.
+Ingat penerapan MLP pada prediksi harga rumah (:numref:`sec_kaggle_house`).
+Langkah pertama kita saat bekerja dengan data nyata
+adalah menstandarkan fitur input kita agar memiliki
+rata-rata nol $\boldsymbol{\mu} = 0$ dan varians unit $\boldsymbol{\Sigma} = \boldsymbol{1}$ pada beberapa pengamatan :cite:`friedman1987exploratory`, sering kali menskalakan ulang agar diagonal menjadi satuan, yaitu $\Sigma_{ii} = 1$.
+Strategi lain adalah mengatur panjang vektor agar menjadi satuan, dengan rata-rata nol *per pengamatan*.
+Hal ini dapat bekerja dengan baik, misalnya untuk data sensor spasial. Teknik prapemrosesan ini dan banyak lainnya, bermanfaat dalam menjaga masalah estimasi tetap terkendali.
+Untuk ulasan tentang pemilihan dan ekstraksi fitur, lihat artikel dari :citet:`guyon2008feature`, misalnya.
+Menstandarkan vektor juga memiliki efek samping yang baik, yaitu membatasi kompleksitas fungsi yang beroperasi di atasnya. Misalnya, radius-margin bound :cite:`Vapnik95` pada support vector machine dan Perceptron Convergence Theorem :cite:`Novikoff62` bergantung pada input dengan norma terbatas.
 
-Intuitively, this standardization plays nicely with our optimizers
-since it puts the parameters *a priori* on a similar scale.
-As such, it is only natural to ask whether a corresponding normalization step *inside* a deep network
-might not be beneficial. While this is not quite the reasoning that led to the invention of batch normalization :cite:`Ioffe.Szegedy.2015`, it is a useful way of understanding it and its cousin, layer normalization :cite:`Ba.Kiros.Hinton.2016`, within a unified framework.
+Secara intuitif, standarisasi ini bekerja dengan baik dengan optimizer kita
+karena ini menempatkan parameter *a priori* pada skala yang serupa.
+Dengan demikian, wajar untuk bertanya apakah langkah normalisasi serupa *dalam* jaringan yang dalam
+akan memberikan manfaat. Meskipun ini bukan alasan yang tepat yang mengarah pada penemuan batch normalization :cite:`Ioffe.Szegedy.2015`, ini adalah cara yang berguna untuk memahaminya dan sepupunya, layer normalization :cite:`Ba.Kiros.Hinton.2016`, dalam kerangka kerja yang terpadu.
 
-Second, for a typical MLP or CNN, as we train,
-the variables 
-in intermediate layers (e.g., affine transformation outputs in MLP)
-may take values with widely varying magnitudes:
-whether along the layers from input to output, across units in the same layer,
-and over time due to our updates to the model parameters.
-The inventors of batch normalization postulated informally
-that this drift in the distribution of such variables could hamper the convergence of the network.
-Intuitively, we might conjecture that if one
-layer has variable activations that are 100 times that of another layer,
-this might necessitate compensatory adjustments in the learning rates. Adaptive solvers
-such as AdaGrad :cite:`Duchi.Hazan.Singer.2011`, Adam :cite:`Kingma.Ba.2014`, Yogi :cite:`Zaheer.Reddi.Sachan.ea.2018`, or Distributed Shampoo :cite:`anil2020scalable` aim to address this from the viewpoint of optimization, e.g., by adding aspects of second-order methods. 
-The alternative is to prevent the problem from occurring, simply by adaptive normalization.
+Kedua, untuk MLP atau CNN tipikal, saat kita melatih,
+variabel-variabel 
+pada lapisan menengah (misalnya, output transformasi afine dalam MLP)
+dapat mengambil nilai dengan besaran yang sangat bervariasi:
+baik pada lapisan dari input hingga output, di antara unit di lapisan yang sama,
+maupun dari waktu ke waktu akibat pembaruan parameter model.
+Penemu batch normalization menduga secara informal
+bahwa pergeseran distribusi dari variabel-variabel tersebut dapat menghambat konvergensi jaringan.
+Secara intuitif, kita dapat memperkirakan bahwa jika satu
+lapisan memiliki aktivasi variabel 100 kali lipat dibandingkan lapisan lain,
+ini mungkin memerlukan penyesuaian kompensasi pada tingkat pembelajaran. Solver adaptif
+seperti AdaGrad :cite:`Duchi.Hazan.Singer.2011`, Adam :cite:`Kingma.Ba.2014`, Yogi :cite:`Zaheer.Reddi.Sachan.ea.2018`, atau Distributed Shampoo :cite:`anil2020scalable` bertujuan untuk mengatasi ini dari sudut pandang optimisasi, misalnya dengan menambahkan aspek dari metode orde kedua.
+Alternatifnya adalah mencegah masalah ini dengan normalisasi adaptif.
 
-Third, deeper networks are complex and tend to be more liable to overfitting.
-This means that regularization becomes more critical. A common technique for regularization is noise
-injection. This has been known for a long time, e.g., with regard to noise injection for the
-inputs :cite:`Bishop.1995`. It also forms the basis of dropout in :numref:`sec_dropout`. As it turns out, quite serendipitously, batch normalization conveys all three benefits: preprocessing, numerical stability, and regularization.
+Ketiga, jaringan yang lebih dalam cenderung lebih kompleks dan rentan terhadap overfitting.
+Ini berarti bahwa regularisasi menjadi lebih penting. Teknik umum untuk regularisasi adalah injeksi noise.
+Ini telah dikenal sejak lama, misalnya pada injeksi noise untuk
+input :cite:`Bishop.1995`. Ini juga menjadi dasar dari dropout di :numref:`sec_dropout`. Ternyata, secara kebetulan, batch normalization memberikan ketiga manfaat tersebut: prapemrosesan, stabilitas numerik, dan regularisasi.
 
-Batch normalization is applied to individual layers, or optionally, to all of them:
-In each training iteration,
-we first normalize the inputs (of batch normalization)
-by subtracting their mean and
-dividing by their standard deviation,
-where both are estimated based on the statistics of the current minibatch.
-Next, we apply a scale coefficient and an offset to recover the lost degrees
-of freedom. It is precisely due to this *normalization* based on *batch* statistics
-that *batch normalization* derives its name.
+Batch normalization diterapkan pada lapisan individual, atau bisa juga pada semua lapisan:
+Pada setiap iterasi pelatihan,
+kita pertama-tama menormalkan input (dari batch normalization)
+dengan mengurangi rata-rata mereka
+dan membaginya dengan standar deviasi,
+di mana keduanya diperkirakan berdasarkan statistik dari minibatch saat ini.
+Selanjutnya, kita menerapkan koefisien skala dan offset untuk mengembalikan derajat kebebasan (_Degree of Freedom_) yang hilang.
+Karena *normalisasi* ini didasarkan pada statistik *batch*,
+nama *batch normalization* berasal dari sini.
 
-Note that if we tried to apply batch normalization with minibatches of size 1,
-we would not be able to learn anything.
-That is because after subtracting the means,
-each hidden unit would take value 0.
-As you might guess, since we are devoting a whole section to batch normalization,
-with large enough minibatches the approach proves effective and stable.
-One takeaway here is that when applying batch normalization,
-the choice of batch size is
-even more significant than without batch normalization, or at least,
-suitable calibration is needed as we might adjust batch size.
+Perhatikan bahwa jika kita mencoba menerapkan batch normalization dengan ukuran minibatch 1,
+kita tidak akan dapat mempelajari apa pun.
+Ini karena setelah mengurangi rata-rata,
+setiap unit tersembunyi akan bernilai 0.
+Seperti yang bisa Anda duga, karena kita mencurahkan seluruh bagian ini untuk batch normalization,
+dengan ukuran minibatch yang cukup besar, pendekatan ini terbukti efektif dan stabil.
+Satu hal yang perlu diingat di sini adalah bahwa saat menerapkan batch normalization,
+pilihan ukuran batch menjadi
+lebih penting daripada tanpa batch normalization, atau setidaknya,
+diperlukan kalibrasi yang sesuai jika kita mengatur ukuran batch.
 
-Denote by $\mathcal{B}$ a minibatch and let $\mathbf{x} \in \mathcal{B}$ be an input to 
-batch normalization ($\textrm{BN}$). In this case the batch normalization is defined as follows:
+Misalkan $\mathcal{B}$ adalah minibatch dan $\mathbf{x} \in \mathcal{B}$ adalah input untuk 
+batch normalization ($\textrm{BN}$). Dalam kasus ini, batch normalization didefinisikan sebagai berikut:
 
 $$\textrm{BN}(\mathbf{x}) = \boldsymbol{\gamma} \odot \frac{\mathbf{x} - \hat{\boldsymbol{\mu}}_\mathcal{B}}{\hat{\boldsymbol{\sigma}}_\mathcal{B}} + \boldsymbol{\beta}.$$
 :eqlabel:`eq_batchnorm`
 
-In :eqref:`eq_batchnorm`,
-$\hat{\boldsymbol{\mu}}_\mathcal{B}$ is the  sample mean
-and $\hat{\boldsymbol{\sigma}}_\mathcal{B}$ is the sample standard deviation of the minibatch $\mathcal{B}$.
-After applying standardization,
-the resulting minibatch
-has zero mean and unit variance.
-The choice of unit variance
-(rather than some other magic number) is arbitrary. We recover this degree of freedom
-by including an elementwise
-*scale parameter* $\boldsymbol{\gamma}$ and *shift parameter* $\boldsymbol{\beta}$
-that have the same shape as $\mathbf{x}$. Both are parameters that
-need to be learned as part of model training.
+Pada persamaan :eqref:`eq_batchnorm`,
+$\hat{\boldsymbol{\mu}}_\mathcal{B}$ adalah rata-rata sampel
+dan $\hat{\boldsymbol{\sigma}}_\mathcal{B}$ adalah standar deviasi sampel dari minibatch $\mathcal{B}$.
+Setelah menerapkan standarisasi,
+minibatch yang dihasilkan
+memiliki rata-rata nol dan varians satuan.
+Pemilihan varians satuan
+(daripada beberapa nilai ajaib lainnya) bersifat sewenang-wenang. Kita mengembalikan derajat kebebasan ini
+dengan memasukkan
+*parameter skala* $\boldsymbol{\gamma}$ dan *parameter shift* $\boldsymbol{\beta}$
+yang memiliki bentuk yang sama dengan $\mathbf{x}$. Keduanya adalah parameter yang
+perlu dipelajari sebagai bagian dari pelatihan model.
 
-The variable magnitudes
-for intermediate layers cannot diverge during training
-since batch normalization actively centers and rescales them back
-to a given mean and size (via $\hat{\boldsymbol{\mu}}_\mathcal{B}$ and ${\hat{\boldsymbol{\sigma}}_\mathcal{B}}$).
-Practical experience confirms that, as alluded to when discussing feature rescaling, batch normalization seems to allow for more aggressive learning rates.
-We calculate $\hat{\boldsymbol{\mu}}_\mathcal{B}$ and ${\hat{\boldsymbol{\sigma}}_\mathcal{B}}$ in :eqref:`eq_batchnorm` as follows:
+Selama pelatihan, magnitudo variabel
+pada lapisan menengah tidak dapat menyimpang
+karena batch normalization secara aktif menggeser dan menskalakan kembali mereka
+ke rata-rata dan ukuran tertentu (melalui $\hat{\boldsymbol{\mu}}_\mathcal{B}$ dan ${\hat{\boldsymbol{\sigma}}_\mathcal{B}}$).
+Pengalaman praktis mengonfirmasi bahwa, seperti yang diisyaratkan saat membahas penskalaan fitur, batch normalization memungkinkan penggunaan tingkat pembelajaran yang lebih agresif.
+Kita menghitung $\hat{\boldsymbol{\mu}}_\mathcal{B}$ dan ${\hat{\boldsymbol{\sigma}}_\mathcal{B}}$ dalam persamaan :eqref:`eq_batchnorm` sebagai berikut:
 
 $$\hat{\boldsymbol{\mu}}_\mathcal{B} = \frac{1}{|\mathcal{B}|} \sum_{\mathbf{x} \in \mathcal{B}} \mathbf{x}
-\textrm{ and }
+\textrm{ dan }
 \hat{\boldsymbol{\sigma}}_\mathcal{B}^2 = \frac{1}{|\mathcal{B}|} \sum_{\mathbf{x} \in \mathcal{B}} (\mathbf{x} - \hat{\boldsymbol{\mu}}_{\mathcal{B}})^2 + \epsilon.$$
 
-Note that we add a small constant $\epsilon > 0$
-to the variance estimate
-to ensure that we never attempt division by zero,
-even in cases where the empirical variance estimate might be very small or vanish.
-The estimates $\hat{\boldsymbol{\mu}}_\mathcal{B}$ and ${\hat{\boldsymbol{\sigma}}_\mathcal{B}}$ counteract the scaling issue
-by using noisy estimates of mean and variance.
-You might think that this noisiness should be a problem.
-On the contrary, it is actually beneficial.
+Perhatikan bahwa kita menambahkan konstanta kecil $\epsilon > 0$
+pada estimasi varians
+untuk memastikan bahwa kita tidak pernah mencoba membagi dengan nol,
+bahkan dalam kasus di mana estimasi varians empiris mungkin sangat kecil atau hilang.
+Estimasi $\hat{\boldsymbol{\mu}}_\mathcal{B}$ dan ${\hat{\boldsymbol{\sigma}}_\mathcal{B}}$ mengatasi masalah penskalaan
+dengan menggunakan estimasi rata-rata dan varians yang penuh noise.
+Anda mungkin berpikir bahwa noise ini bisa menjadi masalah.
+Sebaliknya, noise ini sebenarnya memberikan manfaat.
 
-This turns out to be a recurring theme in deep learning.
-For reasons that are not yet well-characterized theoretically,
-various sources of noise in optimization
-often lead to faster training and less overfitting:
-this variation appears to act as a form of regularization.
-:citet:`Teye.Azizpour.Smith.2018` and :citet:`Luo.Wang.Shao.ea.2018`
-related the properties of batch normalization to Bayesian priors and penalties, respectively. 
-In particular, this sheds some light on the puzzle
-of why batch normalization works best for moderate minibatch sizes in the 50--100 range.
-This particular size of minibatch seems to inject just the "right amount" of noise per layer, both in terms of scale via $\hat{\boldsymbol{\sigma}}$, and in terms of offset via $\hat{\boldsymbol{\mu}}$: a
-larger minibatch regularizes less due to the more stable estimates, whereas tiny minibatches
-destroy useful signal due to high variance. Exploring this direction further, considering alternative types
-of preprocessing and filtering may yet lead to other effective types of regularization.
+Ini ternyata menjadi tema yang sering muncul dalam deep learning.
+Untuk alasan yang belum sepenuhnya dijelaskan secara teoritis,
+berbagai sumber noise dalam optimisasi
+sering kali mempercepat pelatihan dan mengurangi overfitting:
+variasi ini tampaknya berfungsi sebagai bentuk regularisasi.
+:citet:`Teye.Azizpour.Smith.2018` dan :citet:`Luo.Wang.Shao.ea.2018`
+mengaitkan properti batch normalization dengan Bayesian priors dan penalti, masing-masing.
+Secara khusus, ini memberikan pemahaman mengapa
+batch normalization bekerja paling baik dengan ukuran minibatch moderat, antara 50 hingga 100.
+Ukuran minibatch ini tampaknya menyuntikkan jumlah "noise" yang tepat di setiap lapisan, baik dalam hal skala melalui $\hat{\boldsymbol{\sigma}}$, dan dalam hal offset melalui $\hat{\boldsymbol{\mu}}$:
+minibatch yang lebih besar memberikan regularisasi yang lebih sedikit karena estimasi yang lebih stabil, sedangkan minibatch yang terlalu kecil
+menghilangkan sinyal yang berguna karena varian yang tinggi. Menggali lebih jauh ke arah ini, mempertimbangkan jenis prapemrosesan dan penyaringan alternatif mungkin akan menghasilkan bentuk regularisasi yang efektif lainnya.
 
-Fixing a trained model, you might think
-that we would prefer using the entire dataset
-to estimate the mean and variance.
-Once training is complete, why would we want
-the same image to be classified differently,
-depending on the batch in which it happens to reside?
-During training, such exact calculation is infeasible
-because the intermediate variables
-for all data examples
-change every time we update our model.
-However, once the model is trained,
-we can calculate the means and variances
-of each layer's variables based on the entire dataset.
-Indeed this is standard practice for
-models employing batch normalization;
-thus batch normalization layers function differently
-in *training mode* (normalizing by minibatch statistics)
-than in *prediction mode* (normalizing by dataset statistics).
-In this form they closely resemble the behavior of dropout regularization of :numref:`sec_dropout`,
-where noise is only injected during training.
+Dengan model yang telah dilatih, Anda mungkin berpikir
+bahwa kita akan lebih suka menggunakan seluruh dataset
+untuk memperkirakan rata-rata dan varians.
+Setelah pelatihan selesai, mengapa kita ingin
+gambar yang sama diklasifikasikan berbeda,
+tergantung pada batch tempat gambar itu berada?
+Selama pelatihan, perhitungan tepat ini tidak mungkin dilakukan
+karena variabel perantara
+untuk semua contoh data
+berubah setiap kali kita memperbarui model.
+Namun, setelah model dilatih,
+kita dapat menghitung rata-rata dan varians
+dari variabel setiap lapisan berdasarkan seluruh dataset.
+Memang, ini adalah praktik standar untuk
+model yang menggunakan batch normalization;
+dengan demikian, lapisan batch normalization berfungsi secara berbeda
+dalam *mode pelatihan* (menormalkan berdasarkan statistik minibatch)
+dan *mode prediksi* (menormalkan berdasarkan statistik dataset).
+Dalam bentuk ini, mereka menyerupai perilaku regularisasi dropout di :numref:`sec_dropout`,
+di mana noise hanya disuntikkan selama pelatihan.
 
 
-## Batch Normalization Layers
 
-Batch normalization implementations for fully connected layers
-and convolutional layers are slightly different.
-One key difference between batch normalization and other layers
-is that because the former operates on a full minibatch at a time,
-we cannot just ignore the batch dimension
-as we did before when introducing other layers.
+## Lapisan Batch Normalization
 
-### Fully Connected Layers
+Implementasi batch normalization untuk lapisan fully connected
+dan lapisan konvolusi sedikit berbeda.
+Satu perbedaan utama antara batch normalization dan lapisan lainnya
+adalah karena batch normalization beroperasi pada satu minibatch penuh sekaligus,
+kita tidak bisa begitu saja mengabaikan dimensi batch
+seperti yang kita lakukan sebelumnya saat memperkenalkan lapisan lainnya.
 
-When applying batch normalization to fully connected layers,
-:citet:`Ioffe.Szegedy.2015`, in their original paper inserted batch normalization after the affine transformation
-and *before* the nonlinear activation function. Later applications experimented with
-inserting batch normalization right *after* activation functions.
-Denoting the input to the fully connected layer by $\mathbf{x}$,
-the affine transformation
-by $\mathbf{W}\mathbf{x} + \mathbf{b}$ (with the weight parameter $\mathbf{W}$ and the bias parameter $\mathbf{b}$),
-and the activation function by $\phi$,
-we can express the computation of a batch-normalization-enabled,
-fully connected layer output $\mathbf{h}$ as follows:
+### Lapisan Fully Connected
+
+Saat menerapkan batch normalization pada lapisan fully connected,
+:citet:`Ioffe.Szegedy.2015`, dalam makalah asli mereka memasukkan batch normalization setelah transformasi afine
+dan *sebelum* fungsi aktivasi nonlinear. Aplikasi selanjutnya bereksperimen dengan
+memasukkan batch normalization tepat *setelah* fungsi aktivasi.
+Menyatakan input pada lapisan fully connected dengan $\mathbf{x}$,
+transformasi afine
+dengan $\mathbf{W}\mathbf{x} + \mathbf{b}$ (dengan parameter bobot $\mathbf{W}$ dan parameter bias $\mathbf{b}$),
+dan fungsi aktivasi dengan $\phi$,
+kita dapat menyatakan komputasi output lapisan fully connected dengan batch normalization $\mathbf{h}$ sebagai berikut:
 
 $$\mathbf{h} = \phi(\textrm{BN}(\mathbf{W}\mathbf{x} + \mathbf{b}) ).$$
 
-Recall that mean and variance are computed
-on the *same* minibatch
-on which the transformation is applied.
+Ingat bahwa rata-rata dan varians dihitung
+pada *minibatch yang sama*
+di mana transformasi diterapkan.
 
-### Convolutional Layers
+### Lapisan Konvolusi
 
-Similarly, with convolutional layers,
-we can apply batch normalization after the convolution
-but before the nonlinear activation function. The key difference from batch normalization
-in fully connected layers is that we apply the operation on a per-channel basis
-*across all locations*. This is compatible with our assumption of translation
-invariance that led to convolutions: we assumed that the specific location of a pattern
-within an image was not critical for the purpose of understanding.
+Demikian pula, pada lapisan konvolusi,
+kita dapat menerapkan batch normalization setelah konvolusi
+namun sebelum fungsi aktivasi nonlinear. Perbedaan utama dari batch normalization
+pada lapisan fully connected adalah kita menerapkan operasi ini pada setiap kanal secara terpisah
+*di semua lokasi*. Ini sejalan dengan asumsi invariansi translasi
+yang mengarah pada konvolusi: kita berasumsi bahwa lokasi spesifik dari suatu pola
+dalam gambar tidaklah penting untuk tujuan pemahaman.
 
-Assume that our minibatches contain $m$ examples
-and that for each channel,
-the output of the convolution has height $p$ and width $q$.
-For convolutional layers, we carry out each batch normalization
-over the $m \cdot p \cdot q$ elements per output channel simultaneously.
-Thus, we collect the values over all spatial locations
-when computing the mean and variance
-and consequently
-apply the same mean and variance
-within a given channel
-to normalize the value at each spatial location.
-Each channel has its own scale and shift parameters,
-both of which are scalars.
+Asumsikan bahwa minibatch kita berisi $m$ contoh
+dan bahwa untuk setiap kanal,
+output dari konvolusi memiliki tinggi $p$ dan lebar $q$.
+Untuk lapisan konvolusi, kita melakukan setiap batch normalization
+pada $m \cdot p \cdot q$ elemen per kanal output secara bersamaan.
+Dengan demikian, kita mengumpulkan nilai-nilai di semua lokasi spasial
+saat menghitung rata-rata dan varians,
+dan menerapkan rata-rata dan varians yang sama
+dalam kanal tertentu
+untuk menormalkan nilai di setiap lokasi spasial.
+Setiap kanal memiliki parameter skala dan shift sendiri,
+keduanya berupa skalar.
 
 ### Layer Normalization
 :label:`subsec_layer-normalization-in-bn`
 
-Note that in the context of convolutions the batch normalization is well defined even for
-minibatches of size 1: after all, we have all the locations across an image to average. Consequently,
-mean and variance are well defined, even if it is just within a single observation. This consideration
-led :citet:`Ba.Kiros.Hinton.2016` to introduce the notion of *layer normalization*. It works just like
-a batch norm, only that it is applied to one observation at a time. Consequently both the offset and the scaling factor are scalars. For an $n$-dimensional vector $\mathbf{x}$, layer norms are given by 
+Perhatikan bahwa dalam konteks konvolusi, batch normalization tetap terdefinisi dengan baik bahkan untuk
+minibatch dengan ukuran 1: bagaimanapun juga, kita memiliki semua lokasi dalam gambar untuk dirata-rata. Pertimbangan ini
+mendorong :citet:`Ba.Kiros.Hinton.2016` untuk memperkenalkan konsep *layer normalization*. Layer normalization bekerja mirip dengan
+batch normalization, hanya saja diterapkan pada satu pengamatan pada satu waktu. Akibatnya, baik faktor offset maupun skala menjadi skalar. Untuk vektor berdimensi $n$ $\mathbf{x}$, layer normalization diberikan oleh 
 
 $$\mathbf{x} \rightarrow \textrm{LN}(\mathbf{x}) =  \frac{\mathbf{x} - \hat{\mu}}{\hat\sigma},$$
 
-where scaling and offset are applied coefficient-wise
-and given by 
+di mana skala dan offset diterapkan secara koefisien demi koefisien
+dan didefinisikan oleh 
 
-$$\hat{\mu} \stackrel{\textrm{def}}{=} \frac{1}{n} \sum_{i=1}^n x_i \textrm{ and }
+$$\hat{\mu} \stackrel{\textrm{def}}{=} \frac{1}{n} \sum_{i=1}^n x_i \textrm{ dan }
 \hat{\sigma}^2 \stackrel{\textrm{def}}{=} \frac{1}{n} \sum_{i=1}^n (x_i - \hat{\mu})^2 + \epsilon.$$
 
-As before we add a small offset $\epsilon > 0$ to prevent division by zero. One of the major benefits of using layer normalization is that it prevents divergence. After all, ignoring $\epsilon$, the output of the layer normalization is scale independent. That is, we have $\textrm{LN}(\mathbf{x}) \approx \textrm{LN}(\alpha \mathbf{x})$ for any choice of $\alpha \neq 0$. This becomes an equality for $|\alpha| \to \infty$ (the approximate equality is due to the offset $\epsilon$ for the variance). 
+Seperti sebelumnya, kita menambahkan offset kecil $\epsilon > 0$ untuk mencegah pembagian dengan nol. Salah satu manfaat utama penggunaan layer normalization adalah mencegah divergensi. Setelah semua, jika mengabaikan $\epsilon$, output dari layer normalization independen terhadap skala. Artinya, kita memiliki $\textrm{LN}(\mathbf{x}) \approx \textrm{LN}(\alpha \mathbf{x})$ untuk setiap pilihan $\alpha \neq 0$. Ini menjadi persamaan yang tepat untuk $|\alpha| \to \infty$ (persamaan mendekati ini terjadi karena offset $\epsilon$ pada varians). 
 
-Another advantage of the layer normalization is that it does not depend on the minibatch size. It is also independent of whether we are in training or test regime. In other words, it is simply a deterministic transformation that standardizes the activations to a given scale. This can be very beneficial in preventing divergence in optimization. We skip further details and recommend that interested readers consult the original paper.
+Keuntungan lain dari layer normalization adalah tidak tergantung pada ukuran minibatch. Layer normalization juga independen dari apakah kita sedang dalam mode pelatihan atau prediksi. Dengan kata lain, ini hanya transformasi deterministik yang menstandarkan aktivasi pada skala tertentu. Hal ini dapat sangat bermanfaat untuk mencegah divergensi dalam optimasi. Kami tidak membahas lebih lanjut dan menyarankan pembaca yang tertarik untuk merujuk pada makalah aslinya.
 
-### Batch Normalization During Prediction
+### Batch Normalization Selama Prediksi
 
-As we mentioned earlier, batch normalization typically behaves differently
-in training mode than in prediction mode.
-First, the noise in the sample mean and the sample variance
-arising from estimating each on minibatches
-is no longer desirable once we have trained the model.
-Second, we might not have the luxury
-of computing per-batch normalization statistics.
-For example,
-we might need to apply our model to make one prediction at a time.
+Seperti yang telah disebutkan sebelumnya, batch normalization umumnya berperilaku berbeda
+dalam mode pelatihan dan mode prediksi.
+Pertama, noise dalam rata-rata sampel dan varians sampel
+yang timbul dari estimasi pada minibatch
+tidak lagi diinginkan setelah model dilatih.
+Kedua, kita mungkin tidak memiliki kemewahan
+untuk menghitung statistik normalisasi per batch.
+Misalnya,
+kita mungkin perlu menerapkan model untuk membuat satu prediksi setiap kali.
 
-Typically, after training, we use the entire dataset
-to compute stable estimates of the variable statistics
-and then fix them at prediction time.
-Hence, batch normalization behaves differently during training than at test time.
-Recall that dropout also exhibits this characteristic.
+Biasanya, setelah pelatihan, kita menggunakan seluruh dataset
+untuk menghitung estimasi statistik variabel yang stabil
+dan kemudian menguncinya saat prediksi.
+Oleh karena itu, batch normalization berperilaku berbeda selama pelatihan dan pada saat pengujian.
+Ingat bahwa dropout juga menunjukkan karakteristik ini.
 
-## (**Implementation from Scratch**)
+## (**Implementasi dari Awal**)
 
-To see how batch normalization works in practice, we implement one from scratch below.
+Untuk melihat bagaimana batch normalization bekerja dalam praktik, kita akan mengimplementasikannya dari awal di bawah ini.
+
 
 ```{.python .input}
 %%tab mxnet
 def batch_norm(X, gamma, beta, moving_mean, moving_var, eps, momentum):
-    # Use autograd to determine whether we are in training mode
+    # Gunakan autograd untuk menentukan apakah dalam mode pelatihan
     if not autograd.is_training():
-        # In prediction mode, use mean and variance obtained by moving average
+        # Dalam mode prediksi, gunakan mean dan varians yang diperoleh dari moving average
         X_hat = (X - moving_mean) / np.sqrt(moving_var + eps)
     else:
         assert len(X.shape) in (2, 4)
         if len(X.shape) == 2:
-            # When using a fully connected layer, calculate the mean and
-            # variance on the feature dimension
+            # Saat menggunakan lapisan fully connected, hitung mean dan
+            # varians pada dimensi fitur
             mean = X.mean(axis=0)
             var = ((X - mean) ** 2).mean(axis=0)
         else:
-            # When using a two-dimensional convolutional layer, calculate the
-            # mean and variance on the channel dimension (axis=1). Here we
-            # need to maintain the shape of X, so that the broadcasting
-            # operation can be carried out later
+            # Saat menggunakan lapisan konvolusi dua dimensi, hitung mean dan
+            # varians pada dimensi channel (axis=1). Di sini kita perlu menjaga
+            # bentuk X, sehingga operasi broadcasting dapat dilakukan nantinya
             mean = X.mean(axis=(0, 2, 3), keepdims=True)
             var = ((X - mean) ** 2).mean(axis=(0, 2, 3), keepdims=True)
-        # In training mode, the current mean and variance are used 
+        # Dalam mode pelatihan, mean dan varians saat ini digunakan 
         X_hat = (X - mean) / np.sqrt(var + eps)
-        # Update the mean and variance using moving average
+        # Update mean dan varians menggunakan moving average
         moving_mean = (1.0 - momentum) * moving_mean + momentum * mean
         moving_var = (1.0 - momentum) * moving_var + momentum * var
-    Y = gamma * X_hat + beta  # Scale and shift
+    Y = gamma * X_hat + beta  # Skala dan geser
     return Y, moving_mean, moving_var
 ```
 
 ```{.python .input}
 %%tab pytorch
 def batch_norm(X, gamma, beta, moving_mean, moving_var, eps, momentum):
-    # Use is_grad_enabled to determine whether we are in training mode
+    # Gunakan is_grad_enabled untuk menentukan apakah kita sedang dalam mode pelatihan
     if not torch.is_grad_enabled():
-        # In prediction mode, use mean and variance obtained by moving average
+        # Dalam mode prediksi, gunakan mean dan varians yang diperoleh dari moving average
         X_hat = (X - moving_mean) / torch.sqrt(moving_var + eps)
     else:
         assert len(X.shape) in (2, 4)
         if len(X.shape) == 2:
-            # When using a fully connected layer, calculate the mean and
-            # variance on the feature dimension
+            # Saat menggunakan lapisan fully connected, hitung mean dan
+            # varians pada dimensi fitur
             mean = X.mean(dim=0)
             var = ((X - mean) ** 2).mean(dim=0)
         else:
-            # When using a two-dimensional convolutional layer, calculate the
-            # mean and variance on the channel dimension (axis=1). Here we
-            # need to maintain the shape of X, so that the broadcasting
-            # operation can be carried out later
+            # Saat menggunakan lapisan konvolusi dua dimensi, hitung mean dan
+            # varians pada dimensi channel (axis=1). Di sini kita perlu menjaga
+            # bentuk X, sehingga operasi broadcasting dapat dilakukan nantinya
             mean = X.mean(dim=(0, 2, 3), keepdim=True)
             var = ((X - mean) ** 2).mean(dim=(0, 2, 3), keepdim=True)
-        # In training mode, the current mean and variance are used 
+        # Dalam mode pelatihan, gunakan mean dan varians saat ini
         X_hat = (X - mean) / torch.sqrt(var + eps)
-        # Update the mean and variance using moving average
+        # Perbarui mean dan varians menggunakan moving average
         moving_mean = (1.0 - momentum) * moving_mean + momentum * mean
         moving_var = (1.0 - momentum) * moving_var + momentum * var
-    Y = gamma * X_hat + beta  # Scale and shift
+    Y = gamma * X_hat + beta  # Skala dan geser
     return Y, moving_mean.data, moving_var.data
 ```
 
 ```{.python .input}
 %%tab tensorflow
 def batch_norm(X, gamma, beta, moving_mean, moving_var, eps):
-    # Compute reciprocal of square root of the moving variance elementwise
+    # Hitung kebalikan dari akar kuadrat varians bergerak secara elemenwise
     inv = tf.cast(tf.math.rsqrt(moving_var + eps), X.dtype)
-    # Scale and shift
+    # Scale dan Shift
     inv *= gamma
     Y = X * inv + (beta - moving_mean * inv)
     return Y
@@ -347,88 +343,71 @@ def batch_norm(X, gamma, beta, moving_mean, moving_var, eps):
 
 ```{.python .input}
 %%tab jax
-def batch_norm(X, deterministic, gamma, beta, moving_mean, moving_var, eps,
-               momentum):
-    # Use `deterministic` to determine whether the current mode is training
-    # mode or prediction mode
+def batch_norm(X, deterministic, gamma, beta, moving_mean, moving_var, eps, momentum):
+    # Gunakan `deterministic` untuk menentukan apakah mode saat ini adalah mode pelatihan atau mode prediksi
     if deterministic:
-        # In prediction mode, use mean and variance obtained by moving average
-        # `linen.Module.variables` have a `value` attribute containing the array
+        # Dalam mode prediksi, gunakan mean dan varians yang diperoleh dari moving average
+        # `linen.Module.variables` memiliki atribut `value` yang mengandung array
         X_hat = (X - moving_mean.value) / jnp.sqrt(moving_var.value + eps)
     else:
         assert len(X.shape) in (2, 4)
         if len(X.shape) == 2:
-            # When using a fully connected layer, calculate the mean and
-            # variance on the feature dimension
+            # Saat menggunakan lapisan fully connected, hitung mean dan varians pada dimensi fitur
             mean = X.mean(axis=0)
             var = ((X - mean) ** 2).mean(axis=0)
         else:
-            # When using a two-dimensional convolutional layer, calculate the
-            # mean and variance on the channel dimension (axis=1). Here we
-            # need to maintain the shape of `X`, so that the broadcasting
-            # operation can be carried out later
+            # Saat menggunakan lapisan konvolusi dua dimensi, hitung mean dan varians pada dimensi channel (axis=1).
+            # Di sini kita perlu menjaga bentuk `X`, sehingga operasi broadcasting dapat dilakukan nantinya
             mean = X.mean(axis=(0, 2, 3), keepdims=True)
             var = ((X - mean) ** 2).mean(axis=(0, 2, 3), keepdims=True)
-        # In training mode, the current mean and variance are used
+        # Dalam mode pelatihan, gunakan mean dan varians saat ini
         X_hat = (X - mean) / jnp.sqrt(var + eps)
-        # Update the mean and variance using moving average
+        # Perbarui mean dan varians menggunakan moving average
         moving_mean.value = momentum * moving_mean.value + (1.0 - momentum) * mean
         moving_var.value = momentum * moving_var.value + (1.0 - momentum) * var
-    Y = gamma * X_hat + beta  # Scale and shift
+    Y = gamma * X_hat + beta  # Skala dan geser
     return Y
 ```
 
-We can now [**create a proper `BatchNorm` layer.**]
-Our layer will maintain proper parameters
-for scale `gamma` and shift `beta`,
-both of which will be updated in the course of training.
-Additionally, our layer will maintain
-moving averages of the means and variances
-for subsequent use during model prediction.
+Kita sekarang bisa [**membuat layer `BatchNorm` yang sesungguhnya**].  
+Layer ini akan menyimpan parameter yang diperlukan untuk skala `gamma` dan shift `beta`, yang keduanya akan diperbarui selama pelatihan. Selain itu, layer ini juga akan menyimpan moving averages dari nilai mean dan varians yang nantinya akan digunakan selama prediksi model.
 
-Putting aside the algorithmic details,
-note the design pattern underlying our implementation of the layer.
-Typically, we define the mathematics in a separate function, say `batch_norm`.
-We then integrate this functionality into a custom layer,
-whose code mostly addresses bookkeeping matters,
-such as moving data to the right device context,
-allocating and initializing any required variables,
-keeping track of moving averages (here for mean and variance), and so on.
-This pattern enables a clean separation of mathematics from boilerplate code.
-Also note that for the sake of convenience
-we did not worry about automatically inferring the input shape here;
-thus we need to specify the number of features throughout.
-By now all modern deep learning frameworks offer automatic detection of size and shape in the
-high-level batch normalization APIs (in practice we will use this instead).
+Mengesampingkan detail algoritmik, perhatikan pola desain di balik implementasi layer ini. 
+Biasanya, kita mendefinisikan operasi matematis di fungsi terpisah, misalnya `batch_norm`. Kemudian kita mengintegrasikan fungsionalitas ini ke dalam layer khusus, 
+yang sebagian besar kode di dalamnya menangani hal-hal administratif, seperti memindahkan data ke konteks perangkat yang sesuai, 
+mengalokasikan dan menginisialisasi variabel yang diperlukan, menjaga catatan moving averages (di sini untuk nilai mean dan varians), 
+dan sebagainya. Pola ini memungkinkan pemisahan yang jelas antara matematika dan kode boilerplate.
+
+Selain itu, untuk kemudahan, kita tidak perlu khawatir tentang deteksi otomatis terhadap bentuk input di sini; 
+sehingga kita perlu menentukan jumlah fitur secara eksplisit. Saat ini, semua framework deep learning modern telah menawarkan deteksi ukuran dan bentuk 
+otomatis dalam API batch normalization tingkat tinggi (dalam praktiknya kita akan menggunakan API ini sebagai gantinya).
 
 ```{.python .input}
 %%tab mxnet
 class BatchNorm(nn.Block):
-    # `num_features`: the number of outputs for a fully connected layer
-    # or the number of output channels for a convolutional layer. `num_dims`:
-    # 2 for a fully connected layer and 4 for a convolutional layer
+    # `num_features`: jumlah output untuk layer fully connected
+    # atau jumlah channel output untuk layer konvolusi. `num_dims`:
+    # 2 untuk layer fully connected dan 4 untuk layer konvolusi
     def __init__(self, num_features, num_dims, **kwargs):
         super().__init__(**kwargs)
         if num_dims == 2:
             shape = (1, num_features)
         else:
             shape = (1, num_features, 1, 1)
-        # The scale parameter and the shift parameter (model parameters) are
-        # initialized to 1 and 0, respectively
+        # Parameter skala dan parameter shift (parameter model) diinisialisasi ke 1 dan 0
         self.gamma = self.params.get('gamma', shape=shape, init=init.One())
         self.beta = self.params.get('beta', shape=shape, init=init.Zero())
-        # The variables that are not model parameters are initialized to 0 and
-        # 1
+        # Variabel yang bukan parameter model diinisialisasi ke 0 dan 1
         self.moving_mean = np.zeros(shape)
         self.moving_var = np.ones(shape)
 
     def forward(self, X):
-        # If `X` is not on the main memory, copy `moving_mean` and
-        # `moving_var` to the device where `X` is located
+        # Jika `X` tidak berada di memori utama, salin `moving_mean` dan
+        # `moving_var` ke perangkat di mana `X` berada
         if self.moving_mean.ctx != X.ctx:
             self.moving_mean = self.moving_mean.copyto(X.ctx)
             self.moving_var = self.moving_var.copyto(X.ctx)
-        # Save the updated `moving_mean` and `moving_var`
+        # Simpan `moving_mean` dan `moving_var` yang diperbarui
         Y, self.moving_mean, self.moving_var = batch_norm(
             X, self.gamma.data(), self.beta.data(), self.moving_mean,
             self.moving_var, eps=1e-12, momentum=0.1)
@@ -438,31 +417,30 @@ class BatchNorm(nn.Block):
 ```{.python .input}
 %%tab pytorch
 class BatchNorm(nn.Module):
-    # num_features: the number of outputs for a fully connected layer or the
-    # number of output channels for a convolutional layer. num_dims: 2 for a
-    # fully connected layer and 4 for a convolutional layer
+    # num_features: jumlah output untuk layer fully connected atau
+    # jumlah channel output untuk layer konvolusi. num_dims: 2 untuk
+    # layer fully connected dan 4 untuk layer konvolusi
     def __init__(self, num_features, num_dims):
         super().__init__()
         if num_dims == 2:
             shape = (1, num_features)
         else:
             shape = (1, num_features, 1, 1)
-        # The scale parameter and the shift parameter (model parameters) are
-        # initialized to 1 and 0, respectively
+        # Parameter skala dan parameter shift (parameter model) diinisialisasi
+        # masing-masing menjadi 1 dan 0
         self.gamma = nn.Parameter(torch.ones(shape))
         self.beta = nn.Parameter(torch.zeros(shape))
-        # The variables that are not model parameters are initialized to 0 and
-        # 1
+        # Variabel yang bukan parameter model diinisialisasi ke 0 dan 1
         self.moving_mean = torch.zeros(shape)
         self.moving_var = torch.ones(shape)
 
     def forward(self, X):
-        # If X is not on the main memory, copy moving_mean and moving_var to
-        # the device where X is located
+        # Jika X tidak berada di memori utama, salin moving_mean dan moving_var
+        # ke perangkat di mana X berada
         if self.moving_mean.device != X.device:
             self.moving_mean = self.moving_mean.to(X.device)
             self.moving_var = self.moving_var.to(X.device)
-        # Save the updated moving_mean and moving_var
+        # Simpan moving_mean dan moving_var yang diperbarui
         Y, self.moving_mean, self.moving_var = batch_norm(
             X, self.gamma, self.beta, self.moving_mean,
             self.moving_var, eps=1e-5, momentum=0.1)
@@ -477,13 +455,13 @@ class BatchNorm(tf.keras.layers.Layer):
 
     def build(self, input_shape):
         weight_shape = [input_shape[-1], ]
-        # The scale parameter and the shift parameter (model parameters) are
-        # initialized to 1 and 0, respectively
+        # Parameter skala dan parameter shift (parameter model) diinisialisasi
+        # masing-masing menjadi 1 dan 0
         self.gamma = self.add_weight(name='gamma', shape=weight_shape,
             initializer=tf.initializers.ones, trainable=True)
         self.beta = self.add_weight(name='beta', shape=weight_shape,
             initializer=tf.initializers.zeros, trainable=True)
-        # The variables that are not model parameters are initialized to 0
+        # Variabel yang bukan parameter model diinisialisasi ke 0
         self.moving_mean = self.add_weight(name='moving_mean',
             shape=weight_shape, initializer=tf.initializers.zeros,
             trainable=False)
@@ -523,11 +501,11 @@ class BatchNorm(tf.keras.layers.Layer):
 ```{.python .input}
 %%tab jax
 class BatchNorm(nn.Module):
-    # `num_features`: the number of outputs for a fully connected layer
-    # or the number of output channels for a convolutional layer.
-    # `num_dims`: 2 for a fully connected layer and 4 for a convolutional layer
-    # Use `deterministic` to determine whether the current mode is training
-    # mode or prediction mode
+    # `num_features`: jumlah output untuk lapisan fully connected
+    # atau jumlah output channel untuk lapisan konvolusi.
+    # `num_dims`: 2 untuk lapisan fully connected dan 4 untuk lapisan konvolusi
+    # Gunakan `deterministic` untuk menentukan apakah mode saat ini adalah
+    # mode pelatihan atau prediksi
     num_features: int
     num_dims: int
     deterministic: bool = False
@@ -539,13 +517,13 @@ class BatchNorm(nn.Module):
         else:
             shape = (1, 1, 1, self.num_features)
 
-        # The scale parameter and the shift parameter (model parameters) are
-        # initialized to 1 and 0, respectively
+        # Parameter skala dan parameter shift (parameter model) diinisialisasi
+        # masing-masing menjadi 1 dan 0
         gamma = self.param('gamma', jax.nn.initializers.ones, shape)
         beta = self.param('beta', jax.nn.initializers.zeros, shape)
 
-        # The variables that are not model parameters are initialized to 0 and
-        # 1. Save them to the 'batch_stats' collection
+        # Variabel yang bukan parameter model diinisialisasi ke 0 dan 1.
+        # Simpan ke koleksi 'batch_stats'
         moving_mean = self.variable('batch_stats', 'moving_mean', jnp.zeros, shape)
         moving_var = self.variable('batch_stats', 'moving_var', jnp.ones, shape)
         Y = batch_norm(X, self.deterministic, gamma, beta,
@@ -554,15 +532,12 @@ class BatchNorm(nn.Module):
         return Y
 ```
 
-We used `momentum` to govern the aggregation over past mean and variance estimates. This is somewhat of a misnomer as it has nothing whatsoever to do with the *momentum* term of optimization. Nonetheless, it is the commonly adopted name for this term and in deference to API naming convention we use the same variable name in our code.
+Kami menggunakan `momentum` untuk mengatur agregasi atas estimasi rata-rata dan varians sebelumnya. Ini sebenarnya merupakan sebuah *misnomer* karena tidak ada hubungannya dengan istilah *momentum* dalam optimisasi. Namun demikian, ini adalah nama yang umum digunakan untuk istilah ini dan sesuai dengan konvensi penamaan API, kita menggunakan nama variabel yang sama dalam kode kita.
 
-## [**LeNet with Batch Normalization**]
+## [**LeNet dengan Batch Normalization**]
 
-To see how to apply `BatchNorm` in context,
-below we apply it to a traditional LeNet model (:numref:`sec_lenet`).
-Recall that batch normalization is applied
-after the convolutional layers or fully connected layers
-but before the corresponding activation functions.
+Untuk melihat cara menerapkan `BatchNorm` dalam konteksnya, berikut kami menerapkannya pada model LeNet tradisional (:numref:`sec_lenet`). Ingat bahwa batch normalization diterapkan setelah lapisan konvolusi atau lapisan fully connected tetapi sebelum fungsi aktivasi yang sesuai.
+
 
 ```{.python .input}
 %%tab pytorch, mxnet, tensorflow
@@ -637,14 +612,11 @@ class BNLeNetScratch(d2l.Classifier):
 ```
 
 :begin_tab:`jax`
-Since `BatchNorm` layers need to calculate the batch statistics
-(mean and variance), Flax keeps track of the `batch_stats` dictionary, updating
-them with every minibatch. Collections like `batch_stats` can be stored in the
-`TrainState` object (in the `d2l.Trainer` class defined in
-:numref:`oo-design-training`) as an attribute and during the model's forward pass,
-these should be passed to the `mutable` argument, so that Flax returns the mutated
-variables.
+Karena lapisan `BatchNorm` perlu menghitung statistik batch (rata-rata dan varians), Flax melacak dictionary `batch_stats`, memperbaruinya dengan setiap minibatch. 
+Koleksi seperti `batch_stats` dapat disimpan dalam objek `TrainState` (di dalam kelas `d2l.Trainer` yang didefinisikan di :numref:`oo-design-training`) sebagai sebuah atribut, 
+dan selama proses forward pass model, ini harus diteruskan ke argumen `mutable`, sehingga Flax mengembalikan variabel yang telah dimutasi.
 :end_tab:
+
 
 ```{.python .input}
 %%tab jax
@@ -661,8 +633,9 @@ def loss(self, params, X, Y, state, averaged=True):
     return (fn(Y_hat, Y).mean(), updates) if averaged else (fn(Y_hat, Y), updates)
 ```
 
-As before, we will [**train our network on the Fashion-MNIST dataset**].
-This code is virtually identical to that when we first trained LeNet.
+Seperti sebelumnya, kita akan [**melatih jaringan kita pada dataset Fashion-MNIST**].
+Kode ini hampir identik dengan ketika kita pertama kali melatih LeNet.
+
 
 ```{.python .input}
 %%tab mxnet, pytorch, jax
@@ -683,9 +656,9 @@ with d2l.try_gpu():
     trainer.fit(model, data)
 ```
 
-Let's [**have a look at the scale parameter `gamma`
-and the shift parameter `beta`**] learned
-from the first batch normalization layer.
+Mari kita [**melihat parameter skala `gamma`
+dan parameter shift `beta`**] yang dipelajari
+dari lapisan normalisasi batch pertama.
 
 ```{.python .input}
 %%tab mxnet
@@ -709,13 +682,11 @@ trainer.state.params['net']['layers_1']['gamma'].reshape((-1,)), \
 trainer.state.params['net']['layers_1']['beta'].reshape((-1,))
 ```
 
-## [**Concise Implementation**]
+## [**Implementasi Singkat**]
 
-Compared with the `BatchNorm` class,
-which we just defined ourselves,
-we can use the `BatchNorm` class defined in high-level APIs from the deep learning framework directly.
-The code looks virtually identical
-to our implementation above, except that we no longer need to provide additional arguments for it to get the dimensions right.
+Dibandingkan dengan kelas `BatchNorm`, yang baru saja kita definisikan sendiri, kita dapat langsung menggunakan kelas `BatchNorm` yang telah disediakan dalam API tingkat tinggi dari kerangka deep learning. 
+Kodenya hampir sama dengan implementasi kita di atas, hanya saja kita tidak perlu lagi memberikan argumen tambahan untuk mendapatkan dimensi yang tepat.
+
 
 ```{.python .input}
 %%tab pytorch, tensorflow, mxnet
@@ -792,10 +763,9 @@ class BNLeNet(d2l.Classifier):
             nn.Dense(self.num_classes)])
 ```
 
-Below, we [**use the same hyperparameters to train our model.**]
-Note that as usual, the high-level API variant runs much faster
-because its code has been compiled to C++ or CUDA
-while our custom implementation must be interpreted by Python.
+Di bawah ini, kita [**menggunakan hyperparameter yang sama untuk melatih model kita.**]  
+Perhatikan bahwa seperti biasa, varian API tingkat tinggi berjalan jauh lebih cepat karena kodenya telah dikompilasi ke C++ atau CUDA, sementara implementasi kustom kita harus diinterpretasikan oleh Python.
+
 
 ```{.python .input}
 %%tab mxnet, pytorch, jax
@@ -816,118 +786,53 @@ with d2l.try_gpu():
     trainer.fit(model, data)
 ```
 
-## Discussion
+## Diskusi
 
-Intuitively, batch normalization is thought
-to make the optimization landscape smoother.
-However, we must be careful to distinguish between
-speculative intuitions and true explanations
-for the phenomena that we observe when training deep models.
-Recall that we do not even know why simpler
-deep neural networks (MLPs and conventional CNNs)
-generalize well in the first place.
-Even with dropout and weight decay,
-they remain so flexible that their ability to generalize to unseen data
-likely needs significantly more refined learning-theoretic generalization guarantees.
+Secara intuitif, normalisasi batch dianggap dapat membuat lanskap optimasi lebih halus. Namun, kita harus berhati-hati untuk membedakan antara intuisi spekulatif dan penjelasan yang benar-benar menjelaskan fenomena yang kita amati saat melatih model deep learning. Ingat bahwa kita bahkan belum mengetahui mengapa jaringan neural yang lebih sederhana (seperti MLP dan CNN konvensional) mampu melakukan generalisasi dengan baik. Bahkan dengan dropout dan peluruhan bobot, model ini tetap fleksibel sehingga kemampuannya untuk melakukan generalisasi pada data yang belum pernah dilihat mungkin membutuhkan jaminan teori pembelajaran yang lebih terperinci.
 
-The original paper proposing batch normalization :cite:`Ioffe.Szegedy.2015`, in addition to introducing a powerful and useful tool,
-offered an explanation for why it works:
-by reducing *internal covariate shift*.
-Presumably by *internal covariate shift* they
-meant something like the intuition expressed above---the
-notion that the distribution of variable values changes
-over the course of training.
-However, there were two problems with this explanation:
-i) This drift is very different from *covariate shift*,
-rendering the name a misnomer. If anything, it is closer to concept drift. 
-ii) The explanation offers an under-specified intuition
-but leaves the question of *why precisely this technique works*
-an open question wanting for a rigorous explanation.
-Throughout this book, we aim to convey the intuitions that practitioners
-use to guide their development of deep neural networks.
-However, we believe that it is important
-to separate these guiding intuitions
-from established scientific fact.
-Eventually, when you master this material
-and start writing your own research papers
-you will want to be clear to delineate
-between technical claims and hunches.
+Makalah asli yang mengusulkan normalisasi batch :cite:`Ioffe.Szegedy.2015`, selain memperkenalkan alat yang kuat dan berguna, menawarkan penjelasan mengapa teknik ini berhasil, yakni dengan mengurangi *internal covariate shift*. Diduga, istilah *internal covariate shift* merujuk pada intuisi di atas—gagasan bahwa distribusi nilai variabel berubah selama pelatihan. Namun, ada dua masalah dengan penjelasan ini: i) Drift ini sangat berbeda dari *covariate shift*, sehingga nama ini tidak tepat. Jika ada, ini lebih mendekati konsep drift. ii) Penjelasan ini menawarkan intuisi yang kurang rinci dan meninggalkan pertanyaan mengapa teknik ini berhasil. Sepanjang buku ini, kami berupaya menyampaikan intuisi yang digunakan praktisi untuk mengembangkan jaringan saraf dalam, namun penting untuk memisahkan intuisi panduan ini dari fakta ilmiah yang telah terbukti.
 
-Following the success of batch normalization,
-its explanation in terms of *internal covariate shift*
-has repeatedly surfaced in debates in the technical literature
-and broader discourse about how to present machine learning research.
-In a memorable speech given while accepting a Test of Time Award
-at the 2017 NeurIPS conference,
-Ali Rahimi used *internal covariate shift*
-as a focal point in an argument likening
-the modern practice of deep learning to alchemy.
-Subsequently, the example was revisited in detail
-in a position paper outlining
-troubling trends in machine learning :cite:`Lipton.Steinhardt.2018`.
-Other authors
-have proposed alternative explanations for the success of batch normalization,
-some :cite:`Santurkar.Tsipras.Ilyas.ea.2018`
-claiming that batch normalization's success comes despite exhibiting behavior
-that is in some ways opposite to those claimed in the original paper.
+Setelah kesuksesan normalisasi batch, penjelasan *internal covariate shift* kembali muncul dalam debat literatur teknis tentang cara menyajikan penelitian machine learning. Dalam pidato yang dikenang saat menerima penghargaan Test of Time di konferensi NeurIPS 2017, Ali Rahimi menggunakan *internal covariate shift* sebagai pusat dalam argumen yang menyamakan praktik deep learning modern dengan alkimia. Contoh ini kemudian dibahas dalam makalah :cite:`Lipton.Steinhardt.2018`, dengan beberapa penulis menawarkan penjelasan alternatif atas keberhasilan normalisasi batch :cite:`Santurkar.Tsipras.Ilyas.ea.2018`, yang mengklaim bahwa keberhasilan teknik ini terjadi meski dalam beberapa hal bertentangan dengan klaim dalam makalah asli.
 
+Kami mencatat bahwa *internal covariate shift* tidak lebih layak dikritik daripada ribuan klaim serupa lainnya yang dibuat setiap tahun dalam literatur machine learning. Kemungkinan, istilah ini menjadi pusat perdebatan karena daya tariknya bagi audiens yang dituju. Normalisasi batch telah menjadi metode yang sangat diperlukan, diterapkan dalam hampir semua pengklasifikasi gambar yang digunakan, dan makalah yang memperkenalkan teknik ini telah dikutip puluhan ribu kali. Kami memperkirakan prinsip-prinsip pemandu dari regularisasi melalui injeksi noise, percepatan melalui penskalaan ulang, dan prapemrosesan mungkin akan mengarah pada penemuan layer dan teknik lain di masa depan.
 
-We note that the *internal covariate shift*
-is no more worthy of criticism than any of
-thousands of similarly vague claims
-made every year in the technical machine learning literature.
-Likely, its resonance as a focal point of these debates
-owes to its broad recognizability for the target audience.
-Batch normalization has proven an indispensable method,
-applied in nearly all deployed image classifiers,
-earning the paper that introduced the technique
-tens of thousands of citations. We conjecture, though, that the guiding principles
-of regularization through noise injection, acceleration through rescaling and lastly preprocessing
-may well lead to further inventions of layers and techniques in the future.
+Catatan praktis tentang normalisasi batch yang perlu diingat:
 
-On a more practical note, there are a number of aspects worth remembering about batch normalization:
+* Selama pelatihan model, normalisasi batch secara terus-menerus menyesuaikan output antara layer dengan menggunakan rata-rata dan deviasi standar dari minibatch, sehingga nilai output setiap layer lebih stabil.
+* Normalisasi batch sedikit berbeda untuk layer fully connected dibandingkan dengan layer konvolusi. Dalam beberapa kasus, normalisasi layer dapat digunakan sebagai alternatif untuk konvolusi.
+* Seperti layer dropout, layer normalisasi batch memiliki perilaku berbeda dalam mode pelatihan dan prediksi.
+* Normalisasi batch berguna untuk regularisasi dan meningkatkan konvergensi dalam optimasi. Namun, motivasi asli untuk mengurangi internal covariate shift tampaknya bukan penjelasan yang valid.
+* Untuk model yang lebih kuat yang tidak terlalu sensitif terhadap gangguan input, pertimbangkan untuk menghapus normalisasi batch :cite:`wang2022removing`.
 
-* During model training, batch normalization continuously adjusts the intermediate output of
-  the network by utilizing the mean and standard deviation of the minibatch, so that the
-  values of the intermediate output in each layer throughout the neural network are more stable.
-* Batch normalization is slightly different for fully connected layers than for convolutional layers. In fact,
-  for convolutional layers, layer normalization can sometimes be used as an alternative.
-* Like a dropout layer, batch normalization layers have different behaviors
-  in training mode than in prediction mode.
-* Batch normalization is useful for regularization and improving convergence in optimization. By contrast,
-  the original motivation of reducing internal covariate shift seems not to be a valid explanation.
-* For more robust models that are less sensitive to input perturbations, consider removing batch normalization :cite:`wang2022removing`.
+## Latihan
 
-## Exercises
-
-1. Should we remove the bias parameter from the fully connected layer or the convolutional layer before the batch normalization? Why?
-1. Compare the learning rates for LeNet with and without batch normalization.
-    1. Plot the increase in validation accuracy.
-    1. How large can you make the learning rate before the optimization fails in both cases?
-1. Do we need batch normalization in every layer? Experiment with it.
-1. Implement a "lite" version of batch normalization that only removes the mean, or alternatively one that
-   only removes the variance. How does it behave?
-1. Fix the parameters `beta` and `gamma`. Observe and analyze the results.
-1. Can you replace dropout by batch normalization? How does the behavior change?
-1. Research ideas: think of other normalization transforms that you can apply:
-    1. Can you apply the probability integral transform?
-    1. Can you use a full-rank covariance estimate? Why should you probably not do that? 
-    1. Can you use other compact matrix variants (block-diagonal, low-displacement rank, Monarch, etc.)?
-    1. Does a sparsification compression act as a regularizer?
-    1. Are there other projections (e.g., convex cone, symmetry group-specific transforms) that you can use?
+1. Haruskah kita menghapus parameter bias dari layer fully connected atau layer konvolusi sebelum normalisasi batch? Mengapa?
+1. Bandingkan learning rate untuk LeNet dengan dan tanpa normalisasi batch.
+    1. Plot peningkatan akurasi validasi.
+    1. Seberapa besar Anda dapat menambah learning rate sebelum optimasi gagal pada kedua kasus?
+1. Apakah kita perlu normalisasi batch di setiap layer? Coba eksperimenkan.
+1. Implementasikan versi "ringan" dari normalisasi batch yang hanya menghilangkan rata-rata, atau yang hanya menghilangkan variansi. Bagaimana perilakunya?
+1. Tetapkan parameter `beta` dan `gamma` sebagai tetap. Amati dan analisis hasilnya.
+1. Bisakah Anda mengganti dropout dengan normalisasi batch? Bagaimana perubahannya?
+1. Penelitian ide baru: pikirkan transformasi normalisasi lain yang dapat Anda terapkan:
+    1. Bisakah Anda menerapkan transformasi integral probabilitas?
+    1. Bisakah Anda menggunakan estimasi kovarians full-rank? Mengapa ini mungkin bukan ide bagus?
+    1. Bisakah Anda menggunakan varian matriks kompak lainnya (block-diagonal, low-displacement rank, Monarch, dll.)?
+    1. Apakah kompresi sparsifikasi berfungsi sebagai regularizer?
+    1. Apakah ada proyeksi lain (misalnya, cone cembung, transformasi khusus grup simetri) yang dapat Anda gunakan?
 
 :begin_tab:`mxnet`
-[Discussions](https://discuss.d2l.ai/t/83)
+[Diskusi](https://discuss.d2l.ai/t/83)
 :end_tab:
 
 :begin_tab:`pytorch`
-[Discussions](https://discuss.d2l.ai/t/84)
+[Diskusi](https://discuss.d2l.ai/t/84)
 :end_tab:
 
 :begin_tab:`tensorflow`
-[Discussions](https://discuss.d2l.ai/t/330)
+[Diskusi](https://discuss.d2l.ai/t/330)
 :end_tab:
 
 :begin_tab:`jax`
-[Discussions](https://discuss.d2l.ai/t/18005)
+[Diskusi](https://discuss.d2l.ai/t/18005)
 :end_tab:
