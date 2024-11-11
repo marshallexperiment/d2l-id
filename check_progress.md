@@ -87,14 +87,14 @@
 # 8 - chapter_convolutional-modern
 
 - [x] ./chapter_convolutional-modern/batch-norm.md
-- [ ] ./chapter_convolutional-modern/resnet.md
-- [ ] ./chapter_convolutional-modern/alexnet.md
-- [ ] ./chapter_convolutional-modern/index.md
-- [ ] ./chapter_convolutional-modern/vgg.md
-- [ ] ./chapter_convolutional-modern/googlenet.md
-- [ ] ./chapter_convolutional-modern/cnn-design.md
-- [ ] ./chapter_convolutional-modern/nin.md
-- [ ] ./chapter_convolutional-modern/densenet.md
+- [x] ./chapter_convolutional-modern/resnet.md
+- [x] ./chapter_convolutional-modern/alexnet.md
+- [x] ./chapter_convolutional-modern/index.md
+- [x] ./chapter_convolutional-modern/vgg.md
+- [x] ./chapter_convolutional-modern/googlenet.md
+- [x] ./chapter_convolutional-modern/cnn-design.md
+- [x] ./chapter_convolutional-modern/nin.md
+- [x] ./chapter_convolutional-modern/densenet.md
 
 # 9 - chapter_recurrent-neural-networks
 
