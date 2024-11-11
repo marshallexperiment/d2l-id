@@ -3,18 +3,15 @@
 tab.interact_select(['mxnet', 'pytorch', 'tensorflow', 'jax'])
 ```
 
-# Multi-Branch Networks  (GoogLeNet)
+# Jaringan Multi-Cabang (GoogLeNet)
 :label:`sec_googlenet`
 
-In 2014, *GoogLeNet*
-won the ImageNet Challenge :cite:`Szegedy.Liu.Jia.ea.2015`, using a structure
-that combined the strengths of NiN :cite:`Lin.Chen.Yan.2013`, repeated blocks :cite:`Simonyan.Zisserman.2014`,
-and a cocktail of convolution kernels. It was arguably also the first network that exhibited a clear distinction among the stem (data ingest), body (data processing), and head (prediction) in a CNN. This design pattern has persisted ever since in the design of deep networks: the *stem* is given by the first two or three convolutions that operate on the image. They extract low-level features from the underlying images. This is followed by a *body* of convolutional blocks. Finally, the *head* maps the features obtained so far to the required classification, segmentation, detection, or tracking problem at hand.
+Pada tahun 2014, *GoogLeNet* memenangkan ImageNet Challenge :cite:`Szegedy.Liu.Jia.ea.2015`, dengan menggunakan struktur yang menggabungkan keunggulan NiN :cite:`Lin.Chen.Yan.2013`, blok-blok berulang :cite:`Simonyan.Zisserman.2014`, dan berbagai kernel konvolusi. Jaringan ini bisa dibilang juga merupakan jaringan pertama yang menunjukkan perbedaan yang jelas antara stem (pemrosesan awal data), body (pemrosesan data utama), dan head (prediksi) dalam CNN. Pola desain ini telah bertahan dalam perancangan jaringan dalam sejak saat itu: *stem* terdiri dari dua atau tiga konvolusi pertama yang bekerja pada gambar dan mengekstrak fitur tingkat rendah dari gambar. Ini diikuti oleh *body* yang terdiri dari blok-blok konvolusi. Akhirnya, *head* memetakan fitur yang telah diperoleh untuk menyelesaikan masalah klasifikasi, segmentasi, deteksi, atau pelacakan yang diinginkan.
 
-The key contribution in GoogLeNet was the design of the network body. It solved the problem of selecting
-convolution kernels in an ingenious way. While other works tried to identify which convolution, ranging from $1 \times 1$ to $11 \times 11$ would be best, it simply *concatenated* multi-branch convolutions.
-In what follows we introduce a slightly simplified version of GoogLeNet: the original design included a number of tricks for stabilizing training through intermediate loss functions, applied to multiple layers of the network. 
-They are no longer necessary due to the availability of improved training algorithms.
+Kontribusi utama GoogLeNet terletak pada desain body jaringan. GoogLeNet menyelesaikan masalah pemilihan kernel konvolusi dengan cara yang cerdas. Sementara penelitian lain mencoba mengidentifikasi konvolusi mana, mulai dari $1 \times 1$ hingga $11 \times 11$, yang paling baik, GoogLeNet cukup *menggabungkan* konvolusi multi-cabang sekaligus.
+Berikut ini, kami memperkenalkan versi GoogLeNet yang sedikit disederhanakan: desain aslinya menyertakan beberapa trik untuk menstabilkan pelatihan melalui fungsi loss intermediate, yang diterapkan pada beberapa lapisan jaringan. 
+Trik tersebut tidak lagi diperlukan berkat adanya algoritma pelatihan yang lebih baik.
+
 
 ```{.python .input}
 %%tab mxnet
@@ -46,29 +43,30 @@ from jax import numpy as jnp
 import jax
 ```
 
-## (**Inception Blocks**)
+## (**Blok Inception**)
 
-The basic convolutional block in GoogLeNet is called an *Inception block*,
-stemming from the meme "we need to go deeper" from the movie *Inception*.
+Blok konvolusi dasar dalam GoogLeNet disebut *Inception block*,
+terinspirasi dari meme "we need to go deeper" dari film *Inception*.
 
-![Structure of the Inception block.](../img/inception.svg)
+![Struktur dari blok Inception.](../img/inception.svg)
 :label:`fig_inception`
 
-As depicted in :numref:`fig_inception`,
-the inception block consists of four parallel branches.
-The first three branches use convolutional layers
-with window sizes of $1\times 1$, $3\times 3$, and $5\times 5$
-to extract information from different spatial sizes.
-The middle two branches also add a $1\times 1$ convolution of the input
-to reduce the number of channels, reducing the model's complexity.
-The fourth branch uses a $3\times 3$ max-pooling layer,
-followed by a $1\times 1$ convolutional layer
-to change the number of channels.
-The four branches all use appropriate padding to give the input and output the same height and width.
-Finally, the outputs along each branch are concatenated
-along the channel dimension and comprise the block's output.
-The commonly-tuned hyperparameters of the Inception block
-are the number of output channels per layer, i.e., how to allocate capacity among convolutions of different size.
+Seperti yang digambarkan pada :numref:`fig_inception`,
+blok inception terdiri dari empat cabang (_branch_) paralel.
+Tiga cabang pertama menggunakan lapisan konvolusi
+dengan ukuran jendela $1\times 1$, $3\times 3$, dan $5\times 5$
+untuk mengekstrak informasi dari ukuran spasial yang berbeda.
+Dua cabang di tengah juga menambahkan konvolusi $1\times 1$ dari input
+untuk mengurangi jumlah saluran, sehingga mengurangi kompleksitas model.
+Cabang keempat menggunakan lapisan max-pooling $3\times 3$,
+diikuti oleh lapisan konvolusi $1\times 1$
+untuk mengubah jumlah saluran.
+Keempat cabang tersebut menggunakan padding yang sesuai sehingga tinggi dan lebar input dan output tetap sama.
+Akhirnya, output dari masing-masing cabang digabungkan
+dalam dimensi saluran dan membentuk output dari blok tersebut.
+Hyperparameter yang sering disesuaikan pada blok Inception
+adalah jumlah saluran output per lapisan, yaitu cara mengalokasikan kapasitas di antara konvolusi dengan ukuran yang berbeda.
+
 
 ```{.python .input}
 %%tab mxnet
@@ -179,27 +177,28 @@ class Inception(nn.Module):
         return jnp.concatenate((b1, b2, b3, b4), axis=-1)
 ```
 
-To gain some intuition for why this network works so well,
-consider the combination of the filters.
-They explore the image in a variety of filter sizes.
-This means that details at different extents
-can be recognized efficiently by filters of different sizes.
-At the same time, we can allocate different amounts of parameters
-for different filters.
+Untuk mendapatkan pemahaman mengapa jaringan ini bekerja dengan sangat baik,
+pertimbangkan kombinasi filter yang digunakan.
+Filter tersebut menjelajahi gambar dengan berbagai ukuran filter.
+Ini berarti bahwa detail pada berbagai skala
+dapat dikenali secara efisien oleh filter dengan ukuran yang berbeda.
+Pada saat yang sama, kita dapat mengalokasikan jumlah parameter yang berbeda
+untuk filter yang berbeda.
 
 
-## [**GoogLeNet Model**]
 
-As shown in :numref:`fig_inception_full`, GoogLeNet uses a stack of a total of 9 inception blocks, arranged into three groups with max-pooling in between,
-and global average pooling in its head to generate its estimates.
-Max-pooling between inception blocks reduces the dimensionality.
-At its stem, the first module is similar to AlexNet and LeNet.
+## [**Model GoogLeNet**]
 
-![The GoogLeNet architecture.](../img/inception-full-90.svg)
+Seperti yang ditunjukkan pada :numref:`fig_inception_full`, GoogLeNet menggunakan susunan dari total 9 blok inception, diatur ke dalam tiga kelompok dengan max-pooling di antaranya, dan global average pooling di bagian head untuk menghasilkan perkiraannya.
+Max-pooling di antara blok inception mengurangi dimensi.
+Pada bagian stem-nya, modul pertama serupa dengan AlexNet dan LeNet.
+
+![Arsitektur GoogLeNet.](../img/inception-full-90.svg)
 :label:`fig_inception_full`
 
-We can now implement GoogLeNet piece by piece. Let's begin with the stem.
-The first module uses a 64-channel $7\times 7$ convolutional layer.
+Sekarang kita dapat mengimplementasikan GoogLeNet bagian demi bagian. Mari kita mulai dengan bagian stem.
+Modul pertama menggunakan lapisan konvolusi $7\times 7$ dengan 64 saluran.
+
 
 ```{.python .input}
 %%tab pytorch, mxnet, tensorflow
@@ -241,9 +240,11 @@ class GoogleNet(d2l.Classifier):
                                       padding='same')])
 ```
 
-The second module uses two convolutional layers:
-first, a 64-channel $1\times 1$ convolutional layer,
-followed by a $3\times 3$ convolutional layer that triples the number of channels. This corresponds to the second branch in the Inception block and concludes the design of the body. At this point we have 192 channels.
+Modul kedua menggunakan dua lapisan konvolusi:
+pertama, lapisan konvolusi $1\times 1$ dengan 64 saluran,
+diikuti oleh lapisan konvolusi $3\times 3$ yang menggandakan jumlah saluran menjadi tiga kali lipat. Ini sesuai dengan cabang kedua dalam blok Inception dan menyelesaikan desain body. 
+Pada tahap ini, kita memiliki 192 saluran.
+
 
 ```{.python .input}
 %%tab all
@@ -275,19 +276,19 @@ def b2(self):
                                                     padding='same')])
 ```
 
-The third module connects two complete Inception blocks in series.
-The number of output channels of the first Inception block is
-$64+128+32+32=256$. This amounts to 
-a ratio of the number of output channels
-among the four branches of $2:4:1:1$. To achieve this, we first reduce the input
-dimensions by $\frac{1}{2}$ and by $\frac{1}{12}$ in the second and third branch respectively
-to arrive at $96 = 192/2$ and $16 = 192/12$ channels respectively.
+Modul ketiga menghubungkan dua blok Inception lengkap secara seri.
+Jumlah saluran output dari blok Inception pertama adalah
+$64+128+32+32=256$. Ini menghasilkan rasio jumlah saluran output
+di antara keempat cabang yaitu $2:4:1:1$. Untuk mencapai ini, kita terlebih dahulu mengurangi dimensi input
+dengan rasio $\frac{1}{2}$ dan $\frac{1}{12}$ pada cabang kedua dan ketiga masing-masing,
+sehingga kita mendapatkan 96 ($=192/2$) dan 16 ($=192/12$) saluran.
 
-The number of output channels of the second Inception block
-is increased to $128+192+96+64=480$, yielding a ratio of $128:192:96:64 = 4:6:3:2$. As before,
-we need to reduce the number of intermediate dimensions in the second and third channel. A
-scale of $\frac{1}{2}$ and $\frac{1}{8}$ respectively suffices, yielding $128$ and $32$ channels
-respectively. This is captured by the arguments of the following `Inception` block constructors.
+Jumlah saluran output dari blok Inception kedua
+ditingkatkan menjadi $128+192+96+64=480$, menghasilkan rasio $128:192:96:64 = 4:6:3:2$. Seperti sebelumnya,
+kita perlu mengurangi jumlah dimensi intermediate pada saluran kedua dan ketiga. Skala
+$\frac{1}{2}$ dan $\frac{1}{8}$ masing-masing cukup, menghasilkan 128 dan 32 saluran
+masing-masing. Hal ini diatur melalui argumen pada konstruktor `Inception` block berikut.
+
 
 ```{.python .input}
 %%tab all
@@ -316,21 +317,22 @@ def b3(self):
                                                     padding='same')])
 ```
 
-The fourth module is more complicated.
-It connects five Inception blocks in series,
-and they have $192+208+48+64=512$, $160+224+64+64=512$,
+Modul keempat lebih rumit.
+Modul ini menghubungkan lima blok Inception secara seri,
+dengan jumlah saluran output masing-masing adalah $192+208+48+64=512$, $160+224+64+64=512$,
 $128+256+64+64=512$, $112+288+64+64=528$,
-and $256+320+128+128=832$ output channels, respectively.
-The number of channels assigned to these branches is similar
-to that in the third module:
-the second branch with the $3\times 3$ convolutional layer
-outputs the largest number of channels,
-followed by the first branch with only the $1\times 1$ convolutional layer,
-the third branch with the $5\times 5$ convolutional layer,
-and the fourth branch with the $3\times 3$ max-pooling layer.
-The second and third branches will first reduce
-the number of channels according to the ratio.
-These ratios are slightly different in different Inception blocks.
+dan $256+320+128+128=832$.
+Jumlah saluran yang dialokasikan ke cabang-cabang ini mirip
+dengan modul ketiga:
+cabang kedua dengan lapisan konvolusi $3\times 3$
+menghasilkan jumlah saluran terbesar,
+diikuti oleh cabang pertama dengan lapisan konvolusi $1\times 1$ saja,
+cabang ketiga dengan lapisan konvolusi $5\times 5$,
+dan cabang keempat dengan lapisan max-pooling $3\times 3$.
+Cabang kedua dan ketiga akan terlebih dahulu mengurangi
+jumlah saluran sesuai dengan rasio yang ditentukan.
+Rasio ini sedikit berbeda di berbagai blok Inception.
+
 
 ```{.python .input}
 %%tab all
@@ -371,17 +373,18 @@ def b4(self):
                                                     padding='same')])
 ```
 
-The fifth module has two Inception blocks with $256+320+128+128=832$
-and $384+384+128+128=1024$ output channels.
-The number of channels assigned to each branch
-is the same as that in the third and fourth modules,
-but differs in specific values.
-It should be noted that the fifth block is followed by the output layer.
-This block uses the global average pooling layer
-to change the height and width of each channel to 1, just as in NiN.
-Finally, we turn the output into a two-dimensional array
-followed by a fully connected layer
-whose number of outputs is the number of label classes.
+Modul kelima memiliki dua blok Inception dengan jumlah saluran output $256+320+128+128=832$
+dan $384+384+128+128=1024$.
+Jumlah saluran yang dialokasikan untuk setiap cabang
+sama seperti pada modul ketiga dan keempat,
+tetapi berbeda dalam nilai spesifiknya.
+Perlu dicatat bahwa blok kelima diikuti oleh lapisan output.
+Blok ini menggunakan lapisan global average pooling
+untuk mengubah tinggi dan lebar setiap saluran menjadi 1, seperti pada NiN.
+Akhirnya, kita mengubah output menjadi array dua dimensi
+yang diikuti oleh lapisan fully connected
+dengan jumlah output yang sesuai dengan jumlah kelas label.
+
 
 ```{.python .input}
 %%tab all
@@ -414,7 +417,7 @@ def b5(self):
                               lambda x: x.reshape((x.shape[0], -1))])
 ```
 
-Now that we defined all blocks `b1` through `b5`, it is just a matter of assembling them all into a full network.
+Sekarang setelah kita mendefinisikan semua blok `b1` hingga `b5`, langkah selanjutnya hanyalah merangkai semua blok tersebut menjadi satu jaringan penuh.
 
 ```{.python .input}
 %%tab pytorch, mxnet, tensorflow
@@ -437,16 +440,14 @@ def __init__(self, lr=0.1, num_classes=10):
             tf.keras.layers.Dense(num_classes)])
 ```
 
-The GoogLeNet model is computationally complex. Note the large number of
-relatively arbitrary hyperparameters in terms of the number of channels chosen, the number of blocks prior to dimensionality reduction, the relative partitioning of capacity across channels, etc. Much of it is due to the 
-fact that at the time when GoogLeNet was introduced, automatic tools for network definition or design exploration 
-were not yet available. For instance, by now we take it for granted that a competent deep learning framework is capable of inferring dimensionalities of input tensors automatically. At the time, many such configurations had to be specified explicitly by the experimenter, thus often slowing down active experimentation. Moreover, the tools needed for automatic exploration were still in flux and initial experiments largely amounted to costly brute-force exploration, genetic algorithms, and similar strategies. 
+Model GoogLeNet memiliki kompleksitas komputasi yang tinggi. Perhatikan banyaknya hyperparameter yang relatif sewenang-wenang dalam hal jumlah saluran yang dipilih, jumlah blok sebelum pengurangan dimensi, pembagian kapasitas relatif di antara saluran, dan sebagainya. Sebagian besar dari ini disebabkan oleh fakta bahwa pada saat GoogLeNet diperkenalkan, alat otomatis untuk definisi jaringan atau eksplorasi desain belum tersedia. Misalnya, saat ini kita menganggap bahwa kerangka kerja deep learning yang kompeten mampu menyimpulkan dimensi tensor input secara otomatis. Pada saat itu, banyak konfigurasi seperti ini harus ditentukan secara eksplisit oleh peneliti, yang sering kali memperlambat eksperimen aktif. Selain itu, alat yang dibutuhkan untuk eksplorasi otomatis masih dalam pengembangan dan eksperimen awal sebagian besar berujung pada eksplorasi brute-force yang mahal, algoritma genetika, dan strategi serupa.
 
-For now the only modification we will carry out is to
-[**reduce the input height and width from 224 to 96
-to have a reasonable training time on Fashion-MNIST.**]
-This simplifies the computation. Let's have a look at the
-changes in the shape of the output between the various modules.
+Untuk saat ini, satu-satunya modifikasi yang akan kita lakukan adalah
+[**mengurangi tinggi dan lebar input dari 224 menjadi 96
+untuk mendapatkan waktu pelatihan yang masuk akal pada Fashion-MNIST.**]
+Ini akan menyederhanakan komputasi. Mari kita lihat
+perubahan dalam bentuk output di antara berbagai modul.
+
 
 ```{.python .input}
 %%tab mxnet, pytorch
@@ -458,11 +459,12 @@ model = GoogleNet().layer_summary((1, 1, 96, 96))
 model = GoogleNet().layer_summary((1, 96, 96, 1))
 ```
 
-## [**Training**]
+## [**Pelatihan**]
 
-As before, we train our model using the Fashion-MNIST dataset.
- We transform it to $96 \times 96$ pixel resolution
- before invoking the training procedure.
+Seperti sebelumnya, kita melatih model menggunakan dataset Fashion-MNIST.
+Kita mengubah resolusinya menjadi $96 \times 96$ piksel
+sebelum memulai prosedur pelatihan.
+
 
 ```{.python .input}
 %%tab mxnet, pytorch, jax
@@ -483,39 +485,36 @@ with d2l.try_gpu():
     trainer.fit(model, data)
 ```
 
-## Discussion
+## Diskusi
 
-A key feature of GoogLeNet is that it is actually *cheaper* to compute than its predecessors
-while simultaneously providing improved accuracy. This marks the beginning of a much more deliberate
-network design that trades off the cost of evaluating a network with a reduction in errors. It also marks the beginning of experimentation at a block level with network design hyperparameters, even though it was entirely manual at the time. We will revisit this topic in :numref:`sec_cnn-design` when discussing strategies for network structure exploration. 
+Fitur utama GoogLeNet adalah bahwa model ini sebenarnya *lebih murah* untuk dihitung dibandingkan dengan pendahulunya, sambil tetap memberikan akurasi yang lebih baik. Ini menandai dimulainya perancangan jaringan yang lebih sengaja, yang menyeimbangkan biaya evaluasi jaringan dengan pengurangan kesalahan. Ini juga menandai awal dari eksperimen pada tingkat blok dengan hyperparameter desain jaringan, meskipun saat itu masih sepenuhnya manual. Kami akan mengulas kembali topik ini pada :numref:`sec_cnn-design` ketika membahas strategi untuk eksplorasi struktur jaringan.
 
-Over the following sections we will encounter a number of design choices (e.g., batch normalization, residual connections, and channel grouping) that allow us to improve networks significantly. For now, you can be proud to have implemented what is arguably the first truly modern CNN.
+Pada bagian-bagian berikutnya, kita akan menemui sejumlah pilihan desain (misalnya, batch normalization, residual connections, dan channel grouping) yang memungkinkan kita untuk meningkatkan jaringan secara signifikan. Untuk saat ini, Anda bisa bangga telah mengimplementasikan CNN modern pertama yang sesungguhnya.
 
-## Exercises
+## Latihan
 
-1. GoogLeNet was so successful that it went through a number of iterations, progressively improving speed and accuracy. Try to implement and run some of them. They include the following:
-    1. Add a batch normalization layer :cite:`Ioffe.Szegedy.2015`, as described later in :numref:`sec_batch_norm`.
-    1. Make adjustments to the Inception block (width, choice and order of convolutions), as described in :citet:`Szegedy.Vanhoucke.Ioffe.ea.2016`.
-    1. Use label smoothing for model regularization, as described in :citet:`Szegedy.Vanhoucke.Ioffe.ea.2016`.
-    1. Make further adjustments to the Inception block by adding residual connection :cite:`Szegedy.Ioffe.Vanhoucke.ea.2017`, as described later in :numref:`sec_resnet`.
-1. What is the minimum image size needed for GoogLeNet to work?
-1. Can you design a variant of GoogLeNet that works on Fashion-MNIST's native resolution of $28 \times 28$ pixels? How would you need to change the stem, the body, and the head of the network, if anything at all?
-1. Compare the model parameter sizes of AlexNet, VGG, NiN, and GoogLeNet. How do the latter two network
-   architectures significantly reduce the model parameter size?
-1. Compare the amount of computation needed in GoogLeNet and AlexNet. How does this affect the design of an accelerator chip, e.g., in terms of memory size, memory bandwidth, cache size, the amount of computation, and the benefit of specialized operations?
+1. GoogLeNet begitu sukses sehingga mengalami beberapa iterasi, secara bertahap meningkatkan kecepatan dan akurasi. Cobalah untuk mengimplementasikan dan menjalankan beberapa di antaranya. Ini termasuk:
+    1. Menambahkan lapisan batch normalization :cite:`Ioffe.Szegedy.2015`, seperti yang dijelaskan di kemudian hari pada :numref:`sec_batch_norm`.
+    1. Melakukan penyesuaian pada blok Inception (lebar, pilihan dan urutan konvolusi), seperti yang dijelaskan dalam :citet:`Szegedy.Vanhoucke.Ioffe.ea.2016`.
+    1. Menggunakan label smoothing untuk regularisasi model, seperti yang dijelaskan dalam :citet:`Szegedy.Vanhoucke.Ioffe.ea.2016`.
+    1. Melakukan penyesuaian lebih lanjut pada blok Inception dengan menambahkan residual connection :cite:`Szegedy.Ioffe.Vanhoucke.ea.2017`, seperti yang dijelaskan di kemudian hari pada :numref:`sec_resnet`.
+1. Berapa ukuran gambar minimum yang dibutuhkan agar GoogLeNet dapat berfungsi?
+1. Bisakah Anda merancang varian GoogLeNet yang berfungsi pada resolusi asli Fashion-MNIST sebesar $28 \times 28$ piksel? Bagaimana Anda perlu mengubah stem, body, dan head dari jaringan ini, jika perlu?
+1. Bandingkan ukuran parameter model dari AlexNet, VGG, NiN, dan GoogLeNet. Bagaimana dua arsitektur jaringan terakhir secara signifikan mengurangi ukuran parameter model?
+1. Bandingkan jumlah komputasi yang diperlukan pada GoogLeNet dan AlexNet. Bagaimana hal ini memengaruhi desain chip akselerator, misalnya dalam hal ukuran memori, bandwidth memori, ukuran cache, jumlah komputasi, dan manfaat operasi khusus?
 
 :begin_tab:`mxnet`
-[Discussions](https://discuss.d2l.ai/t/81)
+[Diskusi](https://discuss.d2l.ai/t/81)
 :end_tab:
 
 :begin_tab:`pytorch`
-[Discussions](https://discuss.d2l.ai/t/82)
+[Diskusi](https://discuss.d2l.ai/t/82)
 :end_tab:
 
 :begin_tab:`tensorflow`
-[Discussions](https://discuss.d2l.ai/t/316)
+[Diskusi](https://discuss.d2l.ai/t/316)
 :end_tab:
 
 :begin_tab:`jax`
-[Discussions](https://discuss.d2l.ai/t/18004)
+[Diskusi](https://discuss.d2l.ai/t/18004)
 :end_tab:
