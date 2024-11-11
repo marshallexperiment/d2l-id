@@ -46,7 +46,7 @@ import jax
 import optax
 ```
 
-## Pelatihan Jaringan Dalam
+## Pelatihan Jaringan Dalam (Deep networks Train)
 
 Saat bekerja dengan data, kita sering melakukan prapemrosesan sebelum pelatihan.
 Pilihan terkait prapemrosesan data sering kali memberikan perbedaan besar pada hasil akhir.
