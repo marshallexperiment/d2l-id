@@ -3,12 +3,13 @@
 tab.interact_select(['mxnet', 'pytorch', 'tensorflow', 'jax'])
 ```
 
-# Residual Networks (ResNet) and ResNeXt
+# Jaringan Residual (ResNet) dan ResNeXt
 :label:`sec_resnet`
 
-As we design ever deeper networks it becomes imperative to understand how adding layers can increase the complexity and expressiveness of the network.
-Even more important is the ability to design networks where adding layers makes networks strictly more expressive rather than just different.
-To make some progress we need a bit of mathematics.
+Saat kita merancang jaringan yang semakin dalam, menjadi penting untuk memahami bagaimana penambahan lapisan dapat meningkatkan kompleksitas dan kemampuan ekspresif dari jaringan tersebut.
+Yang lebih penting lagi adalah kemampuan untuk merancang jaringan di mana penambahan lapisan membuat jaringan secara ketat lebih ekspresif daripada sekadar berbeda.
+Untuk membuat beberapa kemajuan, kita membutuhkan sedikit matematika.
+
 
 ```{.python .input}
 %%tab mxnet
@@ -40,98 +41,99 @@ from jax import numpy as jnp
 import jax
 ```
 
-## Function Classes
 
-Consider $\mathcal{F}$, the class of functions that a specific network architecture (together with learning rates and other hyperparameter settings) can reach.
-That is, for all $f \in \mathcal{F}$ there exists some set of parameters (e.g., weights and biases) that can be obtained through training on a suitable dataset.
-Let's assume that $f^*$ is the "truth" function that we really would like to find.
-If it is in $\mathcal{F}$, we are in good shape but typically we will not be quite so lucky.
-Instead, we will try to find some $f^*_\mathcal{F}$ which is our best bet within $\mathcal{F}$.
-For instance,
-given a dataset with features $\mathbf{X}$
-and labels $\mathbf{y}$,
-we might try finding it by solving the following optimization problem:
+## Kelas Fungsi
+
+Pertimbangkan $\mathcal{F}$, yaitu kelas fungsi yang dapat dicapai oleh arsitektur jaringan tertentu (bersama dengan learning rate dan pengaturan hyperparameter lainnya).
+Artinya, untuk semua $f \in \mathcal{F}$ terdapat beberapa set parameter (misalnya, bobot dan bias) yang dapat diperoleh melalui pelatihan pada dataset yang sesuai.
+Mari kita asumsikan bahwa $f^*$ adalah fungsi "kebenaran" yang benar-benar ingin kita temukan.
+Jika $f^*$ berada dalam $\mathcal{F}$, kita berada dalam kondisi baik, tetapi umumnya kita tidak akan seberuntung itu.
+Sebaliknya, kita akan mencoba menemukan $f^*_\mathcal{F}$ yang merupakan pilihan terbaik kita dalam $\mathcal{F}$.
+Sebagai contoh,
+diberikan sebuah dataset dengan fitur $\mathbf{X}$
+dan label $\mathbf{y}$,
+kita mungkin mencoba menemukannya dengan menyelesaikan masalah optimisasi berikut:
 
 $$f^*_\mathcal{F} \stackrel{\textrm{def}}{=} \mathop{\mathrm{argmin}}_f L(\mathbf{X}, \mathbf{y}, f) \textrm{ subject to } f \in \mathcal{F}.$$
 
-We know that regularization :cite:`tikhonov1977solutions,morozov2012methods` may control complexity of $\mathcal{F}$
-and achieve consistency, so a larger size of training data
-generally leads to better $f^*_\mathcal{F}$.
-It is only reasonable to assume that if we design a different and more powerful architecture $\mathcal{F}'$ we should arrive at a better outcome. In other words, we would expect that $f^*_{\mathcal{F}'}$ is "better" than $f^*_{\mathcal{F}}$. However, if $\mathcal{F} \not\subseteq \mathcal{F}'$ there is no guarantee that this should even happen. In fact, $f^*_{\mathcal{F}'}$ might well be worse.
-As illustrated by :numref:`fig_functionclasses`,
-for non-nested function classes, a larger function class does not always move closer to the "truth" function $f^*$. For instance,
-on the left of :numref:`fig_functionclasses`,
-though $\mathcal{F}_3$ is closer to $f^*$ than $\mathcal{F}_1$, $\mathcal{F}_6$ moves away and there is no guarantee that further increasing the complexity can reduce the distance from $f^*$.
-With nested function classes
-where $\mathcal{F}_1 \subseteq \cdots \subseteq \mathcal{F}_6$
-on the right of :numref:`fig_functionclasses`,
-we can avoid the aforementioned issue from the non-nested function classes.
+Kita tahu bahwa regularisasi :cite:`tikhonov1977solutions,morozov2012methods` dapat mengontrol kompleksitas $\mathcal{F}$
+dan mencapai konsistensi, sehingga ukuran data pelatihan yang lebih besar
+umumnya mengarah pada $f^*_\mathcal{F}$ yang lebih baik.
+Adalah wajar untuk berasumsi bahwa jika kita merancang arsitektur lain yang lebih kuat $\mathcal{F}'$, kita seharusnya mendapatkan hasil yang lebih baik. Dengan kata lain, kita mengharapkan bahwa $f^*_{\mathcal{F}'}$ lebih "baik" daripada $f^*_{\mathcal{F}}$. Namun, jika $\mathcal{F} \not\subseteq \mathcal{F}'$, tidak ada jaminan bahwa hal ini akan terjadi. Bahkan, $f^*_{\mathcal{F}'}$ mungkin justru lebih buruk.
+Sebagaimana diilustrasikan pada :numref:`fig_functionclasses`,
+untuk kelas fungsi yang tidak bersarang, kelas fungsi yang lebih besar tidak selalu bergerak mendekati fungsi "kebenaran" $f^*$. Sebagai contoh,
+di sebelah kiri dari :numref:`fig_functionclasses`,
+meskipun $\mathcal{F}_3$ lebih dekat ke $f^*$ daripada $\mathcal{F}_1$, $\mathcal{F}_6$ bergerak menjauh dan tidak ada jaminan bahwa peningkatan kompleksitas dapat mengurangi jarak dari $f^*$.
+Dengan kelas fungsi bersarang
+di mana $\mathcal{F}_1 \subseteq \cdots \subseteq \mathcal{F}_6$
+di sebelah kanan :numref:`fig_functionclasses`,
+kita dapat menghindari masalah yang disebutkan sebelumnya dari kelas fungsi yang tidak bersarang.
 
 
-![For non-nested function classes, a larger (indicated by area) function class does not guarantee we will get closer to the "truth" function ($\mathit{f}^*$). This does not happen in nested function classes.](../img/functionclasses.svg)
+![Untuk kelas fungsi yang tidak bersarang, kelas fungsi yang lebih besar (ditunjukkan dengan area) tidak menjamin kita akan semakin dekat ke fungsi "kebenaran" ($\mathit{f}^*$). Hal ini tidak terjadi pada kelas fungsi yang bersarang.](../img/functionclasses.svg)
 :label:`fig_functionclasses`
 
-Thus,
-only if larger function classes contain the smaller ones are we guaranteed that increasing them strictly increases the expressive power of the network.
-For deep neural networks,
-if we can
-train the newly-added layer into an identity function $f(\mathbf{x}) = \mathbf{x}$, the new model will be as effective as the original model. As the new model may get a better solution to fit the training dataset, the added layer might make it easier to reduce training errors.
+Oleh karena itu,
+hanya jika kelas fungsi yang lebih besar mengandung yang lebih kecil kita dapat dijamin bahwa peningkatan tersebut secara ketat meningkatkan kekuatan ekspresif jaringan.
+Untuk jaringan neural dalam,
+jika kita bisa
+melatih lapisan yang baru ditambahkan menjadi fungsi identitas $f(\mathbf{x}) = \mathbf{x}$, model baru akan seefektif model asli. Karena model baru mungkin mendapatkan solusi yang lebih baik untuk menyesuaikan dataset pelatihan, lapisan yang ditambahkan mungkin mempermudah pengurangan error pelatihan.
 
-This is the question that :citet:`He.Zhang.Ren.ea.2016` considered when working on very deep computer vision models.
-At the heart of their proposed *residual network* (*ResNet*) is the idea that every additional layer should
-more easily
-contain the identity function as one of its elements.
-These considerations are rather profound but they led to a surprisingly simple
-solution, a *residual block*.
-With it, ResNet won the ImageNet Large Scale Visual Recognition Challenge in 2015. The design had a profound influence on how to
-build deep neural networks. For instance, residual blocks have been added to recurrent networks :cite:`prakash2016neural,kim2017residual`. Likewise, Transformers :cite:`Vaswani.Shazeer.Parmar.ea.2017` use them to stack many layers of networks efficiently. It is also used in graph neural networks :cite:`Kipf.Welling.2016` and, as a basic concept, it has been used extensively in computer vision :cite:`Redmon.Farhadi.2018,Ren.He.Girshick.ea.2015`. 
-Note that residual networks are predated by highway networks :cite:`srivastava2015highway` that share some of the motivation, albeit without the elegant parametrization around the identity function.
+Inilah pertanyaan yang dipertimbangkan oleh :citet:`He.Zhang.Ren.ea.2016` saat mengerjakan model visi komputer yang sangat dalam.
+Inti dari *jaringan residual* (*ResNet*) yang mereka usulkan adalah gagasan bahwa setiap lapisan tambahan seharusnya
+lebih mudah
+mengandung fungsi identitas sebagai salah satu elemennya.
+Pertimbangan ini cukup mendalam tetapi mengarah pada solusi yang mengejutkan sederhana, yaitu *blok residual*.
+Dengan blok ini, ResNet memenangkan ImageNet Large Scale Visual Recognition Challenge pada tahun 2015. Desain ini memiliki pengaruh mendalam pada cara
+membangun jaringan neural yang dalam. Sebagai contoh, blok residual telah ditambahkan pada jaringan berulang (recurrent networks) :cite:`prakash2016neural,kim2017residual`. Demikian juga, Transformer :cite:`Vaswani.Shazeer.Parmar.ea.2017` menggunakannya untuk menumpuk banyak lapisan jaringan secara efisien. Blok ini juga digunakan dalam jaringan neural graf :cite:`Kipf.Welling.2016` dan, sebagai konsep dasar, telah digunakan secara luas dalam visi komputer :cite:`Redmon.Farhadi.2018,Ren.He.Girshick.ea.2015`.
+Perlu dicatat bahwa jaringan residual didahului oleh jaringan highway :cite:`srivastava2015highway` yang berbagi beberapa motivasi yang serupa, meskipun tanpa parametrisasi yang elegan di sekitar fungsi identitas.
 
 
-## (**Residual Blocks**)
+## (**Blok Residual**)
 :label:`subsec_residual-blks`
 
-Let's focus on a local part of a neural network, as depicted in :numref:`fig_residual_block`. Denote the input by $\mathbf{x}$.
-We assume that $f(\mathbf{x})$, the desired underlying mapping we want to obtain by learning, is to be used as input to the activation function on the top.
-On the left,
-the portion within the dotted-line box
-must directly learn $f(\mathbf{x})$.
-On the right,
-the portion within the dotted-line box
-needs to
-learn the *residual mapping* $g(\mathbf{x}) = f(\mathbf{x}) - \mathbf{x}$,
-which is how the residual block derives its name.
-If the identity mapping $f(\mathbf{x}) = \mathbf{x}$ is the desired underlying mapping,
-the residual mapping amounts to $g(\mathbf{x}) = 0$ and it is thus easier to learn:
-we only need to push the weights and biases
-of the
-upper weight layer (e.g., fully connected layer and convolutional layer)
-within the dotted-line box
-to zero.
-The right figure illustrates the *residual block* of ResNet,
-where the solid line carrying the layer input
-$\mathbf{x}$ to the addition operator
-is called a *residual connection* (or *shortcut connection*).
-With residual blocks, inputs can
-forward propagate faster through the residual connections across layers.
-In fact,
-the residual block
-can be thought of as
-a special case of the multi-branch Inception block:
-it has two branches
-one of which is the identity mapping.
+Mari kita fokus pada bagian lokal dari jaringan neural, seperti yang digambarkan pada :numref:`fig_residual_block`. Misalkan inputnya adalah $\mathbf{x}$.
+Kita mengasumsikan bahwa $f(\mathbf{x})$, pemetaan dasar yang ingin kita peroleh melalui pembelajaran, akan digunakan sebagai input ke fungsi aktivasi di bagian atas.
+Di sebelah kiri,
+bagian dalam kotak garis putus-putus
+harus langsung mempelajari $f(\mathbf{x})$.
+Di sebelah kanan,
+bagian dalam kotak garis putus-putus
+perlu
+mempelajari *pemetaan residual* $g(\mathbf{x}) = f(\mathbf{x}) - \mathbf{x}$,
+inilah asal nama blok residual.
+Jika pemetaan identitas $f(\mathbf{x}) = \mathbf{x}$ adalah pemetaan dasar yang diinginkan,
+pemetaan residual menjadi $g(\mathbf{x}) = 0$, sehingga lebih mudah dipelajari:
+kita hanya perlu mendorong bobot dan bias
+dari
+lapisan bobot atas (misalnya, fully connected layer dan lapisan konvolusi)
+dalam kotak garis putus-putus
+ke nol.
+Gambar di sebelah kanan menggambarkan *blok residual* dari ResNet,
+di mana garis solid yang membawa input lapisan
+$\mathbf{x}$ ke operator penjumlahan
+disebut *koneksi residual* (atau *koneksi pintas*).
+Dengan blok residual, input dapat
+dipropagasi ke depan lebih cepat melalui koneksi residual antar lapisan.
+Faktanya,
+blok residual
+dapat dianggap sebagai
+kasus khusus dari blok multi-cabang Inception:
+blok ini memiliki dua cabang
+yang salah satunya adalah pemetaan identitas.
 
-![In a regular block (left), the portion within the dotted-line box must directly learn the mapping $\mathit{f}(\mathbf{x})$. In a residual block (right), the portion within the dotted-line box needs to learn the residual mapping $\mathit{g}(\mathbf{x}) = \mathit{f}(\mathbf{x}) - \mathbf{x}$, making the identity mapping $\mathit{f}(\mathbf{x}) = \mathbf{x}$ easier to learn.](../img/residual-block.svg)
+![Dalam blok biasa (kiri), bagian dalam kotak garis putus-putus harus langsung mempelajari pemetaan $\mathit{f}(\mathbf{x})$. Dalam blok residual (kanan), bagian dalam kotak garis putus-putus perlu mempelajari pemetaan residual $\mathit{g}(\mathbf{x}) = \mathit{f}(\mathbf{x}) - \mathbf{x}$, membuat pemetaan identitas $\mathit{f}(\mathbf{x}) = \mathbf{x}$ lebih mudah dipelajari.](../img/residual-block.svg)
 :label:`fig_residual_block`
 
 
-ResNet has VGG's full $3\times 3$ convolutional layer design. The residual block has two $3\times 3$ convolutional layers with the same number of output channels. Each convolutional layer is followed by a batch normalization layer and a ReLU activation function. Then, we skip these two convolution operations and add the input directly before the final ReLU activation function.
-This kind of design requires that the output of the two convolutional layers has to be of the same shape as the input, so that they can be added together. If we want to change the number of channels, we need to introduce an additional $1\times 1$ convolutional layer to transform the input into the desired shape for the addition operation. Let's have a look at the code below.
+ResNet menggunakan desain lapisan konvolusi penuh $3\times 3$ dari VGG. Blok residual memiliki dua lapisan konvolusi $3\times 3$ dengan jumlah channel output yang sama. Setiap lapisan konvolusi diikuti oleh lapisan batch normalization dan fungsi aktivasi ReLU. Kemudian, kita melewati dua operasi konvolusi ini dan menambahkan input secara langsung sebelum fungsi aktivasi ReLU terakhir.
+Desain semacam ini mengharuskan output dari dua lapisan konvolusi memiliki bentuk yang sama dengan input, sehingga mereka dapat dijumlahkan bersama. Jika kita ingin mengubah jumlah channel, kita perlu memperkenalkan lapisan konvolusi tambahan $1\times 1$ untuk mentransformasi input ke bentuk yang diinginkan untuk operasi penjumlahan. Mari kita lihat kode di bawah ini.
+
 
 ```{.python .input}
 %%tab mxnet
 class Residual(nn.Block):  #@save
-    """The Residual block of ResNet models."""
+    """Blok Residual untuk model ResNet."""
     def __init__(self, num_channels, use_1x1conv=False, strides=1, **kwargs):
         super().__init__(**kwargs)
         self.conv1 = nn.Conv2D(num_channels, kernel_size=3, padding=1,
@@ -156,7 +158,7 @@ class Residual(nn.Block):  #@save
 ```{.python .input}
 %%tab pytorch
 class Residual(nn.Module):  #@save
-    """The Residual block of ResNet models."""
+    """Blok Residual untuk model ResNet."""
     def __init__(self, num_channels, use_1x1conv=False, strides=1):
         super().__init__()
         self.conv1 = nn.LazyConv2d(num_channels, kernel_size=3, padding=1,
@@ -182,7 +184,7 @@ class Residual(nn.Module):  #@save
 ```{.python .input}
 %%tab tensorflow
 class Residual(tf.keras.Model):  #@save
-    """The Residual block of ResNet models."""
+    """Blok Residual untuk model ResNet."""
     def __init__(self, num_channels, use_1x1conv=False, strides=1):
         super().__init__()
         self.conv1 = tf.keras.layers.Conv2D(num_channels, padding='same',
@@ -208,7 +210,7 @@ class Residual(tf.keras.Model):  #@save
 ```{.python .input}
 %%tab jax
 class Residual(nn.Module):  #@save
-    """The Residual block of ResNet models."""
+    """Blok Residual untuk model ResNet."""
     num_channels: int
     use_1x1conv: bool = False
     strides: tuple = (1, 1)
@@ -236,12 +238,13 @@ class Residual(nn.Module):  #@save
         return nn.relu(Y)
 ```
 
-This code generates two types of networks: one where we add the input to the output before applying the ReLU nonlinearity whenever `use_1x1conv=False`; and one where we adjust channels and resolution by means of a $1 \times 1$ convolution before adding. :numref:`fig_resnet_block` illustrates this.
+Kode ini menghasilkan dua jenis jaringan: satu di mana kita menambahkan input ke output sebelum menerapkan nonlinearitas ReLU ketika `use_1x1conv=False`; dan satu lagi di mana kita menyesuaikan channel dan resolusi menggunakan konvolusi $1 \times 1$ sebelum melakukan penjumlahan. :numref:`fig_resnet_block` menggambarkan hal ini.
 
-![ResNet block with and without $1 \times 1$ convolution, which transforms the input into the desired shape for the addition operation.](../img/resnet-block.svg)
+![Blok ResNet dengan dan tanpa konvolusi $1 \times 1$, yang mengubah input ke dalam bentuk yang diinginkan untuk operasi penjumlahan.](../img/resnet-block.svg)
 :label:`fig_resnet_block`
 
-Now let's look at [**a situation where the input and output are of the same shape**], where $1 \times 1$ convolution is not needed.
+Sekarang mari kita lihat [**situasi di mana input dan output memiliki bentuk yang sama**], di mana konvolusi $1 \times 1$ tidak diperlukan.
+
 
 ```{.python .input}
 %%tab mxnet, pytorch
@@ -269,8 +272,9 @@ X = jax.random.normal(d2l.get_key(), (4, 6, 6, 3))
 blk.init_with_output(d2l.get_key(), X)[0].shape
 ```
 
-We also have the option to [**halve the output height and width while increasing the number of output channels**].
-In this case we use $1 \times 1$ convolutions via `use_1x1conv=True`. This comes in handy at the beginning of each ResNet block to reduce the spatial dimensionality via `strides=2`.
+Kita juga memiliki opsi untuk [**mengurangi setengah tinggi dan lebar output sambil meningkatkan jumlah channel output**].
+Dalam kasus ini, kita menggunakan konvolusi $1 \times 1$ dengan `use_1x1conv=True`. Hal ini berguna di awal setiap blok ResNet untuk mengurangi dimensi spasial menggunakan `strides=2`.
+
 
 ```{.python .input}
 %%tab pytorch, mxnet, tensorflow
@@ -286,9 +290,9 @@ blk = Residual(6, use_1x1conv=True, strides=(2, 2))
 blk.init_with_output(d2l.get_key(), X)[0].shape
 ```
 
-## [**ResNet Model**]
+## [**Model ResNet**]
 
-The first two layers of ResNet are the same as those of the GoogLeNet we described before: the $7\times 7$ convolutional layer with 64 output channels and a stride of 2 is followed by the $3\times 3$ max-pooling layer with a stride of 2. The difference is the batch normalization layer added after each convolutional layer in ResNet.
+Dua lapisan pertama dari ResNet sama seperti pada GoogLeNet yang telah kita bahas sebelumnya: lapisan konvolusi $7\times 7$ dengan 64 channel output dan stride 2 diikuti oleh lapisan max-pooling $3\times 3$ dengan stride 2. Perbedaannya adalah adanya lapisan batch normalization yang ditambahkan setelah setiap lapisan konvolusi pada ResNet.
 
 ```{.python .input}
 %%tab pytorch, mxnet, tensorflow
@@ -334,9 +338,12 @@ class ResNet(d2l.Classifier):
                                   padding='same')])
 ```
 
-GoogLeNet uses four modules made up of Inception blocks.
-However, ResNet uses four modules made up of residual blocks, each of which uses several residual blocks with the same number of output channels.
-The number of channels in the first module is the same as the number of input channels. Since a max-pooling layer with a stride of 2 has already been used, it is not necessary to reduce the height and width. In the first residual block for each of the subsequent modules, the number of channels is doubled compared with that of the previous module, and the height and width are halved.
+GoogLeNet menggunakan empat modul yang terdiri dari blok Inception.
+
+Namun, ResNet menggunakan empat modul yang terdiri dari blok residual, di mana masing-masing modul menggunakan beberapa blok residual dengan jumlah channel output yang sama.
+Jumlah channel pada modul pertama sama dengan jumlah channel input. Karena lapisan max-pooling dengan stride 2 sudah digunakan, tidak perlu lagi mengurangi tinggi dan lebar. 
+Pada blok residual pertama untuk setiap modul berikutnya, jumlah channel digandakan dibandingkan dengan modul sebelumnya, dan tinggi serta lebar dikurangi setengah.
+
 
 ```{.python .input}
 %%tab mxnet
@@ -391,7 +398,7 @@ def block(self, num_residuals, num_channels, first_block=False):
     return nn.Sequential(blk)
 ```
 
-Then, we add all the modules to ResNet. Here, two residual blocks are used for each module. Lastly, just like GoogLeNet, we add a global average pooling layer, followed by the fully connected layer output.
+Selanjutnya, kita menambahkan semua modul ke dalam ResNet. Di sini, dua blok residual digunakan untuk setiap modul. Terakhir, seperti pada GoogLeNet, kita menambahkan lapisan global average pooling, diikuti dengan lapisan fully connected sebagai output.
 
 ```{.python .input}
 %%tab pytorch, mxnet, tensorflow
@@ -439,13 +446,14 @@ def create_net(self):
     return net
 ```
 
-There are four convolutional layers in each module (excluding the $1\times 1$ convolutional layer). Together with the first $7\times 7$ convolutional layer and the final fully connected layer, there are 18 layers in total. Therefore, this model is commonly known as ResNet-18.
-By configuring different numbers of channels and residual blocks in the module, we can create different ResNet models, such as the deeper 152-layer ResNet-152. Although the main architecture of ResNet is similar to that of GoogLeNet, ResNet's structure is simpler and easier to modify. All these factors have resulted in the rapid and widespread use of ResNet. :numref:`fig_resnet18` depicts the full ResNet-18.
+Terdapat empat lapisan konvolusi dalam setiap modul (tidak termasuk lapisan konvolusi $1\times 1$). Bersama dengan lapisan konvolusi pertama $7\times 7$ dan lapisan fully connected terakhir, terdapat total 18 lapisan. Oleh karena itu, model ini umumnya dikenal sebagai ResNet-18.
+Dengan mengonfigurasi jumlah channel dan blok residual yang berbeda dalam modul, kita dapat menciptakan model ResNet yang berbeda, seperti ResNet-152 yang lebih dalam dengan 152 lapisan. Meskipun arsitektur utama ResNet mirip dengan GoogLeNet, struktur ResNet lebih sederhana dan mudah dimodifikasi. Semua faktor ini membuat ResNet digunakan secara cepat dan luas. :numref:`fig_resnet18` menunjukkan keseluruhan arsitektur ResNet-18.
 
-![The ResNet-18 architecture.](../img/resnet18-90.svg)
+![Arsitektur ResNet-18.](../img/resnet18-90.svg)
 :label:`fig_resnet18`
 
-Before training ResNet, let's [**observe how the input shape changes across different modules in ResNet**]. As in all the previous architectures, the resolution decreases while the number of channels increases up until the point where a global average pooling layer aggregates all features.
+Sebelum melatih ResNet, mari [**amati bagaimana bentuk input berubah di berbagai modul dalam ResNet**]. Seperti pada semua arsitektur sebelumnya, resolusi menurun sementara jumlah channel meningkat hingga titik di mana lapisan global average pooling menggabungkan semua fitur.
+
 
 ```{.python .input}
 %%tab pytorch, mxnet, tensorflow
@@ -478,9 +486,12 @@ ResNet18().layer_summary((1, 96, 96, 1))
 ResNet18(training=False).layer_summary((1, 96, 96, 1))
 ```
 
-## [**Training**]
+## [**Pelatihan**]
 
-We train ResNet on the Fashion-MNIST dataset, just like before. ResNet is quite a powerful and flexible architecture. The plot capturing training and validation loss illustrates a significant gap between both graphs, with the training loss being considerably lower. For a network of this flexibility, more training data would offer distinct benefit in closing the gap and improving accuracy.
+Kita melatih ResNet pada dataset Fashion-MNIST, seperti sebelumnya. ResNet adalah arsitektur yang cukup kuat dan fleksibel. Grafik yang menunjukkan loss pelatihan dan validasi memperlihatkan adanya perbedaan 
+signifikan antara kedua grafik tersebut, dengan loss pelatihan yang jauh lebih rendah. Untuk jaringan dengan fleksibilitas seperti ini, data pelatihan yang lebih banyak akan memberikan manfaat yang jelas dalam 
+menutup celah ini dan meningkatkan akurasi.
+
 
 ```{.python .input}
 %%tab mxnet, pytorch, jax
@@ -504,31 +515,32 @@ with d2l.try_gpu():
 ## ResNeXt
 :label:`subsec_resnext`
 
-One of the challenges one encounters in the design of ResNet is the trade-off between nonlinearity and dimensionality within a given block. That is, we could add more nonlinearity by increasing the number of layers, or by increasing the width of the convolutions. An alternative strategy is to increase the number of channels that can carry information between blocks. Unfortunately, the latter comes with a quadratic penalty since the computational cost of ingesting $c_\textrm{i}$ channels and emitting $c_\textrm{o}$ channels is proportional to $\mathcal{O}(c_\textrm{i} \cdot c_\textrm{o})$ (see our discussion in :numref:`sec_channels`). 
+Salah satu tantangan yang ditemui dalam desain ResNet adalah trade-off antara nonlinearitas dan dimensi dalam sebuah blok. Artinya, kita dapat menambahkan lebih banyak nonlinearitas dengan meningkatkan jumlah lapisan, atau dengan meningkatkan lebar konvolusi. Strategi alternatif adalah meningkatkan jumlah channel yang dapat membawa informasi antar blok. Sayangnya, pendekatan ini memiliki penalti kuadratik karena biaya komputasi untuk memasukkan $c_\textrm{i}$ channel dan menghasilkan $c_\textrm{o}$ channel sebanding dengan $\mathcal{O}(c_\textrm{i} \cdot c_\textrm{o})$ (lihat diskusi kita pada :numref:`sec_channels`).
 
-We can take some inspiration from the Inception block of :numref:`fig_inception` which has information flowing through the block in separate groups. Applying the idea of multiple independent groups to the ResNet block of :numref:`fig_resnet_block` led to the design of ResNeXt :cite:`Xie.Girshick.Dollar.ea.2017`.
-Different from the smorgasbord of transformations in Inception, 
-ResNeXt adopts the *same* transformation in all branches,
-thus minimizing the need for manual tuning of each branch. 
+Kita dapat mengambil inspirasi dari blok Inception pada :numref:`fig_inception` yang mengalirkan informasi melalui blok dalam grup-grup terpisah. Menerapkan ide dari beberapa grup independen ke dalam blok ResNet pada :numref:`fig_resnet_block` menghasilkan desain ResNeXt :cite:`Xie.Girshick.Dollar.ea.2017`.
+Berbeda dengan beragam transformasi pada Inception,
+ResNeXt mengadopsi transformasi *yang sama* pada semua cabang,
+sehingga meminimalkan kebutuhan penyetelan manual untuk setiap cabang.
 
-![The ResNeXt block. The use of grouped convolution with $\mathit{g}$ groups is $\mathit{g}$ times faster than a dense convolution. It is a bottleneck residual block when the number of intermediate channels $\mathit{b}$ is less than $\mathit{c}$.](../img/resnext-block.svg)
+![Blok ResNeXt. Penggunaan grouped convolution dengan $\mathit{g}$ grup lebih cepat $\mathit{g}$ kali daripada konvolusi padat. Ini adalah blok residual bottleneck ketika jumlah channel intermediate $\mathit{b}$ lebih kecil daripada $\mathit{c}$.](../img/resnext-block.svg)
 :label:`fig_resnext_block`
 
-Breaking up a convolution from $c_\textrm{i}$ to $c_\textrm{o}$ channels into one of $g$ groups of size $c_\textrm{i}/g$ generating $g$ outputs of size $c_\textrm{o}/g$ is called, quite fittingly, a *grouped convolution*. The computational cost (proportionally) is reduced from $\mathcal{O}(c_\textrm{i} \cdot c_\textrm{o})$ to $\mathcal{O}(g \cdot (c_\textrm{i}/g) \cdot (c_\textrm{o}/g)) = \mathcal{O}(c_\textrm{i} \cdot c_\textrm{o} / g)$, i.e., it is $g$ times faster. Even better, the number of parameters needed to generate the output is also reduced from a $c_\textrm{i} \times c_\textrm{o}$ matrix to $g$ smaller matrices of size $(c_\textrm{i}/g) \times (c_\textrm{o}/g)$, again a $g$ times reduction. In what follows we assume that both $c_\textrm{i}$ and $c_\textrm{o}$ are divisible by $g$. 
+Memecah sebuah konvolusi dari $c_\textrm{i}$ menjadi $c_\textrm{o}$ channel menjadi $g$ grup berukuran $c_\textrm{i}/g$ yang menghasilkan $g$ keluaran berukuran $c_\textrm{o}/g$ disebut *grouped convolution*. Biaya komputasi (secara proporsional) berkurang dari $\mathcal{O}(c_\textrm{i} \cdot c_\textrm{o})$ menjadi $\mathcal{O}(g \cdot (c_\textrm{i}/g) \cdot (c_\textrm{o}/g)) = \mathcal{O}(c_\textrm{i} \cdot c_\textrm{o} / g)$, yaitu, lebih cepat $g$ kali. Lebih baik lagi, jumlah parameter yang dibutuhkan untuk menghasilkan keluaran juga berkurang dari matriks $c_\textrm{i} \times c_\textrm{o}$ menjadi $g$ matriks yang lebih kecil dengan ukuran $(c_\textrm{i}/g) \times (c_\textrm{o}/g)$, kembali mengurangi kebutuhan $g$ kali. Berikutnya, kita mengasumsikan bahwa $c_\textrm{i}$ dan $c_\textrm{o}$ keduanya dapat dibagi oleh $g$.
 
-The only challenge in this design is that no information is exchanged between the $g$ groups. The ResNeXt block of 
-:numref:`fig_resnext_block` amends this in two ways: the grouped convolution with a $3 \times 3$ kernel is sandwiched in between two $1 \times 1$ convolutions. The second one serves double duty in changing the number of channels back. The benefit is that we only pay the $\mathcal{O}(c \cdot b)$ cost for $1 \times 1$ kernels and can make do with an $\mathcal{O}(b^2 / g)$ cost for $3 \times 3$ kernels. Similar to the residual block implementation in
-:numref:`subsec_residual-blks`, the residual connection is replaced (thus generalized) by a $1 \times 1$ convolution.
+Satu-satunya tantangan dalam desain ini adalah tidak ada pertukaran informasi di antara $g$ grup. Blok ResNeXt pada
+:numref:`fig_resnext_block` mengatasi hal ini dengan dua cara: grouped convolution dengan kernel $3 \times 3$ diapit di antara dua konvolusi $1 \times 1$. Konvolusi kedua berfungsi ganda untuk mengembalikan jumlah channel. Keuntungannya adalah kita hanya membayar biaya $\mathcal{O}(c \cdot b)$ untuk kernel $1 \times 1$ dan bisa bertahan dengan biaya $\mathcal{O}(b^2 / g)$ untuk kernel $3 \times 3$. Mirip dengan implementasi blok residual pada
+:numref:`subsec_residual-blks`, koneksi residual digantikan (dan dengan demikian digeneralisasi) oleh konvolusi $1 \times 1$.
 
-The right-hand figure in :numref:`fig_resnext_block` provides a much more concise summary of the resulting network block. It will also play a major role in the design of generic modern CNNs in :numref:`sec_cnn-design`. Note that the idea of grouped convolutions dates back to the implementation of AlexNet :cite:`Krizhevsky.Sutskever.Hinton.2012`. When distributing the network across two GPUs with limited memory, the implementation treated each GPU as its own channel with no ill effects. 
+Gambar sebelah kanan pada :numref:`fig_resnext_block` memberikan ringkasan yang jauh lebih ringkas dari blok jaringan yang dihasilkan. Blok ini juga akan memainkan peran utama dalam desain CNN modern secara umum pada :numref:`sec_cnn-design`. Perlu dicatat bahwa ide grouped convolutions berasal dari implementasi AlexNet :cite:`Krizhevsky.Sutskever.Hinton.2012`. Ketika mendistribusikan jaringan ke dua GPU dengan memori terbatas, implementasi memperlakukan masing-masing GPU sebagai channel sendiri tanpa efek samping.
 
-The following implementation of the `ResNeXtBlock` class takes as argument `groups` ($g$), with 
-`bot_channels` ($b$) intermediate (bottleneck) channels. Lastly, when we need to reduce the height and width of the representation, we add a stride of $2$ by setting `use_1x1conv=True, strides=2`.
+Implementasi berikut dari kelas `ResNeXtBlock` mengambil argumen `groups` ($g$), dengan
+`bot_channels` ($b$) sebagai channel intermediate (bottleneck). Terakhir, ketika kita perlu mengurangi tinggi dan lebar representasi, kita menambahkan stride sebesar $2$ dengan mengatur `use_1x1conv=True, strides=2`.
+
 
 ```{.python .input}
 %%tab mxnet
 class ResNeXtBlock(nn.Block):  #@save
-    """The ResNeXt block."""
+    """Blok ResNeXt"""
     def __init__(self, num_channels, groups, bot_mul,
                  use_1x1conv=False, strides=1, **kwargs):
         super().__init__(**kwargs)
@@ -561,7 +573,7 @@ class ResNeXtBlock(nn.Block):  #@save
 ```{.python .input}
 %%tab pytorch
 class ResNeXtBlock(nn.Module):  #@save
-    """The ResNeXt block."""
+    """Blok ResNeXt"""
     def __init__(self, num_channels, groups, bot_mul, use_1x1conv=False,
                  strides=1):
         super().__init__()
@@ -593,7 +605,7 @@ class ResNeXtBlock(nn.Module):  #@save
 ```{.python .input}
 %%tab tensorflow
 class ResNeXtBlock(tf.keras.Model):  #@save
-    """The ResNeXt block."""
+    """Blok ResNeXt"""
     def __init__(self, num_channels, groups, bot_mul, use_1x1conv=False,
                  strides=1):
         super().__init__()
@@ -625,7 +637,7 @@ class ResNeXtBlock(tf.keras.Model):  #@save
 ```{.python .input}
 %%tab jax
 class ResNeXtBlock(nn.Module):  #@save
-    """The ResNeXt block."""
+    """Blok ResNeXt"""
     num_channels: int
     groups: int
     bot_mul: int
@@ -661,7 +673,8 @@ class ResNeXtBlock(nn.Module):  #@save
         return nn.relu(Y + X)
 ```
 
-Its use is entirely analogous to that of the `ResNetBlock` discussed previously. For instance, when using (`use_1x1conv=False, strides=1`), the input and output are of the same shape. Alternatively, setting `use_1x1conv=True, strides=2` halves the output height and width.
+Penggunaannya sepenuhnya mirip dengan `ResNetBlock` yang telah dibahas sebelumnya. Misalnya, ketika menggunakan (`use_1x1conv=False, strides=1`), bentuk input dan output adalah sama. 
+Sebaliknya, dengan mengatur `use_1x1conv=True, strides=2`, tinggi dan lebar output berkurang setengah.
 
 ```{.python .input}
 %%tab mxnet, pytorch
@@ -687,52 +700,50 @@ X = jnp.zeros((4, 96, 96, 32))
 blk.init_with_output(d2l.get_key(), X)[0].shape
 ```
 
-## Summary and Discussion
+## Ringkasan dan Diskusi
 
-Nested function classes are desirable since they allow us to obtain strictly *more powerful* rather than also subtly *different* function classes when adding capacity. One way of accomplishing this is by letting additional layers to simply pass through the input to the output. Residual connections allow for this. As a consequence, this changes the inductive bias from simple functions being of the form $f(\mathbf{x}) = 0$ to simple functions looking like $f(\mathbf{x}) = \mathbf{x}$. 
+Kelas fungsi bersarang sangat diinginkan karena memungkinkan kita untuk memperoleh kelas fungsi yang *lebih kuat* secara ketat daripada sekadar *berbeda* saat menambah kapasitas. Salah satu cara untuk mencapainya adalah dengan memungkinkan lapisan tambahan hanya meneruskan input ke output. Koneksi residual memungkinkan hal ini. Akibatnya, ini mengubah bias induktif dari fungsi sederhana berbentuk $f(\mathbf{x}) = 0$ menjadi fungsi sederhana yang tampak seperti $f(\mathbf{x}) = \mathbf{x}$.
 
+Pemetaan residual dapat mempelajari fungsi identitas dengan lebih mudah, seperti mendorong parameter dalam lapisan bobot ke nol. Kita dapat melatih jaringan neural *dalam* yang efektif dengan memiliki blok residual. Input dapat dipropagasi lebih cepat melalui koneksi residual antar lapisan. Akibatnya, kita dapat melatih jaringan yang jauh lebih dalam. Misalnya, makalah asli ResNet :cite:`He.Zhang.Ren.ea.2016` memungkinkan hingga 152 lapisan. Manfaat lain dari jaringan residual adalah memungkinkan kita untuk menambah lapisan, yang diinisialisasi sebagai fungsi identitas, *selama* proses pelatihan. Bagaimanapun, perilaku default suatu lapisan adalah membiarkan data melewati tanpa perubahan. Ini dapat mempercepat pelatihan jaringan yang sangat besar dalam beberapa kasus.
 
-The residual mapping can learn the identity function more easily, such as pushing parameters in the weight layer to zero. We can train an effective *deep* neural network by having residual blocks. Inputs can forward propagate faster through the residual connections across layers. As a consequence, we can thus train much deeper networks. For instance, the original ResNet paper :cite:`He.Zhang.Ren.ea.2016` allowed for up to 152 layers. Another benefit of residual networks is that it allows us to add layers, initialized as the identity function, *during* the training process. After all, the default behavior of a layer is to let the data pass through unchanged. This can accelerate the training of very large networks in some cases. 
-
-Prior to residual connections,
-bypassing paths with gating units were introduced
-to effectively train highway networks with over 100 layers
+Sebelum koneksi residual,
+jalur pintas dengan unit pengatur diperkenalkan
+untuk melatih jaringan highway dengan lebih dari 100 lapisan secara efektif
 :cite:`srivastava2015highway`.
-Using identity functions as bypassing paths,
-ResNet performed remarkably well
-on multiple computer vision tasks.
-Residual connections had a major influence on the design of subsequent deep neural networks, of either convolutional or sequential nature.
-As we will introduce later,
-the Transformer architecture :cite:`Vaswani.Shazeer.Parmar.ea.2017`
-adopts residual connections (together with other design choices) and is pervasive
-in areas as diverse as
-language, vision, speech, and reinforcement learning.
+Dengan menggunakan fungsi identitas sebagai jalur pintas,
+ResNet berkinerja luar biasa
+dalam berbagai tugas visi komputer.
+Koneksi residual memiliki pengaruh besar pada desain jaringan neural dalam berikutnya, baik yang bersifat konvolusi maupun sekuensial.
+Seperti yang akan kita bahas kemudian,
+arsitektur Transformer :cite:`Vaswani.Shazeer.Parmar.ea.2017`
+mengadopsi koneksi residual (bersama dengan pilihan desain lainnya) dan digunakan secara luas
+di bidang yang beragam seperti
+bahasa, visi, suara, dan pembelajaran penguatan.
 
-ResNeXt is an example for how the design of convolutional neural networks has evolved over time: by being more frugal with computation and trading it off against the size of the activations (number of channels), it allows for faster and more accurate networks at lower cost. An alternative way of viewing grouped convolutions is to think of a block-diagonal matrix for the convolutional weights. Note that there are quite a few such "tricks" that lead to more efficient networks. For instance, ShiftNet :cite:`wu2018shift` mimicks the effects of a $3 \times 3$ convolution, simply by adding shifted activations to the channels, offering increased function complexity, this time without any computational cost. 
+ResNeXt adalah contoh bagaimana desain jaringan neural konvolusional berkembang seiring waktu: dengan lebih hemat dalam penggunaan komputasi dan menukarnya dengan ukuran aktivasi (jumlah channel), ResNeXt memungkinkan jaringan yang lebih cepat dan lebih akurat dengan biaya lebih rendah. Cara alternatif melihat grouped convolution adalah menganggapnya sebagai matriks blok-diagonal untuk bobot konvolusi. Perhatikan bahwa ada beberapa "trik" seperti ini yang menghasilkan jaringan yang lebih efisien. Misalnya, ShiftNet :cite:`wu2018shift` meniru efek konvolusi $3 \times 3$, hanya dengan menambahkan aktivasi yang digeser ke channel, memberikan peningkatan kompleksitas fungsi, kali ini tanpa biaya komputasi.
 
-A common feature of the designs we have discussed so far is that the network design is fairly manual, primarily relying on the ingenuity of the designer to find the "right" network hyperparameters. While clearly feasible, it is also very costly in terms of human time and there is no guarantee that the outcome is optimal in any sense. In :numref:`sec_cnn-design` we will discuss a number of strategies for obtaining high quality networks in a more automated fashion. In particular, we will review the notion of *network design spaces* that led to the RegNetX/Y models
-:cite:`Radosavovic.Kosaraju.Girshick.ea.2020`.
+Satu fitur umum dari desain yang telah kita bahas sejauh ini adalah bahwa desain jaringan cukup manual, yang sebagian besar mengandalkan kecerdikan perancang untuk menemukan hyperparameter jaringan yang "tepat". Meskipun jelas dapat dilakukan, hal ini juga sangat mahal dalam hal waktu manusia dan tidak ada jaminan bahwa hasil akhirnya optimal dalam pengertian apa pun. Pada :numref:`sec_cnn-design` kita akan membahas sejumlah strategi untuk memperoleh jaringan berkualitas tinggi secara lebih otomatis. Secara khusus, kita akan meninjau konsep *ruang desain jaringan* yang mengarah ke model RegNetX/Y :cite:`Radosavovic.Kosaraju.Girshick.ea.2020`.
 
-## Exercises
+## Latihan
 
-1. What are the major differences between the Inception block in :numref:`fig_inception` and the residual block? How do they compare in terms of computation, accuracy, and the classes of functions they can describe?
-1. Refer to Table 1 in the ResNet paper :cite:`He.Zhang.Ren.ea.2016` to implement different variants of the network. 
-1. For deeper networks, ResNet introduces a "bottleneck" architecture to reduce model complexity. Try to implement it.
-1. In subsequent versions of ResNet, the authors changed the "convolution, batch normalization, and activation" structure to the "batch normalization, activation, and convolution" structure. Make this improvement yourself. See Figure 1 in :citet:`He.Zhang.Ren.ea.2016*1` for details.
-1. Why can't we just increase the complexity of functions without bound, even if the function classes are nested?
+1. Apa perbedaan utama antara blok Inception pada :numref:`fig_inception` dan blok residual? Bagaimana perbandingannya dalam hal komputasi, akurasi, dan kelas fungsi yang dapat mereka gambarkan?
+2. Rujuk ke Tabel 1 dalam makalah ResNet :cite:`He.Zhang.Ren.ea.2016` untuk mengimplementasikan berbagai varian jaringan.
+3. Untuk jaringan yang lebih dalam, ResNet memperkenalkan arsitektur "bottleneck" untuk mengurangi kompleksitas model. Coba implementasikan arsitektur ini.
+4. Pada versi ResNet berikutnya, penulis mengubah struktur "konvolusi, batch normalization, dan aktivasi" menjadi struktur "batch normalization, aktivasi, dan konvolusi". Lakukan peningkatan ini sendiri. Lihat Gambar 1 dalam :citet:`He.Zhang.Ren.ea.2016*1` untuk detailnya.
+5. Mengapa kita tidak bisa begitu saja meningkatkan kompleksitas fungsi tanpa batas, bahkan jika kelas fungsi bersarang?
 
 :begin_tab:`mxnet`
-[Discussions](https://discuss.d2l.ai/t/85)
+[Diskusi](https://discuss.d2l.ai/t/85)
 :end_tab:
 
 :begin_tab:`pytorch`
-[Discussions](https://discuss.d2l.ai/t/86)
+[Diskusi](https://discuss.d2l.ai/t/86)
 :end_tab:
 
 :begin_tab:`tensorflow`
-[Discussions](https://discuss.d2l.ai/t/8737)
+[Diskusi](https://discuss.d2l.ai/t/8737)
 :end_tab:
 
 :begin_tab:`jax`
-[Discussions](https://discuss.d2l.ai/t/18006)
+[Diskusi](https://discuss.d2l.ai/t/18006)
 :end_tab:
