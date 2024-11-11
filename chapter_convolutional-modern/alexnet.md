@@ -3,66 +3,24 @@
 tab.interact_select(['mxnet', 'pytorch', 'tensorflow', 'jax'])
 ```
 
-# Deep Convolutional Neural Networks (AlexNet)
+# Jaringan Neural Konvolusi Dalam (AlexNet)
 :label:`sec_alexnet`
 
+Meskipun CNN sudah dikenal luas di kalangan komunitas visi komputer dan pembelajaran mesin setelah diperkenalkannya LeNet :cite:`LeCun.Jackel.Bottou.ea.1995`, CNN tidak langsung mendominasi bidang ini. Meskipun LeNet mencapai hasil yang baik pada dataset kecil awal, kinerja dan kelayakan melatih CNN pada dataset yang lebih besar dan realistis belum terbukti. Faktanya, selama sebagian besar waktu antara awal 1990-an dan hasil yang sangat penting pada tahun 2012 :cite:`Krizhevsky.Sutskever.Hinton.2012`, jaringan neural sering kali dilampaui oleh metode pembelajaran mesin lainnya, seperti metode kernel :cite:`Scholkopf.Smola.2002`, metode ensemble :cite:`Freund.Schapire.ea.1996`, dan estimasi terstruktur :cite:`Taskar.Guestrin.Koller.2004`.
 
-Although CNNs were well known
-in the computer vision and machine learning communities
-following the introduction of LeNet :cite:`LeCun.Jackel.Bottou.ea.1995`,
-they did not immediately dominate the field.
-Although LeNet achieved good results on early small datasets,
-the performance and feasibility of training CNNs
-on larger, more realistic datasets had yet to be established.
-In fact, for much of the intervening time between the early 1990s
-and the watershed results of 2012 :cite:`Krizhevsky.Sutskever.Hinton.2012`,
-neural networks were often surpassed by other machine learning methods,
-such as kernel methods :cite:`Scholkopf.Smola.2002`, ensemble methods :cite:`Freund.Schapire.ea.1996`,
-and structured estimation :cite:`Taskar.Guestrin.Koller.2004`.
+Untuk visi komputer, perbandingan ini mungkin tidak sepenuhnya akurat. Artinya, meskipun input ke jaringan konvolusi terdiri dari nilai piksel mentah atau yang diproses secara ringan (misalnya, dengan sentralisasi), para praktisi tidak akan pernah memberikan piksel mentah ke model tradisional. Sebaliknya, pipeline visi komputer yang umum terdiri dari pipeline ekstraksi fitur yang dirancang secara manual, seperti SIFT :cite:`Lowe.2004`, SURF :cite:`Bay.Tuytelaars.Van-Gool.2006`, dan bags of visual words :cite:`Sivic.Zisserman.2003`. Alih-alih *mempelajari* fitur, fitur tersebut *dibuat secara manual*. Sebagian besar kemajuan datang dari ide-ide cerdas untuk ekstraksi fitur di satu sisi dan pemahaman mendalam tentang geometri :cite:`Hartley.Zisserman.2000` di sisi lain. Algoritma pembelajaran sering dianggap sebagai pemikiran tambahan.
 
-For computer vision, this comparison is perhaps not entirely accurate.
-That is, although the inputs to convolutional networks
-consist of raw or lightly-processed (e.g., by centering) pixel values, practitioners would never feed raw pixels into traditional models.
-Instead, typical computer vision pipelines
-consisted of manually engineering feature extraction pipelines, such as SIFT :cite:`Lowe.2004`, SURF :cite:`Bay.Tuytelaars.Van-Gool.2006`, and bags of visual words :cite:`Sivic.Zisserman.2003`.
-Rather than *learning* the features, the features were *crafted*.
-Most of the progress came from having more clever ideas for feature extraction on the one hand and deep insight into geometry :cite:`Hartley.Zisserman.2000` on the other. The learning algorithm was often considered an afterthought.
+Meskipun beberapa akselerator jaringan neural sudah tersedia pada tahun 1990-an, akselerator ini belum cukup kuat untuk membuat CNN dengan saluran banyak, lapisan dalam, dan sejumlah besar parameter. Misalnya, NVIDIA GeForce 256 dari tahun 1999 mampu memproses paling banyak 480 juta operasi floating-point per detik (MFLOPS) tanpa adanya kerangka pemrograman yang berarti untuk operasi di luar game. Akselerator saat ini mampu melakukan lebih dari 1000 TFLOPs per perangkat. Selain itu, dataset masih relatif kecil: OCR pada 60.000 gambar resolusi rendah $28 \times 28$ piksel dianggap sebagai tugas yang sangat menantang. Ditambah lagi, trik-trik penting untuk melatih jaringan neural, seperti heuristik inisialisasi parameter :cite:`Glorot.Bengio.2010`, varian pintar dari stochastic gradient descent :cite:`Kingma.Ba.2014`, fungsi aktivasi yang tidak mengurangi nilai :cite:`Nair.Hinton.2010`, dan teknik regularisasi efektif :cite:`Srivastava.Hinton.Krizhevsky.ea.2014` masih belum ada.
 
-Although some neural network accelerators were available in the 1990s,
-they were not yet sufficiently powerful to make
-deep multichannel, multilayer CNNs
-with a large number of parameters. For instance, NVIDIA's GeForce 256 from 1999
-was able to process at most 480 million floating-point operations, such as additions and multiplications, per second (MFLOPS), without any meaningful
-programming framework for operations beyond games. Today's accelerators are able to perform in excess of 1000 TFLOPs per device.
-Moreover, datasets were still relatively small: OCR on 60,000 low-resolution $28 \times 28$ pixel images was considered a highly challenging task.
-Added to these obstacles, key tricks for training neural networks
-including parameter initialization heuristics :cite:`Glorot.Bengio.2010`,
-clever variants of stochastic gradient descent :cite:`Kingma.Ba.2014`,
-non-squashing activation functions :cite:`Nair.Hinton.2010`,
-and effective regularization techniques :cite:`Srivastava.Hinton.Krizhevsky.ea.2014` were still missing.
+Jadi, alih-alih melatih sistem *end-to-end* (dari piksel ke klasifikasi), pipeline klasik lebih mirip seperti ini:
 
-Thus, rather than training *end-to-end* (pixel to classification) systems,
-classical pipelines looked more like this:
+1. Dapatkan dataset yang menarik. Pada masa-masa awal, dataset ini membutuhkan sensor yang mahal. Misalnya, [Apple QuickTake 100](https://en.wikipedia.org/wiki/Apple_QuickTake) dari tahun 1994 memiliki resolusi 0,3 megapiksel (VGA), mampu menyimpan hingga 8 gambar, dengan harga sekitar $1000.
+2. Pralakukan dataset dengan fitur yang dibuat secara manual berdasarkan pengetahuan tentang optik, geometri, alat analitis lain, dan terkadang juga dari penemuan kebetulan oleh mahasiswa yang beruntung.
+3. Proses data melalui serangkaian ekstraktor fitur standar seperti SIFT (scale-invariant feature transform) :cite:`Lowe.2004`, SURF (speeded up robust features) :cite:`Bay.Tuytelaars.Van-Gool.2006`, atau pipeline lainnya yang disetel secara manual. OpenCV masih menyediakan ekstraktor SIFT hingga hari ini!
+4. Masukkan representasi yang dihasilkan ke dalam pengklasifikasi favorit Anda, yang kemungkinan adalah model linear atau metode kernel, untuk melatih pengklasifikasi.
 
-1. Obtain an interesting dataset. In the early days, these datasets required expensive sensors. For instance, the [Apple QuickTake 100](https://en.wikipedia.org/wiki/Apple_QuickTake) of 1994 sported a whopping 0.3 megapixel (VGA) resolution, capable of storing up to 8 images, all for the price of \$1000.
-1. Preprocess the dataset with hand-crafted features based on some knowledge of optics, geometry, other analytic tools, and occasionally on the serendipitous discoveries by lucky graduate students.
-1. Feed the data through a standard set of feature extractors such as the SIFT (scale-invariant feature transform) :cite:`Lowe.2004`, the SURF (speeded up robust features) :cite:`Bay.Tuytelaars.Van-Gool.2006`, or any number of other hand-tuned pipelines. OpenCV still provides SIFT extractors to this day!
-1. Dump the resulting representations into your favorite classifier, likely a linear model or kernel method, to train a classifier.
+Jika Anda berbicara dengan peneliti pembelajaran mesin, mereka akan mengatakan bahwa pembelajaran mesin itu penting dan indah. Teori elegan membuktikan sifat dari berbagai pengklasifikasi :cite:`boucheron2005theory` dan optimisasi konveks :cite:`Boyd.Vandenberghe.2004` telah menjadi andalan untuk memperolehnya. Bidang pembelajaran mesin berkembang pesat, ketat, dan sangat berguna. Namun, jika Anda berbicara dengan peneliti visi komputer, Anda akan mendengar cerita yang sangat berbeda. Mereka akan mengatakan bahwa kebenaran pahit dari pengenalan gambar adalah bahwa fitur, geometri :cite:`Hartley.Zisserman.2000,hartley2009global`, dan rekayasa, bukan algoritma pembelajaran baru, yang mendorong kemajuan. Peneliti visi komputer secara wajar percaya bahwa dataset yang sedikit lebih besar atau lebih bersih atau pipeline ekstraksi fitur yang sedikit lebih baik jauh lebih penting untuk akurasi akhir daripada algoritma pembelajaran apa pun.
 
-If you spoke to machine learning researchers,
-they would reply that machine learning was both important and beautiful.
-Elegant theories proved the properties of various classifiers :cite:`boucheron2005theory` and convex
-optimization :cite:`Boyd.Vandenberghe.2004` had become the mainstay for obtaining them.
-The field of machine learning was thriving, rigorous, and eminently useful. However,
-if you spoke to a computer vision researcher,
-you would hear a very different story.
-The dirty truth of image recognition, they would tell you,
-is that features, geometry :cite:`Hartley.Zisserman.2000,hartley2009global`, and engineering,
-rather than novel learning algorithms, drove progress.
-Computer vision researchers justifiably believed
-that a slightly bigger or cleaner dataset
-or a slightly improved feature-extraction pipeline
-mattered far more to the final accuracy than any learning algorithm.
 
 ```{.python .input  n=2}
 %%tab mxnet
@@ -92,234 +50,229 @@ from flax import linen as nn
 import jax
 from jax import numpy as jnp
 ```
+## Pembelajaran Representasi (_Representation Learning_)
 
-## Representation Learning
-
-Another way to cast the state of affairs is that
-the most important part of the pipeline was the representation.
-And up until 2012 the representation was calculated mostly mechanically.
-In fact, engineering a new set of feature functions, improving results, and writing up the method
-all featured prominently in papers.
+Cara lain untuk melihat keadaan ini adalah bahwa
+bagian terpenting dari pipeline adalah representasi.
+Dan hingga tahun 2012, representasi sebagian besar dihitung secara mekanis.
+Faktanya, merancang serangkaian fungsi fitur baru, meningkatkan hasil, dan menulis metode
+semuanya menjadi bagian penting dalam makalah penelitian.
 SIFT :cite:`Lowe.2004`,
 SURF :cite:`Bay.Tuytelaars.Van-Gool.2006`,
 HOG (histograms of oriented gradient) :cite:`Dalal.Triggs.2005`,
 bags of visual words :cite:`Sivic.Zisserman.2003`,
-and similar feature extractors ruled the roost.
+dan ekstraktor fitur serupa mendominasi.
 
-Another group of researchers,
-including Yann LeCun, Geoff Hinton, Yoshua Bengio,
-Andrew Ng, Shun-ichi Amari, and Juergen Schmidhuber,
-had different plans.
-They believed that features themselves ought to be learned.
-Moreover, they believed that to be reasonably complex,
-the features ought to be hierarchically composed
-with multiple jointly learned layers, each with learnable parameters.
-In the case of an image, the lowest layers might come
-to detect edges, colors, and textures, by analogy with how the visual system in animals
-processes its input. In particular, the automatic design of visual features such as those obtained
-by sparse coding :cite:`olshausen1996emergence` remained an open challenge until the advent of modern CNNs.
-It was not until :citet:`Dean.Corrado.Monga.ea.2012,le2013building` that the idea of generating features
-from image data automatically gained significant traction.
+Sekelompok peneliti lain,
+termasuk Yann LeCun, Geoff Hinton, Yoshua Bengio,
+Andrew Ng, Shun-ichi Amari, dan Juergen Schmidhuber,
+memiliki rencana berbeda.
+Mereka percaya bahwa fitur itu sendiri seharusnya dipelajari.
+Lebih jauh, mereka meyakini bahwa untuk menjadi cukup kompleks,
+fitur tersebut sebaiknya disusun secara hierarkis
+dengan beberapa lapisan yang dipelajari bersama, masing-masing dengan parameter yang dapat dipelajari.
+Dalam kasus gambar, lapisan terendah mungkin akan mendeteksi
+tepi, warna, dan tekstur, mirip dengan cara sistem visual pada hewan
+memproses inputnya. Secara khusus, desain otomatis fitur visual seperti yang diperoleh melalui sparse coding :cite:`olshausen1996emergence` tetap menjadi tantangan terbuka hingga munculnya CNN modern.
+Hingga penelitian :citet:`Dean.Corrado.Monga.ea.2012,le2013building`, ide untuk menghasilkan fitur dari data gambar secara otomatis mulai mendapatkan perhatian signifikan.
 
-The first modern CNN :cite:`Krizhevsky.Sutskever.Hinton.2012`, named
-*AlexNet* after one of its inventors, Alex Krizhevsky, is largely an evolutionary improvement
-over LeNet. It achieved excellent performance in the 2012 ImageNet challenge.
+CNN modern pertama :cite:`Krizhevsky.Sutskever.Hinton.2012`, yang dinamai
+*AlexNet* dari salah satu penemunya, Alex Krizhevsky, sebagian besar merupakan perbaikan evolusioner
+atas LeNet. Model ini mencapai kinerja luar biasa dalam tantangan ImageNet tahun 2012.
 
-![Image filters learned by the first layer of AlexNet. Reproduction courtesy of :citet:`Krizhevsky.Sutskever.Hinton.2012`.](../img/filters.png)
+![Filter gambar yang dipelajari oleh lapisan pertama AlexNet. Reproduksi dari :citet:`Krizhevsky.Sutskever.Hinton.2012`.](../img/filters.png)
 :width:`400px`
 :label:`fig_filters`
 
-Interestingly, in the lowest layers of the network,
-the model learned feature extractors that resembled some traditional filters.
+Menariknya, di lapisan-lapisan terendah jaringan,
+model mempelajari ekstraktor fitur yang menyerupai beberapa filter tradisional.
 :numref:`fig_filters`
-shows lower-level image descriptors.
-Higher layers in the network might build upon these representations
-to represent larger structures, like eyes, noses, blades of grass, and so on.
-Even higher layers might represent whole objects
-like people, airplanes, dogs, or frisbees.
-Ultimately, the final hidden state learns a compact representation
-of the image that summarizes its contents
-such that data belonging to different categories can be easily separated.
+menunjukkan deskriptor gambar tingkat rendah.
+Lapisan-lapisan yang lebih tinggi dalam jaringan mungkin membangun representasi ini
+untuk merepresentasikan struktur yang lebih besar, seperti mata, hidung, bilah rumput, dan sebagainya.
+Lapisan yang lebih tinggi lagi mungkin merepresentasikan objek-objek keseluruhan
+seperti manusia, pesawat, anjing, atau frisbee.
+Pada akhirnya, keadaan tersembunyi terakhir mempelajari representasi kompak
+dari gambar yang merangkum isinya
+sehingga data yang tergolong dalam kategori yang berbeda dapat dipisahkan dengan mudah.
 
-AlexNet (2012) and its precursor LeNet (1995) share many architectural elements. This begs the question: why did it take so long?
-A key difference was that, over the previous two decades, the amount of data and the computing power available had increased significantly. As such AlexNet was much larger: it was trained on much more data, and on much faster GPUs compared to the CPUs available in 1995.
+AlexNet (2012) dan pendahulunya LeNet (1995) memiliki banyak elemen arsitektur yang serupa. Hal ini menimbulkan pertanyaan: mengapa membutuhkan waktu begitu lama?
+Perbedaan utama adalah bahwa, selama dua dekade sebelumnya, jumlah data dan daya komputasi yang tersedia telah meningkat secara signifikan. Oleh karena itu, AlexNet jauh lebih besar: model ini dilatih pada lebih banyak data, dan pada GPU yang jauh lebih cepat dibandingkan dengan CPU yang tersedia pada tahun 1995.
 
-### Missing Ingredient: Data
 
-Deep models with many layers require large amounts of data
-in order to enter the regime
-where they significantly outperform traditional methods
-based on convex optimizations (e.g., linear and kernel methods).
-However, given the limited storage capacity of computers,
-the relative expense of (imaging) sensors,
-and the comparatively tighter research budgets in the 1990s,
-most research relied on tiny datasets.
-Numerous papers relied on the UCI collection of datasets,
-many of which contained only hundreds or (a few) thousands of images
-captured in low resolution and often with an artificially clean background.
+### Bahan yang Hilang: Data
 
-In 2009, the ImageNet dataset was released :cite:`Deng.Dong.Socher.ea.2009`,
-challenging researchers to learn models from 1 million examples,
-1000 each from 1000 distinct categories of objects. The categories themselves
-were based on the most popular noun nodes in WordNet :cite:`Miller.1995`.
-The ImageNet team used Google Image Search to prefilter large candidate sets
-for each category and employed
-the Amazon Mechanical Turk crowdsourcing pipeline
-to confirm for each image whether it belonged to the associated category.
-This scale was unprecedented, exceeding others by over an order of magnitude
-(e.g., CIFAR-100 has 60,000 images). Another aspect was that the images were at
-relatively high resolution of $224 \times 224$ pixels, unlike the 80 million-sized
-TinyImages dataset :cite:`Torralba.Fergus.Freeman.2008`, consisting of $32 \times 32$ pixel thumbnails.
-This allowed for the formation of higher-level features.
-The associated competition, dubbed the ImageNet Large Scale Visual Recognition
+Model deep dengan banyak lapisan membutuhkan sejumlah besar data
+untuk mencapai kondisi di mana model tersebut secara signifikan
+melebihi kinerja metode tradisional yang berbasis optimisasi cembung 
+(misalnya, metode linier dan kernel).
+Namun, karena keterbatasan kapasitas penyimpanan komputer,
+mahalnya sensor (seperti pencitraan), 
+dan anggaran penelitian yang lebih ketat pada tahun 1990-an,
+sebagian besar penelitian bergantung pada dataset kecil.
+Banyak makalah mengandalkan koleksi dataset UCI,
+yang sebagian besar hanya berisi ratusan atau (beberapa) ribu gambar
+dengan resolusi rendah dan seringkali dengan latar belakang yang bersih secara artifisial.
+
+Pada tahun 2009, dataset ImageNet dirilis :cite:`Deng.Dong.Socher.ea.2009`,
+menantang para peneliti untuk melatih model dengan 1 juta contoh,
+masing-masing 1000 dari 1000 kategori objek yang berbeda. Kategori-kategori ini
+berdasarkan pada kata benda paling populer dalam WordNet :cite:`Miller.1995`.
+Tim ImageNet menggunakan Google Image Search untuk menyaring set kandidat besar
+untuk setiap kategori dan menggunakan
+pipeline crowdsourcing Amazon Mechanical Turk
+untuk memastikan setiap gambar termasuk dalam kategori yang terkait.
+Skala ini belum pernah terjadi sebelumnya, melebihi yang lain hingga lebih dari satu kali lipat
+(misalnya, CIFAR-100 hanya memiliki 60.000 gambar). Aspek lain adalah gambar-gambar ini memiliki
+resolusi yang relatif tinggi sebesar $224 \times 224$ piksel, berbeda dengan dataset TinyImages yang berisi 80 juta gambar :cite:`Torralba.Fergus.Freeman.2008`, yang terdiri dari thumbnail berukuran $32 \times 32$ piksel.
+Hal ini memungkinkan pembentukan fitur tingkat yang lebih tinggi.
+Kompetisi terkait, yang dinamakan ImageNet Large Scale Visual Recognition
 Challenge :cite:`russakovsky2015imagenet`,
-pushed computer vision and machine learning research forward,
-challenging researchers to identify which models performed best
-at a greater scale than academics had previously considered. The largest vision datasets, such as LAION-5B
-:cite:`schuhmann2022laion` contain billions of images with additional metadata.
+mendorong penelitian di bidang computer vision dan machine learning,
+menantang peneliti untuk mengidentifikasi model mana yang berkinerja terbaik
+dalam skala yang lebih besar daripada yang sebelumnya dipertimbangkan oleh akademisi. Dataset vision terbesar, seperti LAION-5B
+:cite:`schuhmann2022laion` mengandung miliaran gambar dengan metadata tambahan.
 
-### Missing Ingredient: Hardware
 
-Deep learning models are voracious consumers of compute cycles.
-Training can take hundreds of epochs, and each iteration
-requires passing data through many layers of computationally expensive
-linear algebra operations.
-This is one of the main reasons why in the 1990s and early 2000s,
-simple algorithms based on the more-efficiently optimized
-convex objectives were preferred.
+### Bahan yang Hilang: Perangkat Keras
 
-*Graphical processing units* (GPUs) proved to be a game changer
-in making deep learning feasible.
-These chips had earlier been developed for accelerating
-graphics processing to benefit computer games.
-In particular, they were optimized for high throughput $4 \times 4$
-matrix--vector products, which are needed for many computer graphics tasks.
-Fortunately, the math is strikingly similar
-to that required for calculating convolutional layers.
-Around that time, NVIDIA and ATI had begun optimizing GPUs
-for general computing operations :cite:`Fernando.2004`,
-going as far as to market them as *general-purpose GPUs* (GPGPUs).
+Model deep learning merupakan konsumen komputasi yang sangat besar.
+Proses pelatihan bisa memakan ratusan epoch, dan setiap iterasi
+membutuhkan data yang melewati banyak lapisan operasi aljabar linear yang memerlukan daya komputasi tinggi.
+Inilah salah satu alasan utama mengapa pada tahun 1990-an dan awal 2000-an,
+algoritma sederhana berbasis optimisasi cembung yang lebih efisien lebih disukai.
 
-To provide some intuition, consider the cores of a modern microprocessor
+*Graphical Processing Units* (GPU) terbukti menjadi pengubah permainan
+dalam membuat deep learning menjadi mungkin.
+Chip ini awalnya dikembangkan untuk mempercepat
+pemrosesan grafis demi manfaat dalam game komputer.
+Secara khusus, GPU dioptimalkan untuk throughput tinggi dalam produk matriks-vektor $4 \times 4$, yang diperlukan untuk banyak tugas grafis komputer.
+Untungnya, matematika yang digunakan dalam pemrosesan ini sangat mirip
+dengan yang dibutuhkan untuk menghitung lapisan konvolusional.
+Pada saat itu, NVIDIA dan ATI mulai mengoptimalkan GPU
+untuk operasi komputasi umum :cite:`Fernando.2004`,
+bahkan hingga memasarkannya sebagai *general-purpose GPUs* (GPGPUs).
+
+Untuk memberikan sedikit intuisi, pertimbangkan inti dari mikroprosesor modern
 (CPU).
-Each of the cores is fairly powerful running at a high clock frequency
-and sporting large caches (up to several megabytes of L3).
-Each core is well-suited to executing a wide range of instructions,
-with branch predictors, a deep pipeline, specialized execution units,
-speculative execution,
-and many other bells and whistles
-that enable it to run a large variety of programs with sophisticated control flow.
-This apparent strength, however, is also its Achilles heel:
-general-purpose cores are very expensive to build. They excel at general-purpose
-code with lots of control flow.
-This requires lots of chip area, not just for the
-actual ALU (arithmetic logical unit) where computation happens, but also for
-all the aforementioned bells and whistles, plus
-memory interfaces, caching logic between cores,
-high-speed interconnects, and so on. CPUs are
-comparatively bad at any single task when compared with dedicated hardware.
-Modern laptops have 4--8 cores,
-and even high-end servers rarely exceed 64 cores per socket,
-simply because it is not cost-effective.
+Masing-masing inti cukup kuat, berjalan pada frekuensi clock tinggi
+dan memiliki cache besar (hingga beberapa megabyte L3).
+Setiap inti cocok untuk menjalankan berbagai instruksi,
+dengan prediktor cabang, pipeline dalam, unit eksekusi khusus,
+eksekusi spekulatif,
+dan berbagai fitur tambahan
+yang memungkinkannya menjalankan berbagai program dengan aliran kontrol yang kompleks.
+Namun, keunggulan ini juga menjadi kelemahan:
+inti serbaguna sangat mahal untuk dibangun. Mereka unggul dalam menjalankan kode serbaguna dengan banyak aliran kontrol.
+Ini membutuhkan area chip yang besar, tidak hanya untuk
+ALU (arithmetic logical unit) tempat komputasi terjadi, tetapi juga untuk
+semua fitur tambahan tersebut,
+plus antarmuka memori, logika caching antar inti,
+interkoneksi kecepatan tinggi, dan sebagainya. CPU
+relatif buruk dalam melakukan satu tugas tertentu dibandingkan dengan perangkat keras yang khusus dirancang untuk tugas tersebut.
+Laptop modern memiliki 4–8 inti,
+dan bahkan server kelas atas jarang memiliki lebih dari 64 inti per soket,
+karena hal ini tidak hemat biaya.
 
-By comparison, GPUs can consist of thousands of small processing elements (NIVIDA's latest Ampere chips have up to 6912 CUDA cores), often grouped into larger groups (NVIDIA calls them warps).
-The details differ somewhat between NVIDIA, AMD, ARM and other chip vendors. While each core is relatively weak,
-running at about 1GHz clock frequency,
-it is the total number of such cores that makes GPUs orders of magnitude faster than CPUs.
-For instance, NVIDIA's recent Ampere A100 GPU offers over 300 TFLOPs per chip for specialized 16-bit precision (BFLOAT16) matrix-matrix multiplications, and up to 20 TFLOPs for more general-purpose floating point operations (FP32).
-At the same time, floating point performance of CPUs rarely exceeds 1 TFLOPs. For instance, Amazon's Graviton 3  reaches 2 TFLOPs peak performance for 16-bit precision operations, a number similar to the GPU performance of Apple's M1 processor.
+Sebaliknya, GPU dapat terdiri dari ribuan elemen pemrosesan kecil (chip Ampere terbaru dari NVIDIA memiliki hingga 6912 CUDA core), seringkali dikelompokkan menjadi grup yang lebih besar (NVIDIA menyebutnya sebagai warps).
+Detail ini berbeda antara NVIDIA, AMD, ARM, dan vendor chip lainnya. Meskipun setiap inti relatif lemah,
+dengan frekuensi clock sekitar 1GHz,
+jumlah total inti yang besar membuat GPU berkali-kali lebih cepat daripada CPU.
+Misalnya, GPU NVIDIA terbaru, Ampere A100, menawarkan lebih dari 300 TFLOPs per chip untuk perkalian matriks-matriks presisi 16-bit khusus (BFLOAT16) dan hingga 20 TFLOPs untuk operasi floating-point presisi umum (FP32).
+Pada saat yang sama, performa floating point CPU jarang melebihi 1 TFLOPs. Misalnya, Amazon Graviton 3 mencapai puncak performa 2 TFLOPs untuk operasi presisi 16-bit, angka yang mirip dengan performa GPU pada prosesor Apple M1.
 
-There are many reasons why GPUs are much faster than CPUs in terms of FLOPs.
-First, power consumption tends to grow *quadratically* with clock frequency.
-Hence, for the power budget of a CPU core that runs four times faster (a typical number),
-you can use 16 GPU cores at $\frac{1}{4}$ the speed,
-which yields $16 \times \frac{1}{4} = 4$ times the performance.
-Second, GPU cores are much simpler
-(in fact, for a long time they were not even *able*
-to execute general-purpose code),
-which makes them more energy efficient. For instance, (i) they tend not to support speculative evaluation, (ii) it typically is not possible to program each processing element individually, and (iii) the caches per core tend to be much smaller.
-Last, many operations in deep learning require high memory bandwidth.
-Again, GPUs shine here with buses that are at least 10 times as wide as many CPUs.
+Ada banyak alasan mengapa GPU jauh lebih cepat daripada CPU dalam hal FLOPs.
+Pertama, konsumsi daya cenderung meningkat *kuadrat* dengan frekuensi clock.
+Oleh karena itu, untuk anggaran daya satu inti CPU yang berjalan empat kali lebih cepat (angka umum),
+Anda dapat menggunakan 16 inti GPU pada kecepatan $\frac{1}{4}$,
+yang menghasilkan kinerja $16 \times \frac{1}{4} = 4$ kali lebih baik.
+Kedua, inti GPU jauh lebih sederhana
+(sebenarnya, untuk waktu yang lama mereka bahkan *tidak mampu*
+menjalankan kode serbaguna),
+yang membuatnya lebih efisien dalam hal energi. Misalnya, (i) mereka cenderung tidak mendukung evaluasi spekulatif, (ii) umumnya tidak memungkinkan pemrograman setiap elemen pemrosesan secara individual, dan (iii) cache per inti cenderung lebih kecil.
+Terakhir, banyak operasi dalam deep learning membutuhkan bandwidth memori yang tinggi.
+GPU unggul dalam hal ini dengan bus yang setidaknya 10 kali lebih lebar dibandingkan banyak CPU.
 
-Back to 2012. A major breakthrough came
-when Alex Krizhevsky and Ilya Sutskever
-implemented a deep CNN
-that could run on GPUs.
-They realized that the computational bottlenecks in CNNs,
-convolutions and matrix multiplications,
-are all operations that could be parallelized in hardware.
-Using two NVIDIA GTX 580s with 3GB of memory, either of which was capable of 1.5 TFLOPs (still a challenge for most CPUs a decade later),
-they implemented fast convolutions.
-The [cuda-convnet](https://code.google.com/archive/p/cuda-convnet/) code
-was good enough that for several years
-it was the industry standard and powered
-the first couple of years of the deep learning boom.
+Kembali ke tahun 2012. Sebuah terobosan besar terjadi
+ketika Alex Krizhevsky dan Ilya Sutskever
+mengimplementasikan CNN dalam GPU.
+Mereka menyadari bahwa hambatan komputasi dalam CNN,
+konvolusi dan perkalian matriks,
+adalah operasi yang dapat diparalelisasi dalam perangkat keras.
+Menggunakan dua NVIDIA GTX 580 dengan memori 3GB, yang masing-masing mampu 1,5 TFLOPs (masih menjadi tantangan bagi sebagian besar CPU satu dekade kemudian),
+mereka mengimplementasikan konvolusi cepat.
+Kode [cuda-convnet](https://code.google.com/archive/p/cuda-convnet/) mereka
+cukup baik sehingga selama beberapa tahun
+menjadi standar industri dan mendukung
+tahun-tahun pertama ledakan deep learning.
+
 
 ## AlexNet
 
-AlexNet, which employed an 8-layer CNN,
-won the ImageNet Large Scale Visual Recognition Challenge 2012
-by a large margin :cite:`Russakovsky.Deng.Huang.ea.2013`.
-This network showed, for the first time,
-that the features obtained by learning can transcend manually-designed features, breaking the previous paradigm in computer vision.
+AlexNet, yang menggunakan CNN dengan 8 lapisan,
+memenangkan kompetisi ImageNet Large Scale Visual Recognition Challenge 2012
+dengan selisih yang besar :cite:`Russakovsky.Deng.Huang.ea.2013`.
+Jaringan ini menunjukkan, untuk pertama kalinya,
+bahwa fitur yang diperoleh melalui pembelajaran dapat melampaui fitur yang dirancang secara manual, mengubah paradigma sebelumnya dalam computer vision.
 
-The architectures of AlexNet and LeNet are strikingly similar,
-as :numref:`fig_alexnet` illustrates.
-Note that we provide a slightly streamlined version of AlexNet
-removing some of the design quirks that were needed in 2012
-to make the model fit on two small GPUs.
+Arsitektur AlexNet dan LeNet memiliki kesamaan yang mencolok,
+sebagaimana diilustrasikan pada :numref:`fig_alexnet`.
+Perlu dicatat bahwa kami menyajikan versi AlexNet yang sedikit disederhanakan,
+menghapus beberapa elemen desain yang diperlukan pada tahun 2012
+agar model tersebut bisa muat di dua GPU kecil.
 
-![From LeNet (left) to AlexNet (right).](../img/alexnet.svg)
+![Dari LeNet (kiri) ke AlexNet (kanan).](../img/alexnet.svg)
 :label:`fig_alexnet`
 
-There are also significant differences between AlexNet and LeNet.
-First, AlexNet is much deeper than the comparatively small LeNet-5.
-AlexNet consists of eight layers: five convolutional layers,
-two fully connected hidden layers, and one fully connected output layer.
-Second, AlexNet used the ReLU instead of the sigmoid
-as its activation function. Let's delve into the details below.
+Terdapat juga perbedaan signifikan antara AlexNet dan LeNet.
+Pertama, AlexNet jauh lebih dalam dibandingkan dengan LeNet-5 yang relatif kecil.
+AlexNet terdiri dari delapan lapisan: lima lapisan konvolusi,
+dua lapisan tersembunyi fully connected, dan satu lapisan output fully connected.
+Kedua, AlexNet menggunakan fungsi aktivasi ReLU daripada sigmoid.
+Mari kita pelajari detailnya di bawah ini.
 
-### Architecture
+### Arsitektur
 
-In AlexNet's first layer, the convolution window shape is $11\times11$.
-Since the images in ImageNet are eight times taller and wider
-than the MNIST images,
-objects in ImageNet data tend to occupy more pixels with more visual detail.
-Consequently, a larger convolution window is needed to capture the object.
-The convolution window shape in the second layer
-is reduced to $5\times5$, followed by $3\times3$.
-In addition, after the first, second, and fifth convolutional layers,
-the network adds max-pooling layers
-with a window shape of $3\times3$ and a stride of 2.
-Moreover, AlexNet has ten times more convolution channels than LeNet.
+Pada lapisan pertama AlexNet, bentuk jendela konvolusi adalah $11\times11$.
+Karena gambar dalam ImageNet delapan kali lebih tinggi dan lebih lebar
+daripada gambar MNIST,
+objek dalam data ImageNet cenderung menempati lebih banyak piksel dengan lebih banyak detail visual.
+Akibatnya, jendela konvolusi yang lebih besar diperlukan untuk menangkap objek tersebut.
+Bentuk jendela konvolusi pada lapisan kedua
+dikurangi menjadi $5\times5$, diikuti dengan $3\times3$.
+Selain itu, setelah lapisan konvolusi pertama, kedua, dan kelima,
+jaringan menambahkan lapisan max-pooling
+dengan bentuk jendela $3\times3$ dan stride 2.
+Selain itu, AlexNet memiliki sepuluh kali lebih banyak saluran konvolusi dibandingkan LeNet.
 
-After the final convolutional layer, there are two huge fully connected layers
-with 4096 outputs.
-These layers require nearly 1GB model parameters.
-Because of the limited memory in early GPUs,
-the original AlexNet used a dual data stream design,
-so that each of their two GPUs could be responsible
-for storing and computing only its half of the model.
-Fortunately, GPU memory is comparatively abundant now,
-so we rarely need to break up models across GPUs these days
-(our version of the AlexNet model deviates
-from the original paper in this aspect).
+Setelah lapisan konvolusi terakhir, terdapat dua lapisan fully connected yang sangat besar
+dengan 4096 output.
+Lapisan ini membutuhkan hampir 1GB parameter model.
+Karena keterbatasan memori pada GPU awal,
+AlexNet asli menggunakan desain aliran data ganda,
+sehingga masing-masing dari dua GPU mereka hanya bertanggung jawab
+untuk menyimpan dan menghitung setengah dari model tersebut.
+Untungnya, memori GPU sekarang relatif melimpah,
+sehingga kita jarang perlu membagi model ke beberapa GPU akhir-akhir ini
+(versi AlexNet kami menyimpang
+dari makalah aslinya dalam aspek ini).
 
-### Activation Functions
+### Fungsi Aktivasi
 
-Furthermore, AlexNet changed the sigmoid activation function to a simpler ReLU activation function. On the one hand, the computation of the ReLU activation function is simpler. For example, it does not have the exponentiation operation found in the sigmoid activation function.
- On the other hand, the ReLU activation function makes model training easier when using different parameter initialization methods. This is because, when the output of the sigmoid activation function is very close to 0 or 1, the gradient of these regions is almost 0, so that backpropagation cannot continue to update some of the model parameters. By contrast, the gradient of the ReLU activation function in the positive interval is always 1 (:numref:`subsec_activation-functions`). Therefore, if the model parameters are not properly initialized, the sigmoid function may obtain a gradient of almost 0 in the positive interval, meaning that the model cannot be effectively trained.
+Selain itu, AlexNet mengganti fungsi aktivasi sigmoid dengan fungsi aktivasi ReLU yang lebih sederhana. Di satu sisi, perhitungan fungsi aktivasi ReLU lebih sederhana. Sebagai contoh, ReLU tidak memiliki operasi eksponensiasi seperti yang ditemukan dalam fungsi aktivasi sigmoid.
+Di sisi lain, fungsi aktivasi ReLU memudahkan proses pelatihan model ketika menggunakan metode inisialisasi parameter yang berbeda. Hal ini karena, ketika output dari fungsi aktivasi sigmoid sangat mendekati 0 atau 1, gradien pada wilayah tersebut hampir 0, sehingga backpropagation tidak dapat terus memperbarui beberapa parameter model. Sebaliknya, gradien fungsi aktivasi ReLU pada interval positif selalu bernilai 1 (:numref:`subsec_activation-functions`). Oleh karena itu, jika parameter model tidak diinisialisasi dengan benar, fungsi sigmoid mungkin mendapatkan gradien yang hampir 0 pada interval positif, yang berarti bahwa model tidak dapat dilatih dengan efektif.
 
-### Capacity Control and Preprocessing
+### Kontrol Kapasitas dan Prapemrosesan
 
-AlexNet controls the model complexity of the fully connected layer
-by dropout (:numref:`sec_dropout`),
-while LeNet only uses weight decay.
-To augment the data even further, the training loop of AlexNet
-added a great deal of image augmentation,
-such as flipping, clipping, and color changes.
-This makes the model more robust and the larger sample size effectively reduces overfitting.
-See :citet:`Buslaev.Iglovikov.Khvedchenya.ea.2020` for an in-depth review of such preprocessing steps.
+AlexNet mengontrol kompleksitas model pada lapisan fully connected
+dengan dropout (:numref:`sec_dropout`),
+sementara LeNet hanya menggunakan weight decay.
+Untuk memperbesar data lebih jauh, proses pelatihan AlexNet
+menambahkan banyak augmentasi gambar,
+seperti flipping, clipping, dan perubahan warna.
+Ini membuat model menjadi lebih robust dan ukuran sampel yang lebih besar secara efektif mengurangi overfitting.
+Lihat :citet:`Buslaev.Iglovikov.Khvedchenya.ea.2020` untuk tinjauan mendalam mengenai langkah-langkah prapemrosesan tersebut.
+
 
 ```{.python .input  n=5}
 %%tab pytorch, mxnet, tensorflow
@@ -409,7 +362,9 @@ class AlexNet(d2l.Classifier):
         ])
 ```
 
-We [**construct a single-channel data example**] with both height and width of 224 (**to observe the output shape of each layer**). It matches the AlexNet architecture in :numref:`fig_alexnet`.
+Kita [**membangun contoh data dengan satu saluran (single-channel)**] dengan tinggi dan lebar 224 (**untuk mengamati bentuk output dari setiap lapisan**). 
+Ini sesuai dengan arsitektur AlexNet pada :numref:`fig_alexnet`.
+
 
 ```{.python .input  n=6}
 %%tab pytorch, mxnet
@@ -426,25 +381,25 @@ AlexNet().layer_summary((1, 224, 224, 1))
 AlexNet(training=False).layer_summary((1, 224, 224, 1))
 ```
 
-## Training
+## Pelatihan
 
-Although AlexNet was trained on ImageNet in :citet:`Krizhevsky.Sutskever.Hinton.2012`,
-we use Fashion-MNIST here
-since training an ImageNet model to convergence could take hours or days
-even on a modern GPU.
-One of the problems with applying AlexNet directly on [**Fashion-MNIST**]
-is that its (**images have lower resolution**) ($28 \times 28$ pixels)
-(**than ImageNet images.**)
-To make things work, (**we upsample them to $224 \times 224$**).
-This is generally not a smart practice, as it simply increases the computational
-complexity without adding information. Nonetheless, we do it here to be faithful to the AlexNet architecture.
-We perform this resizing with the `resize` argument in the `d2l.FashionMNIST` constructor.
+Meskipun AlexNet dilatih pada ImageNet dalam :citet:`Krizhevsky.Sutskever.Hinton.2012`,
+di sini kita menggunakan Fashion-MNIST
+karena melatih model ImageNet hingga konvergen bisa memakan waktu berjam-jam atau bahkan berhari-hari
+bahkan pada GPU modern.
+Salah satu masalah dalam menerapkan AlexNet langsung pada [**Fashion-MNIST**]
+adalah bahwa (**gambar-gambar pada dataset ini memiliki resolusi lebih rendah**) ($28 \times 28$ piksel)
+(**dibandingkan dengan gambar-gambar di ImageNet**).
+Agar dapat berfungsi, (**kita melakukan upsampling gambar menjadi $224 \times 224$**).
+Secara umum, ini bukan praktik yang cerdas, karena hanya meningkatkan kompleksitas komputasi tanpa menambahkan informasi tambahan. Namun demikian, kita melakukannya di sini untuk tetap setia pada arsitektur AlexNet.
+Kita melakukan perubahan ukuran ini dengan argumen `resize` dalam konstruktor `d2l.FashionMNIST`.
 
-Now, we can [**start training AlexNet.**]
-Compared to LeNet in :numref:`sec_lenet`,
-the main change here is the use of a smaller learning rate
-and much slower training due to the deeper and wider network,
-the higher image resolution, and the more costly convolutions.
+Sekarang, kita bisa [**memulai pelatihan AlexNet.**]
+Dibandingkan dengan LeNet pada :numref:`sec_lenet`,
+perubahan utama di sini adalah penggunaan laju pembelajaran yang lebih kecil
+dan pelatihan yang jauh lebih lambat karena jaringan yang lebih dalam dan lebih lebar,
+resolusi gambar yang lebih tinggi, dan konvolusi yang lebih mahal.
+
 
 ```{.python .input  n=8}
 %%tab pytorch, mxnet, jax
@@ -463,42 +418,42 @@ with d2l.try_gpu():
     trainer.fit(model, data)
 ```
 
-## Discussion
+## Diskusi
 
-AlexNet's structure bears a striking resemblance to LeNet, with a number of critical improvements, both for accuracy (dropout) and for ease of training (ReLU). What is equally striking is the amount of progress that has been made in terms of deep learning tooling. What was several months of work in 2012 can now be accomplished in a dozen lines of code using any modern framework.
+Struktur AlexNet memiliki kemiripan yang mencolok dengan LeNet, dengan sejumlah peningkatan penting, baik untuk akurasi (dropout) maupun kemudahan pelatihan (ReLU). Yang sama mencoloknya adalah perkembangan besar dalam alat deep learning. Apa yang dulu membutuhkan beberapa bulan kerja pada tahun 2012 kini dapat diselesaikan hanya dalam beberapa baris kode dengan menggunakan framework modern apa pun.
 
-Reviewing the architecture, we see that AlexNet has an Achilles heel when it comes to efficiency: the last two hidden layers require matrices of size $6400 \times 4096$ and $4096 \times 4096$, respectively. This corresponds to 164 MB of memory and 81 MFLOPs of computation, both of which are a nontrivial outlay, especially on smaller devices, such as mobile phones. This is one of the reasons why AlexNet has been surpassed by much more effective architectures that we will cover in the following sections. Nonetheless, it is a key step from shallow to deep networks that are used nowadays. Note that even though the number of parameters exceeds by far the amount of training data in our experiments (the last two layers have more than 40 million parameters, trained on a datasets of 60 thousand images), there is hardly any overfitting: training and validation loss are virtually identical throughout training. This is due to the improved regularization, such as dropout, inherent in modern deep network designs.
+Dalam meninjau arsitektur, kita melihat bahwa AlexNet memiliki kelemahan utama dalam hal efisiensi: dua lapisan tersembunyi terakhir membutuhkan matriks berukuran $6400 \times 4096$ dan $4096 \times 4096$. Ini setara dengan 164 MB memori dan 81 MFLOP untuk komputasi, yang keduanya adalah pengeluaran yang signifikan, terutama pada perangkat yang lebih kecil, seperti ponsel. Inilah salah satu alasan mengapa AlexNet telah digantikan oleh arsitektur yang jauh lebih efisien yang akan kita bahas pada bagian berikut. Namun demikian, AlexNet adalah langkah kunci dari jaringan dangkal menuju jaringan dalam yang digunakan saat ini. Perlu dicatat bahwa meskipun jumlah parameter jauh melampaui jumlah data pelatihan dalam eksperimen kita (dua lapisan terakhir memiliki lebih dari 40 juta parameter, dilatih pada dataset yang berisi 60 ribu gambar), hampir tidak ada overfitting: loss pelatihan dan validasi hampir identik sepanjang pelatihan. Ini berkat regularisasi yang ditingkatkan, seperti dropout, yang melekat pada desain jaringan dalam modern.
 
-Although it seems that there are only a few more lines in AlexNet's implementation than in LeNet's, it took the academic community many years to embrace this conceptual change and take advantage of its excellent experimental results. This was also due to the lack of efficient computational tools. At the time neither DistBelief :cite:`Dean.Corrado.Monga.ea.2012` nor Caffe :cite:`Jia.Shelhamer.Donahue.ea.2014` existed, and Theano :cite:`Bergstra.Breuleux.Bastien.ea.2010` still lacked many distinguishing features. It was the availability of TensorFlow :cite:`Abadi.Barham.Chen.ea.2016` that dramatically changed the situation.
+Meskipun tampaknya hanya ada beberapa baris tambahan dalam implementasi AlexNet dibandingkan dengan LeNet, dibutuhkan waktu bertahun-tahun bagi komunitas akademis untuk menerima perubahan konseptual ini dan memanfaatkan hasil eksperimen yang sangat baik. Ini juga disebabkan oleh kurangnya alat komputasi yang efisien. Pada saat itu, baik DistBelief :cite:`Dean.Corrado.Monga.ea.2012` maupun Caffe :cite:`Jia.Shelhamer.Donahue.ea.2014` belum ada, dan Theano :cite:`Bergstra.Breuleux.Bastien.ea.2010` masih belum memiliki banyak fitur yang membedakannya. Ketersediaan TensorFlow :cite:`Abadi.Barham.Chen.ea.2016` secara dramatis mengubah situasi.
 
-## Exercises
+## Latihan
 
-1. Following up on the discussion above, analyze the computational properties of AlexNet.
-    1. Compute the memory footprint for convolutions and fully connected layers, respectively. Which one dominates?
-    1. Calculate the computational cost for the convolutions and the fully connected layers.
-    1. How does the memory (read and write bandwidth, latency, size) affect computation? Is there any difference in its effects for training and inference?
-1. You are a chip designer and need to trade off computation and memory bandwidth. For example, a faster chip requires more power and possibly a larger chip area. More memory bandwidth requires more pins and control logic, thus also more area. How do you optimize?
-1. Why do engineers no longer report performance benchmarks on AlexNet?
-1. Try increasing the number of epochs when training AlexNet. Compared with LeNet, how do the results differ? Why?
-1. AlexNet may be too complex for the Fashion-MNIST dataset, in particular due to the low resolution of the initial images.
-    1. Try simplifying the model to make the training faster, while ensuring that the accuracy does not drop significantly.
-    1. Design a better model that works directly on $28 \times 28$ images.
-1. Modify the batch size, and observe the changes in throughput (images/s), accuracy, and GPU memory.
-1. Apply dropout and ReLU to LeNet-5. Does it improve? Can you improve things further by preprocessing to take advantage of the invariances inherent in the images?
-1. Can you make AlexNet overfit? Which feature do you need to remove or change to break training?
+1. Berdasarkan diskusi di atas, analisis sifat komputasi AlexNet.
+    1. Hitung penggunaan memori untuk konvolusi dan lapisan fully connected. Manakah yang lebih dominan?
+    1. Hitung biaya komputasi untuk konvolusi dan lapisan fully connected.
+    1. Bagaimana memori (bandwidth baca dan tulis, latensi, ukuran) memengaruhi komputasi? Apakah ada perbedaan efeknya pada pelatihan dan inferensi?
+1. Anda adalah seorang desainer chip dan perlu menyeimbangkan antara komputasi dan bandwidth memori. Misalnya, chip yang lebih cepat membutuhkan lebih banyak daya dan mungkin area chip yang lebih besar. Bandwidth memori yang lebih besar membutuhkan lebih banyak pin dan logika kontrol, sehingga juga membutuhkan area lebih. Bagaimana Anda mengoptimalkannya?
+1. Mengapa para insinyur tidak lagi melaporkan tolok ukur kinerja pada AlexNet?
+1. Coba tingkatkan jumlah epoch saat melatih AlexNet. Dibandingkan dengan LeNet, bagaimana perbedaannya? Mengapa demikian?
+1. AlexNet mungkin terlalu kompleks untuk dataset Fashion-MNIST, terutama karena resolusi gambar awal yang rendah.
+    1. Coba sederhanakan model agar pelatihan lebih cepat, dengan memastikan bahwa akurasinya tidak turun secara signifikan.
+    1. Rancang model yang lebih baik yang langsung bekerja pada gambar $28 \times 28$.
+1. Ubah ukuran batch, dan amati perubahan throughput (gambar/detik), akurasi, dan memori GPU.
+1. Terapkan dropout dan ReLU pada LeNet-5. Apakah ini meningkatkan hasil? Dapatkah Anda meningkatkan lebih lanjut dengan prapemrosesan untuk memanfaatkan invarian yang melekat pada gambar?
+1. Bisakah Anda membuat AlexNet mengalami overfitting? Fitur mana yang perlu Anda hilangkan atau ubah untuk mengganggu pelatihan?
 
 :begin_tab:`mxnet`
-[Discussions](https://discuss.d2l.ai/t/75)
+[Diskusi](https://discuss.d2l.ai/t/75)
 :end_tab:
 
 :begin_tab:`pytorch`
-[Discussions](https://discuss.d2l.ai/t/76)
+[Diskusi](https://discuss.d2l.ai/t/76)
 :end_tab:
 
 :begin_tab:`tensorflow`
-[Discussions](https://discuss.d2l.ai/t/276)
+[Diskusi](https://discuss.d2l.ai/t/276)
 :end_tab:
 
 :begin_tab:`jax`
-[Discussions](https://discuss.d2l.ai/t/18001)
+[Diskusi](https://discuss.d2l.ai/t/18001)
 :end_tab:
