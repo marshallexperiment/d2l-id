@@ -6,12 +6,12 @@ tab.interact_select(['mxnet', 'pytorch', 'tensorflow', 'jax'])
 # Densely Connected Networks (DenseNet)
 :label:`sec_densenet`
 
-ResNet significantly changed the view of how to parametrize the functions in deep networks. *DenseNet* (dense convolutional network) is to some extent the logical extension of this :cite:`Huang.Liu.Van-Der-Maaten.ea.2017`.
-DenseNet is characterized by both the connectivity pattern where
-each layer connects to all the preceding layers
-and the concatenation operation (rather than the addition operator in ResNet) to preserve and reuse features
-from earlier layers.
-To understand how to arrive at it, let's take a small detour to mathematics.
+ResNet secara signifikan mengubah cara kita memandang parameterisasi fungsi dalam jaringan yang dalam. *DenseNet* (jaringan konvolusi padat) hingga tingkat tertentu adalah perpanjangan logis dari ini :cite:`Huang.Liu.Van-Der-Maaten.ea.2017`.
+DenseNet ditandai dengan pola konektivitas di mana
+setiap lapisan terhubung ke semua lapisan sebelumnya
+dan operasi konkatenasi (bukan operator penjumlahan seperti pada ResNet) untuk mempertahankan dan menggunakan kembali fitur
+dari lapisan sebelumnya.
+Untuk memahami bagaimana sampai pada konsep ini, mari kita melakukan sedikit penyimpangan ke dalam matematika.
 
 ```{.python .input}
 %%tab mxnet
@@ -42,49 +42,46 @@ from jax import numpy as jnp
 import jax
 ```
 
-## From ResNet to DenseNet
+## Dari ResNet ke DenseNet
 
-Recall the Taylor expansion for functions. At the point $x = 0$ it can be written as
+Ingat kembali ekspansi Taylor untuk fungsi. Pada titik $x = 0$, ekspansi ini dapat dituliskan sebagai
 
 $$f(x) = f(0) + x \cdot \left[f'(0) + x \cdot \left[\frac{f''(0)}{2!}  + x \cdot \left[\frac{f'''(0)}{3!}  + \cdots \right]\right]\right].$$
 
-
-The key point is that it decomposes a function into terms of increasingly higher order. In a similar vein, ResNet decomposes functions into
+Poin utamanya adalah bahwa ekspansi ini menguraikan sebuah fungsi menjadi beberapa suku dengan urutan yang semakin tinggi. Dalam cara yang serupa, ResNet menguraikan fungsi menjadi
 
 $$f(\mathbf{x}) = \mathbf{x} + g(\mathbf{x}).$$
 
-That is, ResNet decomposes $f$ into a simple linear term and a more complex
-nonlinear one.
-What if we wanted to capture (not necessarily add) information beyond two terms?
-One such solution is DenseNet :cite:`Huang.Liu.Van-Der-Maaten.ea.2017`.
+Artinya, ResNet menguraikan $f$ menjadi satu suku linear sederhana dan satu suku non-linear yang lebih kompleks.
+Bagaimana jika kita ingin menangkap (tidak selalu menambah) informasi di luar dua suku tersebut?
+Salah satu solusinya adalah DenseNet :cite:`Huang.Liu.Van-Der-Maaten.ea.2017`.
 
-![The main difference between ResNet (left) and DenseNet (right) in cross-layer connections: use of addition and use of concatenation. ](../img/densenet-block.svg)
+![Perbedaan utama antara ResNet (kiri) dan DenseNet (kanan) dalam koneksi antar lapisan: penggunaan penjumlahan dan penggunaan konkatenasi.](../img/densenet-block.svg)
 :label:`fig_densenet_block`
 
-As shown in :numref:`fig_densenet_block`, the key difference between ResNet and DenseNet is that in the latter case outputs are *concatenated* (denoted by $[,]$) rather than added.
-As a result, we perform a mapping from $\mathbf{x}$ to its values after applying an increasingly complex sequence of functions:
+Seperti yang ditunjukkan dalam :numref:`fig_densenet_block`, perbedaan utama antara ResNet dan DenseNet adalah pada kasus yang terakhir output *dikonkat* (ditandai dengan $[,]$) daripada ditambahkan.
+Hasilnya, kita melakukan pemetaan dari $\mathbf{x}$ ke nilainya setelah menerapkan urutan fungsi yang semakin kompleks:
 
 $$\mathbf{x} \to \left[
 \mathbf{x},
 f_1(\mathbf{x}),
 f_2\left(\left[\mathbf{x}, f_1\left(\mathbf{x}\right)\right]\right), f_3\left(\left[\mathbf{x}, f_1\left(\mathbf{x}\right), f_2\left(\left[\mathbf{x}, f_1\left(\mathbf{x}\right)\right]\right)\right]\right), \ldots\right].$$
 
-In the end, all these functions are combined in MLP to reduce the number of features again. In terms of implementation this is quite simple:
-rather than adding terms, we concatenate them. The name DenseNet arises from the fact that the dependency graph between variables becomes quite dense. The final layer of such a chain is densely connected to all previous layers. The dense connections are shown in :numref:`fig_densenet`.
+Pada akhirnya, semua fungsi ini digabungkan dalam MLP untuk mengurangi jumlah fitur kembali. Dalam hal implementasi, ini cukup sederhana: alih-alih menambahkan suku, kita mengkonkatnya. Nama DenseNet berasal dari fakta bahwa grafik ketergantungan antara variabel menjadi cukup padat. Lapisan terakhir dari rantai ini terhubung secara padat ke semua lapisan sebelumnya. Koneksi padat ini ditunjukkan dalam :numref:`fig_densenet`.
 
-![Dense connections in DenseNet. Note how the dimensionality increases with depth.](../img/densenet.svg)
+![Koneksi padat dalam DenseNet. Perhatikan bagaimana dimensi meningkat dengan kedalaman.](../img/densenet.svg)
 :label:`fig_densenet`
 
-The main components that comprise a DenseNet are *dense blocks* and *transition layers*. The former define how the inputs and outputs are concatenated, while the latter control the number of channels so that it is not too large, 
-since the expansion $\mathbf{x} \to \left[\mathbf{x}, f_1(\mathbf{x}),
-f_2\left(\left[\mathbf{x}, f_1\left(\mathbf{x}\right)\right]\right), \ldots \right]$ can be quite high-dimensional.
+Komponen utama yang membentuk DenseNet adalah *dense block* dan *transition layer*. Dense block mendefinisikan bagaimana input dan output dikonkat, sementara transition layer mengendalikan jumlah saluran sehingga tidak terlalu besar,
+karena ekspansi $\mathbf{x} \to \left[\mathbf{x}, f_1(\mathbf{x}),
+f_2\left(\left[\mathbf{x}, f_1\left(\mathbf{x}\right)\right]\right), \ldots \right]$ dapat menjadi sangat berdimensi tinggi.
 
 
 ## [**Dense Blocks**]
 
-DenseNet uses the modified "batch normalization, activation, and convolution"
-structure of ResNet (see the exercise in :numref:`sec_resnet`).
-First, we implement this convolution block structure.
+DenseNet menggunakan struktur "batch normalization, aktivasi, dan konvolusi" yang telah dimodifikasi dari ResNet (lihat latihan pada :numref:`sec_resnet`).
+Pertama, kita implementasikan struktur blok konvolusi ini.
+
 
 ```{.python .input}
 %%tab mxnet
@@ -138,7 +135,7 @@ class ConvBlock(nn.Module):
         return Y
 ```
 
-A *dense block* consists of multiple convolution blocks, each using the same number of output channels. In the forward propagation, however, we concatenate the input and output of each convolution block on the channel dimension. Lazy evaluation allows us to adjust the dimensionality automatically.
+Sebuah *dense block* terdiri dari beberapa blok konvolusi, masing-masing menggunakan jumlah saluran output yang sama. Namun, dalam propagasi ke depan, kita mengkonkat input dan output dari setiap blok konvolusi pada dimensi saluran. Evaluasi malas (lazy evaluation) memungkinkan kita untuk menyesuaikan dimensi secara otomatis.
 
 ```{.python .input}
 %%tab mxnet
@@ -207,9 +204,9 @@ class DenseBlock(nn.Module):
         return self.net(X)
 ```
 
-In the following example,
-we [**define a `DenseBlock` instance**] with two convolution blocks of 10 output channels.
-When using an input with three channels, we will get an output with  $3 + 10 + 10=23$ channels. The number of convolution block channels controls the growth in the number of output channels relative to the number of input channels. This is also referred to as the *growth rate*.
+Pada contoh berikut, kita [**mendefinisikan instance `DenseBlock`**] dengan dua blok konvolusi yang masing-masing memiliki 10 saluran output.
+Ketika menggunakan input dengan tiga saluran, kita akan mendapatkan output dengan jumlah saluran $3 + 10 + 10 = 23$. Jumlah saluran pada blok konvolusi mengontrol pertumbuhan jumlah 
+saluran output relatif terhadap jumlah saluran input. Hal ini juga disebut sebagai *growth rate*.
 
 ```{.python .input}
 %%tab pytorch, mxnet, tensorflow
@@ -233,9 +230,10 @@ Y = blk.init_with_output(d2l.get_key(), X)[0]
 Y.shape
 ```
 
-## [**Transition Layers**]
+## [**Transition Layer**]
 
-Since each dense block will increase the number of channels, adding too many of them will lead to an excessively complex model. A *transition layer* is used to control the complexity of the model. It reduces the number of channels by using a $1\times 1$ convolution. Moreover, it halves the height and width via average pooling with a stride of 2.
+Karena setiap dense block akan meningkatkan jumlah saluran, menambahkan terlalu banyak blok akan menghasilkan model yang terlalu kompleks. *Transition layer* digunakan untuk mengendalikan kompleksitas model. Transition layer mengurangi jumlah saluran dengan menggunakan konvolusi $1\times 1$. Selain itu, transition layer juga membagi dua tinggi dan lebar dengan menggunakan average pooling dengan stride 2.
+
 
 ```{.python .input}
 %%tab mxnet
@@ -288,7 +286,7 @@ class TransitionBlock(nn.Module):
         return X
 ```
 
-[**Apply a transition layer**] with 10 channels to the output of the dense block in the previous example.  This reduces the number of output channels to 10, and halves the height and width.
+[**Terapkan transition layer**] dengan 10 saluran pada output dari dense block di contoh sebelumnya. Ini akan mengurangi jumlah saluran output menjadi 10, serta membagi dua tinggi dan lebar dari output tersebut.
 
 ```{.python .input}
 %%tab mxnet
@@ -315,9 +313,10 @@ blk = TransitionBlock(10)
 blk.init_with_output(d2l.get_key(), Y)[0].shape
 ```
 
-## [**DenseNet Model**]
+## [**Model DenseNet**]
 
-Next, we will construct a DenseNet model. DenseNet first uses the same single convolutional layer and max-pooling layer as in ResNet.
+Selanjutnya, kita akan membangun model DenseNet. DenseNet pertama-tama menggunakan lapisan konvolusi tunggal dan lapisan max-pooling yang sama seperti pada ResNet.
+
 
 ```{.python .input}
 %%tab pytorch, mxnet, tensorflow
@@ -367,11 +366,12 @@ class DenseNet(d2l.Classifier):
         ])
 ```
 
-Then, similar to the four modules made up of residual blocks that ResNet uses,
-DenseNet uses four dense blocks.
-As with ResNet, we can set the number of convolutional layers used in each dense block. Here, we set it to 4, consistent with the ResNet-18 model in :numref:`sec_resnet`. Furthermore, we set the number of channels (i.e., growth rate) for the convolutional layers in the dense block to 32, so 128 channels will be added to each dense block.
+Kemudian, mirip dengan empat modul yang terdiri dari residual block yang digunakan ResNet,
+DenseNet menggunakan empat dense block.
+Seperti halnya pada ResNet, kita bisa mengatur jumlah lapisan konvolusi yang digunakan di setiap dense block. Di sini, kita menetapkannya menjadi 4, konsisten dengan model ResNet-18 di :numref:`sec_resnet`. Selain itu, kita mengatur jumlah saluran (yaitu, growth rate) untuk lapisan konvolusi dalam dense block menjadi 32, sehingga 128 saluran akan ditambahkan ke setiap dense block.
 
-In ResNet, the height and width are reduced between each module by a residual block with a stride of 2. Here, we use the transition layer to halve the height and width and halve the number of channels. Similar to ResNet, a global pooling layer and a fully connected layer are connected at the end to produce the output.
+Dalam ResNet, tinggi dan lebar berkurang di antara setiap modul oleh residual block dengan stride 2. Di sini, kita menggunakan transition layer untuk membagi dua tinggi dan lebar, serta membagi dua jumlah saluran. Mirip dengan ResNet, lapisan global pooling dan lapisan fully connected terhubung di akhir untuk menghasilkan output.
+
 
 ```{.python .input}
 %%tab pytorch, mxnet, tensorflow
@@ -385,10 +385,10 @@ def __init__(self, num_channels=64, growth_rate=32, arch=(4, 4, 4, 4),
         self.net.add(self.b1())
         for i, num_convs in enumerate(arch):
             self.net.add(DenseBlock(num_convs, growth_rate))
-            # The number of output channels in the previous dense block
+            # Jumlah saluran output pada dense block sebelumnya
             num_channels += num_convs * growth_rate
-            # A transition layer that halves the number of channels is added
-            # between the dense blocks
+            # Transition layer yang membagi dua jumlah saluran ditambahkan
+            # di antara dense block
             if i != len(arch) - 1:
                 num_channels //= 2
                 self.net.add(transition_block(num_channels))
@@ -400,10 +400,10 @@ def __init__(self, num_channels=64, growth_rate=32, arch=(4, 4, 4, 4),
         for i, num_convs in enumerate(arch):
             self.net.add_module(f'dense_blk{i+1}', DenseBlock(num_convs,
                                                               growth_rate))
-            # The number of output channels in the previous dense block
+            # Jumlah saluran output pada dense block sebelumnya
             num_channels += num_convs * growth_rate
-            # A transition layer that halves the number of channels is added
-            # between the dense blocks
+            # Transition layer yang membagi dua jumlah saluran ditambahkan
+            # di antara dense block
             if i != len(arch) - 1:
                 num_channels //= 2
                 self.net.add_module(f'tran_blk{i+1}', transition_block(
@@ -417,10 +417,10 @@ def __init__(self, num_channels=64, growth_rate=32, arch=(4, 4, 4, 4),
         self.net = tf.keras.models.Sequential(self.b1())
         for i, num_convs in enumerate(arch):
             self.net.add(DenseBlock(num_convs, growth_rate))
-            # The number of output channels in the previous dense block
+            # Jumlah saluran output pada dense block sebelumnya
             num_channels += num_convs * growth_rate
-            # A transition layer that halves the number of channels is added
-            # between the dense blocks
+            # Transition layer yang membagi dua jumlah saluran ditambahkan
+            # di antara dense block
             if i != len(arch) - 1:
                 num_channels //= 2
                 self.net.add(TransitionBlock(num_channels))
@@ -440,10 +440,10 @@ def create_net(self):
     for i, num_convs in enumerate(self.arch):
         net.layers.extend([DenseBlock(num_convs, self.growth_rate,
                                       training=self.training)])
-        # The number of output channels in the previous dense block
+        # Jumlah saluran output pada dense block sebelumnya
         num_channels = self.num_channels + (num_convs * self.growth_rate)
-        # A transition layer that halves the number of channels is added
-        # between the dense blocks
+        # Transition layer yang membagi dua jumlah saluran ditambahkan
+        # di antara dense block
         if i != len(self.arch) - 1:
             num_channels //= 2
             net.layers.extend([TransitionBlock(num_channels,
@@ -461,7 +461,7 @@ def create_net(self):
 
 ## [**Training**]
 
-Since we are using a deeper network here, in this section, we will reduce the input height and width from 224 to 96 to simplify the computation.
+Karena kita menggunakan jaringan yang lebih dalam di sini, pada bagian ini kita akan mengurangi tinggi dan lebar input dari 224 menjadi 96 untuk menyederhanakan komputasi.
 
 ```{.python .input}
 %%tab mxnet, pytorch, jax
@@ -480,39 +480,38 @@ with d2l.try_gpu():
     trainer.fit(model, data)
 ```
 
-## Summary and Discussion
+## Ringkasan dan Diskusi
 
-The main components that comprise DenseNet are dense blocks and transition layers. For the latter, we need to keep the dimensionality under control when composing the network by adding transition layers that shrink the number of channels again.
-In terms of cross-layer connections, in contrast to ResNet, where inputs and outputs are added together, DenseNet concatenates inputs and outputs on the channel dimension.
-Although these concatenation operations
-reuse features to achieve computational efficiency,
-unfortunately they lead to heavy GPU memory consumption.
-As a result,
-applying DenseNet may require more memory-efficient implementations that may increase training time :cite:`pleiss2017memory`.
+Komponen utama yang membentuk DenseNet adalah dense block dan transition layer. Untuk transition layer, kita perlu menjaga dimensi tetap terkendali saat membangun jaringan dengan menambahkan transition layer yang mengurangi kembali jumlah saluran.
+Dalam hal koneksi antar lapisan, berbeda dengan ResNet di mana input dan output dijumlahkan, DenseNet menggabungkan input dan output pada dimensi saluran.
+Meskipun operasi konkatenasi ini
+menggunakan kembali fitur untuk mencapai efisiensi komputasi,
+sayangnya ini menyebabkan konsumsi memori GPU yang berat.
+Akibatnya,
+menerapkan DenseNet mungkin memerlukan implementasi yang lebih efisien dalam penggunaan memori, yang dapat meningkatkan waktu pelatihan :cite:`pleiss2017memory`.
 
+## Latihan
 
-## Exercises
-
-1. Why do we use average pooling rather than max-pooling in the transition layer?
-1. One of the advantages mentioned in the DenseNet paper is that its model parameters are smaller than those of ResNet. Why is this the case?
-1. One problem for which DenseNet has been criticized is its high memory consumption.
-    1. Is this really the case? Try to change the input shape to $224\times 224$ to compare the actual GPU memory consumption empirically.
-    1. Can you think of an alternative means of reducing the memory consumption? How would you need to change the framework?
-1. Implement the various DenseNet versions presented in Table 1 of the DenseNet paper :cite:`Huang.Liu.Van-Der-Maaten.ea.2017`.
-1. Design an MLP-based model by applying the DenseNet idea. Apply it to the housing price prediction task in :numref:`sec_kaggle_house`.
+1. Mengapa kita menggunakan average pooling daripada max-pooling pada transition layer?
+2. Salah satu kelebihan yang disebutkan dalam paper DenseNet adalah bahwa parameter modelnya lebih kecil dibandingkan dengan ResNet. Mengapa demikian?
+3. Salah satu masalah yang dikritik dari DenseNet adalah konsumsi memori yang tinggi.
+    1. Apakah ini benar-benar terjadi? Coba ubah bentuk input menjadi $224\times 224$ untuk membandingkan konsumsi memori GPU secara empiris.
+    2. Dapatkah Anda memikirkan cara alternatif untuk mengurangi konsumsi memori? Bagaimana Anda perlu mengubah framework?
+4. Implementasikan berbagai versi DenseNet yang disajikan dalam Tabel 1 pada paper DenseNet :cite:`Huang.Liu.Van-Der-Maaten.ea.2017`.
+5. Rancang model berbasis MLP dengan menerapkan ide DenseNet. Terapkan pada tugas prediksi harga rumah di :numref:`sec_kaggle_house`.
 
 :begin_tab:`mxnet`
-[Discussions](https://discuss.d2l.ai/t/87)
+[Diskusi](https://discuss.d2l.ai/t/87)
 :end_tab:
 
 :begin_tab:`pytorch`
-[Discussions](https://discuss.d2l.ai/t/88)
+[Diskusi](https://discuss.d2l.ai/t/88)
 :end_tab:
 
 :begin_tab:`tensorflow`
-[Discussions](https://discuss.d2l.ai/t/331)
+[Diskusi](https://discuss.d2l.ai/t/331)
 :end_tab:
 
 :begin_tab:`jax`
-[Discussions](https://discuss.d2l.ai/t/18008)
+[Diskusi](https://discuss.d2l.ai/t/18008)
 :end_tab:
