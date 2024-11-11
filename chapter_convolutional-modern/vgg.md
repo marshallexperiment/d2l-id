@@ -3,33 +3,32 @@
 tab.interact_select(['mxnet', 'pytorch', 'tensorflow', 'jax'])
 ```
 
-# Networks Using Blocks (VGG)
+# Jaringan dengan Menggunakan Blok (VGG)
 :label:`sec_vgg`
 
-While AlexNet offered empirical evidence that deep CNNs
-can achieve good results, it did not provide a general template
-to guide subsequent researchers in designing new networks.
-In the following sections, we will introduce several heuristic concepts
-commonly used to design deep networks.
+Meskipun AlexNet memberikan bukti empiris bahwa CNN yang dalam
+dapat mencapai hasil yang baik, model ini tidak menyediakan template umum
+untuk membimbing para peneliti berikutnya dalam merancang jaringan baru.
+Pada bagian-bagian berikutnya, kita akan memperkenalkan beberapa konsep heuristik
+yang umum digunakan untuk merancang jaringan dalam.
 
-Progress in this field mirrors that of VLSI (very large scale integration) 
-in chip design
-where engineers moved from placing transistors
-to logical elements to logic blocks :cite:`Mead.1980`.
-Similarly, the design of neural network architectures
-has grown progressively more abstract,
-with researchers moving from thinking in terms of
-individual neurons to whole layers,
-and now to blocks, repeating patterns of layers. A decade later, this has now
-progressed to researchers using entire trained models to repurpose them for different, 
-albeit related, tasks. Such large pretrained models are typically called 
-*foundation models* :cite:`bommasani2021opportunities`. 
+Perkembangan dalam bidang ini mencerminkan perkembangan pada VLSI (very large scale integration)
+dalam desain chip, di mana para insinyur beralih dari menempatkan transistor
+ke elemen logika dan kemudian ke blok logika :cite:`Mead.1980`.
+Demikian pula, desain arsitektur jaringan saraf
+semakin abstrak, dengan peneliti yang awalnya berpikir dalam hal
+neuron individu beralih ke seluruh lapisan,
+dan kini ke blok, pola lapisan berulang. Satu dekade kemudian, ini telah berkembang menjadi penggunaan model yang telah dilatih seluruhnya untuk berbagai tujuan,
+meskipun dalam tugas yang terkait. Model besar yang telah dilatih sebelumnya ini biasanya disebut
+*foundation models* :cite:`bommasani2021opportunities`.
 
-Back to network design. The idea of using blocks first emerged from the
-Visual Geometry Group (VGG) at Oxford University,
-in their eponymously-named *VGG* network :cite:`Simonyan.Zisserman.2014`.
-It is easy to implement these repeated structures in code
-with any modern deep learning framework by using loops and subroutines.
+Kembali ke desain jaringan. Ide menggunakan blok pertama kali muncul dari
+Visual Geometry Group (VGG) di Universitas Oxford,
+dalam jaringan bernama *VGG* sesuai nama kelompoknya :cite:`Simonyan.Zisserman.2014`.
+Mengimplementasikan struktur berulang ini dalam kode
+sangat mudah dengan framework deep learning modern mana pun
+dengan menggunakan loop dan subrutin.
+
 
 ```{.python .input}
 %%tab mxnet
@@ -59,40 +58,35 @@ from flax import linen as nn
 import jax
 ```
 
-## (**VGG Blocks**)
+## (**Blok VGG**)
 :label:`subsec_vgg-blocks`
 
-The basic building block of CNNs
-is a sequence of the following:
-(i) a convolutional layer
-with padding to maintain the resolution,
-(ii) a nonlinearity such as a ReLU,
-(iii) a pooling layer such
-as max-pooling to reduce the resolution. One of the problems with 
-this approach is that the spatial resolution decreases quite rapidly. In particular, 
-this imposes a hard limit of $\log_2 d$ convolutional layers on the network before all 
-dimensions ($d$) are used up. For instance, in the case of ImageNet, it would be impossible to have 
-more than 8 convolutional layers in this way. 
+Blok dasar dari CNN adalah urutan berikut:
+(i) lapisan konvolusi dengan padding untuk menjaga resolusi,
+(ii) non-linearitas seperti ReLU,
+(iii) lapisan pooling seperti max-pooling untuk mengurangi resolusi. Salah satu masalah dari
+pendekatan ini adalah bahwa resolusi spasial berkurang dengan cepat. Secara khusus,
+ini memberikan batas keras pada jumlah lapisan konvolusi sebanyak $\log_2 d$ dalam jaringan sebelum semua
+dimensi ($d$) terpakai. Misalnya, dalam kasus ImageNet, dengan pendekatan ini tidak mungkin memiliki
+lebih dari 8 lapisan konvolusi.
 
-The key idea of :citet:`Simonyan.Zisserman.2014` was to use *multiple* convolutions in between downsampling
-via max-pooling in the form of a block. They were primarily interested in whether deep or 
-wide networks perform better. For instance, the successive application of two $3 \times 3$ convolutions
-touches the same pixels as a single $5 \times 5$ convolution does. At the same time, the latter uses approximately 
-as many parameters ($25 \cdot c^2$) as three $3 \times 3$ convolutions do ($3 \cdot 9 \cdot c^2$). 
-In a rather detailed analysis they showed that deep and narrow networks significantly outperform their shallow counterparts. This set deep learning on a quest for ever deeper networks with over 100 layers for typical applications.
-Stacking $3 \times 3$ convolutions
-has become a gold standard in later deep networks (a design decision only to be revisited recently by 
-:citet:`liu2022convnet`). Consequently, fast implementations for small convolutions have become a staple on GPUs :cite:`lavin2016fast`. 
+Ide utama dari :citet:`Simonyan.Zisserman.2014` adalah menggunakan *beberapa* konvolusi di antara downsampling
+melalui max-pooling dalam bentuk blok. Mereka tertarik untuk mengetahui apakah jaringan yang dalam atau
+lebar yang berkinerja lebih baik. Misalnya, penerapan berturut-turut dua konvolusi $3 \times 3$
+menjangkau piksel yang sama seperti yang dilakukan oleh konvolusi tunggal $5 \times 5$. Pada saat yang sama, konvolusi tunggal $5 \times 5$ menggunakan jumlah parameter yang hampir sama ($25 \cdot c^2$) dengan tiga konvolusi $3 \times 3$ ($3 \cdot 9 \cdot c^2$).
+Dalam analisis yang cukup rinci, mereka menunjukkan bahwa jaringan yang dalam dan sempit jauh lebih unggul daripada jaringan yang dangkal. Ini memicu perkembangan deep learning untuk mencari jaringan yang semakin dalam dengan lebih dari 100 lapisan untuk aplikasi umum.
+Penumpukan konvolusi $3 \times 3$ telah menjadi standar emas pada jaringan dalam berikutnya (sebuah keputusan desain yang baru-baru ini ditinjau kembali oleh :citet:`liu2022convnet`). Akibatnya, implementasi cepat untuk konvolusi kecil telah menjadi andalan pada GPU :cite:`lavin2016fast`.
 
-Back to VGG: a VGG block consists of a *sequence* of convolutions with $3\times3$ kernels with padding of 1 
-(keeping height and width) followed by a $2 \times 2$ max-pooling layer with stride of 2
-(halving height and width after each block).
-In the code below, we define a function called `vgg_block`
-to implement one VGG block.
+Kembali ke VGG: sebuah blok VGG terdiri dari *urutan* konvolusi dengan kernel $3\times3$ dengan padding 1
+(menjaga tinggi dan lebar) diikuti oleh lapisan max-pooling $2 \times 2$ dengan stride 2
+(mengurangi tinggi dan lebar menjadi setengahnya setelah setiap blok).
+Pada kode di bawah ini, kita mendefinisikan fungsi bernama `vgg_block`
+untuk mengimplementasikan satu blok VGG.
 
-The function below takes two arguments,
-corresponding to the number of convolutional layers `num_convs`
-and the number of output channels `num_channels`.
+Fungsi di bawah ini menerima dua argumen,
+yang sesuai dengan jumlah lapisan konvolusi `num_convs`
+dan jumlah saluran output `num_channels`.
+
 
 ```{.python .input  n=2}
 %%tab mxnet
@@ -139,32 +133,32 @@ def vgg_block(num_convs, out_channels):
     return nn.Sequential(layers)
 ```
 
-## [**VGG Network**]
+## [**Jaringan VGG**]
 :label:`subsec_vgg-network`
 
-Like AlexNet and LeNet, 
-the VGG Network can be partitioned into two parts:
-the first consisting mostly of convolutional and pooling layers
-and the second consisting of fully connected layers that are identical to those in AlexNet. 
-The key difference is 
-that the convolutional layers are grouped in nonlinear transformations that 
-leave the dimensonality unchanged, followed by a resolution-reduction step, as 
-depicted in :numref:`fig_vgg`. 
+Seperti AlexNet dan LeNet,
+Jaringan VGG dapat dibagi menjadi dua bagian:
+bagian pertama terdiri terutama dari lapisan konvolusi dan pooling,
+dan bagian kedua terdiri dari lapisan fully connected yang identik dengan yang ada di AlexNet.
+Perbedaan utamanya adalah
+bahwa lapisan konvolusi dikelompokkan dalam transformasi non-linear
+yang menjaga dimensi tetap sama, diikuti dengan langkah pengurangan resolusi, seperti
+yang digambarkan pada :numref:`fig_vgg`.
 
-![From AlexNet to VGG. The key difference is that VGG consists of blocks of layers, whereas AlexNet's layers are all designed individually.](../img/vgg.svg)
+![Dari AlexNet ke VGG. Perbedaan utamanya adalah bahwa VGG terdiri dari blok-blok lapisan, sementara lapisan AlexNet dirancang secara individual.](../img/vgg.svg)
 :width:`400px`
 :label:`fig_vgg`
 
-The convolutional part of the network connects several VGG blocks from :numref:`fig_vgg` (also defined in the `vgg_block` function)
-in succession. This grouping of convolutions is a pattern that has 
-remained almost unchanged over the past decade, although the specific choice of 
-operations has undergone considerable modifications. 
-The variable `arch` consists of a list of tuples (one per block),
-where each contains two values: the number of convolutional layers
-and the number of output channels,
-which are precisely the arguments required to call
-the `vgg_block` function. As such, VGG defines a *family* of networks rather than just 
-a specific manifestation. To build a specific network we simply iterate over `arch` to compose the blocks.
+Bagian konvolusi dari jaringan menghubungkan beberapa blok VGG dari :numref:`fig_vgg` (juga didefinisikan dalam fungsi `vgg_block`)
+secara berurutan. Pengelompokan konvolusi ini adalah pola yang
+tetap hampir tidak berubah selama dekade terakhir, meskipun pilihan operasi tertentu telah mengalami modifikasi yang cukup besar.
+Variabel `arch` terdiri dari daftar tuple (satu per blok),
+di mana masing-masing berisi dua nilai: jumlah lapisan konvolusi
+dan jumlah saluran output,
+yang merupakan argumen yang diperlukan untuk memanggil
+fungsi `vgg_block`. Dengan demikian, VGG mendefinisikan *keluarga* jaringan daripada sekadar
+satu bentuk spesifik. Untuk membangun jaringan tertentu, kita cukup melakukan iterasi pada `arch` untuk menyusun blok-bloknya.
+
 
 ```{.python .input  n=5}
 %%tab pytorch, mxnet, tensorflow
@@ -227,14 +221,15 @@ class VGG(d2l.Classifier):
             nn.Dense(self.num_classes)])
 ```
 
-The original VGG network had five convolutional blocks,
-among which the first two have one convolutional layer each
-and the latter three contain two convolutional layers each.
-The first block has 64 output channels
-and each subsequent block doubles the number of output channels,
-until that number reaches 512.
-Since this network uses eight convolutional layers
-and three fully connected layers, it is often called VGG-11.
+Jaringan VGG asli memiliki lima blok konvolusi,
+di mana dua blok pertama masing-masing memiliki satu lapisan konvolusi
+dan tiga blok terakhir masing-masing berisi dua lapisan konvolusi.
+Blok pertama memiliki 64 saluran output,
+dan setiap blok berikutnya menggandakan jumlah saluran output,
+hingga jumlah tersebut mencapai 512.
+Karena jaringan ini menggunakan delapan lapisan konvolusi
+dan tiga lapisan fully connected, maka sering disebut VGG-11.
+
 
 ```{.python .input  n=6}
 %%tab pytorch, mxnet
@@ -254,22 +249,23 @@ VGG(arch=((1, 64), (1, 128), (2, 256), (2, 512), (2, 512)),
     training=False).layer_summary((1, 224, 224, 1))
 ```
 
-As you can see, we halve height and width at each block,
-finally reaching a height and width of 7
-before flattening the representations
-for processing by the fully connected part of the network. 
-:citet:`Simonyan.Zisserman.2014` described several other variants of VGG. 
-In fact, it has become the norm to propose *families* of networks with 
-different speed--accuracy trade-off when introducing a new architecture. 
+Seperti yang Anda lihat, kita mengurangi setengah tinggi dan lebar di setiap blok,
+hingga akhirnya mencapai tinggi dan lebar 7
+sebelum melakukan flattening pada representasi
+untuk diproses oleh bagian fully connected dari jaringan.
+:citet:`Simonyan.Zisserman.2014` juga menjelaskan beberapa varian lain dari VGG.
+Faktanya, sekarang menjadi hal yang biasa untuk mengusulkan *keluarga* jaringan dengan
+perbedaan trade-off antara kecepatan dan akurasi ketika memperkenalkan arsitektur baru.
 
-## Training
+## Pelatihan
 
-[**Since VGG-11 is computationally more demanding than AlexNet
-we construct a network with a smaller number of channels.**]
-This is more than sufficient for training on Fashion-MNIST.
-The [**model training**] process is similar to that of AlexNet in :numref:`sec_alexnet`. 
-Again observe the close match between validation and training loss, 
-suggesting only a small amount of overfitting.
+[**Karena VGG-11 membutuhkan komputasi yang lebih besar daripada AlexNet,
+kami membangun jaringan dengan jumlah saluran yang lebih sedikit.**]
+Ini sudah lebih dari cukup untuk pelatihan pada Fashion-MNIST.
+Proses [**pelatihan model**] mirip dengan AlexNet pada :numref:`sec_alexnet`.
+Perhatikan kembali kesesuaian yang erat antara loss validasi dan loss pelatihan,
+yang menunjukkan hanya sedikit overfitting.
+
 
 ```{.python .input  n=8}
 %%tab mxnet, pytorch, jax
@@ -290,35 +286,34 @@ with d2l.try_gpu():
     trainer.fit(model, data)
 ```
 
-## Summary
+## Ringkasan
 
-One might argue that VGG is the first truly modern convolutional neural network. While AlexNet introduced many of the components of what make deep learning effective at scale, it is VGG that arguably introduced key properties such as blocks of multiple convolutions and a preference for deep and narrow networks. It is also the first network that is actually an entire family of similarly parametrized models, giving the practitioner ample trade-off between complexity and speed. This is also the place where modern deep learning frameworks shine. It is no longer necessary to generate XML configuration files to specify a network but rather, to assemble said networks through simple Python code. 
+Orang mungkin berpendapat bahwa VGG adalah jaringan saraf konvolusional modern yang pertama. Meskipun AlexNet memperkenalkan banyak komponen yang membuat deep learning efektif pada skala besar, VGG bisa dibilang yang memperkenalkan properti kunci seperti blok konvolusi ganda dan preferensi untuk jaringan yang dalam dan sempit. Ini juga merupakan jaringan pertama yang menjadi seluruh keluarga model dengan parameterisasi serupa, memberikan praktisi berbagai pilihan trade-off antara kompleksitas dan kecepatan. Di sini pula kerangka kerja deep learning modern unggul, karena tidak lagi diperlukan file konfigurasi XML untuk menentukan jaringan, melainkan cukup dengan merakit jaringan melalui kode Python sederhana.
 
-More recently ParNet :cite:`Goyal.Bochkovskiy.Deng.ea.2021` demonstrated that it is possible to achieve competitive performance using a much more shallow architecture through a large number of parallel computations. This is an exciting development and there is hope that it will influence architecture designs in the future. For the remainder of the chapter, though, we will follow the path of scientific progress over the past decade. 
+Baru-baru ini, ParNet :cite:`Goyal.Bochkovskiy.Deng.ea.2021` menunjukkan bahwa dimungkinkan untuk mencapai performa kompetitif dengan menggunakan arsitektur yang jauh lebih dangkal melalui sejumlah besar komputasi paralel. Ini adalah perkembangan yang menarik dan ada harapan bahwa hal ini akan mempengaruhi desain arsitektur di masa depan. Namun, untuk sisa bab ini, kita akan mengikuti jalur perkembangan ilmiah selama dekade terakhir.
 
-## Exercises
+## Latihan
 
-
-1. Compared with AlexNet, VGG is much slower in terms of computation, and it also needs more GPU memory. 
-    1. Compare the number of parameters needed for AlexNet and VGG.
-    1. Compare the number of floating point operations used in the convolutional layers and in the fully connected layers. 
-    1. How could you reduce the computational cost created by the fully connected layers?
-1. When displaying the dimensions associated with the various layers of the network, we only see the information associated with eight blocks (plus some auxiliary transforms), even though the network has 11 layers. Where did the remaining three layers go?
-1. Use Table 1 in the VGG paper :cite:`Simonyan.Zisserman.2014` to construct other common models, such as VGG-16 or VGG-19.
-1. Upsampling the resolution in Fashion-MNIST eight-fold from $28 \times 28$ to $224 \times 224$ dimensions is very wasteful. Try modifying the network architecture and resolution conversion, e.g., to 56 or to 84 dimensions for its input instead. Can you do so without reducing the accuracy of the network? Consult the VGG paper :cite:`Simonyan.Zisserman.2014` for ideas on adding more nonlinearities prior to downsampling.
+1. Dibandingkan dengan AlexNet, VGG jauh lebih lambat dalam hal komputasi, dan juga membutuhkan lebih banyak memori GPU.
+    1. Bandingkan jumlah parameter yang dibutuhkan oleh AlexNet dan VGG.
+    1. Bandingkan jumlah operasi floating-point yang digunakan pada lapisan konvolusi dan pada lapisan fully connected.
+    1. Bagaimana Anda bisa mengurangi biaya komputasi yang diciptakan oleh lapisan fully connected?
+1. Saat menampilkan dimensi yang terkait dengan berbagai lapisan dalam jaringan, kita hanya melihat informasi yang terkait dengan delapan blok (ditambah beberapa transformasi tambahan), meskipun jaringan memiliki 11 lapisan. Di mana tiga lapisan yang tersisa?
+1. Gunakan Tabel 1 dalam makalah VGG :cite:`Simonyan.Zisserman.2014` untuk membangun model umum lainnya, seperti VGG-16 atau VGG-19.
+1. Meningkatkan resolusi pada Fashion-MNIST sebanyak delapan kali lipat dari dimensi $28 \times 28$ ke $224 \times 224$ sangat tidak efisien. Cobalah memodifikasi arsitektur jaringan dan konversi resolusi, misalnya, menjadi 56 atau 84 dimensi untuk inputnya. Bisakah Anda melakukannya tanpa mengurangi akurasi jaringan? Konsultasikan makalah VGG :cite:`Simonyan.Zisserman.2014` untuk ide-ide dalam menambahkan lebih banyak non-linearitas sebelum downsampling.
 
 :begin_tab:`mxnet`
-[Discussions](https://discuss.d2l.ai/t/77)
+[Diskusi](https://discuss.d2l.ai/t/77)
 :end_tab:
 
 :begin_tab:`pytorch`
-[Discussions](https://discuss.d2l.ai/t/78)
+[Diskusi](https://discuss.d2l.ai/t/78)
 :end_tab:
 
 :begin_tab:`tensorflow`
-[Discussions](https://discuss.d2l.ai/t/277)
+[Diskusi](https://discuss.d2l.ai/t/277)
 :end_tab:
 
 :begin_tab:`jax`
-[Discussions](https://discuss.d2l.ai/t/18002)
+[Diskusi](https://discuss.d2l.ai/t/18002)
 :end_tab:
