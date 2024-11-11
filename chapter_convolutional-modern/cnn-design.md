@@ -3,34 +3,34 @@
 tab.interact_select(['mxnet', 'pytorch', 'tensorflow', 'jax'])
 ```
 
-# Designing Convolution Network Architectures
+# Merancang Arsitektur Jaringan Konvolusi
 :label:`sec_cnn-design`
 
-The previous sections have taken us on a tour of modern network design for computer vision. Common to all the work we covered was that it greatly relied on the intuition of scientists. Many of the architectures are heavily informed by human creativity and to a much lesser extent by systematic exploration of the design space that deep networks offer. Nonetheless, this *network engineering* approach has been tremendously successful. 
+Bagian-bagian sebelumnya telah membawa kita dalam tur desain jaringan modern untuk computer vision. Yang umum dari semua pekerjaan yang telah kita bahas adalah bahwa pekerjaan tersebut sangat bergantung pada intuisi para ilmuwan. Banyak arsitektur dipengaruhi oleh kreativitas manusia dan hanya sedikit oleh eksplorasi sistematis dari ruang desain yang ditawarkan oleh jaringan dalam. Namun, pendekatan *rekayasa jaringan* ini telah berhasil secara luar biasa.
 
-Ever since AlexNet (:numref:`sec_alexnet`)
-beat conventional computer vision models on ImageNet,
-it has become popular to construct very deep networks
-by stacking blocks of convolutions, all designed according to the same pattern. 
-In particular, $3 \times 3$ convolutions were 
-popularized by VGG networks (:numref:`sec_vgg`).
-NiN (:numref:`sec_nin`) showed that even $1 \times 1$ convolutions could 
-be beneficial by adding local nonlinearities. 
-Moreover, NiN solved the problem of aggregating information at the head of a network 
-by aggregating across all locations. 
-GoogLeNet (:numref:`sec_googlenet`) added multiple branches of different convolution width, 
-combining the advantages of VGG and NiN in its Inception block. 
+Sejak AlexNet (:numref:`sec_alexnet`)
+mengalahkan model computer vision konvensional pada ImageNet,
+membangun jaringan yang sangat dalam
+dengan menumpuk blok konvolusi yang dirancang dengan pola yang sama telah menjadi populer.
+Secara khusus, konvolusi $3 \times 3$ 
+dipopulerkan oleh jaringan VGG (:numref:`sec_vgg`).
+NiN (:numref:`sec_nin`) menunjukkan bahwa konvolusi $1 \times 1$ 
+juga dapat menguntungkan dengan menambahkan non-linearitas lokal. 
+Selain itu, NiN menyelesaikan masalah agregasi informasi pada bagian akhir jaringan
+dengan mengumpulkan informasi di seluruh lokasi.
+GoogLeNet (:numref:`sec_googlenet`) menambahkan beberapa cabang dengan lebar konvolusi yang berbeda,
+menggabungkan keunggulan VGG dan NiN dalam blok Inception-nya.
 ResNets (:numref:`sec_resnet`) 
-changed the inductive bias towards the identity mapping (from $f(x) = 0$). This allowed for very deep networks. Almost a decade later, the ResNet design is still popular, a testament to its design. Lastly, ResNeXt (:numref:`subsec_resnext`) added grouped convolutions, offering a better trade-off between parameters and computation. A precursor to Transformers for vision, the Squeeze-and-Excitation Networks (SENets) allow for efficient information transfer between locations
-:cite:`Hu.Shen.Sun.2018`. This was accomplished by computing a per-channel global attention function. 
+mengubah bias induktif menuju pemetaan identitas (dari $f(x) = 0$). Ini memungkinkan jaringan yang sangat dalam. Hampir satu dekade kemudian, desain ResNet masih populer, yang menunjukkan keunggulan desainnya. Terakhir, ResNeXt (:numref:`subsec_resnext`) menambahkan konvolusi yang dikelompokkan, menawarkan keseimbangan yang lebih baik antara parameter dan komputasi. Sebagai pendahulu Transformers untuk vision, Squeeze-and-Excitation Networks (SENets) memungkinkan transfer informasi yang efisien antar lokasi :cite:`Hu.Shen.Sun.2018`. Hal ini dicapai dengan menghitung fungsi perhatian global per saluran.
 
-Up to now we have omitted networks obtained via *neural architecture search* (NAS) :cite:`zoph2016neural,liu2018darts`. We chose to do so since their cost is usually enormous, relying on brute-force search, genetic algorithms, reinforcement learning, or some other form of hyperparameter optimization. Given a fixed search space,
-NAS uses a search strategy to automatically select
-an architecture based on the returned performance estimation.
-The outcome of NAS
-is a single network instance. EfficientNets are a notable outcome of this search :cite:`tan2019efficientnet`.
+Sampai sekarang, kita belum membahas jaringan yang diperoleh melalui *neural architecture search* (NAS) :cite:`zoph2016neural,liu2018darts`. Kami memilih untuk tidak membahasnya karena biayanya biasanya sangat besar, mengandalkan pencarian brute-force, algoritma genetika, pembelajaran penguatan, atau bentuk lain dari optimisasi hyperparameter. Dengan ruang pencarian tetap, 
+NAS menggunakan strategi pencarian untuk secara otomatis memilih
+arsitektur berdasarkan estimasi kinerja yang dikembalikan.
+Hasil dari NAS
+adalah satu instance jaringan. EfficientNets adalah salah satu hasil penting dari pencarian ini :cite:`tan2019efficientnet`.
 
-In the following we discuss an idea that is quite different to the quest for the *single best network*. It is computationally relatively inexpensive, it leads to scientific insights on the way, and it is quite effective in terms of the quality of outcomes. Let's review the strategy by :citet:`Radosavovic.Kosaraju.Girshick.ea.2020` to *design network design spaces*. The strategy combines the strength of manual design and NAS. It accomplishes this by operating on *distributions of networks* and optimizing the distributions in a way to obtain good performance for entire families of networks. The outcome of it are *RegNets*, specifically RegNetX and RegNetY, plus a range of guiding principles for the design of performant CNNs.
+Selanjutnya, kami membahas ide yang sangat berbeda dari pencarian *jaringan terbaik tunggal*. Ini secara komputasi relatif murah, menghasilkan wawasan ilmiah sepanjang jalan, dan cukup efektif dalam hal kualitas hasil. Mari kita tinjau strategi oleh :citet:`Radosavovic.Kosaraju.Girshick.ea.2020` untuk *merancang ruang desain jaringan*. Strategi ini menggabungkan kekuatan desain manual dan NAS. Hal ini dicapai dengan mengoperasikan pada *distribusi jaringan* dan mengoptimalkan distribusi tersebut untuk memperoleh performa yang baik bagi seluruh keluarga jaringan. Hasil dari pendekatan ini adalah *RegNets*, khususnya RegNetX dan RegNetY, serta berbagai prinsip panduan untuk desain CNN yang berkinerja baik.
+
 
 ```{.python .input}
 %%tab mxnet
@@ -61,26 +61,26 @@ from d2l import jax as d2l
 from flax import linen as nn
 ```
 
-## The AnyNet Design Space
+## AnyNet Design Space
 :label:`subsec_the-anynet-design-space`
 
-The description below closely follows the reasoning in :citet:`Radosavovic.Kosaraju.Girshick.ea.2020` with some abbreviations to make it fit in the scope of the book. 
-To begin, we need a template for the family of networks to explore. One of the commonalities of the designs in this chapter is that the networks consist of a *stem*, a *body* and a *head*. The stem performs initial image processing, often through convolutions with a larger window size. The body consists of multiple blocks, carrying out the bulk of the transformations needed to go from raw images to object representations. Lastly, the head converts this into the desired outputs, such as via a softmax regressor for multiclass classification. 
-The body, in turn, consists of multiple stages, operating on the image at decreasing resolutions. In fact, both the stem and each subsequent stage quarter the spatial resolution. Lastly, each stage consists of one or more blocks. This pattern is common to all networks, from VGG to ResNeXt. Indeed, for the design of generic AnyNet networks, :citet:`Radosavovic.Kosaraju.Girshick.ea.2020` used the ResNeXt block of :numref:`fig_resnext_block`.
+Deskripsi di bawah ini mengikuti penjelasan dalam :citet:`Radosavovic.Kosaraju.Girshick.ea.2020` dengan beberapa penyesuaian agar sesuai dengan cakupan buku ini.
+Untuk memulai, kita memerlukan template untuk keluarga jaringan yang akan dieksplorasi. Salah satu kesamaan desain dalam bab ini adalah bahwa jaringan terdiri dari *stem*, *body*, dan *head*. Bagian stem melakukan pemrosesan awal gambar, sering kali melalui konvolusi dengan ukuran jendela yang lebih besar. Bagian body terdiri dari beberapa blok yang melaksanakan sebagian besar transformasi yang diperlukan untuk mengubah gambar mentah menjadi representasi objek. Terakhir, bagian head mengonversi representasi ini menjadi output yang diinginkan, misalnya melalui softmax regressor untuk klasifikasi multi-kelas.
+Bagian body, pada gilirannya, terdiri dari beberapa tahap yang beroperasi pada gambar dengan resolusi yang semakin rendah. Baik bagian stem maupun setiap tahap berikutnya mengurangi resolusi spasial hingga seperempatnya. Terakhir, setiap tahap terdiri dari satu atau lebih blok. Pola ini umum untuk semua jaringan, mulai dari VGG hingga ResNeXt. Untuk desain jaringan generik AnyNet, :citet:`Radosavovic.Kosaraju.Girshick.ea.2020` menggunakan blok ResNeXt seperti yang ditunjukkan pada :numref:`fig_resnext_block`.
 
-
-![The AnyNet design space. The numbers $(\mathit{c}, \mathit{r})$ along each arrow indicate the number of channels $c$ and the resolution $\mathit{r} \times \mathit{r}$ of the images at that point. From left to right: generic network structure composed of stem, body, and head; body composed of four stages; detailed structure of a stage; two alternative structures for blocks, one without downsampling and one that halves the resolution in each dimension. Design choices include depth $\mathit{d_i}$, the number of output channels $\mathit{c_i}$, the number of groups $\mathit{g_i}$, and bottleneck ratio $\mathit{k_i}$ for any stage $\mathit{i}$.](../img/anynet.svg)
+![Ruang desain AnyNet. Angka $(\mathit{c}, \mathit{r})$ di sepanjang setiap panah menunjukkan jumlah saluran $c$ dan resolusi $\mathit{r} \times \mathit{r}$ dari gambar pada titik tersebut. Dari kiri ke kanan: struktur jaringan generik yang terdiri dari stem, body, dan head; body yang terdiri dari empat tahap; struktur detail dari suatu tahap; dua struktur alternatif untuk blok, satu tanpa downsampling dan satu lagi yang mengurangi resolusi pada setiap dimensi. Pilihan desain mencakup kedalaman $\mathit{d_i}$, jumlah saluran output $\mathit{c_i}$, jumlah grup $\mathit{g_i}$, dan rasio bottleneck $\mathit{k_i}$ untuk setiap tahap $\mathit{i}$.](../img/anynet.svg)
 :label:`fig_anynet_full`
 
-Let's review the structure outlined in :numref:`fig_anynet_full` in detail. As mentioned, an AnyNet consists of a stem, body, and head. The stem takes as its input RGB images (3 channels), using a $3 \times 3$ convolution with a stride of $2$, followed by a batch norm, to halve the resolution from $r \times r$ to $r/2 \times r/2$. Moreover, it generates $c_0$ channels that serve as input to the body. 
+Mari kita tinjau struktur yang dijelaskan dalam :numref:`fig_anynet_full` secara detail. Seperti yang disebutkan, AnyNet terdiri dari stem, body, dan head. Stem menerima input berupa gambar RGB (3 saluran), menggunakan konvolusi $3 \times 3$ dengan stride $2$, diikuti oleh batch normalization, untuk mengurangi resolusi dari $r \times r$ menjadi $r/2 \times r/2$. Selain itu, stem menghasilkan $c_0$ saluran yang berfungsi sebagai input untuk body.
 
-Since the network is designed to work well with ImageNet images of shape $224 \times 224 \times 3$, the body serves to reduce this to $7 \times 7 \times c_4$ through 4 stages (recall that $224 / 2^{1+4} = 7$), each with an eventual stride of $2$. Lastly, the head employs an entirely standard design via global average pooling, similar to NiN (:numref:`sec_nin`), followed by a fully connected layer to emit an $n$-dimensional vector for $n$-class classification. 
+Karena jaringan dirancang untuk bekerja dengan gambar ImageNet berukuran $224 \times 224 \times 3$, body bertugas menguranginya menjadi $7 \times 7 \times c_4$ melalui 4 tahap (ingat bahwa $224 / 2^{1+4} = 7$), masing-masing dengan stride $2$. Terakhir, head menggunakan desain standar melalui global average pooling, mirip dengan NiN (:numref:`sec_nin`), diikuti oleh lapisan fully connected untuk menghasilkan vektor berdimensi $n$ untuk klasifikasi $n$-kelas.
 
-Most of the relevant design decisions are inherent to the body of the network. It proceeds in stages, where each stage is composed of the same type of ResNeXt blocks as we discussed in :numref:`subsec_resnext`. The design there is again entirely generic: we begin with a block that halves the resolution by using a stride of $2$ (the rightmost in :numref:`fig_anynet_full`). To match this, the residual branch of the ResNeXt block needs to pass through a $1 \times 1$ convolution. This block is followed by a variable number of additional ResNeXt blocks that leave both resolution and the number of channels unchanged. Note that a common design practice is to add a slight bottleneck in the design of convolutional blocks. 
-As such, with bottleneck ratio $k_i \geq 1$ we afford some number of channels, $c_i/k_i$,  within each block for stage $i$ (as the experiments show, this is not really effective and should be skipped). Lastly, since we are dealing with ResNeXt blocks, we also need to pick the number of groups $g_i$ for grouped convolutions at stage $i$. 
+Sebagian besar keputusan desain yang relevan ada pada bagian body dari jaringan. Bagian ini terdiri dari beberapa tahap, di mana setiap tahap terdiri dari tipe blok ResNeXt yang sama seperti yang dibahas di :numref:`subsec_resnext`. Desain ini sepenuhnya generik: kita memulai dengan blok yang mengurangi resolusi dengan menggunakan stride $2$ (paling kanan dalam :numref:`fig_anynet_full`). Untuk mencocokkannya, cabang residual dari blok ResNeXt perlu melalui konvolusi $1 \times 1$. Blok ini diikuti oleh sejumlah blok ResNeXt tambahan yang menjaga resolusi dan jumlah saluran tetap tidak berubah. Perlu dicatat bahwa praktik desain umum adalah menambahkan sedikit bottleneck dalam desain blok konvolusi.
+Dengan demikian, dengan rasio bottleneck $k_i \geq 1$ kita menyediakan sejumlah saluran, $c_i/k_i$, dalam setiap blok untuk tahap $i$ (seperti yang ditunjukkan eksperimen, ini sebenarnya tidak efektif dan sebaiknya dilewati). Terakhir, karena kita menggunakan blok ResNeXt, kita juga perlu memilih jumlah grup $g_i$ untuk konvolusi yang dikelompokkan pada tahap $i$.
 
-This seemingly generic design space provides us nonetheless with many parameters: we can set the block width (number of channels) $c_0, \ldots c_4$, the depth (number of blocks) per stage $d_1, \ldots d_4$, the bottleneck ratios $k_1, \ldots k_4$, and the group widths (numbers of groups) $g_1, \ldots g_4$. 
-In total this adds up to 17 parameters, resulting in an unreasonably large number of configurations that would warrant exploring. We need some tools to reduce this huge design space effectively. This is where the conceptual beauty of design spaces comes in. Before we do so, let's implement the generic design first.
+Ruang desain yang tampak generik ini tetap memberikan banyak parameter: kita dapat mengatur lebar blok (jumlah saluran) $c_0, \ldots c_4$, kedalaman (jumlah blok) per tahap $d_1, \ldots d_4$, rasio bottleneck $k_1, \ldots k_4$, dan lebar grup (jumlah grup) $g_1, \ldots g_4$.
+Secara keseluruhan, ini menghasilkan 17 parameter, yang mengarah pada jumlah konfigurasi yang sangat besar dan perlu dieksplorasi. Kita membutuhkan alat untuk mengurangi ruang desain yang besar ini secara efektif. Inilah keindahan konseptual dari ruang desain. Sebelum melanjutkan, mari kita implementasikan desain generik ini terlebih dahulu.
+
 
 ```{.python .input}
 %%tab mxnet
@@ -133,9 +133,10 @@ class AnyNet(d2l.Classifier):
         ])
 ```
 
-Each stage consists of `depth` ResNeXt blocks,
-where `num_channels` specifies the block width.
-Note that the first block halves the height and width of input images.
+Setiap tahap terdiri dari `depth` blok ResNeXt,
+dengan `num_channels` yang menentukan lebar blok.
+Perlu dicatat bahwa blok pertama mengurangi setengah tinggi dan lebar gambar input.
+
 
 ```{.python .input}
 %%tab mxnet
@@ -195,8 +196,9 @@ def stage(self, depth, num_channels, groups, bot_mul):
     return nn.Sequential(blk)
 ```
 
-Putting the network stem, body, and head together,
-we complete the implementation of AnyNet.
+Dengan menggabungkan bagian stem, body, dan head dari jaringan,
+kita menyelesaikan implementasi AnyNet.
+
 
 ```{.python .input}
 %%tab pytorch, mxnet, tensorflow
@@ -243,48 +245,47 @@ def create_net(self):
     return net
 ```
 
-## Distributions and Parameters of Design Spaces
+## Distribusi dan Parameter Ruang Desain
 
-As just discussed in :numref:`subsec_the-anynet-design-space`, parameters of a design space are hyperparameters of networks in that design space.
-Consider the problem of identifying good parameters in the AnyNet design space. We could try finding the *single best* parameter choice for a given amount of computation (e.g., FLOPs and compute time). If we allowed for even only *two* possible choices for each parameter, we would have to explore $2^{17} = 131072$ combinations to find the best solution. This is clearly infeasible because of its exorbitant cost. Even worse, we do not really learn anything from this exercise in terms of how one should design a network. Next time we add, say, an X-stage, or a shift operation, or similar, we would need to start from scratch. Even worse, due to the stochasticity in training (rounding, shuffling, bit errors), no two runs are likely to produce exactly the same results. A better strategy would be to try to determine general guidelines of how the choices of parameters should be related. For instance, the bottleneck ratio, the number of channels, blocks, groups, or their change between layers should ideally be governed by a collection of simple rules. The approach in :citet:`radosavovic2019network` relies on the following four assumptions:
+Seperti yang telah dibahas di :numref:`subsec_the-anynet-design-space`, parameter dari ruang desain adalah hyperparameter dari jaringan dalam ruang desain tersebut.
+Pertimbangkan masalah identifikasi parameter yang baik dalam ruang desain AnyNet. Kita dapat mencoba menemukan pilihan parameter *terbaik tunggal* untuk sejumlah komputasi tertentu (misalnya, FLOPs dan waktu komputasi). Jika kita hanya mengizinkan *dua* pilihan untuk setiap parameter, kita harus mengeksplorasi $2^{17} = 131072$ kombinasi untuk menemukan solusi terbaik. Ini jelas tidak mungkin dilakukan karena biayanya yang sangat tinggi. Lebih buruk lagi, kita tidak benar-benar mempelajari apa pun dari latihan ini tentang bagaimana seharusnya kita merancang jaringan. Lain kali, jika kita menambahkan tahap X, atau operasi shift, atau sejenisnya, kita harus memulai dari awal. Bahkan lebih buruk, karena adanya faktor stochastik dalam pelatihan (pembulatan, pengacakan, kesalahan bit), kemungkinan besar tidak ada dua pelatihan yang menghasilkan hasil yang persis sama. Strategi yang lebih baik adalah mencoba menentukan pedoman umum tentang bagaimana pilihan parameter harus saling berhubungan. Misalnya, rasio bottleneck, jumlah saluran, blok, grup, atau perubahan antar lapisan sebaiknya diatur oleh sekumpulan aturan sederhana. Pendekatan pada :citet:`radosavovic2019network` bergantung pada empat asumsi berikut:
 
-1. We assume that general design principles actually exist, so that many networks satisfying these requirements should offer good performance. Consequently, identifying a *distribution* over networks can be a sensible strategy. In other words, we assume that there are many good needles in the haystack.
-1. We need not train networks to convergence before we can assess whether a network is good. Instead, it is sufficient to use the intermediate results as reliable guidance for final accuracy. Using (approximate) proxies to optimize an objective is referred to as multi-fidelity optimization :cite:`forrester2007multi`. Consequently, design optimization is carried out, based on the accuracy achieved after only a few passes through the dataset, reducing the cost significantly. 
-1. Results obtained at a smaller scale (for smaller networks) generalize to larger ones. Consequently, optimization is carried out for networks that are structurally similar, but with a smaller number of blocks, fewer channels, etc. Only in the end will we need to verify that the so-found networks also offer good performance at scale. 
-1. Aspects of the design can be approximately factorized so that it is possible to infer their effect on the quality of the outcome somewhat independently. In other words, the optimization problem is moderately easy.
+1. Kita mengasumsikan bahwa prinsip desain umum benar-benar ada, sehingga banyak jaringan yang memenuhi persyaratan ini harus menawarkan kinerja yang baik. Akibatnya, mengidentifikasi *distribusi* jaringan bisa menjadi strategi yang masuk akal. Dengan kata lain, kita berasumsi bahwa ada banyak jarum yang bagus di tumpukan jerami.
+2. Kita tidak perlu melatih jaringan hingga konvergen sebelum kita dapat menilai apakah sebuah jaringan baik. Sebaliknya, cukup menggunakan hasil antara sebagai panduan yang andal untuk akurasi akhir. Penggunaan proxy (pendekatan) yang (mendekati) untuk mengoptimalkan suatu tujuan ini disebut sebagai optimisasi multi-fidelity :cite:`forrester2007multi`. Dengan demikian, optimisasi desain dilakukan berdasarkan akurasi yang dicapai setelah hanya beberapa kali melalui dataset, sehingga secara signifikan mengurangi biaya.
+3. Hasil yang diperoleh pada skala yang lebih kecil (untuk jaringan yang lebih kecil) digeneralisasi ke jaringan yang lebih besar. Oleh karena itu, optimisasi dilakukan untuk jaringan yang strukturnya serupa, tetapi dengan jumlah blok yang lebih sedikit, jumlah saluran yang lebih sedikit, dll. Hanya di akhir kita perlu memverifikasi bahwa jaringan yang ditemukan juga memberikan kinerja yang baik pada skala besar.
+4. Aspek desain dapat difaktorkan secara mendekati sehingga memungkinkan untuk menyimpulkan efeknya terhadap kualitas hasil secara terpisah. Dengan kata lain, masalah optimisasi relatif mudah.
 
-These assumptions allow us to test many networks cheaply. In particular, we can *sample* uniformly from the space of configurations and evaluate their performance. Subsequently, we can evaluate the quality of the choice of parameters by reviewing the *distribution* of error/accuracy that can be achieved with said networks. Denote by $F(e)$ the cumulative distribution function (CDF) for errors committed by networks of a given design space, drawn using probability disribution $p$. That is, 
+Asumsi-asumsi ini memungkinkan kita menguji banyak jaringan dengan biaya yang murah. Secara khusus, kita dapat *mengambil sampel* secara acak dari ruang konfigurasi dan mengevaluasi kinerjanya. Selanjutnya, kita dapat mengevaluasi kualitas pilihan parameter dengan meninjau *distribusi* error/akurasi yang dapat dicapai oleh jaringan-jaringan tersebut. Denotasi $F(e)$ adalah fungsi distribusi kumulatif (CDF) untuk kesalahan yang dibuat oleh jaringan dalam ruang desain tertentu, diambil menggunakan distribusi probabilitas $p$. Artinya,
 
 $$F(e, p) \stackrel{\textrm{def}}{=} P_{\textrm{net} \sim p} \{e(\textrm{net}) \leq e\}.$$
 
-Our goal is now to find a distribution $p$ over *networks* such that most networks have a very low error rate and where the support of $p$ is concise. Of course, this is computationally infeasible to perform accurately. We resort to a sample of networks $\mathcal{Z} \stackrel{\textrm{def}}{=} \{\textrm{net}_1, \ldots \textrm{net}_n\}$ (with errors $e_1, \ldots, e_n$, respectively) from $p$ and use the empirical CDF $\hat{F}(e, \mathcal{Z})$ instead:
+Tujuan kita sekarang adalah menemukan distribusi $p$ atas *jaringan* sedemikian rupa sehingga sebagian besar jaringan memiliki tingkat kesalahan yang sangat rendah dan di mana dukungan $p$ adalah ringkas. Tentu saja, ini secara komputasi tidak mungkin dilakukan secara akurat. Kita mengandalkan sampel jaringan $\mathcal{Z} \stackrel{\textrm{def}}{=} \{\textrm{net}_1, \ldots \textrm{net}_n\}$ (dengan kesalahan $e_1, \ldots, e_n$ masing-masing) dari $p$ dan menggunakan CDF empiris $\hat{F}(e, \mathcal{Z})$ sebagai gantinya:
 
 $$\hat{F}(e, \mathcal{Z}) = \frac{1}{n}\sum_{i=1}^n \mathbf{1}(e_i \leq e).$$
 
-Whenever the CDF for one set of choices majorizes (or matches) another CDF it follows that its choice of parameters is superior (or indifferent). Accordingly 
-:citet:`Radosavovic.Kosaraju.Girshick.ea.2020` experimented with a shared network bottleneck ratio $k_i = k$ for all stages $i$ of the network. This gets rid of three of the four parameters governing the bottleneck ratio. To assess whether this (negatively) affects the performance one can draw networks from the constrained and from the unconstrained distribution and compare the corresonding CDFs. It turns out that this constraint does not affect the accuracy of the distribution of networks at all, as can be seen in the first panel of :numref:`fig_regnet-fig`. 
-Likewise, we could choose to pick the same group width $g_i = g$ occurring at the various stages of the network. Again, this does not affect performance, as can be seen in the second panel of :numref:`fig_regnet-fig`.
-Both steps combined reduce the number of free parameters by six. 
+Setiap kali CDF untuk satu set pilihan lebih besar (atau cocok) dengan CDF lain, ini menunjukkan bahwa pilihan parameternya lebih baik (atau setara). Sesuai dengan itu, :citet:`Radosavovic.Kosaraju.Girshick.ea.2020` bereksperimen dengan rasio bottleneck jaringan yang sama $k_i = k$ untuk semua tahap $i$ dari jaringan. Ini menghilangkan tiga dari empat parameter yang mengatur rasio bottleneck. Untuk menilai apakah hal ini (secara negatif) mempengaruhi kinerja, seseorang dapat mengambil jaringan dari distribusi yang dibatasi dan dari distribusi yang tidak terbatas dan membandingkan CDF yang sesuai. Ternyata batasan ini tidak mempengaruhi akurasi distribusi jaringan sama sekali, seperti yang dapat dilihat pada panel pertama di :numref:`fig_regnet-fig`.
+Demikian pula, kita dapat memilih untuk menggunakan lebar grup yang sama $g_i = g$ pada berbagai tahap dalam jaringan. Sekali lagi, ini tidak mempengaruhi kinerja, seperti yang dapat dilihat pada panel kedua di :numref:`fig_regnet-fig`.
+Kedua langkah ini bersama-sama mengurangi jumlah parameter bebas sebanyak enam.
 
-![Comparing error empirical distribution functions of design spaces. $\textrm{AnyNet}_\mathit{A}$ is the original design space; $\textrm{AnyNet}_\mathit{B}$ ties the bottleneck ratios, $\textrm{AnyNet}_\mathit{C}$ also ties group widths, $\textrm{AnyNet}_\mathit{D}$ increases the network depth across stages. From left to right: (i) tying bottleneck ratios has no effect on performance; (ii) tying group widths has no effect on performance; (iii) increasing network widths (channels) across stages improves performance; (iv) increasing network depths across stages improves performance. Figure courtesy of :citet:`Radosavovic.Kosaraju.Girshick.ea.2020`.](../img/regnet-fig.png)
+![Membandingkan fungsi distribusi empiris error pada ruang desain. $\textrm{AnyNet}_\mathit{A}$ adalah ruang desain asli; $\textrm{AnyNet}_\mathit{B}$ mengikat rasio bottleneck, $\textrm{AnyNet}_\mathit{C}$ juga mengikat lebar grup, $\textrm{AnyNet}_\mathit{D}$ meningkatkan kedalaman jaringan di berbagai tahap. Dari kiri ke kanan: (i) mengikat rasio bottleneck tidak berpengaruh terhadap kinerja; (ii) mengikat lebar grup tidak berpengaruh terhadap kinerja; (iii) meningkatkan lebar jaringan (saluran) di berbagai tahap meningkatkan kinerja; (iv) meningkatkan kedalaman jaringan di berbagai tahap meningkatkan kinerja. Gambar berasal dari :citet:`Radosavovic.Kosaraju.Girshick.ea.2020`.](../img/regnet-fig.png)
 :label:`fig_regnet-fig`
 
-Next we look for ways to reduce the multitude of potential choices for width and depth of the stages. It is a reasonable assumption that, as we go deeper, the number of channels should increase, i.e., $c_i \geq c_{i-1}$ ($w_{i+1} \geq w_i$ per their notation in :numref:`fig_regnet-fig`), yielding 
-$\textrm{AnyNetX}_D$. Likewise, it is equally reasonable to assume that as the stages progress, they should become deeper, i.e., $d_i \geq d_{i-1}$, yielding $\textrm{AnyNetX}_E$. This can be experimentally verified in the third and fourth panel of :numref:`fig_regnet-fig`, respectively.
+Selanjutnya, kita mencari cara untuk mengurangi banyaknya pilihan potensial untuk lebar dan kedalaman tahap. Merupakan asumsi yang masuk akal bahwa, seiring dengan semakin dalamnya jaringan, jumlah saluran harus meningkat, yaitu $c_i \geq c_{i-1}$ ($w_{i+1} \geq w_i$ menurut notasi mereka dalam :numref:`fig_regnet-fig`), menghasilkan $\textrm{AnyNetX}_D$. Demikian pula, merupakan asumsi yang masuk akal bahwa semakin jauh tahap berlanjut, kedalaman seharusnya bertambah, yaitu $d_i \geq d_{i-1}$, menghasilkan $\textrm{AnyNetX}_E$. Hal ini dapat diverifikasi secara eksperimental pada panel ketiga dan keempat di :numref:`fig_regnet-fig`.
+
 
 ## RegNet
 
-The resulting $\textrm{AnyNetX}_E$ design space consists of simple networks
-following easy-to-interpret design principles:
+Ruang desain $\textrm{AnyNetX}_E$ yang dihasilkan terdiri dari jaringan sederhana
+yang mengikuti prinsip desain yang mudah diinterpretasikan:
 
-* Share the bottleneck ratio $k_i = k$ for all stages $i$;
-* Share the group width $g_i = g$ for all stages $i$;
-* Increase network width across stages: $c_{i} \leq c_{i+1}$;
-* Increase network depth across stages: $d_{i} \leq d_{i+1}$.
+* Bagikan rasio bottleneck $k_i = k$ untuk semua tahap $i$;
+* Bagikan lebar grup $g_i = g$ untuk semua tahap $i$;
+* Tingkatkan lebar jaringan di seluruh tahap: $c_{i} \leq c_{i+1}$;
+* Tingkatkan kedalaman jaringan di seluruh tahap: $d_{i} \leq d_{i+1}$.
 
-This leaves us with a final set of choices: how to pick the specific values for the above parameters of the eventual $\textrm{AnyNetX}_E$ design space. By studying the best-performing networks from the distribution in $\textrm{AnyNetX}_E$ one can observe the following: the width of the network ideally increases linearly with the block index across the network, i.e., $c_j \approx c_0 + c_a j$, where $j$ is the block index and slope $c_a > 0$. Given that we get to choose a different block width only per stage, we arrive at a piecewise constant function, engineered to match this dependence. Furthermore, experiments also show that a bottleneck ratio of $k = 1$ performs best, i.e., we are advised not to use bottlenecks at all. 
+Ini menyisakan kita dengan pilihan terakhir: bagaimana memilih nilai spesifik untuk parameter di atas dalam ruang desain akhir $\textrm{AnyNetX}_E$. Dengan mempelajari jaringan dengan performa terbaik dari distribusi dalam $\textrm{AnyNetX}_E$, seseorang dapat mengamati hal berikut: lebar jaringan sebaiknya meningkat secara linear dengan indeks blok di seluruh jaringan, yaitu $c_j \approx c_0 + c_a j$, di mana $j$ adalah indeks blok dan slope $c_a > 0$. Mengingat bahwa kita memilih lebar blok yang berbeda hanya untuk setiap tahap, kita sampai pada fungsi konstan secara parsial, yang direkayasa untuk mencocokkan ketergantungan ini. Lebih jauh lagi, eksperimen juga menunjukkan bahwa rasio bottleneck $k = 1$ memberikan performa terbaik, artinya kita disarankan untuk tidak menggunakan bottleneck sama sekali.
 
-We recommend the interested reader reviews further details in the design of specific networks for different amounts of computation by perusing :citet:`Radosavovic.Kosaraju.Girshick.ea.2020`. For instance, an effective 32-layer RegNetX variant is given by $k = 1$ (no bottleneck), $g = 16$ (group width is 16), $c_1 = 32$ and $c_2 = 80$ channels for the first and second stage, respectively, chosen to be $d_1=4$ and $d_2=6$ blocks deep. The astonishing insight from the design is that it still applies, even when investigating networks at a larger scale. Even better, it even holds for Squeeze-and-Excitation (SE) network designs (RegNetY) that have a global channel activation :cite:`Hu.Shen.Sun.2018`.
+Kami merekomendasikan pembaca yang tertarik untuk meninjau lebih lanjut detail dalam desain jaringan spesifik untuk jumlah komputasi yang berbeda dengan membaca :citet:`Radosavovic.Kosaraju.Girshick.ea.2020`. Misalnya, varian RegNetX 32-lapisan yang efektif diberikan oleh $k = 1$ (tanpa bottleneck), $g = 16$ (lebar grup adalah 16), $c_1 = 32$ dan $c_2 = 80$ saluran untuk tahap pertama dan kedua, masing-masing, dipilih menjadi $d_1=4$ dan $d_2=6$ blok dalam. Wawasan yang mengejutkan dari desain ini adalah bahwa ia masih berlaku, bahkan ketika menyelidiki jaringan dalam skala yang lebih besar. Lebih baik lagi, ini bahkan berlaku untuk desain jaringan Squeeze-and-Excitation (SE) (RegNetY) yang memiliki aktivasi saluran global :cite:`Hu.Shen.Sun.2018`.
 
 ```{.python .input}
 %%tab pytorch, mxnet, tensorflow
@@ -307,7 +308,7 @@ class RegNetX32(AnyNet):
     arch: tuple = ((4, 32, 16, 1), (6, 80, 16, 1))
 ```
 
-We can see that each RegNetX stage progressively reduces resolution and increases output channels.
+Kita dapat melihat bahwa setiap tahap RegNetX secara progresif mengurangi resolusi dan meningkatkan jumlah saluran output.
 
 ```{.python .input}
 %%tab mxnet, pytorch
@@ -324,9 +325,10 @@ RegNetX32().layer_summary((1, 96, 96, 1))
 RegNetX32(training=False).layer_summary((1, 96, 96, 1))
 ```
 
-## Training
+## Pelatihan
 
-Training the 32-layer RegNetX on the Fashion-MNIST dataset is just like before.
+Pelatihan RegNetX 32-lapisan pada dataset Fashion-MNIST dilakukan seperti sebelumnya.
+
 
 ```{.python .input}
 %%tab mxnet, pytorch, jax
@@ -345,38 +347,37 @@ with d2l.try_gpu():
     trainer.fit(model, data)
 ```
 
-## Discussion
+## Diskusi
 
-With desirable inductive biases (assumptions or preferences) like locality and translation invariance (:numref:`sec_why-conv`)
-for vision, CNNs have been the dominant architectures in this area. This remained the case from LeNet up until Transformers (:numref:`sec_transformer`) :cite:`Dosovitskiy.Beyer.Kolesnikov.ea.2021,touvron2021training` started surpassing CNNs in terms of accuracy. While much of the recent progress in terms of vision Transformers *can* be backported into CNNs :cite:`liu2022convnet`, it is only possible at a higher computational cost. Just as importantly, recent hardware optimizations (NVIDIA Ampere and Hopper) have only widened the gap in favor of Transformers. 
+Dengan bias induktif (asumsi atau preferensi) yang diinginkan seperti lokalitas dan invarian translasi (:numref:`sec_why-conv`)
+untuk visi, CNN telah menjadi arsitektur dominan di area ini. Hal ini tetap terjadi dari LeNet hingga Transformer (:numref:`sec_transformer`) :cite:`Dosovitskiy.Beyer.Kolesnikov.ea.2021,touvron2021training` mulai melampaui CNN dalam hal akurasi. Meskipun banyak dari kemajuan baru-baru ini dalam hal Vision Transformer *dapat* diterapkan kembali ke CNN :cite:`liu2022convnet`, ini hanya mungkin dilakukan dengan biaya komputasi yang lebih tinggi. Yang sama pentingnya, optimisasi perangkat keras terbaru (NVIDIA Ampere dan Hopper) hanya memperlebar kesenjangan yang mendukung Transformer.
 
-It is worth noting that Transformers have a significantly lower degree of inductive bias towards locality and translation invariance than CNNs. That learned structures prevailed is due, not least, to the availability of large image collections, such as LAION-400m and LAION-5B :cite:`schuhmann2022laion` with up to 5 billion images. Quite surprisingly, some of the more relevant work in this context even includes MLPs :cite:`tolstikhin2021mlp`. 
+Perlu dicatat bahwa Transformer memiliki derajat bias induktif terhadap lokalitas dan invarian translasi yang jauh lebih rendah dibandingkan dengan CNN. Struktur yang dipelajari lebih unggul karena, tidak sedikit, ketersediaan koleksi gambar besar seperti LAION-400m dan LAION-5B :cite:`schuhmann2022laion` yang memiliki hingga 5 miliar gambar. Yang cukup mengejutkan, beberapa karya yang lebih relevan dalam konteks ini bahkan mencakup MLP :cite:`tolstikhin2021mlp`.
 
-In sum, vision Transformers (:numref:`sec_vision-transformer`) by now lead in terms of 
-state-of-the-art performance in large-scale image classification, 
-showing that *scalability trumps inductive biases* :cite:`Dosovitskiy.Beyer.Kolesnikov.ea.2021`.
-This includes pretraining large-scale Transformers (:numref:`sec_large-pretraining-transformers`) with multi-head self-attention (:numref:`sec_multihead-attention`). We invite the readers to dive into these chapters for a much more detailed discussion.
+Singkatnya, Vision Transformer (:numref:`sec_vision-transformer`) sekarang memimpin dalam hal 
+kinerja terbaik pada klasifikasi gambar skala besar,
+menunjukkan bahwa *skalabilitas lebih penting daripada bias induktif* :cite:`Dosovitskiy.Beyer.Kolesnikov.ea.2021`.
+Ini mencakup pretraining Transformer berskala besar (:numref:`sec_large-pretraining-transformers`) dengan multi-head self-attention (:numref:`sec_multihead-attention`). Kami mengundang pembaca untuk menelaah bab-bab ini untuk diskusi yang lebih rinci.
 
-## Exercises
+## Latihan
 
-1. Increase the number of stages to four. Can you design a deeper RegNetX that performs better?
-1. De-ResNeXt-ify RegNets by replacing the ResNeXt block with the ResNet block. How does your new model perform?
-1. Implement multiple instances of a "VioNet" family by *violating* the design principles of RegNetX. How do they perform? Which of ($d_i$, $c_i$, $g_i$, $b_i$) is the most important factor?
-1. Your goal is to design the "perfect" MLP. Can you use the design principles introduced above to find good architectures? Is it possible to extrapolate from small to large networks?
+1. Tingkatkan jumlah tahap menjadi empat. Bisakah Anda merancang RegNetX yang lebih dalam dan memberikan kinerja yang lebih baik?
+1. Hapus elemen ResNeXt dari RegNet dengan mengganti blok ResNeXt dengan blok ResNet. Bagaimana kinerja model baru Anda?
+1. Implementasikan beberapa instance dari keluarga "VioNet" dengan *melanggar* prinsip desain RegNetX. Bagaimana kinerjanya? Manakah dari ($d_i$, $c_i$, $g_i$, $b_i$) yang merupakan faktor paling penting?
+1. Tujuan Anda adalah merancang MLP "sempurna". Bisakah Anda menggunakan prinsip desain yang diperkenalkan di atas untuk menemukan arsitektur yang baik? Apakah mungkin mengekstrapolasi dari jaringan kecil ke jaringan besar?
 
 :begin_tab:`mxnet`
-[Discussions](https://discuss.d2l.ai/t/7462)
+[Diskusi](https://discuss.d2l.ai/t/7462)
 :end_tab:
 
 :begin_tab:`pytorch`
-[Discussions](https://discuss.d2l.ai/t/7463)
+[Diskusi](https://discuss.d2l.ai/t/7463)
 :end_tab:
 
 :begin_tab:`tensorflow`
-[Discussions](https://discuss.d2l.ai/t/8738)
+[Diskusi](https://discuss.d2l.ai/t/8738)
 :end_tab:
 
 :begin_tab:`jax`
-[Discussions](https://discuss.d2l.ai/t/18009)
+[Diskusi](https://discuss.d2l.ai/t/18009)
 :end_tab:
-
