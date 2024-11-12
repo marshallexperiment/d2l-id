@@ -1,94 +1,44 @@
 # Deep Recurrent Neural Networks
-
 :label:`sec_deep_rnn`
 
-Up until now, we have focused on defining networks 
-consisting of a sequence input, 
-a single hidden RNN layer,
-and an output layer. 
-Despite having just one hidden layer 
-between the input at any time step
-and the corresponding output,
-there is a sense in which these networks are deep.
-Inputs from the first time step can influence
-the outputs at the final time step $T$ 
-(often 100s or 1000s of steps later).
-These inputs pass through $T$ applications
-of the recurrent layer before reaching 
-the final output. 
-However, we often also wish to retain the ability
-to express complex relationships 
-between the inputs at a given time step
-and the outputs at that same time step.
-Thus we often construct RNNs that are deep
-not only in the time direction 
-but also in the input-to-output direction.
-This is precisely the notion of depth
-that we have already encountered 
-in our development of MLPs
-and deep CNNs.
+Hingga saat ini, kita fokus pada mendefinisikan jaringan yang terdiri dari masukan sekuensial, satu lapisan RNN tersembunyi, dan satu lapisan keluaran.
+Meskipun hanya memiliki satu lapisan tersembunyi antara masukan pada setiap langkah waktu dan keluaran yang sesuai, ada sebuah pengertian di mana jaringan ini bisa dianggap dalam (deep).
+Input dari langkah waktu pertama dapat mempengaruhi keluaran pada langkah waktu terakhir $T$ (sering kali 100 atau 1000 langkah kemudian).
+Input ini melewati $T$ aplikasi dari lapisan rekuren sebelum mencapai keluaran akhir.
+Namun, kita sering juga ingin mempertahankan kemampuan untuk mengekspresikan hubungan yang kompleks antara input pada langkah waktu tertentu dengan keluaran pada langkah waktu yang sama.
+Untuk itu, kita sering kali membangun RNN yang dalam tidak hanya dalam arah waktu, tetapi juga dalam arah input-ke-output.
+Ini adalah pengertian kedalaman yang sudah kita temui saat mengembangkan MLP dan deep CNN.
 
+Metode standar untuk membangun jenis deep RNN ini sangat sederhana: kita menumpuk RNN secara bertumpuk.
+Diberikan sekuens dengan panjang $T$, RNN pertama menghasilkan sekuens keluaran dengan panjang $T$.
+Selanjutnya, keluaran tersebut menjadi masukan bagi lapisan RNN berikutnya.
+Pada bagian ini, kami akan menggambarkan pola desain ini dan memberikan contoh sederhana bagaimana mengimplementasikan deep RNN.
+Di bawah ini, pada :numref:`fig_deep_rnn`, kami menggambarkan deep RNN dengan $L$ lapisan tersembunyi.
+Setiap status tersembunyi bekerja pada masukan sekuensial dan menghasilkan keluaran sekuensial.
+Selain itu, setiap sel RNN (kotak putih di :numref:`fig_deep_rnn`) pada setiap langkah waktu bergantung pada nilai dari lapisan yang sama pada langkah waktu sebelumnya dan nilai dari lapisan sebelumnya pada langkah waktu yang sama.
 
-The standard method for building this sort of deep RNN 
-is strikingly simple: we stack the RNNs on top of each other. 
-Given a sequence of length $T$, the first RNN produces 
-a sequence of outputs, also of length $T$.
-These, in turn, constitute the inputs to the next RNN layer. 
-In this short section, we illustrate this design pattern
-and present a simple example for how to code up such stacked RNNs.
-Below, in :numref:`fig_deep_rnn`, we illustrate
-a deep RNN with $L$ hidden layers.
-Each hidden state operates on a sequential input
-and produces a sequential output.
-Moreover, any RNN cell (white box in :numref:`fig_deep_rnn`) at each time step
-depends on both the same layer's 
-value at the previous time step
-and the previous layer's value 
-at the same time step. 
-
-![Architecture of a deep RNN.](../img/deep-rnn.svg)
+![Arsitektur Deep RNN.](../img/deep-rnn.svg)
 :label:`fig_deep_rnn`
 
-Formally, suppose that we have a minibatch input
-$\mathbf{X}_t \in \mathbb{R}^{n \times d}$ 
-(number of examples $=n$; number of inputs in each example $=d$) at time step $t$.
-At the same time step, 
-let the hidden state of the $l^\textrm{th}$ hidden layer ($l=1,\ldots,L$) be $\mathbf{H}_t^{(l)} \in \mathbb{R}^{n \times h}$ 
-(number of hidden units $=h$)
-and the output layer variable be 
-$\mathbf{O}_t \in \mathbb{R}^{n \times q}$ 
-(number of outputs: $q$).
-Setting $\mathbf{H}_t^{(0)} = \mathbf{X}_t$,
-the hidden state of
-the $l^\textrm{th}$ hidden layer
-that uses the activation function $\phi_l$
-is calculated as follows:
+Secara formal, misalkan kita memiliki masukan minibatch $\mathbf{X}_t \in \mathbb{R}^{n \times d}$ (jumlah contoh $=n$; jumlah masukan dalam setiap contoh $=d$) pada langkah waktu $t$.
+Pada saat yang sama, status tersembunyi dari lapisan tersembunyi ke-$l$ ($l=1,\ldots,L$) adalah $\mathbf{H}_t^{(l)} \in \mathbb{R}^{n \times h}$ (jumlah unit tersembunyi $=h$) dan variabel lapisan keluaran adalah $\mathbf{O}_t \in \mathbb{R}^{n \times q}$ (jumlah keluaran: $q$).
+Menetapkan $\mathbf{H}_t^{(0)} = \mathbf{X}_t$, status tersembunyi dari lapisan tersembunyi ke-$l$ yang menggunakan fungsi aktivasi $\phi_l$ dihitung sebagai berikut:
 
 $$\mathbf{H}_t^{(l)} = \phi_l(\mathbf{H}_t^{(l-1)} \mathbf{W}_{\textrm{xh}}^{(l)} + \mathbf{H}_{t-1}^{(l)} \mathbf{W}_{\textrm{hh}}^{(l)}  + \mathbf{b}_\textrm{h}^{(l)}),$$
 :eqlabel:`eq_deep_rnn_H`
 
-where the weights $\mathbf{W}_{\textrm{xh}}^{(l)} \in \mathbb{R}^{h \times h}$ and $\mathbf{W}_{\textrm{hh}}^{(l)} \in \mathbb{R}^{h \times h}$, together with
-the bias $\mathbf{b}_\textrm{h}^{(l)} \in \mathbb{R}^{1 \times h}$, 
-are the model parameters of the $l^\textrm{th}$ hidden layer.
+dengan bobot $\mathbf{W}_{\textrm{xh}}^{(l)} \in \mathbb{R}^{h \times h}$ dan $\mathbf{W}_{\textrm{hh}}^{(l)} \in \mathbb{R}^{h \times h}$, bersama dengan bias $\mathbf{b}_\textrm{h}^{(l)} \in \mathbb{R}^{1 \times h}$, yang merupakan parameter model dari lapisan tersembunyi ke-$l$.
 
-At the end, the calculation of the output layer 
-is only based on the hidden state 
-of the final $L^\textrm{th}$ hidden layer:
+Pada akhirnya, perhitungan dari lapisan keluaran hanya didasarkan pada status tersembunyi dari lapisan tersembunyi terakhir $L^\textrm{th}$:
 
 $$\mathbf{O}_t = \mathbf{H}_t^{(L)} \mathbf{W}_{\textrm{hq}} + \mathbf{b}_\textrm{q},$$
 
-where the weight $\mathbf{W}_{\textrm{hq}} \in \mathbb{R}^{h \times q}$ 
-and the bias $\mathbf{b}_\textrm{q} \in \mathbb{R}^{1 \times q}$ 
-are the model parameters of the output layer.
+dengan bobot $\mathbf{W}_{\textrm{hq}} \in \mathbb{R}^{h \times q}$ dan bias $\mathbf{b}_\textrm{q} \in \mathbb{R}^{1 \times q}$ yang merupakan parameter model dari lapisan keluaran.
 
-Just as with MLPs, the number of hidden layers $L$ 
-and the number of hidden units $h$ are hyperparameters
-that we can tune.
-Common RNN layer widths ($h$) are in the range $(64, 2056)$,
-and common depths ($L$) are in the range $(1, 8)$. 
-In addition, we can easily get a deep-gated RNN
-by replacing the hidden state computation in :eqref:`eq_deep_rnn_H`
-with that from an LSTM or a GRU.
+Sama seperti MLP, jumlah lapisan tersembunyi $L$ dan jumlah unit tersembunyi $h$ adalah hyperparameter yang bisa kita atur.
+Lebar lapisan RNN yang umum ($h$) berada pada rentang $(64, 2056)$, dan kedalaman ($L$) berada pada rentang $(1, 8)$.
+Selain itu, kita bisa dengan mudah mendapatkan deep-gated RNN dengan menggantikan perhitungan status tersembunyi dalam :eqref:`eq_deep_rnn_H` dengan LSTM atau GRU.
+
 
 ```{.python .input}
 %load_ext d2lbook.tab
@@ -124,11 +74,12 @@ import jax
 from jax import numpy as jnp
 ```
 
-## Implementation from Scratch
+## Implementasi dari Awal
 
-To implement a multilayer RNN from scratch,
-we can treat each layer as an `RNNScratch` instance
-with its own learnable parameters.
+Untuk mengimplementasikan multilayer RNN dari awal,
+kita bisa memperlakukan setiap lapisan sebagai instance `RNNScratch`
+dengan parameter yang dapat dipelajari secara terpisah.
+
 
 ```{.python .input}
 %%tab mxnet, tensorflow
@@ -166,9 +117,10 @@ class StackedRNNScratch(d2l.Module):
                      for i in range(self.num_layers)]
 ```
 
-The multilayer forward computation
-simply performs forward computation
-layer by layer.
+Perhitungan maju multilayer
+hanya melakukan perhitungan maju
+lapis demi lapis.
+
 
 ```{.python .input}
 %%tab all
@@ -182,9 +134,10 @@ def forward(self, inputs, Hs=None):
     return outputs, Hs
 ```
 
-As an example, we train a deep GRU model on
-*The Time Machine* dataset (same as in :numref:`sec_rnn-scratch`).
-To keep things simple we set the number of layers to 2.
+Sebagai contoh, kita melatih model GRU mendalam pada
+dataset *The Time Machine* (sama seperti pada :numref:`sec_rnn-scratch`).
+Agar tetap sederhana, kita menetapkan jumlah lapisan menjadi 2.
+
 
 ```{.python .input}
 %%tab all
@@ -203,33 +156,34 @@ if tab.selected('tensorflow'):
 trainer.fit(model, data)
 ```
 
-## Concise Implementation
+## Implementasi Ringkas
 
 :begin_tab:`pytorch, mxnet, tensorflow`
-Fortunately many of the logistical details required
-to implement multiple layers of an RNN 
-are readily available in high-level APIs.
-Our concise implementation will use such built-in functionalities.
-The code generalizes the one we used previously in :numref:`sec_gru`,
-letting us specify the number of layers explicitly 
-rather than picking the default of only one layer.
+Untungnya, banyak rincian logistik yang diperlukan
+untuk mengimplementasikan beberapa lapisan RNN
+telah tersedia dalam API tingkat tinggi.
+Implementasi ringkas kami akan menggunakan fungsionalitas bawaan tersebut.
+Kode ini menggeneralisasi kode yang kami gunakan sebelumnya di :numref:`sec_gru`,
+membiarkan kita menentukan jumlah lapisan secara eksplisit 
+daripada memilih default hanya satu lapisan.
 :end_tab:
 
 :begin_tab:`jax`
-Flax takes a minimalistic approach while implementing
-RNNs. Defining the number of layers in an RNN or combining it with dropout
-is not available out of the box.
-Our concise implementation will use all built-in functionalities and
-add `num_layers` and `dropout` features on top.
-The code generalizes the one we used previously in :numref:`sec_gru`,
-allowing specification of the number of layers explicitly
-rather than picking the default of a single layer.
+Flax mengambil pendekatan minimalis saat mengimplementasikan RNN.
+Mendefinisikan jumlah lapisan dalam RNN atau menggabungkannya dengan dropout
+tidak tersedia langsung dari kotak.
+Implementasi ringkas kami akan menggunakan semua fungsionalitas bawaan dan
+menambahkan fitur `num_layers` dan `dropout`.
+Kode ini menggeneralisasi kode yang kami gunakan sebelumnya di :numref:`sec_gru`,
+memungkinkan kita untuk menentukan jumlah lapisan secara eksplisit
+daripada memilih default satu lapisan.
 :end_tab:
+
 
 ```{.python .input}
 %%tab mxnet
 class GRU(d2l.RNN):  #@save
-    """The multilayer GRU model."""
+    """ multilayer GRU model."""
     def __init__(self, num_hiddens, num_layers, dropout=0):
         d2l.Module.__init__(self)
         self.save_hyperparameters()
@@ -239,7 +193,7 @@ class GRU(d2l.RNN):  #@save
 ```{.python .input}
 %%tab pytorch
 class GRU(d2l.RNN):  #@save
-    """The multilayer GRU model."""
+    """ multilayer GRU model."""
     def __init__(self, num_inputs, num_hiddens, num_layers, dropout=0):
         d2l.Module.__init__(self)
         self.save_hyperparameters()
@@ -250,7 +204,7 @@ class GRU(d2l.RNN):  #@save
 ```{.python .input}
 %%tab tensorflow
 class GRU(d2l.RNN):  #@save
-    """The multilayer GRU model."""
+    """ multilayer GRU model."""
     def __init__(self, num_hiddens, num_layers, dropout=0):
         d2l.Module.__init__(self)
         self.save_hyperparameters()
@@ -267,7 +221,7 @@ class GRU(d2l.RNN):  #@save
 ```{.python .input}
 %%tab jax
 class GRU(d2l.RNN):  #@save
-    """The multilayer GRU model."""
+    """ multilayer GRU model."""
     num_hiddens: int
     num_layers: int
     dropout: float = 0
@@ -284,33 +238,30 @@ class GRU(d2l.RNN):  #@save
         GRU = nn.scan(nn.GRUCell, variable_broadcast="params",
                       in_axes=0, out_axes=0, split_rngs={"params": False})
 
-        # Introduce a dropout layer after every GRU layer except last
+        # Memperkenalkan Lapisan Dropout Setelah Setiap Lapisan GRU Kecuali yang Terakhir
         for i in range(self.num_layers - 1):
             layer_i_state, X = GRU()(state[i], outputs)
             new_state.append(layer_i_state)
             X = nn.Dropout(self.dropout, deterministic=not training)(X)
 
-        # Final GRU layer without dropout
+        # Lapisan GRU terakhir tanpa dropout
         out_state, X = GRU()(state[-1], X)
         new_state.append(out_state)
         return X, jnp.array(new_state)
 ```
 
-The architectural decisions such as choosing hyperparameters 
-are very similar to those of :numref:`sec_gru`.
-We pick the same number of inputs and outputs 
-as we have distinct tokens, i.e., `vocab_size`.
-The number of hidden units is still 32.
-The only difference is that we now 
-(**select a nontrivial number of hidden layers 
-by specifying the value of `num_layers`.**)
+Keputusan arsitektural seperti memilih hyperparameter sangat mirip dengan yang ada di :numref:`sec_gru`.
+Kami memilih jumlah input dan output yang sama dengan jumlah token yang berbeda, yaitu `vocab_size`.
+Jumlah unit tersembunyi (hidden units) masih 32.
+Satu-satunya perbedaan adalah bahwa sekarang kami (**memilih jumlah lapisan tersembunyi yang tidak trivial dengan menentukan nilai `num_layers`**).
+
 
 ```{.python .input}
 %%tab mxnet
 gru = GRU(num_hiddens=32, num_layers=2)
 model = d2l.RNNLM(gru, vocab_size=len(data.vocab), lr=2)
 
-# Running takes > 1h (pending fix from MXNet)
+# Menjalankan proses membutuhkan lebih dari 1 jam (menunggu perbaikan dari MXNet)
 # trainer.fit(model, data)
 # model.predict('it has', 20, data.vocab, d2l.try_gpu())
 ```
@@ -344,37 +295,28 @@ model.predict('it has', 20, data.vocab)
 model.predict('it has', 20, data.vocab, trainer.state.params)
 ```
 
-## Summary
+## Ringkasan
 
-In deep RNNs, the hidden state information is passed 
-to the next time step of the current layer 
-and the current time step of the next layer.
-There exist many different flavors of deep RNNs, such as LSTMs, GRUs, or vanilla RNNs. 
-Conveniently, these models are all available 
-as parts of the high-level APIs of deep learning frameworks.
-Initialization of models requires care. 
-Overall, deep RNNs require considerable amount of work 
-(such as learning rate and clipping) 
-to ensure proper convergence.
+Pada deep RNN, informasi status tersembunyi diteruskan ke langkah waktu berikutnya dari layer saat ini dan juga ke langkah waktu saat ini dari layer berikutnya. Ada banyak variasi dari deep RNN, seperti LSTM, GRU, atau vanilla RNN. Untungnya, model-model ini semua tersedia sebagai bagian dari API tingkat tinggi dalam framework deep learning. Inisialisasi model membutuhkan perhatian khusus. Secara keseluruhan, deep RNN memerlukan banyak pekerjaan (seperti pengaturan learning rate dan clipping) untuk memastikan konvergensi yang tepat.
 
-## Exercises
+## Latihan
 
-1. Replace the GRU by an LSTM and compare the accuracy and training speed.
-1. Increase the training data to include multiple books. How low can you go on the perplexity scale?
-1. Would you want to combine sources of different authors when modeling text? Why is this a good idea? What could go wrong?
+1. Gantilah GRU dengan LSTM dan bandingkan akurasi serta kecepatan pelatihannya.
+2. Tambahkan data pelatihan untuk mencakup beberapa buku. Seberapa rendah kamu bisa mencapai dalam skala perplexity?
+3. Apakah kamu ingin menggabungkan sumber dari penulis yang berbeda ketika membuat model teks? Mengapa ini ide yang bagus? Apa yang bisa salah?
 
 :begin_tab:`mxnet`
-[Discussions](https://discuss.d2l.ai/t/340)
+[Diskusi](https://discuss.d2l.ai/t/340)
 :end_tab:
 
 :begin_tab:`pytorch`
-[Discussions](https://discuss.d2l.ai/t/1058)
+[Diskusi](https://discuss.d2l.ai/t/1058)
 :end_tab:
 
 :begin_tab:`tensorflow`
-[Discussions](https://discuss.d2l.ai/t/3862)
+[Diskusi](https://discuss.d2l.ai/t/3862)
 :end_tab:
 
 :begin_tab:`jax`
-[Discussions](https://discuss.d2l.ai/t/18018)
+[Diskusi](https://discuss.d2l.ai/t/18018)
 :end_tab:
