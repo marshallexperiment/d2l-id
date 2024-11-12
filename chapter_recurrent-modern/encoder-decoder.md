@@ -3,41 +3,40 @@
 tab.interact_select('mxnet', 'pytorch', 'tensorflow', 'jax')
 ```
 
-# The Encoder--Decoder Architecture
+# Arsitektur Encoder--Decoder
 :label:`sec_encoder-decoder`
 
-In general sequence-to-sequence problems
-like machine translation
+Dalam masalah *sequence-to-sequence* secara umum seperti terjemahan mesin
 (:numref:`sec_machine_translation`),
-inputs and outputs are of varying lengths
-that are unaligned.
-The standard approach to handling this sort of data
-is to design an *encoder--decoder* architecture (:numref:`fig_encoder_decoder`)
-consisting of two major components:
-an *encoder* that takes a variable-length sequence as input,
-and a *decoder* that acts as a conditional language model,
-taking in the encoded input
-and the leftwards context of the target sequence
-and predicting the subsequent token in the target sequence.
+input dan output memiliki panjang yang bervariasi
+dan tidak selaras.
+Pendekatan standar untuk menangani jenis data seperti ini
+adalah dengan merancang arsitektur *encoder--decoder* (:numref:`fig_encoder_decoder`)
+yang terdiri dari dua komponen utama:
+sebuah *encoder* yang menerima urutan dengan panjang variabel sebagai input,
+dan sebuah *decoder* yang bertindak sebagai model bahasa kondisional,
+mengambil input yang sudah diencode
+dan konteks kiri dari urutan target
+dan memprediksi token berikutnya dalam urutan target.
 
-
-![The encoder--decoder architecture.](../img/encoder-decoder.svg)
+![Arsitektur encoder--decoder.](../img/encoder-decoder.svg)
 :label:`fig_encoder_decoder`
 
-Let's take machine translation from English to French as an example.
-Given an input sequence in English:
+Mari kita ambil contoh terjemahan mesin dari bahasa Inggris ke bahasa Prancis.
+Diberikan sebuah urutan input dalam bahasa Inggris:
 "They", "are", "watching", ".",
-this encoder--decoder architecture
-first encodes the variable-length input into a state,
-then decodes the state
-to generate the translated sequence,
-token by token, as output:
+arsitektur encoder--decoder ini
+pertama-tama mengenkode input dengan panjang variabel ke dalam sebuah state,
+kemudian mendekode state tersebut
+untuk menghasilkan urutan terjemahan,
+token demi token, sebagai output:
 "Ils", "regardent", ".".
-Since the encoder--decoder architecture
-forms the basis of different sequence-to-sequence models
-in subsequent sections,
-this section will convert this architecture
-into an interface that will be implemented later.
+Karena arsitektur encoder--decoder
+membentuk dasar dari berbagai model *sequence-to-sequence*
+pada bagian-bagian selanjutnya,
+bagian ini akan mengonversi arsitektur ini
+menjadi antarmuka yang akan diimplementasikan nanti.
+
 
 ```{.python .input}
 %%tab mxnet
@@ -65,20 +64,17 @@ from flax import linen as nn
 
 ## (**Encoder**)
 
-In the encoder interface,
-we just specify that
-the encoder takes variable-length sequences as input `X`.
-The implementation will be provided
-by any model that inherits this base `Encoder` class.
+Pada antarmuka encoder, kita hanya menentukan bahwa encoder menerima urutan dengan panjang variabel sebagai input `X`. Implementasi akan disediakan oleh model apa pun yang mewarisi kelas dasar `Encoder` ini.
+
 
 ```{.python .input}
 %%tab mxnet
 class Encoder(nn.Block):  #@save
-    """The base encoder interface for the encoder--decoder architecture."""
+    """Antarmuka dasar encoder untuk arsitektur encoder--decoder."""
     def __init__(self):
         super().__init__()
 
-    # Later there can be additional arguments (e.g., length excluding padding)
+    # Nanti bisa ada argumen tambahan (misalnya, panjang tanpa padding)
     def forward(self, X, *args):
         raise NotImplementedError
 ```
@@ -86,11 +82,11 @@ class Encoder(nn.Block):  #@save
 ```{.python .input}
 %%tab pytorch
 class Encoder(nn.Module):  #@save
-    """The base encoder interface for the encoder--decoder architecture."""
+    """Antarmuka dasar encoder untuk arsitektur encoder--decoder."""
     def __init__(self):
         super().__init__()
 
-    # Later there can be additional arguments (e.g., length excluding padding)
+    # Nanti bisa ada argumen tambahan (misalnya, panjang tanpa padding)
     def forward(self, X, *args):
         raise NotImplementedError
 ```
@@ -98,11 +94,11 @@ class Encoder(nn.Module):  #@save
 ```{.python .input}
 %%tab tensorflow
 class Encoder(tf.keras.layers.Layer):  #@save
-    """The base encoder interface for the encoder--decoder architecture."""
+    """Antarmuka dasar encoder untuk arsitektur encoder--decoder."""
     def __init__(self):
         super().__init__()
 
-    # Later there can be additional arguments (e.g., length excluding padding)
+    # Nanti bisa ada argumen tambahan (misalnya, panjang tanpa padding)
     def call(self, X, *args):
         raise NotImplementedError
 ```
@@ -110,40 +106,41 @@ class Encoder(tf.keras.layers.Layer):  #@save
 ```{.python .input}
 %%tab jax
 class Encoder(nn.Module):  #@save
-    """The base encoder interface for the encoder--decoder architecture."""
+    """Antarmuka dasar encoder untuk arsitektur encoder--decoder."""
     def setup(self):
         raise NotImplementedError
 
-    # Later there can be additional arguments (e.g., length excluding padding)
+    # Nanti bisa ada argumen tambahan (misalnya, panjang tanpa padding)
     def __call__(self, X, *args):
         raise NotImplementedError
 ```
 
 ## [**Decoder**]
 
-In the following decoder interface,
-we add an additional `init_state` method
-to convert the encoder output (`enc_all_outputs`)
-into the encoded state.
-Note that this step
-may require extra inputs,
-such as the valid length of the input,
-which was explained
-in :numref:`sec_machine_translation`.
-To generate a variable-length sequence token by token,
-every time the decoder may map an input
-(e.g., the generated token at the previous time step)
-and the encoded state
-into an output token at the current time step.
+Dalam antarmuka decoder berikut,
+kami menambahkan metode tambahan `init_state`
+untuk mengonversi keluaran dari encoder (`enc_all_outputs`)
+menjadi keadaan yang sudah dienkode.
+Perhatikan bahwa langkah ini
+mungkin memerlukan input tambahan,
+seperti panjang yang valid dari input,
+yang sudah dijelaskan
+di :numref:`sec_machine_translation`.
+Untuk menghasilkan urutan dengan panjang variabel token demi token,
+setiap kali decoder dapat memetakan sebuah input
+(misalnya, token yang dihasilkan pada langkah waktu sebelumnya)
+dan keadaan yang sudah dienkode
+menjadi token keluaran pada langkah waktu saat ini.
+
 
 ```{.python .input}
 %%tab mxnet
 class Decoder(nn.Block):  #@save
-    """The base decoder interface for the encoder--decoder architecture."""
+    """Antarmuka dasar decoder untuk arsitektur encoder--decoder."""
     def __init__(self):
         super().__init__()
 
-    # Later there can be additional arguments (e.g., length excluding padding)
+    # Nantinya bisa ada argumen tambahan (misalnya, panjang tanpa padding)
     def init_state(self, enc_all_outputs, *args):
         raise NotImplementedError
 
@@ -154,11 +151,11 @@ class Decoder(nn.Block):  #@save
 ```{.python .input}
 %%tab pytorch
 class Decoder(nn.Module):  #@save
-    """The base decoder interface for the encoder--decoder architecture."""
+    """Antarmuka dasar decoder untuk arsitektur encoder--decoder."""
     def __init__(self):
         super().__init__()
 
-    # Later there can be additional arguments (e.g., length excluding padding)
+    # Nantinya bisa ada argumen tambahan (misalnya, panjang tanpa padding)
     def init_state(self, enc_all_outputs, *args):
         raise NotImplementedError
 
@@ -169,11 +166,11 @@ class Decoder(nn.Module):  #@save
 ```{.python .input}
 %%tab tensorflow
 class Decoder(tf.keras.layers.Layer):  #@save
-    """The base decoder interface for the encoder--decoder architecture."""
+    """Antarmuka dasar decoder untuk arsitektur encoder--decoder."""
     def __init__(self):
         super().__init__()
 
-    # Later there can be additional arguments (e.g., length excluding padding)
+    # Nantinya bisa ada argumen tambahan (misalnya, panjang tanpa padding)
     def init_state(self, enc_all_outputs, *args):
         raise NotImplementedError
 
@@ -184,11 +181,11 @@ class Decoder(tf.keras.layers.Layer):  #@save
 ```{.python .input}
 %%tab jax
 class Decoder(nn.Module):  #@save
-    """The base decoder interface for the encoder--decoder architecture."""
+    """Antarmuka dasar decoder untuk arsitektur encoder--decoder."""
     def setup(self):
         raise NotImplementedError
 
-    # Later there can be additional arguments (e.g., length excluding padding)
+    # Nantinya bisa ada argumen tambahan (misalnya, panjang tanpa padding)
     def init_state(self, enc_all_outputs, *args):
         raise NotImplementedError
 
@@ -196,18 +193,15 @@ class Decoder(nn.Module):  #@save
         raise NotImplementedError
 ```
 
-## [**Putting the Encoder and Decoder Together**]
+## [**Menggabungkan Encoder dan Decoder**]
 
-In the forward propagation,
-the output of the encoder
-is used to produce the encoded state,
-and this state will be further used
-by the decoder as one of its input.
+Dalam propagasi maju, keluaran dari encoder digunakan untuk menghasilkan state yang telah di-encode, dan state ini akan digunakan lebih lanjut oleh decoder sebagai salah satu inputnya.
+
 
 ```{.python .input}
 %%tab mxnet, pytorch
 class EncoderDecoder(d2l.Classifier):  #@save
-    """The base class for the encoder--decoder architecture."""
+    """dasar kelas untuk arsitektur encoder--decoder."""
     def __init__(self, encoder, decoder):
         super().__init__()
         self.encoder = encoder
@@ -216,14 +210,14 @@ class EncoderDecoder(d2l.Classifier):  #@save
     def forward(self, enc_X, dec_X, *args):
         enc_all_outputs = self.encoder(enc_X, *args)
         dec_state = self.decoder.init_state(enc_all_outputs, *args)
-        # Return decoder output only
+        # Mengembalikan output decoder saja
         return self.decoder(dec_X, dec_state)[0]
 ```
 
 ```{.python .input}
 %%tab tensorflow
 class EncoderDecoder(d2l.Classifier):  #@save
-    """The base class for the encoder--decoder architecture."""
+    """dasar kelas untuk arsitektur encoder--decoder."""
     def __init__(self, encoder, decoder):
         super().__init__()
         self.encoder = encoder
@@ -232,14 +226,14 @@ class EncoderDecoder(d2l.Classifier):  #@save
     def call(self, enc_X, dec_X, *args):
         enc_all_outputs = self.encoder(enc_X, *args, training=True)
         dec_state = self.decoder.init_state(enc_all_outputs, *args)
-        # Return decoder output only
+        # Mengembalikan output decoder saja
         return self.decoder(dec_X, dec_state, training=True)[0]
 ```
 
 ```{.python .input}
 %%tab jax
 class EncoderDecoder(d2l.Classifier):  #@save
-    """The base class for the encoder--decoder architecture."""
+    """dasar kelas untuk arsitektur encoder--decoder."""
     encoder: nn.Module
     decoder: nn.Module
     training: bool
@@ -247,46 +241,32 @@ class EncoderDecoder(d2l.Classifier):  #@save
     def __call__(self, enc_X, dec_X, *args):
         enc_all_outputs = self.encoder(enc_X, *args, training=self.training)
         dec_state = self.decoder.init_state(enc_all_outputs, *args)
-        # Return decoder output only
+        # Mengembalikan output decoder saja
         return self.decoder(dec_X, dec_state, training=self.training)[0]
 ```
 
-In the next section,
-we will see how to apply RNNs to design
-sequence-to-sequence models based on
-this encoder--decoder architecture.
+## Ringkasan
 
+Arsitektur encoder-decoder dapat menangani input dan output yang keduanya terdiri dari urutan dengan panjang yang bervariasi, sehingga cocok untuk masalah sequence-to-sequence seperti penerjemahan mesin. Encoder mengambil urutan dengan panjang bervariasi sebagai input dan mengubahnya menjadi suatu state dengan bentuk yang tetap. Decoder kemudian memetakan state yang telah dikodekan (encoded) dengan bentuk tetap ini menjadi urutan dengan panjang yang bervariasi.
 
-## Summary
+## Latihan
 
-Encoder-decoder architectures
-can handle inputs and outputs
-that both consist of variable-length sequences
-and thus are suitable for sequence-to-sequence problems
-such as machine translation.
-The encoder takes a variable-length sequence as input
-and transforms it into a state with a fixed shape.
-The decoder maps the encoded state of a fixed shape
-to a variable-length sequence.
-
-
-## Exercises
-
-1. Suppose that we use neural networks to implement the encoder--decoder architecture. Do the encoder and the decoder have to be the same type of neural network?
-1. Besides machine translation, can you think of another application where the encoder--decoder architecture can be applied?
+1. Misalkan kita menggunakan jaringan saraf (neural network) untuk mengimplementasikan arsitektur encoder-decoder. Apakah encoder dan decoder harus menggunakan jenis jaringan saraf yang sama?
+2. Selain penerjemahan mesin, apakah kamu dapat memikirkan aplikasi lain di mana arsitektur encoder-decoder dapat diterapkan?
 
 :begin_tab:`mxnet`
-[Discussions](https://discuss.d2l.ai/t/341)
+[Diskusi](https://discuss.d2l.ai/t/341)
 :end_tab:
 
 :begin_tab:`pytorch`
-[Discussions](https://discuss.d2l.ai/t/1061)
+[Diskusi](https://discuss.d2l.ai/t/1061)
 :end_tab:
 
 :begin_tab:`tensorflow`
-[Discussions](https://discuss.d2l.ai/t/3864)
+[Diskusi](https://discuss.d2l.ai/t/3864)
 :end_tab:
 
 :begin_tab:`jax`
-[Discussions](https://discuss.d2l.ai/t/18021)
+[Diskusi](https://discuss.d2l.ai/t/18021)
 :end_tab:
+
