@@ -1,44 +1,12 @@
 # Long Short-Term Memory (LSTM)
 :label:`sec_lstm`
 
+Tak lama setelah RNN gaya Elman pertama kali dilatih menggunakan backpropagation :cite:`elman1990finding`, masalah pembelajaran ketergantungan jangka panjang (karena gradien yang menghilang dan meledak) menjadi jelas, dengan Bengio dan Hochreiter membahas masalah ini :cite:`bengio1994learning,Hochreiter.Bengio.Frasconi.ea.2001`. Hochreiter telah mengartikulasikan masalah ini sejak tahun 1991 dalam tesis masternya, meskipun hasilnya tidak begitu dikenal karena tesis tersebut ditulis dalam bahasa Jerman. 
 
-Shortly after the first Elman-style RNNs were trained using backpropagation 
-:cite:`elman1990finding`, the problems of learning long-term dependencies
-(owing to vanishing and exploding gradients)
-became salient, with Bengio and Hochreiter 
-discussing the problem
-:cite:`bengio1994learning,Hochreiter.Bengio.Frasconi.ea.2001`.
-Hochreiter had articulated this problem as early 
-as 1991 in his Master's thesis, although the results 
-were not widely known because the thesis was written in German.
-While gradient clipping helps with exploding gradients, 
-handling vanishing gradients appears 
-to require a more elaborate solution. 
-One of the first and most successful techniques 
-for addressing vanishing gradients 
-came in the form of the long short-term memory (LSTM) model 
-due to :citet:`Hochreiter.Schmidhuber.1997`. 
-LSTMs resemble standard recurrent neural networks 
-but here each ordinary recurrent node
-is replaced by a *memory cell*.
-Each memory cell contains an *internal state*,
-i.e., a node with a self-connected recurrent edge of fixed weight 1,
-ensuring that the gradient can pass across many time steps 
-without vanishing or exploding.
+Meskipun *gradient clipping* membantu mengatasi gradien yang meledak, menangani gradien yang menghilang tampaknya membutuhkan solusi yang lebih rumit. Salah satu teknik pertama dan paling berhasil dalam menangani gradien yang menghilang adalah model *long short-term memory* (LSTM) yang diperkenalkan oleh :citet:`Hochreiter.Schmidhuber.1997`. LSTM mirip dengan jaringan saraf berulang (RNN) standar, tetapi di sini setiap node berulang biasa digantikan oleh *memory cell*. Setiap *memory cell* memiliki *internal state*, yaitu sebuah node dengan *self-connected recurrent edge* dengan bobot tetap 1, yang memastikan bahwa gradien dapat melewati banyak langkah waktu tanpa menghilang atau meledak.
 
-The term "long short-term memory" comes from the following intuition.
-Simple recurrent neural networks 
-have *long-term memory* in the form of weights.
-The weights change slowly during training, 
-encoding general knowledge about the data.
-They also have *short-term memory*
-in the form of ephemeral activations,
-which pass from each node to successive nodes.
-The LSTM model introduces an intermediate type of storage via the memory cell.
-A memory cell is a composite unit, 
-built from simpler nodes 
-in a specific connectivity pattern,
-with the novel inclusion of multiplicative nodes.
+Istilah "long short-term memory" berasal dari intuisi berikut. Jaringan saraf berulang sederhana memiliki *long-term memory* dalam bentuk bobot. Bobot ini berubah secara perlahan selama pelatihan, mengkodekan pengetahuan umum tentang data. Mereka juga memiliki *short-term memory* dalam bentuk aktivasi efemer, yang melewati setiap node ke node-node berikutnya. Model LSTM memperkenalkan jenis penyimpanan antara melalui *memory cell*. Sebuah *memory cell* adalah unit komposit, dibangun dari node-node yang lebih sederhana dalam pola konektivitas tertentu, dengan penambahan node multiplikatif yang baru.
+
 
 ```{.python .input}
 %load_ext d2lbook.tab
@@ -76,64 +44,20 @@ from jax import numpy as jnp
 
 ## Gated Memory Cell
 
-Each memory cell is equipped with an *internal state*
-and a number of multiplicative gates that determine whether
-(i) a given input should impact the internal state (the *input gate*),
-(ii) the internal state should be flushed to $0$ (the *forget gate*),
-and (iii) the internal state of a given neuron 
-should be allowed to impact the cell's output (the *output* gate). 
-
+Setiap *memory cell* dilengkapi dengan *internal state* dan sejumlah *multiplicative gate* yang menentukan apakah (i) input tertentu harus mempengaruhi *internal state* (disebut *input gate*), (ii) *internal state* harus dihapus menjadi $0$ (disebut *forget gate*), dan (iii) *internal state* dari suatu neuron tertentu harus diperbolehkan mempengaruhi keluaran *cell* tersebut (disebut *output gate*).
 
 ### Gated Hidden State
 
-The key distinction between vanilla RNNs and LSTMs
-is that the latter support gating of the hidden state.
-This means that we have dedicated mechanisms for
-when a hidden state should be *updated* and
-also for when it should be *reset*.
-These mechanisms are learned and they address the concerns listed above.
-For instance, if the first token is of great importance
-we will learn not to update the hidden state after the first observation.
-Likewise, we will learn to skip irrelevant temporary observations.
-Last, we will learn to reset the latent state whenever needed.
-We discuss this in detail below.
+Perbedaan utama antara RNN biasa dan LSTM adalah bahwa LSTM mendukung pengaturan *gating* terhadap *hidden state*. Ini berarti kita memiliki mekanisme khusus untuk menentukan kapan *hidden state* harus *di-update* dan kapan harus *di-reset*. Mekanisme ini dipelajari dan digunakan untuk mengatasi masalah yang disebutkan di atas. Misalnya, jika token pertama sangat penting, kita akan mempelajari cara untuk tidak memperbarui *hidden state* setelah pengamatan pertama. Begitu juga, kita akan belajar melewati pengamatan sementara yang tidak relevan. Terakhir, kita akan belajar untuk mereset *latent state* kapan pun diperlukan. Kita akan membahas ini lebih rinci di bawah.
 
-### Input Gate, Forget Gate, and Output Gate
+### Input Gate, Forget Gate, dan Output Gate
 
-The data feeding into the LSTM gates are
-the input at the current time step and
-the hidden state of the previous time step,
-as illustrated in :numref:`fig_lstm_0`.
-Three fully connected layers with sigmoid activation functions
-compute the values of the input, forget, and output gates.
-As a result of the sigmoid activation,
-all values of the three gates
-are in the range of $(0, 1)$.
-Additionally, we require an *input node*,
-typically computed with a *tanh* activation function. 
-Intuitively, the *input gate* determines how much
-of the input node's value should be added 
-to the current memory cell internal state.
-The *forget gate* determines whether to keep
-the current value of the memory or flush it. 
-And the *output gate* determines whether 
-the memory cell should influence the output
-at the current time step. 
+Data yang masuk ke dalam *gate* LSTM adalah input pada *time step* saat ini dan *hidden state* dari *time step* sebelumnya, seperti yang diilustrasikan pada :numref:`fig_lstm_0`. Tiga lapisan koneksi penuh dengan fungsi aktivasi sigmoid digunakan untuk menghitung nilai dari *input gate*, *forget gate*, dan *output gate*. Akibat dari aktivasi sigmoid, semua nilai dari ketiga *gate* tersebut berada dalam rentang $(0, 1)$. Selain itu, kita memerlukan sebuah *input node*, yang biasanya dihitung dengan fungsi aktivasi *tanh*. Secara intuitif, *input gate* menentukan seberapa banyak nilai dari *input node* yang harus ditambahkan ke dalam *internal state* *memory cell* saat ini. *Forget gate* menentukan apakah mempertahankan nilai saat ini dari *memory* atau menghapusnya. Sedangkan *output gate* menentukan apakah *memory cell* harus mempengaruhi keluaran pada *time step* saat ini.
 
-
-![Computing the input gate, the forget gate, and the output gate in an LSTM model.](../img/lstm-0.svg)
+![Menghitung *input gate*, *forget gate*, dan *output gate* pada model LSTM.](../img/lstm-0.svg)
 :label:`fig_lstm_0`
 
-Mathematically, suppose that there are $h$ hidden units, 
-the batch size is $n$, and the number of inputs is $d$.
-Thus, the input is $\mathbf{X}_t \in \mathbb{R}^{n \times d}$ 
-and the hidden state of the previous time step 
-is $\mathbf{H}_{t-1} \in \mathbb{R}^{n \times h}$. 
-Correspondingly, the gates at time step $t$
-are defined as follows: the input gate is $\mathbf{I}_t \in \mathbb{R}^{n \times h}$, 
-the forget gate is $\mathbf{F}_t \in \mathbb{R}^{n \times h}$, 
-and the output gate is $\mathbf{O}_t \in \mathbb{R}^{n \times h}$. 
-They are calculated as follows:
+Secara matematis, misalkan ada $h$ unit tersembunyi, ukuran *batch* adalah $n$, dan jumlah input adalah $d$. Dengan demikian, input adalah $\mathbf{X}_t \in \mathbb{R}^{n \times d}$ dan *hidden state* dari *time step* sebelumnya adalah $\mathbf{H}_{t-1} \in \mathbb{R}^{n \times h}$. Sesuai, *gate* pada *time step* $t$ didefinisikan sebagai berikut: *input gate* adalah $\mathbf{I}_t \in \mathbb{R}^{n \times h}$, *forget gate* adalah $\mathbf{F}_t \in \mathbb{R}^{n \times h}$, dan *output gate* adalah $\mathbf{O}_t \in \mathbb{R}^{n \times h}$. Mereka dihitung sebagai berikut:
 
 $$
 \begin{aligned}
@@ -143,112 +67,67 @@ $$
 \end{aligned}
 $$
 
-where $\mathbf{W}_{\textrm{xi}}, \mathbf{W}_{\textrm{xf}}, \mathbf{W}_{\textrm{xo}} \in \mathbb{R}^{d \times h}$ and $\mathbf{W}_{\textrm{hi}}, \mathbf{W}_{\textrm{hf}}, \mathbf{W}_{\textrm{ho}} \in \mathbb{R}^{h \times h}$ are weight parameters 
-and $\mathbf{b}_\textrm{i}, \mathbf{b}_\textrm{f}, \mathbf{b}_\textrm{o} \in \mathbb{R}^{1 \times h}$ are bias parameters.
-Note that broadcasting 
-(see :numref:`subsec_broadcasting`)
-is triggered during the summation.
-We use sigmoid functions 
-(as introduced in :numref:`sec_mlp`) 
-to map the input values to the interval $(0, 1)$.
+dengan $\mathbf{W}_{\textrm{xi}}, \mathbf{W}_{\textrm{xf}}, \mathbf{W}_{\textrm{xo}} \in \mathbb{R}^{d \times h}$ dan $\mathbf{W}_{\textrm{hi}}, \mathbf{W}_{\textrm{hf}}, \mathbf{W}_{\textrm{ho}} \in \mathbb{R}^{h \times h}$ adalah parameter bobot, dan $\mathbf{b}_\textrm{i}, \mathbf{b}_\textrm{f}, \mathbf{b}_\textrm{o} \in \mathbb{R}^{1 \times h}$ adalah parameter bias. Perhatikan bahwa *broadcasting* (lihat :numref:`subsec_broadcasting`) dipicu selama penjumlahan. Kita menggunakan fungsi sigmoid (seperti yang diperkenalkan di :numref:`sec_mlp`) untuk memetakan nilai input ke interval $(0, 1)$.
 
 
-### Input Node
 
-Next we design the memory cell. 
-Since we have not specified the action of the various gates yet, 
-we first introduce the *input node* 
-$\tilde{\mathbf{C}}_t \in \mathbb{R}^{n \times h}$.
-Its computation is similar to that of the three gates described above, 
-but uses a $\tanh$ function with a value range for $(-1, 1)$ as the activation function. 
-This leads to the following equation at time step $t$:
+### Node Input
+
+Selanjutnya kita merancang *memory cell*. Karena kita belum menetapkan tindakan dari berbagai *gate*, kita pertama-tama memperkenalkan *input node* $\tilde{\mathbf{C}}_t \in \mathbb{R}^{n \times h}$. Perhitungannya mirip dengan tiga *gate* yang dijelaskan di atas, tetapi menggunakan fungsi $\tanh$ dengan rentang nilai $(-1, 1)$ sebagai fungsi aktivasi. Hal ini mengarah pada persamaan berikut pada *time step* $t$:
 
 $$\tilde{\mathbf{C}}_t = \textrm{tanh}(\mathbf{X}_t \mathbf{W}_{\textrm{xc}} + \mathbf{H}_{t-1} \mathbf{W}_{\textrm{hc}} + \mathbf{b}_\textrm{c}),$$
 
-where $\mathbf{W}_{\textrm{xc}} \in \mathbb{R}^{d \times h}$ and $\mathbf{W}_{\textrm{hc}} \in \mathbb{R}^{h \times h}$ are weight parameters and $\mathbf{b}_\textrm{c} \in \mathbb{R}^{1 \times h}$ is a bias parameter.
+dengan $\mathbf{W}_{\textrm{xc}} \in \mathbb{R}^{d \times h}$ dan $\mathbf{W}_{\textrm{hc}} \in \mathbb{R}^{h \times h}$ adalah parameter bobot, dan $\mathbf{b}_\textrm{c} \in \mathbb{R}^{1 \times h}$ adalah parameter bias.
 
-A quick illustration of the input node is shown in :numref:`fig_lstm_1`.
+Ilustrasi singkat dari *input node* ditampilkan di :numref:`fig_lstm_1`.
 
-![Computing the input node in an LSTM model.](../img/lstm-1.svg)
+![Menghitung *input node* dalam model LSTM.](../img/lstm-1.svg)
 :label:`fig_lstm_1`
 
 
-### Memory Cell Internal State
+### Internal State *Memory Cell*
 
-In LSTMs, the input gate $\mathbf{I}_t$ governs 
-how much we take new data into account via $\tilde{\mathbf{C}}_t$ 
-and the forget gate $\mathbf{F}_t$ addresses 
-how much of the old cell internal state $\mathbf{C}_{t-1} \in \mathbb{R}^{n \times h}$ we retain. 
-Using the Hadamard (elementwise) product operator $\odot$
-we arrive at the following update equation:
+Pada LSTM, *input gate* $\mathbf{I}_t$ mengatur seberapa banyak data baru yang kita perhitungkan melalui $\tilde{\mathbf{C}}_t$, dan *forget gate* $\mathbf{F}_t$ menentukan seberapa banyak keadaan internal *memory cell* lama $\mathbf{C}_{t-1} \in \mathbb{R}^{n \times h}$ yang kita pertahankan. Menggunakan operator *Hadamard* (perkalian elemen demi elemen) $\odot$, kita tiba pada persamaan pembaruan berikut:
 
 $$\mathbf{C}_t = \mathbf{F}_t \odot \mathbf{C}_{t-1} + \mathbf{I}_t \odot \tilde{\mathbf{C}}_t.$$
 
-If the forget gate is always 1 and the input gate is always 0, 
-the memory cell internal state $\mathbf{C}_{t-1}$
-will remain constant forever, 
-passing unchanged to each subsequent time step.
-However, input gates and forget gates
-give the model the flexibility of being able to learn 
-when to keep this value unchanged
-and when to perturb it in response 
-to subsequent inputs. 
-In practice, this design alleviates the vanishing gradient problem,
-resulting in models that are much easier to train,
-especially when facing datasets with long sequence lengths. 
+Jika *forget gate* selalu 1 dan *input gate* selalu 0, *internal state memory cell* $\mathbf{C}_{t-1}$ akan tetap konstan selamanya, diteruskan tanpa perubahan ke setiap *time step* berikutnya. Namun, *input gate* dan *forget gate* memberikan fleksibilitas pada model untuk mempelajari kapan harus mempertahankan nilai ini tetap tidak berubah dan kapan harus mengganggunya sebagai respons terhadap input berikutnya. Secara praktik, desain ini mengurangi masalah *vanishing gradient*, sehingga menghasilkan model yang jauh lebih mudah untuk dilatih, terutama ketika berhadapan dengan dataset dengan panjang urutan yang besar.
 
-We thus arrive at the flow diagram in :numref:`fig_lstm_2`.
+Kita akhirnya sampai pada diagram aliran pada :numref:`fig_lstm_2`.
 
-![Computing the memory cell internal state in an LSTM model.](../img/lstm-2.svg)
+![Menghitung keadaan internal *memory cell* dalam model LSTM.](../img/lstm-2.svg)
 
 :label:`fig_lstm_2`
 
 
-### Hidden State
 
-Last, we need to define how to compute the output
-of the memory cell, i.e., the hidden state $\mathbf{H}_t \in \mathbb{R}^{n \times h}$, as seen by other layers. 
-This is where the output gate comes into play.
-In LSTMs, we first apply $\tanh$ to the memory cell internal state
-and then apply another point-wise multiplication,
-this time with the output gate.
-This ensures that the values of $\mathbf{H}_t$ 
-are always in the interval $(-1, 1)$:
+### Keadaan Tersembunyi (Hidden State)
+
+Terakhir, kita perlu mendefinisikan bagaimana menghitung keluaran dari *memory cell*, yaitu keadaan tersembunyi $\mathbf{H}_t \in \mathbb{R}^{n \times h}$, seperti yang terlihat oleh lapisan lainnya. Di sinilah *output gate* berperan. Pada LSTM, kita pertama-tama menerapkan $\tanh$ pada keadaan internal *memory cell* dan kemudian menerapkan perkalian elemen demi elemen lainnya, kali ini dengan *output gate*. Ini memastikan bahwa nilai $\mathbf{H}_t$ selalu berada dalam interval $(-1, 1)$:
 
 $$\mathbf{H}_t = \mathbf{O}_t \odot \tanh(\mathbf{C}_t).$$
 
 
-Whenever the output gate is close to 1, 
-we allow the memory cell internal state to impact the subsequent layers uninhibited,
-whereas for output gate values close to 0,
-we prevent the current memory from impacting other layers of the network
-at the current time step. 
-Note that a memory cell can accrue information 
-across many time steps without impacting the rest of the network
-(as long as the output gate takes values close to 0),
-and then suddenly impact the network at a subsequent time step
-as soon as the output gate flips from values close to 0
-to values close to 1. :numref:`fig_lstm_3` has a graphical illustration of the data flow.
+Kapan pun *output gate* mendekati nilai 1, kita memungkinkan keadaan internal *memory cell* memengaruhi lapisan berikutnya tanpa hambatan, sedangkan untuk nilai *output gate* yang mendekati 0, kita mencegah memori saat ini memengaruhi lapisan lain dalam jaringan pada *time step* saat ini. Perhatikan bahwa sebuah *memory cell* dapat mengumpulkan informasi melintasi banyak *time step* tanpa memengaruhi sisa jaringan (selama *output gate* mengambil nilai mendekati 0), dan kemudian tiba-tiba memengaruhi jaringan pada *time step* berikutnya begitu *output gate* beralih dari nilai mendekati 0 ke nilai mendekati 1. :numref:`fig_lstm_3` memberikan ilustrasi grafis dari aliran data.
 
-![Computing the hidden state in an LSTM model.](../img/lstm-3.svg)
+![Menghitung keadaan tersembunyi dalam model LSTM.](../img/lstm-3.svg)
 :label:`fig_lstm_3`
 
 
 
-## Implementation from Scratch
+## Implementasi dari Awal
 
-Now let's implement an LSTM from scratch.
-As same as the experiments in :numref:`sec_rnn-scratch`,
-we first load *The Time Machine* dataset.
+Sekarang mari kita implementasikan LSTM dari awal.
+Sama seperti eksperimen di :numref:`sec_rnn-scratch`, kita pertama-tama memuat dataset *The Time Machine*.
 
-### [**Initializing Model Parameters**]
+### [**Inisialisasi Parameter Model**]
 
-Next, we need to define and initialize the model parameters. 
-As previously, the hyperparameter `num_hiddens` 
-dictates the number of hidden units.
-We initialize weights following a Gaussian distribution
-with 0.01 standard deviation, 
-and we set the biases to 0.
+Selanjutnya, kita perlu mendefinisikan dan menginisialisasi parameter model. 
+Seperti sebelumnya, hiperparameter `num_hiddens` menentukan jumlah unit tersembunyi. 
+Kita menginisialisasi bobot menggunakan distribusi Gaussian dengan deviasi standar 0.01, 
+dan kita menetapkan nilai bias menjadi 0.
+
+
 
 ```{.python .input}
 %%tab pytorch, mxnet, tensorflow
@@ -302,23 +181,18 @@ class LSTMScratch(d2l.Module):
 ```
 
 :begin_tab:`pytorch, mxnet, tensorflow`
-[**The actual model**] is defined as described above,
-consisting of three gates and an input node. 
-Note that only the hidden state is passed to the output layer.
+[**Model aktual**] didefinisikan seperti yang dijelaskan di atas,
+terdiri dari tiga gerbang dan sebuah node input.
+Perlu dicatat bahwa hanya state tersembunyi yang diteruskan ke layer output.
 :end_tab:
 
 :begin_tab:`jax`
-[**The actual model**] is defined as described above,
-consisting of three gates and an input node. 
-Note that only the hidden state is passed to the output layer.
-A long for-loop in the `forward` method will result in an extremely long
-JIT compilation time for the first run. As a solution to this, instead
-of using a for-loop to update the state with every time step,
-JAX has `jax.lax.scan` utility transformation to achieve the same behavior.
-It takes in an initial state called `carry` and an `inputs` array which
-is scanned on its leading axis. The `scan` transformation ultimately
-returns the final state and the stacked outputs as expected.
+[**Model aktual**] didefinisikan seperti yang dijelaskan di atas,
+terdiri dari tiga gerbang dan sebuah node input.
+Perlu dicatat bahwa hanya state tersembunyi yang diteruskan ke layer output.
+Loop for yang panjang dalam metode `forward` akan menghasilkan waktu JIT compilation yang sangat lama untuk run pertama. Sebagai solusi untuk ini, daripada menggunakan loop for untuk memperbarui state di setiap time step, JAX memiliki utilitas transformasi `jax.lax.scan` untuk mencapai perilaku yang sama. `scan` ini mengambil state awal yang disebut `carry` dan array `inputs` yang akan di-scan pada axis terdepannya. Transformasi `scan` ini pada akhirnya akan mengembalikan state akhir dan output yang sudah ditumpuk seperti yang diharapkan.
 :end_tab:
+
 
 ```{.python .input}
 %%tab pytorch, mxnet, tensorflow
@@ -389,9 +263,9 @@ def forward(self, inputs, H_C=None):
     return outputs, carry
 ```
 
-### [**Training**] and Prediction
+### [**Pelatihan**] dan Prediksi
 
-Let's train an LSTM model by instantiating the `RNNLMScratch` class from :numref:`sec_rnn-scratch`.
+Mari kita latih model LSTM dengan membuat instans dari kelas `RNNLMScratch` dari :numref:`sec_rnn-scratch`.
 
 ```{.python .input}
 %%tab all
@@ -408,15 +282,16 @@ if tab.selected('tensorflow'):
 trainer.fit(model, data)
 ```
 
-## [**Concise Implementation**]
+## [**Implementasi Ringkas**]
 
-Using high-level APIs,
-we can directly instantiate an LSTM model.
-This encapsulates all the configuration details 
-that we made explicit above. 
-The code is significantly faster as it uses 
-compiled operators rather than Python
-for many details that we spelled out before.
+Dengan menggunakan API tingkat tinggi,
+kita dapat langsung membuat instans model LSTM.
+Ini mengenkapsulasi semua detail konfigurasi
+yang telah kita jelaskan sebelumnya.
+Kodenya secara signifikan lebih cepat karena menggunakan
+operator yang telah dikompilasi daripada Python
+untuk banyak detail yang sebelumnya telah kita uraikan.
+
 
 ```{.python .input}
 %%tab mxnet
@@ -508,52 +383,50 @@ model.predict('it has', 20, data.vocab)
 model.predict('it has', 20, data.vocab, trainer.state.params)
 ```
 
-LSTMs are the prototypical latent variable autoregressive model with nontrivial state control.
-Many variants thereof have been proposed over the years, e.g., multiple layers, residual connections, different types of regularization. However, training LSTMs and other sequence models (such as GRUs) is quite costly because of the long range dependency of the sequence.
-Later we will encounter alternative models such as Transformers that can be used in some cases.
+LSTM adalah model autoregresif dengan variabel laten yang prototipikal dengan kontrol status yang tidak sepele.
+Banyak variannya telah diusulkan selama bertahun-tahun, misalnya, beberapa lapisan, koneksi residual, dan berbagai jenis regularisasi. Namun, pelatihan LSTM dan model urutan lainnya (seperti GRU) cukup mahal karena ketergantungan urutan yang panjang.
+Nantinya kita akan menemukan model alternatif seperti Transformer yang dapat digunakan dalam beberapa kasus.
 
 
-## Summary
+## Ringkasan
 
-While LSTMs were published in 1997, 
-they rose to great prominence 
-with some victories in prediction competitions in the mid-2000s,
-and became the dominant models for sequence learning from 2011 
-until the rise of Transformer models, starting in 2017.
-Even Tranformers owe some of their key ideas 
-to architecture design innovations introduced by the LSTM.
+Meskipun LSTM diterbitkan pada tahun 1997,
+model ini meraih popularitas besar
+dengan beberapa kemenangan dalam kompetisi prediksi di pertengahan tahun 2000-an,
+dan menjadi model dominan untuk pembelajaran urutan dari tahun 2011
+hingga munculnya model Transformer, dimulai pada tahun 2017.
+Bahkan Transformer memiliki beberapa ide kunci yang diilhami oleh
+inovasi desain arsitektur yang diperkenalkan oleh LSTM.
 
-
-LSTMs have three types of gates: 
-input gates, forget gates, and output gates 
-that control the flow of information.
-The hidden layer output of LSTM includes the hidden state and the memory cell internal state. 
-Only the hidden state is passed into the output layer while 
-the memory cell internal state remains entirely internal.
-LSTMs can alleviate vanishing and exploding gradients.
-
+LSTM memiliki tiga jenis gerbang:
+gerbang input, gerbang lupa, dan gerbang output
+yang mengontrol aliran informasi.
+Output lapisan tersembunyi dari LSTM mencakup status tersembunyi dan status internal memori sel.
+Hanya status tersembunyi yang diteruskan ke lapisan output, sedangkan
+status internal memori sel tetap sepenuhnya internal.
+LSTM dapat mengatasi gradien yang menghilang dan meledak.
 
 
-## Exercises
+## Latihan
 
-1. Adjust the hyperparameters and analyze their influence on running time, perplexity, and the output sequence.
-1. How would you need to change the model to generate proper words rather than just sequences of characters?
-1. Compare the computational cost for GRUs, LSTMs, and regular RNNs for a given hidden dimension. Pay special attention to the training and inference cost.
-1. Since the candidate memory cell ensures that the value range is between $-1$ and $1$ by  using the $\tanh$ function, why does the hidden state need to use the $\tanh$ function again to ensure that the output value range is between $-1$ and $1$?
-1. Implement an LSTM model for time series prediction rather than character sequence prediction.
+1. Sesuaikan hyperparameter dan analisis pengaruhnya terhadap waktu pelatihan, perplexity, dan urutan keluaran.
+2. Bagaimana Anda perlu mengubah model untuk menghasilkan kata yang tepat daripada hanya urutan karakter?
+3. Bandingkan biaya komputasi untuk GRU, LSTM, dan RNN biasa untuk dimensi tersembunyi yang sama. Perhatikan secara khusus biaya pelatihan dan inferensi.
+4. Karena memori sel kandidat memastikan bahwa rentang nilai berada di antara $-1$ dan $1$ dengan menggunakan fungsi $\tanh$, mengapa status tersembunyi perlu menggunakan fungsi $\tanh$ lagi untuk memastikan bahwa rentang nilai keluaran berada di antara $-1$ dan $1$?
+5. Implementasikan model LSTM untuk prediksi deret waktu daripada prediksi urutan karakter.
 
 :begin_tab:`mxnet`
-[Discussions](https://discuss.d2l.ai/t/343)
+[Diskusi](https://discuss.d2l.ai/t/343)
 :end_tab:
 
 :begin_tab:`pytorch`
-[Discussions](https://discuss.d2l.ai/t/1057)
+[Diskusi](https://discuss.d2l.ai/t/1057)
 :end_tab:
 
 :begin_tab:`tensorflow`
-[Discussions](https://discuss.d2l.ai/t/3861)
+[Diskusi](https://discuss.d2l.ai/t/3861)
 :end_tab:
 
 :begin_tab:`jax`
-[Discussions](https://discuss.d2l.ai/t/18016)
+[Diskusi](https://discuss.d2l.ai/t/18016)
 :end_tab:
