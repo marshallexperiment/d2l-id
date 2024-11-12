@@ -1,26 +1,26 @@
-# Language Models
+# Model Bahasa
 :label:`sec_language-model`
 
-In :numref:`sec_text-sequence`, we saw how to map text sequences into tokens, where these tokens can be viewed as a sequence of discrete observations such as words or characters. Assume that the tokens in a text sequence of length $T$ are in turn $x_1, x_2, \ldots, x_T$.
-The goal of *language models*
-is to estimate the joint probability of the whole sequence:
+Di :numref:`sec_text-sequence`, kita telah melihat cara memetakan urutan teks menjadi token, di mana token-token ini dapat dilihat sebagai urutan observasi diskrit seperti kata atau karakter. Misalkan token-token dalam urutan teks dengan panjang $T$ adalah $x_1, x_2, \ldots, x_T$.
+Tujuan dari *model bahasa* adalah untuk memperkirakan probabilitas gabungan dari seluruh urutan:
 
 $$P(x_1, x_2, \ldots, x_T),$$
 
-where statistical tools
-in :numref:`sec_sequence`
-can be applied.
+di mana alat-alat statistik
+di :numref:`sec_sequence`
+dapat diterapkan.
 
-Language models are incredibly useful. For instance, an ideal language model should generate natural text on its own, simply by drawing one token at a time $x_t \sim P(x_t \mid x_{t-1}, \ldots, x_1)$.
-Quite unlike the monkey using a typewriter, all text emerging from such a model would pass as natural language, e.g., English text. Furthermore, it would be sufficient for generating a meaningful dialog, simply by conditioning the text on previous dialog fragments.
-Clearly we are still very far from designing such a system, since it would need to *understand* the text rather than just generate grammatically sensible content.
+Model bahasa sangat bermanfaat. Misalnya, model bahasa yang ideal seharusnya dapat menghasilkan teks alami dengan sendirinya, hanya dengan mengambil satu token pada satu waktu $x_t \sim P(x_t \mid x_{t-1}, \ldots, x_1)$.
+Berbeda dengan monyet yang menggunakan mesin tik, semua teks yang dihasilkan oleh model ini akan tampak sebagai bahasa alami, misalnya, teks bahasa Inggris. Selain itu, model ini akan cukup untuk menghasilkan dialog yang bermakna, hanya dengan memberikan teks berdasarkan fragmen dialog sebelumnya.
+Jelas kita masih jauh dari merancang sistem seperti itu, karena model ini perlu *memahami* teks, bukan hanya menghasilkan konten yang masuk akal secara tata bahasa.
 
-Nonetheless, language models are of great service even in their limited form.
-For instance, the phrases "to recognize speech" and "to wreck a nice beach" sound very similar.
-This can cause ambiguity in speech recognition,
-which is easily resolved through a language model that rejects the second translation as outlandish.
-Likewise, in a document summarization algorithm
-it is worthwhile knowing that "dog bites man" is much more frequent than "man bites dog", or that "I want to eat grandma" is a rather disturbing statement, whereas "I want to eat, grandma" is much more benign.
+Meskipun demikian, model bahasa sudah sangat berguna bahkan dalam bentuk yang terbatas.
+Sebagai contoh, frasa "to recognize speech" dan "to wreck a nice beach" terdengar sangat mirip.
+Hal ini dapat menyebabkan ambiguitas dalam pengenalan suara,
+yang dapat dengan mudah diselesaikan dengan model bahasa yang menolak terjemahan kedua sebagai sesuatu yang tidak masuk akal.
+Demikian pula, dalam algoritma untuk merangkum dokumen,
+mengetahui bahwa "dog bites man" jauh lebih umum daripada "man bites dog" atau bahwa "I want to eat grandma" adalah pernyataan yang cukup mengganggu, sementara "I want to eat, grandma" jauh lebih ramah, adalah sesuatu yang sangat berharga.
+
 
 ```{.python .input  n=1}
 %load_ext d2lbook.tab
@@ -52,26 +52,27 @@ from d2l import jax as d2l
 from jax import numpy as jnp
 ```
 
-## Learning Language Models
+## Mempelajari Model Bahasa
 
-The obvious question is how we should model a document, or even a sequence of tokens. 
-Suppose that we tokenize text data at the word level.
-Let's start by applying basic probability rules:
+Pertanyaan yang jelas adalah bagaimana kita seharusnya memodelkan sebuah dokumen, atau bahkan sebuah urutan token. 
+Misalkan kita melakukan tokenisasi data teks pada tingkat kata.
+Mari kita mulai dengan menerapkan aturan dasar probabilitas:
+
 
 $$P(x_1, x_2, \ldots, x_T) = \prod_{t=1}^T P(x_t  \mid  x_1, \ldots, x_{t-1}).$$
 
-For example, 
-the probability of a text sequence containing four words would be given as:
+Sebagai contoh, 
+probabilitas dari urutan teks yang mengandung empat kata dapat diberikan sebagai:
 
 $$\begin{aligned}&P(\textrm{deep}, \textrm{learning}, \textrm{is}, \textrm{fun}) \\
 =&P(\textrm{deep}) P(\textrm{learning}  \mid  \textrm{deep}) P(\textrm{is}  \mid  \textrm{deep}, \textrm{learning}) P(\textrm{fun}  \mid  \textrm{deep}, \textrm{learning}, \textrm{is}).\end{aligned}$$
 
-### Markov Models and $n$-grams
+### Model Markov dan $n$-gram
 :label:`subsec_markov-models-and-n-grams`
 
-Among those sequence model analyses in :numref:`sec_sequence`,
-let's apply Markov models to language modeling.
-A distribution over sequences satisfies the Markov property of first order if $P(x_{t+1} \mid x_t, \ldots, x_1) = P(x_{t+1} \mid x_t)$. Higher orders correspond to longer dependencies. This leads to a number of approximations that we could apply to model a sequence:
+Di antara analisis model urutan di :numref:`sec_sequence`,
+mari kita terapkan model Markov pada pemodelan bahasa.
+Sebuah distribusi pada urutan memenuhi properti Markov ordo pertama jika $P(x_{t+1} \mid x_t, \ldots, x_1) = P(x_{t+1} \mid x_t)$. Ordo yang lebih tinggi menunjukkan ketergantungan yang lebih panjang. Ini mengarah pada beberapa pendekatan yang dapat kita terapkan untuk memodelkan sebuah urutan:
 
 $$
 \begin{aligned}
@@ -81,57 +82,53 @@ P(x_1, x_2, x_3, x_4) &=  P(x_1) P(x_2  \mid  x_1) P(x_3  \mid  x_1, x_2) P(x_4 
 \end{aligned}
 $$
 
-The probability formulae that involve one, two, and three variables are typically referred to as *unigram*, *bigram*, and *trigram* models, respectively. 
-In order to compute the language model, we need to calculate the
-probability of words and the conditional probability of a word given
-the previous few words.
-Note that
-such probabilities are
-language model parameters.
+Formula probabilitas yang melibatkan satu, dua, dan tiga variabel biasanya disebut sebagai model *unigram*, *bigram*, dan *trigram*. 
+Untuk menghitung model bahasa, kita perlu menghitung
+probabilitas kata dan probabilitas bersyarat suatu kata dengan
+beberapa kata sebelumnya.
+Perhatikan bahwa
+probabilitas semacam itu merupakan
+parameter model bahasa.
 
 
 
-### Word Frequency
+### Frekuensi Kata
 
-Here, we
-assume that the training dataset is a large text corpus, such as all
-Wikipedia entries, [Project Gutenberg](https://en.wikipedia.org/wiki/Project_Gutenberg),
-and all text posted on the
-web.
-The probability of words can be calculated from the relative word
-frequency of a given word in the training dataset.
-For example, the estimate $\hat{P}(\textrm{deep})$ can be calculated as the
-probability of any sentence starting with the word "deep". A
-slightly less accurate approach would be to count all occurrences of
-the word "deep" and divide it by the total number of words in
-the corpus.
-This works fairly well, particularly for frequent
-words. Moving on, we could attempt to estimate
+Di sini, kita mengasumsikan bahwa dataset pelatihan adalah korpus teks yang besar, seperti semua
+entri Wikipedia, [Project Gutenberg](https://en.wikipedia.org/wiki/Project_Gutenberg),
+dan semua teks yang diposting di
+internet.
+Probabilitas kata dapat dihitung dari frekuensi kata relatif dari kata yang diberikan dalam dataset pelatihan.
+Sebagai contoh, estimasi $\hat{P}(\textrm{deep})$ dapat dihitung sebagai
+probabilitas dari setiap kalimat yang dimulai dengan kata "deep". Pendekatan
+yang sedikit kurang akurat adalah dengan menghitung semua kemunculan
+kata "deep" dan membaginya dengan jumlah total kata dalam
+korpus.
+Ini bekerja cukup baik, terutama untuk kata-kata yang sering muncul. Selanjutnya, kita bisa mencoba mengestimasi
 
 $$\hat{P}(\textrm{learning} \mid \textrm{deep}) = \frac{n(\textrm{deep, learning})}{n(\textrm{deep})},$$
 
-where $n(x)$ and $n(x, x')$ are the number of occurrences of singletons
-and consecutive word pairs, respectively.
-Unfortunately, 
-estimating the
-probability of a word pair is somewhat more difficult, since the
-occurrences of "deep learning" are a lot less frequent. 
-In particular, for some unusual word combinations it may be tricky to
-find enough occurrences to get accurate estimates.
-As suggested by the empirical results in :numref:`subsec_natural-lang-stat`,
-things take a turn for the worse for three-word combinations and beyond.
-There will be many plausible three-word combinations that we likely will not see in our dataset.
-Unless we provide some solution to assign such word combinations a nonzero count, we will not be able to use them in a language model. If the dataset is small or if the words are very rare, we might not find even a single one of them.
+di mana $n(x)$ dan $n(x, x')$ adalah jumlah kemunculan dari satu kata
+dan pasangan kata berturut-turut, masing-masing.
+Sayangnya, 
+mengestimasi probabilitas pasangan kata lebih sulit, karena
+kemunculan "deep learning" jauh lebih jarang. 
+Secara khusus, untuk beberapa kombinasi kata yang tidak biasa, mungkin sulit untuk
+menemukan cukup banyak kemunculan untuk mendapatkan estimasi yang akurat.
+Seperti yang ditunjukkan oleh hasil empiris di :numref:`subsec_natural-lang-stat`,
+situasinya menjadi lebih buruk untuk kombinasi tiga kata atau lebih.
+Akan ada banyak kombinasi tiga kata yang masuk akal namun kemungkinan besar tidak ada dalam dataset kita.
+Kecuali kita memberikan solusi untuk memberi kombinasi kata tersebut jumlah yang tidak nol, kita tidak akan dapat menggunakannya dalam model bahasa. Jika datasetnya kecil atau jika kata-katanya sangat jarang, mungkin kita tidak menemukan satu pun dari kombinasi tersebut.
+
 
 ### Laplace Smoothing
 
-A common strategy is to perform some form of *Laplace smoothing*.
-The solution is to
-add a small constant to all counts. 
-Denote by $n$ the total number of words in
-the training set
-and $m$ the number of unique words.
-This solution helps with singletons, e.g., via
+Salah satu strategi umum adalah melakukan beberapa bentuk *Laplace smoothing*.
+Solusinya adalah menambahkan konstanta kecil pada semua jumlah kemunculan.
+Misalkan $n$ adalah jumlah total kata dalam
+set pelatihan
+dan $m$ adalah jumlah kata unik.
+Solusi ini membantu menangani kata yang muncul hanya sekali, misalnya melalui
 
 $$\begin{aligned}
 	\hat{P}(x) & = \frac{n(x) + \epsilon_1/m}{n + \epsilon_1}, \\
@@ -139,128 +136,120 @@ $$\begin{aligned}
 	\hat{P}(x'' \mid x,x') & = \frac{n(x, x',x'') + \epsilon_3 \hat{P}(x'')}{n(x, x') + \epsilon_3}.
 \end{aligned}$$
 
-Here $\epsilon_1,\epsilon_2$, and $\epsilon_3$ are hyperparameters.
-Take $\epsilon_1$ as an example:
-when $\epsilon_1 = 0$, no smoothing is applied;
-when $\epsilon_1$ approaches positive infinity,
-$\hat{P}(x)$ approaches the uniform probability $1/m$. 
-The above is a rather primitive variant of what
-other techniques can accomplish :cite:`Wood.Gasthaus.Archambeau.ea.2011`.
+Di sini $\epsilon_1,\epsilon_2$, dan $\epsilon_3$ adalah *hyperparameter*.
+Ambil contoh $\epsilon_1$: ketika $\epsilon_1 = 0$, tidak ada *smoothing* yang diterapkan; 
+ketika $\epsilon_1$ mendekati tak terhingga positif, 
+$\hat{P}(x)$ mendekati probabilitas seragam $1/m$. 
+Pendekatan di atas adalah varian yang cukup sederhana dari apa yang dapat dicapai oleh teknik lainnya :cite:`Wood.Gasthaus.Archambeau.ea.2011`.
 
-
-Unfortunately, models like this get unwieldy rather quickly
-for the following reasons. 
-First, 
-as discussed in :numref:`subsec_natural-lang-stat`,
-many $n$-grams occur very rarely, 
-making Laplace smoothing rather unsuitable for language modeling.
-Second, we need to store all counts.
-Third, this entirely ignores the meaning of the words. For
-instance, "cat" and "feline" should occur in related contexts.
-It is quite difficult to adjust such models to additional contexts,
-whereas, deep learning based language models are well suited to
-take this into account.
-Last, long word
-sequences are almost certain to be novel, hence a model that simply
-counts the frequency of previously seen word sequences is bound to perform poorly there.
-Therefore, we focus on using neural networks for language modeling
-in the rest of the chapter.
+Sayangnya, model seperti ini menjadi sulit digunakan dengan cepat
+karena alasan berikut.
+Pertama, 
+seperti dibahas di :numref:`subsec_natural-lang-stat`,
+banyak $n$-gram sangat jarang muncul, 
+membuat *Laplace smoothing* kurang cocok untuk pemodelan bahasa.
+Kedua, kita perlu menyimpan semua jumlah kemunculan.
+Ketiga, model ini sepenuhnya mengabaikan makna kata. Sebagai contoh, "cat" dan "feline" seharusnya muncul dalam konteks yang berhubungan.
+Sangat sulit untuk menyesuaikan model semacam ini dengan konteks tambahan, 
+sementara model bahasa berbasis pembelajaran mendalam sangat cocok untuk mempertimbangkan hal tersebut.
+Terakhir, urutan kata yang panjang hampir pasti akan baru, sehingga model yang hanya menghitung frekuensi urutan kata yang telah dilihat sebelumnya cenderung berkinerja buruk di sini.
+Oleh karena itu, kita akan fokus menggunakan jaringan saraf untuk pemodelan bahasa pada sisa bab ini.
 
 
 ## Perplexity
 :label:`subsec_perplexity`
 
-Next, let's discuss about how to measure the quality of the language model, which we will then use to evaluate our models in the subsequent sections.
-One way is to check how surprising the text is.
-A good language model is able to predict, with high accuracy, the tokens that come next.
-Consider the following continuations of the phrase "It is raining", as proposed by different language models:
+Selanjutnya, mari kita bahas bagaimana cara mengukur kualitas model bahasa, yang nantinya akan kita gunakan untuk mengevaluasi model kita di bagian selanjutnya.
+Salah satu caranya adalah dengan melihat seberapa mengejutkan teks tersebut.
+Model bahasa yang baik dapat memprediksi dengan akurasi tinggi token yang akan datang.
+Pertimbangkan kelanjutan berikut dari frasa "It is raining", yang diusulkan oleh berbagai model bahasa:
 
 1. "It is raining outside"
-1. "It is raining banana tree"
-1. "It is raining piouw;kcj pwepoiut"
+2. "It is raining banana tree"
+3. "It is raining piouw;kcj pwepoiut"
 
-In terms of quality, Example 1 is clearly the best. The words are sensible and logically coherent.
-While it might not quite accurately reflect which word follows semantically ("in San Francisco" and "in winter" would have been perfectly reasonable extensions), the model is able to capture which kind of word follows.
-Example 2 is considerably worse by producing a nonsensical extension. Nonetheless, at least the model has learned how to spell words and some degree of correlation between words. Last, Example 3 indicates a poorly trained model that does not fit data properly.
+Dari segi kualitas, Contoh 1 jelas yang terbaik. Kata-katanya masuk akal dan koheren secara logis.
+Meskipun tidak sepenuhnya mencerminkan kata apa yang secara semantis mengikuti frasa tersebut ("in San Francisco" atau "in winter" akan menjadi kelanjutan yang masuk akal), model ini mampu menangkap jenis kata yang mungkin muncul berikutnya.
+Contoh 2 jauh lebih buruk karena menghasilkan kelanjutan yang tidak masuk akal. Namun, setidaknya model telah belajar cara mengeja kata dan beberapa korelasi antara kata-kata.
+Terakhir, Contoh 3 menunjukkan model yang dilatih dengan buruk dan tidak sesuai dengan data.
 
-We might measure the quality of the model by computing  the likelihood of the sequence.
-Unfortunately this is a number that is hard to understand and difficult to compare.
-After all, shorter sequences are much more likely to occur than the longer ones,
-hence evaluating the model on Tolstoy's magnum opus
-*War and Peace* will inevitably produce a much smaller likelihood than, say, on Saint-Exupery's novella *The Little Prince*. What is missing is the equivalent of an average.
+Kita dapat mengukur kualitas model dengan menghitung *likelihood* dari urutan tersebut.
+Sayangnya, ini adalah angka yang sulit dipahami dan sulit dibandingkan.
+Lagi pula, urutan yang lebih pendek jauh lebih mungkin terjadi daripada urutan yang lebih panjang,
+sehingga mengevaluasi model pada karya utama Tolstoy 
+*War and Peace* akan menghasilkan *likelihood* yang jauh lebih kecil daripada, misalnya, pada novel pendek Saint-Exupery *The Little Prince*. Yang kurang adalah semacam rata-rata.
 
-Information theory comes handy here.
-We defined entropy, surprisal, and cross-entropy
-when we introduced the softmax regression
+Teori informasi sangat membantu di sini.
+Kita telah mendefinisikan entropi, *surprisal*, dan *cross-entropy*
+saat memperkenalkan regresi softmax
 (:numref:`subsec_info_theory_basics`).
-If we want to compress text, we can ask about
-predicting the next token given the current set of tokens.
-A better language model should allow us to predict the next token more accurately.
-Thus, it should allow us to spend fewer bits in compressing the sequence.
-So we can measure it by the cross-entropy loss averaged
-over all the $n$ tokens of a sequence:
+Jika kita ingin mengompresi teks, kita dapat menanyakan tentang
+memperkirakan token berikutnya berdasarkan rangkaian token saat ini.
+Model bahasa yang lebih baik memungkinkan kita memprediksi token berikutnya dengan lebih akurat.
+Dengan demikian, model tersebut memungkinkan kita untuk menggunakan lebih sedikit bit dalam mengompresi urutan tersebut.
+Jadi kita dapat mengukurnya melalui *cross-entropy loss* yang dirata-ratakan
+untuk semua $n$ token dalam urutan:
 
 $$\frac{1}{n} \sum_{t=1}^n -\log P(x_t \mid x_{t-1}, \ldots, x_1),$$
 :eqlabel:`eq_avg_ce_for_lm`
 
-where $P$ is given by a language model and $x_t$ is the actual token observed at time step $t$ from the sequence.
-This makes the performance on documents of different lengths comparable. For historical reasons, scientists in natural language processing prefer to use a quantity called *perplexity*. In a nutshell, it is the exponential of :eqref:`eq_avg_ce_for_lm`:
+di mana $P$ diberikan oleh model bahasa dan $x_t$ adalah token aktual yang diamati pada langkah waktu $t$ dalam urutan.
+Ini membuat kinerja pada dokumen dengan panjang yang berbeda menjadi sebanding. Untuk alasan historis, para peneliti dalam pemrosesan bahasa alami lebih suka menggunakan kuantitas yang disebut *perplexity*. Singkatnya, *perplexity* adalah eksponensial dari :eqref:`eq_avg_ce_for_lm`:
 
 $$\exp\left(-\frac{1}{n} \sum_{t=1}^n \log P(x_t \mid x_{t-1}, \ldots, x_1)\right).$$
 
-Perplexity can be best understood as the reciprocal of the geometric mean of the number of real choices that we have when deciding which token to pick next. Let's look at a number of cases:
+Perplexity dapat dipahami sebagai kebalikan dari rata-rata geometrik jumlah pilihan nyata yang kita miliki saat memutuskan token mana yang akan dipilih berikutnya. Mari kita lihat beberapa kasus:
 
-* In the best case scenario, the model always perfectly estimates the probability of the target token as 1. In this case the perplexity of the model is 1.
-* In the worst case scenario, the model always predicts the probability of the target token as 0. In this situation, the perplexity is positive infinity.
-* At the baseline, the model predicts a uniform distribution over all the available tokens of the vocabulary. In this case, the perplexity equals the number of unique tokens of the vocabulary. In fact, if we were to store the sequence without any compression, this would be the best we could do for encoding it. Hence, this provides a nontrivial upper bound that any useful model must beat.
+* Dalam skenario terbaik, model selalu memperkirakan probabilitas token target sebagai 1. Dalam kasus ini, *perplexity* model adalah 1.
+* Dalam skenario terburuk, model selalu memperkirakan probabilitas token target sebagai 0. Dalam situasi ini, *perplexity* adalah tak terhingga positif.
+* Pada *baseline*, model memperkirakan distribusi seragam untuk semua token yang tersedia dalam kosakata. Dalam kasus ini, *perplexity* sama dengan jumlah token unik dalam kosakata. Faktanya, jika kita ingin menyimpan urutan tanpa kompresi apa pun, ini akan menjadi yang terbaik yang dapat kita lakukan untuk mengkodekannya. Oleh karena itu, ini memberikan batas atas yang tidak sepele yang harus dilampaui oleh model yang berguna.
 
-## Partitioning Sequences
+
+## Memisahkan Urutan
 :label:`subsec_partitioning-seqs`
 
-We will design language models using neural networks
-and use perplexity to evaluate 
-how good the model is at 
-predicting the next token given the current set of tokens
-in text sequences.
-Before introducing the model,
-let's assume that it
-processes a minibatch of sequences with predefined length
-at a time.
-Now the question is how to [**read minibatches of input sequences and target sequences at random**].
+Kita akan merancang model bahasa menggunakan jaringan saraf
+dan menggunakan *perplexity* untuk mengevaluasi 
+seberapa baik model tersebut dalam 
+memprediksi token berikutnya berdasarkan kumpulan token saat ini
+dalam urutan teks.
+Sebelum memperkenalkan modelnya,
+misalkan model ini
+memproses *minibatch* dari urutan dengan panjang yang telah ditentukan
+pada satu waktu.
+Sekarang pertanyaannya adalah bagaimana [**membaca *minibatch* dari urutan input dan urutan target secara acak**].
 
-
-Suppose that the dataset takes the form of a sequence of $T$ token indices in `corpus`.
-We will
-partition it
-into subsequences, where each subsequence has $n$ tokens (time steps).
-To iterate over 
-(almost) all the tokens of the entire dataset 
-for each epoch
-and obtain all possible length-$n$ subsequences,
-we can introduce randomness.
-More concretely,
-at the beginning of each epoch,
-discard the first $d$ tokens,
-where $d\in [0,n)$ is uniformly sampled at random.
-The rest of the sequence
-is then partitioned
-into $m=\lfloor (T-d)/n \rfloor$ subsequences.
-Denote by $\mathbf x_t = [x_t, \ldots, x_{t+n-1}]$ the length-$n$ subsequence starting from token $x_t$ at time step $t$. 
-The resulting $m$ partitioned subsequences
-are 
+Misalkan dataset berbentuk urutan $T$ indeks token dalam `corpus`.
+Kita akan
+membaginya
+menjadi sub-urutan, di mana setiap sub-urutan memiliki $n$ token (time step).
+Untuk mengiterasi 
+(almost) seluruh token dari dataset 
+pada setiap epoch
+dan mendapatkan semua sub-urutan dengan panjang $n$ yang mungkin,
+kita dapat memperkenalkan elemen acak.
+Secara lebih konkret,
+di awal setiap epoch,
+buang token pertama sebanyak $d$,
+di mana $d\in [0,n)$ diambil secara acak dengan distribusi seragam.
+Sisa urutan
+kemudian dibagi
+menjadi $m=\lfloor (T-d)/n \rfloor$ sub-urutan.
+Dinyatakan sebagai $\mathbf x_t = [x_t, \ldots, x_{t+n-1}]$ sub-urutan sepanjang $n$ yang dimulai dari token $x_t$ pada *time step* $t$. 
+Hasilnya, $m$ sub-urutan yang dibagi adalah
 $\mathbf x_d, \mathbf x_{d+n}, \ldots, \mathbf x_{d+n(m-1)}.$
-Each subsequence will be used as an input sequence into the language model.
+Setiap sub-urutan akan digunakan sebagai urutan input ke dalam model bahasa.
 
+Untuk pemodelan bahasa,
+tujuannya adalah untuk memprediksi token berikutnya berdasarkan token-token yang telah kita lihat sejauh ini; oleh karena itu, targetnya (label) adalah urutan asli, digeser satu token.
+Urutan target untuk setiap urutan input $\mathbf x_t$
+adalah $\mathbf x_{t+1}$ dengan panjang $n$.
 
-For language modeling,
-the goal is to predict the next token based on the tokens we have seen so far; hence the targets (labels) are the original sequence, shifted by one token.
-The target sequence for any input sequence $\mathbf x_t$
-is $\mathbf x_{t+1}$ with length $n$.
-
-![Obtaining five pairs of input sequences and target sequences from partitioned length-5 subsequences.](../img/lang-model-data.svg) 
+![Memperoleh lima pasang urutan input dan urutan target dari sub-urutan sepanjang 5 yang telah dipartisi.](../img/lang-model-data.svg) 
 :label:`fig_lang_model_data`
 
-:numref:`fig_lang_model_data` shows an example of obtaining five pairs of input sequences and target sequences with $n=5$ and $d=2$.
+:numref:`fig_lang_model_data` menunjukkan contoh memperoleh lima pasang urutan input dan urutan target dengan $n=5$ dan $d=2$.
+
 
 ```{.python .input  n=5}
 %%tab all
@@ -274,13 +263,14 @@ def __init__(self, batch_size, num_steps, num_train=10000, num_val=5000):
     self.X, self.Y = array[:,:-1], array[:,1:]
 ```
 
-To train language models,
-we will randomly sample 
-pairs of input sequences and target sequences
-in minibatches.
-The following data loader randomly generates a minibatch from the dataset each time.
-The argument `batch_size` specifies the number of subsequence examples in each minibatch
-and `num_steps` is the subsequence length in tokens.
+Untuk melatih model bahasa,
+kita akan secara acak mengambil sampel 
+pasangan urutan input dan urutan target
+dalam *minibatch*.
+*Data loader* berikut secara acak menghasilkan *minibatch* dari dataset setiap kali dipanggil.
+Argumen `batch_size` menentukan jumlah contoh sub-urutan dalam setiap *minibatch*
+dan `num_steps` adalah panjang sub-urutan dalam token.
+
 
 ```{.python .input  n=6}
 %%tab all
@@ -291,11 +281,12 @@ def get_dataloader(self, train):
     return self.get_tensorloader([self.X, self.Y], train, idx)
 ```
 
-As we can see in the following, 
-a minibatch of target sequences
-can be obtained 
-by shifting the input sequences
-by one token.
+Seperti yang dapat kita lihat di bawah ini, 
+sebuah *minibatch* dari urutan target
+dapat diperoleh 
+dengan menggeser urutan input
+sebanyak satu token.
+
 
 ```{.python .input  n=7}
 %%tab all
@@ -305,38 +296,38 @@ for X, Y in data.train_dataloader():
     break
 ```
 
-## Summary and Discussion
+## Ringkasan dan Diskusi
 
-Language models estimate the joint probability of a text sequence. For long sequences, $n$-grams provide a convenient model by truncating the dependence. However, there is a lot of structure but not enough frequency to deal efficiently with infrequent word combinations via Laplace smoothing. Thus, we will focus on neural language modeling in subsequent sections.
-To train language models, we can randomly sample pairs of input sequences and target sequences in minibatches. After training, we will use perplexity to measure the language model quality.
+Model bahasa memperkirakan probabilitas gabungan dari suatu urutan teks. Untuk urutan panjang, $n$-gram menyediakan model yang mudah dengan memotong ketergantungan pada konteks yang lebih jauh. Namun, terdapat banyak struktur tetapi tidak cukup frekuensi untuk menangani kombinasi kata yang jarang dengan efektif melalui *Laplace smoothing*. Oleh karena itu, kita akan fokus pada pemodelan bahasa berbasis jaringan saraf pada bagian selanjutnya.
+Untuk melatih model bahasa, kita dapat secara acak mengambil pasangan urutan input dan urutan target dalam *minibatch*. Setelah pelatihan, kita akan menggunakan *perplexity* untuk mengukur kualitas model bahasa.
 
-Language models can be scaled up with increased data size, model size, and amount in training compute. Large language models can perform desired tasks by predicting output text given input text instructions. As we will discuss later (e.g., :numref:`sec_large-pretraining-transformers`),
-at the present moment
-large language models form the basis of state-of-the-art systems across diverse tasks.
+Model bahasa dapat ditingkatkan skalanya dengan peningkatan ukuran data, ukuran model, dan jumlah komputasi yang digunakan saat pelatihan. Model bahasa besar dapat melakukan tugas-tugas yang diinginkan dengan memprediksi teks keluaran berdasarkan instruksi teks masukan. Seperti yang akan kita bahas nanti (misalnya, :numref:`sec_large-pretraining-transformers`),
+saat ini
+model bahasa besar menjadi dasar bagi sistem mutakhir dalam berbagai tugas.
 
 
-## Exercises
+## Latihan
 
-1. Suppose there are 100,000 words in the training dataset. How much word frequency and multi-word adjacent frequency does a four-gram need to store?
-1. How would you model a dialogue?
-1. What other methods can you think of for reading long sequence data?
-1. Consider our method for discarding a uniformly random number of the first few tokens at the beginning of each epoch.
-    1. Does it really lead to a perfectly uniform distribution over the sequences on the document?
-    1. What would you have to do to make things even more uniform? 
-1. If we want a sequence example to be a complete sentence, what kind of problem does this introduce in minibatch sampling? How can we fix it?
+1. Misalkan ada 100.000 kata dalam dataset pelatihan. Berapa banyak frekuensi kata dan frekuensi kata-kata berurutan yang perlu disimpan oleh model empat-gram?
+2. Bagaimana Anda akan memodelkan sebuah dialog?
+3. Metode lain apa yang dapat Anda pikirkan untuk membaca data urutan panjang?
+4. Pertimbangkan metode kita untuk membuang sejumlah token pertama secara acak pada awal setiap epoch.
+    1. Apakah ini benar-benar menghasilkan distribusi yang sempurna secara seragam pada urutan dalam dokumen?
+    2. Apa yang perlu Anda lakukan untuk membuatnya lebih seragam lagi? 
+5. Jika kita ingin contoh urutan berupa kalimat lengkap, masalah apa yang akan muncul dalam *minibatch sampling*? Bagaimana kita bisa memperbaikinya?
 
 :begin_tab:`mxnet`
-[Discussions](https://discuss.d2l.ai/t/117)
+[Diskusi](https://discuss.d2l.ai/t/117)
 :end_tab:
 
 :begin_tab:`pytorch`
-[Discussions](https://discuss.d2l.ai/t/118)
+[Diskusi](https://discuss.d2l.ai/t/118)
 :end_tab:
 
 :begin_tab:`tensorflow`
-[Discussions](https://discuss.d2l.ai/t/1049)
+[Diskusi](https://discuss.d2l.ai/t/1049)
 :end_tab:
 
 :begin_tab:`jax`
-[Discussions](https://discuss.d2l.ai/t/18012)
+[Diskusi](https://discuss.d2l.ai/t/18012)
 :end_tab:
