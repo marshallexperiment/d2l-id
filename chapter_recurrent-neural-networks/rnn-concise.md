@@ -1,22 +1,23 @@
-# Concise Implementation of Recurrent Neural Networks
+# Implementasi Singkat dari Recurrent Neural Networks
 :label:`sec_rnn-concise`
 
-Like most of our from-scratch implementations,
-:numref:`sec_rnn-scratch` was designed 
-to provide insight into how each component works.
-But when you are using RNNs every day 
-or writing production code,
-you will want to rely more on libraries
-that cut down on both implementation time 
-(by supplying library code for common models and functions)
-and computation time 
-(by optimizing the heck out of these library implementations).
-This section will show you how to implement 
-the same language model more efficiently
-using the high-level API provided 
-by your deep learning framework.
-We begin, as before, by loading 
-*The Time Machine* dataset.
+Seperti kebanyakan implementasi kita dari awal,
+:numref:`sec_rnn-scratch` dirancang 
+untuk memberikan pemahaman tentang cara kerja setiap komponen.
+Namun, ketika Anda menggunakan RNN setiap hari 
+atau menulis kode produksi,
+Anda akan ingin lebih bergantung pada pustaka
+yang mengurangi waktu implementasi 
+(dengan menyediakan kode pustaka untuk model dan fungsi umum)
+dan waktu komputasi 
+(dengan mengoptimalkan pustaka ini secara maksimal).
+Bagian ini akan menunjukkan kepada Anda cara mengimplementasikan 
+model bahasa yang sama dengan lebih efisien
+menggunakan API tingkat tinggi yang disediakan 
+oleh framework pembelajaran mendalam yang Anda gunakan.
+Kita mulai, seperti sebelumnya, dengan memuat 
+dataset *The Time Machine*.
+
 
 ```{.python .input}
 %load_ext d2lbook.tab
@@ -52,35 +53,36 @@ from flax import linen as nn
 from jax import numpy as jnp
 ```
 
-## [**Defining the Model**]
+## [**Mendefinisikan Model**]
 
-We define the following class
-using the RNN implemented
-by high-level APIs.
+Kita mendefinisikan kelas berikut
+dengan menggunakan RNN yang diimplementasikan
+oleh API tingkat tinggi.
 
 :begin_tab:`mxnet`
-Specifically, to initialize the hidden state,
-we invoke the member method `begin_state`.
-This returns a list that contains
-an initial hidden state
-for each example in the minibatch,
-whose shape is
-(number of hidden layers, batch size, number of hidden units).
-For some models to be introduced later
-(e.g., long short-term memory),
-this list will also contain other information.
+Secara khusus, untuk menginisialisasi *hidden state*,
+kita memanggil metode anggota `begin_state`.
+Metode ini mengembalikan sebuah daftar yang berisi
+*hidden state* awal
+untuk setiap contoh dalam *minibatch*,
+dengan bentuk
+(jumlah lapisan tersembunyi, ukuran batch, jumlah unit tersembunyi).
+Untuk beberapa model yang akan diperkenalkan nanti
+(misalnya, *long short-term memory*),
+daftar ini juga akan berisi informasi lain.
 :end_tab:
 
 :begin_tab:`jax`
-Flax does not provide an RNNCell for concise implementation of Vanilla RNNs
-as of today. There are more advanced variants of RNNs like LSTMs and GRUs
-which are available in the Flax `linen` API.
+Flax saat ini tidak menyediakan RNNCell untuk implementasi singkat dari RNN biasa.
+Namun, terdapat varian RNN yang lebih maju seperti LSTM dan GRU
+yang tersedia dalam API `linen` dari Flax.
 :end_tab:
+
 
 ```{.python .input}
 %%tab mxnet
 class RNN(d2l.Module):  #@save
-    """The RNN model implemented with high-level APIs."""
+    """Model RNN yang diimplementasikan dengan High-level API."""
     def __init__(self, num_hiddens):
         super().__init__()
         self.save_hyperparameters()        
@@ -96,7 +98,7 @@ class RNN(d2l.Module):  #@save
 ```{.python .input}
 %%tab pytorch
 class RNN(d2l.Module):  #@save
-    """The RNN model implemented with high-level APIs."""
+    """Model RNN yang diimplementasikan dengan High-level API."""
     def __init__(self, num_inputs, num_hiddens):
         super().__init__()
         self.save_hyperparameters()
@@ -109,7 +111,7 @@ class RNN(d2l.Module):  #@save
 ```{.python .input}
 %%tab tensorflow
 class RNN(d2l.Module):  #@save
-    """The RNN model implemented with high-level APIs."""
+    """Model RNN yang diimplementasikan dengan High-level API."""
     def __init__(self, num_hiddens):
         super().__init__()
         self.save_hyperparameters()            
@@ -125,7 +127,7 @@ class RNN(d2l.Module):  #@save
 ```{.python .input}
 %%tab jax
 class RNN(nn.Module):  #@save
-    """The RNN model implemented with high-level APIs."""
+    """Model RNN yang diimplementasikan dengan High-level API."""
     num_hiddens: int
 
     @nn.compact
@@ -133,14 +135,15 @@ class RNN(nn.Module):  #@save
         raise NotImplementedError
 ```
 
-Inheriting from the `RNNLMScratch` class in :numref:`sec_rnn-scratch`, 
-the following `RNNLM` class defines a complete RNN-based language model.
-Note that we need to create a separate fully connected output layer.
+Mewarisi dari kelas `RNNLMScratch` di :numref:`sec_rnn-scratch`, 
+kelas `RNNLM` berikut mendefinisikan sebuah model bahasa berbasis RNN yang lengkap.
+Perhatikan bahwa kita perlu membuat lapisan keluaran *fully connected* yang terpisah.
+
 
 ```{.python .input}
 %%tab pytorch
 class RNNLM(d2l.RNNLMScratch):  #@save
-    """The RNN-based language model implemented with high-level APIs."""
+    """Model bahasa berbasis RNN yang diimplementasikan dengan High-level API."""
     def init_params(self):
         self.linear = nn.LazyLinear(self.vocab_size)
         
@@ -151,7 +154,7 @@ class RNNLM(d2l.RNNLMScratch):  #@save
 ```{.python .input}
 %%tab mxnet, tensorflow
 class RNNLM(d2l.RNNLMScratch):  #@save
-    """The RNN-based language model implemented with high-level APIs."""
+    """Model bahasa berbasis RNN yang diimplementasikan dengan High-level API."""
     def init_params(self):
         if tab.selected('mxnet'):
             self.linear = nn.Dense(self.vocab_size, flatten=False)
@@ -169,7 +172,7 @@ class RNNLM(d2l.RNNLMScratch):  #@save
 ```{.python .input}
 %%tab jax
 class RNNLM(d2l.RNNLMScratch):  #@save
-    """The RNN-based language model implemented with high-level APIs."""
+    """Model bahasa berbasis RNN yang diimplementasikan dengan High-level API."""
     training: bool = True
 
     def setup(self):
@@ -184,12 +187,13 @@ class RNNLM(d2l.RNNLMScratch):  #@save
         return self.output_layer(rnn_outputs)
 ```
 
-## Training and Predicting
+## Pelatihan dan Prediksi
 
-Before training the model, let's [**make a prediction 
-with a model initialized with random weights.**]
-Given that we have not trained the network, 
-it will generate nonsensical predictions.
+Sebelum melatih model, mari kita [**membuat prediksi 
+dengan model yang diinisialisasi dengan bobot acak.**]
+Karena kita belum melatih jaringan, 
+model akan menghasilkan prediksi yang tidak masuk akal.
+
 
 ```{.python .input}
 %%tab pytorch, mxnet, tensorflow
@@ -202,7 +206,7 @@ model = RNNLM(rnn, vocab_size=len(data.vocab), lr=1)
 model.predict('it has', 20, data.vocab)
 ```
 
-Next, we [**train our model, leveraging the high-level API**].
+Selanjutnya, kita akan [**melatih model kita dengan memanfaatkan High-level API**].
 
 ```{.python .input}
 %%tab pytorch, mxnet, tensorflow
@@ -214,11 +218,12 @@ if tab.selected('tensorflow'):
 trainer.fit(model, data)
 ```
 
-Compared with :numref:`sec_rnn-scratch`,
-this model achieves comparable perplexity,
-but runs faster due to the optimized implementations.
-As before, we can generate predicted tokens 
-following the specified prefix string.
+Dibandingkan dengan :numref:`sec_rnn-scratch`,
+model ini mencapai perplexity yang sebanding,
+tetapi berjalan lebih cepat berkat implementasi yang dioptimalkan.
+Seperti sebelumnya, kita dapat menghasilkan token yang diprediksi 
+berdasarkan string awalan yang telah ditentukan.
+
 
 ```{.python .input}
 %%tab mxnet, pytorch
@@ -230,32 +235,32 @@ model.predict('it has', 20, data.vocab, d2l.try_gpu())
 model.predict('it has', 20, data.vocab)
 ```
 
-## Summary
+## Ringkasan
 
-High-level APIs in deep learning frameworks provide implementations of standard RNNs.
-These libraries help you to avoid wasting time reimplementing standard models.
-Moreover,
-framework implementations are often highly optimized, 
-  leading to significant (computational) performance gains 
-  when compared with implementations from scratch.
+API tingkat tinggi dalam framework pembelajaran mendalam menyediakan implementasi dari RNN standar.
+Pustaka ini membantu Anda menghindari pemborosan waktu untuk mengimplementasikan ulang model standar.
+Selain itu, 
+implementasi framework sering kali sangat dioptimalkan, 
+sehingga memberikan peningkatan kinerja (komputasi) yang signifikan 
+dibandingkan dengan implementasi dari awal.
 
-## Exercises
+## Latihan
 
-1. Can you make the RNN model overfit using the high-level APIs?
-1. Implement the autoregressive model of :numref:`sec_sequence` using an RNN.
+1. Bisakah Anda membuat model RNN mengalami *overfit* menggunakan API tingkat tinggi?
+2. Implementasikan model *autoregressive* dari :numref:`sec_sequence` menggunakan RNN.
 
 :begin_tab:`mxnet`
-[Discussions](https://discuss.d2l.ai/t/335)
+[Diskusi](https://discuss.d2l.ai/t/335)
 :end_tab:
 
 :begin_tab:`pytorch`
-[Discussions](https://discuss.d2l.ai/t/1053)
+[Diskusi](https://discuss.d2l.ai/t/1053)
 :end_tab:
 
 :begin_tab:`tensorflow`
-[Discussions](https://discuss.d2l.ai/t/2211)
+[Diskusi](https://discuss.d2l.ai/t/2211)
 :end_tab:
 
 :begin_tab:`jax`
-[Discussions](https://discuss.d2l.ai/t/18015)
+[Diskusi](https://discuss.d2l.ai/t/18015)
 :end_tab:
