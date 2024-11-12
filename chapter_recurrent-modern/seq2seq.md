@@ -3,74 +3,71 @@
 tab.interact_select('mxnet', 'pytorch', 'tensorflow', 'jax')
 ```
 
-#  Sequence-to-Sequence Learning for Machine Translation
+# Pembelajaran Sequence-to-Sequence untuk Terjemahan Mesin
 :label:`sec_seq2seq`
 
-In so-called sequence-to-sequence problems such as machine translation
-(as discussed in :numref:`sec_machine_translation`),
-where inputs and outputs each consist 
-of variable-length unaligned sequences,
-we generally rely on encoder--decoder architectures
+Dalam masalah yang disebut sebagai sequence-to-sequence, seperti dalam terjemahan mesin
+(seperti yang dibahas dalam :numref:`sec_machine_translation`),
+dimana input dan output masing-masing terdiri dari urutan dengan panjang variabel yang tidak selaras,
+kita umumnya mengandalkan arsitektur encoder-decoder
 (:numref:`sec_encoder-decoder`).
-In this section,
-we will demonstrate the application 
-of an encoder--decoder architecture,
-where both the encoder and decoder 
-are implemented as RNNs,
-to the task of machine translation
+Pada bagian ini,
+kita akan mendemonstrasikan aplikasi dari arsitektur encoder-decoder,
+di mana baik encoder dan decoder diimplementasikan sebagai RNN,
+untuk tugas terjemahan mesin
 :cite:`Sutskever.Vinyals.Le.2014,Cho.Van-Merrienboer.Gulcehre.ea.2014`.
 
-Here, the encoder RNN will take a variable-length sequence as input 
-and transform it into a fixed-shape hidden state.
-Later, in :numref:`chap_attention-and-transformers`,
-we will introduce attention mechanisms, 
-which allow us to access encoded inputs
-without having to compress the entire input
-into a single fixed-length representation.
+Di sini, RNN encoder akan menerima urutan dengan panjang variabel sebagai input
+dan mengubahnya menjadi keadaan tersembunyi (hidden state) dengan bentuk tetap.
+Kemudian, pada :numref:`chap_attention-and-transformers`,
+kita akan memperkenalkan mekanisme perhatian (attention),
+yang memungkinkan kita untuk mengakses input yang di-encode
+tanpa harus mengompresi seluruh input
+menjadi representasi dengan panjang tetap.
 
-Then to generate the output sequence, 
-one token at a time,
-the decoder model, 
-consisting of a separate RNN,
-will predict each successive target token
-given both the input sequence
-and the preceding tokens in the output.
-During training, the decoder will typically
-be conditioned upon the preceding tokens
-in the official "ground truth" label. 
-However, at test time, we will want to condition
-each output of the decoder on the tokens already predicted. 
-Note that if we ignore the encoder,
-the decoder in a sequence-to-sequence architecture 
-behaves just like a normal language model.
-:numref:`fig_seq2seq` illustrates
-how to use two RNNs
-for sequence-to-sequence learning
-in machine translation.
+Untuk menghasilkan urutan output,
+satu token pada satu waktu,
+model decoder,
+yang terdiri dari RNN terpisah,
+akan memprediksi setiap token target berikutnya
+dengan memperhatikan baik urutan input
+maupun token sebelumnya dalam output.
+Selama pelatihan, decoder biasanya
+akan dikondisikan pada token sebelumnya
+dalam label "ground truth" resmi.
+Namun, pada waktu pengujian, kita akan mengondisikan
+setiap output dari decoder pada token yang sudah diprediksi.
+Perlu dicatat bahwa jika kita mengabaikan encoder,
+decoder dalam arsitektur sequence-to-sequence
+berperilaku seperti model bahasa biasa.
+:numref:`fig_seq2seq` mengilustrasikan
+bagaimana menggunakan dua RNN
+untuk pembelajaran sequence-to-sequence
+dalam terjemahan mesin.
 
-
-![Sequence-to-sequence learning with an RNN encoder and an RNN decoder.](../img/seq2seq.svg)
+![Pembelajaran sequence-to-sequence dengan encoder RNN dan decoder RNN.](../img/seq2seq.svg)
 :label:`fig_seq2seq`
 
-In :numref:`fig_seq2seq`,
-the special "&lt;eos&gt;" token
-marks the end of the sequence.
-Our model can stop making predictions
-once this token is generated.
-At the initial time step of the RNN decoder,
-there are two special design decisions to be aware of:
-First, we begin every input with a special 
-beginning-of-sequence "&lt;bos&gt;" token.
-Second, we may feed
-the final hidden state of the encoder
-into the decoder
-at every single decoding time step :cite:`Cho.Van-Merrienboer.Gulcehre.ea.2014`.
-In some other designs,
-such as that of :citet:`Sutskever.Vinyals.Le.2014`,
-the final hidden state of the RNN encoder
-is used
-to initiate the hidden state of the decoder
-only at the first decoding step.
+Dalam :numref:`fig_seq2seq`,
+token spesial "<eos>"
+menandakan akhir dari urutan.
+Model kita dapat berhenti membuat prediksi
+begitu token ini dihasilkan.
+Pada langkah waktu awal dari RNN decoder,
+ada dua keputusan desain spesial yang perlu diperhatikan:
+Pertama, kita memulai setiap input dengan token
+awal urutan "<bos>".
+Kedua, kita dapat memberi
+keadaan tersembunyi akhir dari encoder
+ke decoder
+pada setiap langkah waktu decoding :cite:`Cho.Van-Merrienboer.Gulcehre.ea.2014`.
+Dalam beberapa desain lain,
+seperti yang dibuat oleh :citet:`Sutskever.Vinyals.Le.2014`,
+keadaan tersembunyi akhir dari encoder RNN
+digunakan
+untuk memulai keadaan tersembunyi decoder
+hanya pada langkah decoding pertama.
+
 
 ```{.python .input}
 %%tab mxnet
@@ -114,101 +111,101 @@ import optax
 
 ## Teacher Forcing
 
-While running the encoder on the input sequence
-is relatively straightforward,
-handling the input and output 
-of the decoder requires more care. 
-The most common approach is sometimes called *teacher forcing*.
-Here, the original target sequence (token labels)
-is fed into the decoder as input.
-More concretely,
-the special beginning-of-sequence token
-and the original target sequence,
-excluding the final token,
-are concatenated as input to the decoder,
-while the decoder output (labels for training) is
-the original target sequence,
-shifted by one token:
-"&lt;bos&gt;", "Ils", "regardent", "." $\rightarrow$
-"Ils", "regardent", ".", "&lt;eos&gt;" (:numref:`fig_seq2seq`).
+Sementara menjalankan encoder pada urutan input
+tergolong relatif mudah,
+menangani input dan output 
+dari decoder memerlukan lebih banyak perhatian. 
+Pendekatan yang paling umum disebut *teacher forcing*.
+Di sini, urutan target asli (label token)
+diberikan ke decoder sebagai input.
+Secara lebih konkret,
+token awal urutan spesial
+dan urutan target asli,
+tanpa token terakhir,
+dikombinasikan sebagai input untuk decoder,
+sementara output decoder (label untuk pelatihan) adalah
+urutan target asli,
+digeser satu token:
+"<bos>", "Ils", "regardent", "." $\rightarrow$
+"Ils", "regardent", ".", "<eos>" (:numref:`fig_seq2seq`).
 
-Our implementation in
+Implementasi kita dalam
 :numref:`subsec_loading-seq-fixed-len`
-prepared training data for teacher forcing,
-where shifting tokens for self-supervised learning
-is similar to the training of language models in
+mempersiapkan data pelatihan untuk teacher forcing,
+di mana pergeseran token untuk pembelajaran self-supervised
+mirip dengan pelatihan model bahasa dalam
 :numref:`sec_language-model`.
-An alternative approach is
-to feed the *predicted* token
-from the previous time step
-as the current input to the decoder.
+Pendekatan alternatif adalah
+memberi token *prediksi*
+dari langkah waktu sebelumnya
+sebagai input saat ini ke decoder.
 
-
-In the following, we explain the design 
-depicted in :numref:`fig_seq2seq`
-in greater detail.
-We will train this model for machine translation
-on the English--French dataset as introduced in
+Pada bagian berikut, kami menjelaskan desain
+yang digambarkan pada :numref:`fig_seq2seq`
+dengan lebih detail.
+Kita akan melatih model ini untuk terjemahan mesin
+pada dataset bahasa Inggris-Prancis seperti yang diperkenalkan dalam
 :numref:`sec_machine_translation`.
 
 ## Encoder
 
-Recall that the encoder transforms an input sequence of variable length
-into a fixed-shape *context variable* $\mathbf{c}$ (see :numref:`fig_seq2seq`).
+Ingatlah bahwa encoder mengubah urutan input dengan panjang variabel
+menjadi *variabel konteks* $\mathbf{c}$ dengan bentuk tetap (lihat :numref:`fig_seq2seq`).
 
-
-Consider a single sequence example (batch size 1).
-Suppose the input sequence is $x_1, \ldots, x_T$, 
-such that $x_t$ is the $t^{\textrm{th}}$ token.
-At time step $t$, the RNN transforms
-the input feature vector $\mathbf{x}_t$ for $x_t$
-and the hidden state $\mathbf{h} _{t-1}$ 
-from the previous time step 
-into the current hidden state $\mathbf{h}_t$.
-We can use a function $f$ to express 
-the transformation of the RNN's recurrent layer:
+Pertimbangkan contoh urutan tunggal (ukuran batch 1).
+Misalkan urutan input adalah $x_1, \ldots, x_T$, 
+di mana $x_t$ adalah token ke-$t$.
+Pada langkah waktu $t$, RNN mengubah
+vektor fitur input $\mathbf{x}_t$ untuk $x_t$
+dan status tersembunyi $\mathbf{h} _{t-1}$ 
+dari langkah waktu sebelumnya 
+menjadi status tersembunyi saat ini $\mathbf{h}_t$.
+Kita dapat menggunakan fungsi $f$ untuk menyatakan 
+transformasi dari lapisan rekursif RNN:
 
 $$\mathbf{h}_t = f(\mathbf{x}_t, \mathbf{h}_{t-1}). $$
 
-In general, the encoder transforms 
-the hidden states at all time steps
-into a context variable through a customized function $q$:
+Secara umum, encoder mengubah 
+status tersembunyi di semua langkah waktu
+menjadi variabel konteks melalui fungsi khusus $q$:
 
 $$\mathbf{c} =  q(\mathbf{h}_1, \ldots, \mathbf{h}_T).$$
 
-For example, in :numref:`fig_seq2seq`,
-the context variable is just the hidden state $\mathbf{h}_T$
-corresponding to the encoder RNN's representation
-after processing the final token of the input sequence.
+Sebagai contoh, dalam :numref:`fig_seq2seq`,
+variabel konteks adalah status tersembunyi $\mathbf{h}_T$
+yang sesuai dengan representasi encoder RNN
+setelah memproses token terakhir dari urutan input.
 
-In this example, we have used a unidirectional RNN
-to design the encoder,
-where the hidden state only depends on the input subsequence 
-at and before the time step of the hidden state.
-We can also construct encoders using bidirectional RNNs.
-In this case, a hidden state depends on the subsequence before and after the time step 
-(including the input at the current time step), 
-which encodes the information of the entire sequence.
+Dalam contoh ini, kita telah menggunakan RNN searah
+untuk merancang encoder,
+di mana status tersembunyi hanya bergantung pada suburutan input
+pada dan sebelum langkah waktu dari status tersembunyi.
+Kita juga dapat membuat encoder menggunakan RNN dua arah.
+Dalam hal ini, status tersembunyi bergantung pada suburutan sebelum dan setelah langkah waktu
+(termasuk input pada langkah waktu saat ini), 
+yang mengkodekan informasi dari seluruh urutan.
 
 
-Now let's [**implement the RNN encoder**].
-Note that we use an *embedding layer*
-to obtain the feature vector for each token in the input sequence.
-The weight of an embedding layer is a matrix,
-where the number of rows corresponds to 
-the size of the input vocabulary (`vocab_size`)
-and number of columns corresponds to 
-the feature vector's dimension (`embed_size`).
-For any input token index $i$,
-the embedding layer fetches the $i^{\textrm{th}}$ row 
-(starting from 0) of the weight matrix
-to return its feature vector.
-Here we implement the encoder with a multilayer GRU.
+
+Sekarang mari kita [**mengimplementasikan encoder RNN**].
+Perhatikan bahwa kita menggunakan *embedding layer*
+untuk mendapatkan vektor fitur untuk setiap token dalam urutan input.
+Bobot dari embedding layer adalah sebuah matriks,
+di mana jumlah baris sesuai dengan
+ukuran dari kosakata input (`vocab_size`)
+dan jumlah kolom sesuai dengan
+dimensi dari vektor fitur (`embed_size`).
+Untuk setiap indeks token input $i$,
+embedding layer akan mengambil baris ke-$i$ 
+(dari indeks 0) dari matriks bobot
+untuk mengembalikan vektor fiturnya.
+Di sini, kita mengimplementasikan encoder menggunakan GRU multilayer.
+
 
 ```{.python .input}
 %%tab mxnet
 class Seq2SeqEncoder(d2l.Encoder):  #@save
-    """The RNN encoder for sequence-to-sequence learning."""
+    """Encoder RNN untuk pembelajaran sequence-to-sequence."""
     def __init__(self, vocab_size, embed_size, num_hiddens, num_layers,
                  dropout=0):
         super().__init__()
@@ -229,7 +226,7 @@ class Seq2SeqEncoder(d2l.Encoder):  #@save
 ```{.python .input}
 %%tab pytorch
 def init_seq2seq(module):  #@save
-    """Initialize weights for sequence-to-sequence learning."""
+    """Inisialisasi bobot untuk pembelajaran urutan-ke-urutan (sequence-to-sequence)."""
     if type(module) == nn.Linear:
          nn.init.xavier_uniform_(module.weight)
     if type(module) == nn.GRU:
@@ -241,7 +238,7 @@ def init_seq2seq(module):  #@save
 ```{.python .input}
 %%tab pytorch
 class Seq2SeqEncoder(d2l.Encoder):  #@save
-    """The RNN encoder for sequence-to-sequence learning."""
+    """Encoder RNN untuk pembelajaran sequence-to-sequence."""
     def __init__(self, vocab_size, embed_size, num_hiddens, num_layers,
                  dropout=0):
         super().__init__()
@@ -262,7 +259,7 @@ class Seq2SeqEncoder(d2l.Encoder):  #@save
 ```{.python .input}
 %%tab tensorflow
 class Seq2SeqEncoder(d2l.Encoder):  #@save
-    """The RNN encoder for sequence-to-sequence learning."""
+    """Encoder RNN untuk pembelajaran sequence-to-sequence."""
     def __init__(self, vocab_size, embed_size, num_hiddens, num_layers,
                  dropout=0):
         super().__init__()
@@ -282,7 +279,7 @@ class Seq2SeqEncoder(d2l.Encoder):  #@save
 ```{.python .input}
 %%tab jax
 class Seq2SeqEncoder(d2l.Encoder):  #@save
-    """The RNN encoder for sequence-to-sequence learning."""
+    """Encoder RNN untuk pembelajaran sequence-to-sequence."""
     vocab_size: int
     embed_size: int
     num_hiddens: int
@@ -303,17 +300,8 @@ class Seq2SeqEncoder(d2l.Encoder):  #@save
         return outputs, state
 ```
 
-Let's use a concrete example
-to [**illustrate the above encoder implementation.**]
-Below, we instantiate a two-layer GRU encoder
-whose number of hidden units is 16.
-Given a minibatch of sequence inputs `X`
-(batch size $=4$; number of time steps $=9$),
-the hidden states of the final layer
-at all the time steps
-(`enc_outputs` returned by the encoder's recurrent layers)
-are a tensor of shape
-(number of time steps, batch size, number of hidden units).
+Mari kita gunakan sebuah contoh konkret untuk [**mengilustrasikan implementasi encoder di atas**]. Di bawah ini, kita menginstansiasi sebuah encoder GRU dengan dua lapisan yang memiliki jumlah unit tersembunyi sebanyak 16. Diberikan sebuah minibatch dari input urutan `X` (ukuran batch $=4$; jumlah time step $=9$), keadaan tersembunyi dari lapisan terakhir di semua time step (`enc_outputs` yang dikembalikan oleh lapisan berulang dari encoder) adalah tensor dengan bentuk (jumlah time step, ukuran batch, jumlah hidden unit).
+
 
 ```{.python .input}
 %%tab all
@@ -329,10 +317,8 @@ if tab.selected('jax'):
 d2l.check_shape(enc_outputs, (num_steps, batch_size, num_hiddens))
 ```
 
-Since we are using a GRU here,
-the shape of the multilayer hidden states
-at the final time step is
-(number of hidden layers, batch size, number of hidden units).
+Karena kita menggunakan GRU di sini, bentuk dari keadaan tersembunyi berlapis di time step terakhir adalah (jumlah lapisan tersembunyi, ukuran batch, jumlah unit tersembunyi).
+
 
 ```{.python .input}
 %%tab all
@@ -346,53 +332,54 @@ if tab.selected('tensorflow'):
 ## [**Decoder**]
 :label:`sec_seq2seq_decoder`
 
-Given a target output sequence $y_1, y_2, \ldots, y_{T'}$
-for each time step $t'$
-(we use $t^\prime$ to differentiate from the input sequence time steps),
-the decoder assigns a predicted probability
-to each possible token occurring at step $y_{t'+1}$
-conditioned upon the previous tokens in the target
+Diberikan urutan output target $y_1, y_2, \ldots, y_{T'}$
+untuk setiap time step $t'$
+(kita menggunakan $t^\prime$ untuk membedakan dari urutan time step input),
+decoder memberikan probabilitas prediksi
+untuk setiap kemungkinan token yang terjadi di langkah $y_{t'+1}$
+yang dikondisikan pada token-token sebelumnya dalam target
 $y_1, \ldots, y_{t'}$ 
-and the context variable 
-$\mathbf{c}$, i.e., $P(y_{t'+1} \mid y_1, \ldots, y_{t'}, \mathbf{c})$.
+dan variabel konteks 
+$\mathbf{c}$, yaitu $P(y_{t'+1} \mid y_1, \ldots, y_{t'}, \mathbf{c})$.
 
-To predict the subsequent token $t^\prime+1$ in the target sequence,
-the RNN decoder takes the previous step's target token $y_{t^\prime}$,
-the hidden RNN state from the previous time step $\mathbf{s}_{t^\prime-1}$,
-and the context variable $\mathbf{c}$ as its input,
-and transforms them into the hidden state 
-$\mathbf{s}_{t^\prime}$ at the current time step.
-We can use a function $g$ to express 
-the transformation of the decoder's hidden layer:
+Untuk memprediksi token berikutnya pada $t^\prime+1$ dalam urutan target,
+decoder RNN mengambil token target dari langkah sebelumnya $y_{t^\prime}$,
+keadaan tersembunyi RNN dari langkah sebelumnya $\mathbf{s}_{t^\prime-1}$,
+dan variabel konteks $\mathbf{c}$ sebagai inputnya,
+dan mentransformasikannya menjadi keadaan tersembunyi 
+$\mathbf{s}_{t^\prime}$ pada time step saat ini.
+Kita dapat menggunakan fungsi $g$ untuk mengekspresikan 
+transformasi dari lapisan tersembunyi decoder:
 
 $$\mathbf{s}_{t^\prime} = g(y_{t^\prime-1}, \mathbf{c}, \mathbf{s}_{t^\prime-1}).$$
 :eqlabel:`eq_seq2seq_s_t`
 
-After obtaining the hidden state of the decoder,
-we can use an output layer and the softmax operation 
-to compute the predictive distribution
+Setelah mendapatkan keadaan tersembunyi dari decoder,
+kita dapat menggunakan lapisan output dan operasi softmax 
+untuk menghitung distribusi prediktif
 $p(y_{t^{\prime}+1} \mid y_1, \ldots, y_{t^\prime}, \mathbf{c})$ 
-over the subsequent output token ${t^\prime+1}$.
+terhadap token output selanjutnya ${t^\prime+1}$.
 
-Following :numref:`fig_seq2seq`,
-when implementing the decoder as follows,
-we directly use the hidden state at the final time step
-of the encoder
-to initialize the hidden state of the decoder.
-This requires that the RNN encoder and the RNN decoder 
-have the same number of layers and hidden units.
-To further incorporate the encoded input sequence information,
-the context variable is concatenated
-with the decoder input at all the time steps.
-To predict the probability distribution of the output token,
-we use a fully connected layer
-to transform the hidden state 
-at the final layer of the RNN decoder.
+Mengikuti :numref:`fig_seq2seq`,
+ketika mengimplementasikan decoder seperti berikut ini,
+kita langsung menggunakan keadaan tersembunyi pada time step terakhir
+dari encoder
+untuk menginisialisasi keadaan tersembunyi dari decoder.
+Ini mensyaratkan bahwa encoder RNN dan decoder RNN 
+memiliki jumlah lapisan dan unit tersembunyi yang sama.
+Untuk lebih menggabungkan informasi urutan input yang telah dienkode,
+variabel konteks dikonkatenasikan
+dengan input decoder pada semua time step.
+Untuk memprediksi distribusi probabilitas token output,
+kita menggunakan lapisan fully connected
+untuk mentransformasi keadaan tersembunyi 
+pada lapisan terakhir dari decoder RNN.
+
 
 ```{.python .input}
 %%tab mxnet
 class Seq2SeqDecoder(d2l.Decoder):
-    """The RNN decoder for sequence to sequence learning."""
+    """Encoder RNN untuk pembelajaran sequence-to-sequence."""
     def __init__(self, vocab_size, embed_size, num_hiddens, num_layers,
                  dropout=0):
         super().__init__()
@@ -425,7 +412,7 @@ class Seq2SeqDecoder(d2l.Decoder):
 ```{.python .input}
 %%tab pytorch
 class Seq2SeqDecoder(d2l.Decoder):
-    """The RNN decoder for sequence to sequence learning."""
+    """Encoder RNN untuk pembelajaran sequence-to-sequence."""
     def __init__(self, vocab_size, embed_size, num_hiddens, num_layers,
                  dropout=0):
         super().__init__()
@@ -459,7 +446,7 @@ class Seq2SeqDecoder(d2l.Decoder):
 ```{.python .input}
 %%tab tensorflow
 class Seq2SeqDecoder(d2l.Decoder):
-    """The RNN decoder for sequence to sequence learning."""
+    """Encoder RNN untuk pembelajaran sequence-to-sequence."""
     def __init__(self, vocab_size, embed_size, num_hiddens, num_layers,
                  dropout=0):
         super().__init__()
@@ -491,7 +478,7 @@ class Seq2SeqDecoder(d2l.Decoder):
 ```{.python .input}
 %%tab jax
 class Seq2SeqDecoder(d2l.Decoder):
-    """The RNN decoder for sequence to sequence learning."""
+    """Encoder RNN untuk pembelajaran sequence-to-sequence."""
     vocab_size: int
     embed_size: int
     num_hiddens: int
@@ -525,10 +512,10 @@ class Seq2SeqDecoder(d2l.Decoder):
         return outputs, [enc_output, hidden_state]
 ```
 
-To [**illustrate the implemented decoder**],
-below we instantiate it with the same hyperparameters from the aforementioned encoder.
-As we can see, the output shape of the decoder becomes (batch size, number of time steps, vocabulary size),
-where the final dimension of the tensor stores the predicted token distribution.
+Untuk [**mengilustrasikan decoder yang telah diimplementasikan**],
+di bawah ini kita menginstansiasi decoder tersebut dengan hyperparameter yang sama seperti pada encoder yang disebutkan sebelumnya.
+Seperti yang dapat kita lihat, bentuk (shape) dari output decoder menjadi (ukuran batch, jumlah time step, ukuran kosakata),
+di mana dimensi terakhir dari tensor menyimpan distribusi token yang diprediksi.
 
 ```{.python .input}
 %%tab all
@@ -550,23 +537,24 @@ if tab.selected('tensorflow'):
     d2l.check_shape(state[1][0], (batch_size, num_hiddens))
 ```
 
-The layers in the above RNN encoder--decoder model 
-are summarized in :numref:`fig_seq2seq_details`.
+Lapisan-lapisan dalam model RNN encoder--decoder di atas 
+diringkas dalam :numref:`fig_seq2seq_details`.
 
-![Layers in an RNN encoder--decoder model.](../img/seq2seq-details.svg)
+![Lapisan-lapisan dalam model RNN encoder--decoder.](../img/seq2seq-details.svg)
 :label:`fig_seq2seq_details`
 
 
 
-## Encoder--Decoder for Sequence-to-Sequence Learning
+## Encoder--Decoder untuk Pembelajaran Urutan-ke-Urutan (Sequence-to-Sequence)
 
 
-Putting it all together in code yields the following:
+Menggabungkan semuanya dalam kode menghasilkan yang berikut ini:
+
 
 ```{.python .input}
 %%tab pytorch, tensorflow, mxnet
 class Seq2Seq(d2l.EncoderDecoder):  #@save
-    """The RNN encoder--decoder for sequence to sequence learning."""
+    """Encoder RNN untuk pembelajaran sequence-to-sequence."""
     def __init__(self, encoder, decoder, tgt_pad, lr):
         super().__init__(encoder, decoder)
         self.save_hyperparameters()
@@ -576,7 +564,7 @@ class Seq2Seq(d2l.EncoderDecoder):  #@save
         self.plot('loss', self.loss(Y_hat, batch[-1]), train=False)
         
     def configure_optimizers(self):
-        # Adam optimizer is used here
+        # Adam optimizer digunakan disini
         if tab.selected('mxnet'):
             return gluon.Trainer(self.parameters(), 'adam',
                                  {'learning_rate': self.lr})
@@ -589,7 +577,7 @@ class Seq2Seq(d2l.EncoderDecoder):  #@save
 ```{.python .input}
 %%tab jax
 class Seq2Seq(d2l.EncoderDecoder):  #@save
-    """The RNN encoder--decoder for sequence to sequence learning."""
+    """Encoder RNN--decoder untuk pembelajaran sequence-to-sequence."""
     encoder: nn.Module
     decoder: nn.Module
     tgt_pad: int
@@ -604,27 +592,28 @@ class Seq2Seq(d2l.EncoderDecoder):  #@save
         return optax.adam(learning_rate=self.lr)
 ```
 
-## Loss Function with Masking
+## Fungsi Kerugian dengan Masking
 
-At each time step, the decoder predicts 
-a probability distribution for the output tokens.
-As with language modeling, 
-we can apply softmax 
-to obtain the distribution
-and calculate the cross-entropy loss for optimization.
-Recall from :numref:`sec_machine_translation`
-that the special padding tokens
-are appended to the end of sequences
-and so sequences of varying lengths
-can be efficiently loaded
-in minibatches of the same shape.
-However, prediction of padding tokens
-should be excluded from loss calculations.
-To this end, we can 
-[**mask irrelevant entries with zero values**]
-so that multiplication 
-of any irrelevant prediction
-with zero equates to zero.
+Pada setiap langkah waktu, decoder memprediksi
+distribusi probabilitas untuk token output.
+Seperti pada pemodelan bahasa, 
+kita dapat menerapkan softmax 
+untuk mendapatkan distribusi tersebut
+dan menghitung cross-entropy loss untuk optimasi.
+Ingat dari :numref:`sec_machine_translation`
+bahwa token padding khusus 
+ditambahkan di akhir urutan 
+sehingga urutan dengan panjang yang berbeda
+dapat dimuat secara efisien
+dalam minibatch dengan bentuk yang sama.
+Namun, prediksi token padding
+harus dikecualikan dari perhitungan kerugian.
+Untuk tujuan ini, kita dapat 
+[**masking entri yang tidak relevan dengan nilai nol**]
+sehingga perkalian 
+setiap prediksi yang tidak relevan
+dengan nol menjadi nol.
+
 
 ```{.python .input}
 %%tab pytorch, mxnet, tensorflow
@@ -650,11 +639,12 @@ def loss(self, params, X, Y, state, averaged=False):
     return d2l.reduce_sum(l * mask) / d2l.reduce_sum(mask), {}
 ```
 
-## [**Training**]
+## [**Pelatihan**]
 :label:`sec_seq2seq_training`
 
-Now we can [**create and train an RNN encoder--decoder model**]
-for sequence-to-sequence learning on the machine translation dataset.
+Sekarang kita dapat [**membuat dan melatih model encoder-decoder RNN**]
+untuk pembelajaran sequence-to-sequence pada dataset terjemahan mesin.
+
 
 ```{.python .input}
 %%tab all
@@ -685,30 +675,27 @@ if tab.selected('tensorflow'):
 trainer.fit(model, data)
 ```
 
-## [**Prediction**]
+## [**Prediksi**]
 
-To predict the output sequence
-at each step, 
-the predicted token from the previous
-time step is fed into the decoder as an input.
-One simple strategy is to sample whichever token
-that has been assigned by the decoder the highest probability
-when predicting at each step.
-As in training, at the initial time step
-the beginning-of-sequence ("&lt;bos&gt;") token
-is fed into the decoder.
-This prediction process
-is illustrated in :numref:`fig_seq2seq_predict`.
-When the end-of-sequence ("&lt;eos&gt;") token is predicted,
-the prediction of the output sequence is complete.
+Untuk memprediksi urutan keluaran pada setiap langkah,
+token yang diprediksi dari langkah sebelumnya
+diberikan ke decoder sebagai masukan.
+Salah satu strategi sederhana adalah memilih token
+yang diberikan probabilitas tertinggi oleh decoder
+ketika memprediksi pada setiap langkah.
+Seperti dalam pelatihan, pada langkah awal
+token awal urutan ("&lt;bos&gt;") diberikan ke decoder.
+Proses prediksi ini diilustrasikan pada :numref:`fig_seq2seq_predict`.
+Ketika token akhir urutan ("&lt;eos&gt;") diprediksi,
+prediksi dari urutan keluaran selesai.
 
-
-![Predicting the output sequence token by token using an RNN encoder--decoder.](../img/seq2seq-predict.svg)
+![Memprediksi urutan keluaran token demi token menggunakan RNN encoder-decoder.](../img/seq2seq-predict.svg)
 :label:`fig_seq2seq_predict`
 
-In the next section, we will introduce 
-more sophisticated strategies 
-based on beam search (:numref:`sec_beam-search`).
+Pada bagian berikutnya, kami akan memperkenalkan
+strategi yang lebih canggih
+berdasarkan beam search (:numref:`sec_beam-search`).
+
 
 ```{.python .input}
 %%tab pytorch, mxnet, tensorflow
@@ -730,7 +717,7 @@ def predict_step(self, batch, device, num_steps,
         if tab.selected('tensorflow'):
             Y, dec_state = self.decoder(outputs[-1], dec_state, training=False)
         outputs.append(d2l.argmax(Y, 2))
-        # Save attention weights (to be covered later)
+        # Simpan bobot attention (akan dibahas nanti)
         if save_attention_weights:
             attention_weights.append(self.decoder.attention_weights)
     return d2l.concat(outputs[1:], 1), attention_weights
@@ -745,11 +732,11 @@ def predict_step(self, params, batch, num_steps,
     enc_all_outputs, inter_enc_vars = self.encoder.apply(
         {'params': params['encoder']}, src, src_valid_len, training=False,
         mutable='intermediates')
-    # Save encoder attention weights if inter_enc_vars containing encoder
-    # attention weights is not empty. (to be covered later)
+    # Simpan bobot attention encoder jika inter_enc_vars yang mengandung
+    # bobot attention encoder tidak kosong. (akan dibahas nanti)
     enc_attention_weights = []
     if bool(inter_enc_vars) and save_attention_weights:
-        # Encoder Attention Weights saved in the intermediates collection
+        # Bobot Attention Encoder yang disimpan dalam koleksi intermediates
         enc_attention_weights = inter_enc_vars[
             'intermediates']['enc_attention_weights'][0]
 
@@ -760,9 +747,9 @@ def predict_step(self, params, batch, num_steps,
             {'params': params['decoder']}, outputs[-1], dec_state,
             training=False, mutable='intermediates')
         outputs.append(d2l.argmax(Y, 2))
-        # Save attention weights (to be covered later)
+        # Simpan bobot attention (akan dibahas nanti)
         if save_attention_weights:
-            # Decoder Attention Weights saved in the intermediates collection
+            # Bobot Attention Decoder yang disimpan dalam koleksi intermediates
             dec_attention_weights = inter_dec_vars[
                 'intermediates']['dec_attention_weights'][0]
             attention_weights.append(dec_attention_weights)
@@ -770,66 +757,28 @@ def predict_step(self, params, batch, num_steps,
                                         enc_attention_weights)
 ```
 
-## Evaluation of Predicted Sequences
+## Evaluasi Urutan yang Diprediksi
 
-We can evaluate a predicted sequence
-by comparing it with the
-target sequence (the ground truth).
-But what precisely is the appropriate measure 
-for comparing similarity between two sequences?
+Kita dapat mengevaluasi urutan yang diprediksi dengan membandingkannya dengan urutan target (ground truth). Tetapi apa ukuran yang tepat untuk membandingkan kesamaan antara dua urutan?
 
+*Bilingual Evaluation Understudy* (BLEU), yang awalnya diusulkan untuk mengevaluasi hasil terjemahan mesin :cite:`Papineni.Roukos.Ward.ea.2002`, telah digunakan secara luas untuk mengukur kualitas urutan keluaran untuk berbagai aplikasi. Pada prinsipnya, untuk setiap $n$-gram (:numref:`subsec_markov-models-and-n-grams`) dalam urutan yang diprediksi, BLEU mengevaluasi apakah $n$-gram ini muncul dalam urutan target.
 
-Bilingual Evaluation Understudy (BLEU),
-though originally proposed for evaluating
-machine translation results :cite:`Papineni.Roukos.Ward.ea.2002`,
-has been extensively used in measuring
-the quality of output sequences for different applications.
-In principle, for any $n$-gram (:numref:`subsec_markov-models-and-n-grams`) in the predicted sequence,
-BLEU evaluates whether this $n$-gram appears
-in the target sequence.
-
-Denote by $p_n$ the precision of an $n$-gram,
-defined as the ratio 
-of the number of matched $n$-grams in
-the predicted and target sequences
-to the number of $n$-grams in the predicted sequence.
-To explain, given a target sequence $A$, $B$, $C$, $D$, $E$, $F$,
-and a predicted sequence $A$, $B$, $B$, $C$, $D$,
-we have $p_1 = 4/5$,  $p_2 = 3/4$, $p_3 = 1/3$, and $p_4 = 0$.
-Now let $\textrm{len}_{\textrm{label}}$ and $\textrm{len}_{\textrm{pred}}$
-be the numbers of tokens in the target sequence 
-and the predicted sequence, respectively.
-Then, BLEU is defined as
+Misalkan $p_n$ adalah presisi dari sebuah $n$-gram, yang didefinisikan sebagai rasio antara jumlah $n$-gram yang cocok dalam urutan yang diprediksi dan urutan target terhadap jumlah $n$-gram dalam urutan yang diprediksi. Sebagai contoh, diberikan urutan target $A$, $B$, $C$, $D$, $E$, $F$, dan urutan yang diprediksi $A$, $B$, $B$, $C$, $D$, kita memiliki $p_1 = 4/5$, $p_2 = 3/4$, $p_3 = 1/3$, dan $p_4 = 0$. Misalkan $\textrm{len}_{\textrm{label}}$ dan $\textrm{len}_{\textrm{pred}}$ adalah jumlah token dalam urutan target dan urutan yang diprediksi, masing-masing. Maka, BLEU didefinisikan sebagai
 
 $$ \exp\left(\min\left(0, 1 - \frac{\textrm{len}_{\textrm{label}}}{\textrm{len}_{\textrm{pred}}}\right)\right) \prod_{n=1}^k p_n^{1/2^n},$$
 :eqlabel:`eq_bleu`
 
-where $k$ is the longest $n$-gram for matching.
+dengan $k$ adalah $n$-gram terpanjang yang cocok.
 
-Based on the definition of BLEU in :eqref:`eq_bleu`,
-whenever the predicted sequence is the same as the target sequence, BLEU is 1.
-Moreover,
-since matching longer $n$-grams is more difficult,
-BLEU assigns a greater weight
-when a longer $n$-gram has high precision.
-Specifically, when $p_n$ is fixed,
-$p_n^{1/2^n}$ increases as $n$ grows (the original paper uses $p_n^{1/n}$).
-Furthermore,
-since
-predicting shorter sequences
-tends to yield a higher $p_n$ value,
-the coefficient before the multiplication term in :eqref:`eq_bleu`
-penalizes shorter predicted sequences.
-For example, when $k=2$,
-given the target sequence $A$, $B$, $C$, $D$, $E$, $F$ and the predicted sequence $A$, $B$,
-although $p_1 = p_2 = 1$, the penalty factor $\exp(1-6/2) \approx 0.14$ lowers the BLEU.
+Berdasarkan definisi BLEU pada :eqref:`eq_bleu`, ketika urutan yang diprediksi sama dengan urutan target, maka nilai BLEU adalah 1. Selain itu, karena mencocokkan $n$-gram yang lebih panjang lebih sulit, BLEU memberikan bobot lebih besar jika $n$-gram yang lebih panjang memiliki presisi yang tinggi. Secara khusus, ketika $p_n$ tetap, $p_n^{1/2^n}$ meningkat seiring dengan bertambahnya nilai $n$ (makalah asli menggunakan $p_n^{1/n}$). Selain itu, karena memprediksi urutan yang lebih pendek cenderung memberikan nilai $p_n$ yang lebih tinggi, koefisien sebelum faktor perkalian pada :eqref:`eq_bleu` memberikan penalti untuk urutan yang diprediksi lebih pendek. Sebagai contoh, ketika $k=2$, diberikan urutan target $A$, $B$, $C$, $D$, $E$, $F$ dan urutan yang diprediksi $A$, $B$, meskipun $p_1 = p_2 = 1$, faktor penalti $\exp(1-6/2) \approx 0.14$ akan menurunkan nilai BLEU.
 
-We [**implement the BLEU measure**] as follows.
+Kita [**mengimplementasikan ukuran BLEU**] sebagai berikut.
 
 ```{.python .input}
 %%tab all
+```python
 def bleu(pred_seq, label_seq, k):  #@save
-    """Compute the BLEU."""
+    """Menghitung BLEU."""
     pred_tokens, label_tokens = pred_seq.split(' '), label_seq.split(' ')
     len_pred, len_label = len(pred_tokens), len(label_tokens)
     score = math.exp(min(0, 1 - len_label / len_pred))
@@ -845,10 +794,11 @@ def bleu(pred_seq, label_seq, k):  #@save
     return score
 ```
 
-In the end,
-we use the trained RNN encoder--decoder
-to [**translate a few English sentences into French**]
-and compute the BLEU of the results.
+Pada akhirnya,
+kita menggunakan RNN encoder-decoder yang telah dilatih
+untuk [**menerjemahkan beberapa kalimat bahasa Inggris ke dalam bahasa Prancis**]
+dan menghitung skor BLEU dari hasilnya.
+
 
 ```{.python .input}
 %%tab all
@@ -870,38 +820,37 @@ for en, fr, p in zip(engs, fras, preds):
           f'{bleu(" ".join(translation), fr, k=2):.3f}')
 ```
 
-## Summary
+## Ringkasan
 
-Following the design of the encoder--decoder architecture, we can use two RNNs to design a model for sequence-to-sequence learning.
-In encoder--decoder training, the teacher forcing approach feeds original output sequences (in contrast to predictions) into the decoder.
-When implementing the encoder and the decoder, we can use multilayer RNNs.
-We can use masks to filter out irrelevant computations, such as when calculating the loss.
-For evaluating output sequences,
-BLEU is a popular measure that matches $n$-grams between the predicted sequence and the target sequence.
+Mengikuti desain arsitektur encoder-decoder, kita dapat menggunakan dua RNN untuk mendesain model pembelajaran sequence-to-sequence.
+Dalam pelatihan encoder-decoder, pendekatan teacher forcing memasukkan urutan keluaran asli (berbeda dengan prediksi) ke dalam decoder.
+Ketika mengimplementasikan encoder dan decoder, kita dapat menggunakan multilayer RNN.
+Kita dapat menggunakan mask untuk menyaring perhitungan yang tidak relevan, seperti ketika menghitung loss.
+Untuk mengevaluasi urutan keluaran,
+BLEU adalah ukuran populer yang mencocokkan $n$-gram antara urutan yang diprediksi dan urutan target.
 
 
-## Exercises
+## Latihan
 
-1. Can you adjust the hyperparameters to improve the translation results?
-1. Rerun the experiment without using masks in the loss calculation. What results do you observe? Why?
-1. If the encoder and the decoder differ in the number of layers or the number of hidden units, how can we initialize the hidden state of the decoder?
-1. In training, replace teacher forcing with feeding the prediction at the previous time step into the decoder. How does this influence the performance?
-1. Rerun the experiment by replacing GRU with LSTM.
-1. Are there any other ways to design the output layer of the decoder?
+1. Dapatkah Anda menyesuaikan hyperparameter untuk meningkatkan hasil terjemahan?
+2. Jalankan kembali eksperimen tanpa menggunakan mask dalam perhitungan loss. Hasil apa yang Anda amati? Mengapa?
+3. Jika encoder dan decoder berbeda dalam jumlah lapisan atau jumlah unit tersembunyi, bagaimana kita dapat menginisialisasi status tersembunyi dari decoder?
+4. Dalam pelatihan, gantikan teacher forcing dengan memasukkan prediksi pada langkah waktu sebelumnya ke dalam decoder. Bagaimana hal ini mempengaruhi performa?
+5. Jalankan kembali eksperimen dengan mengganti GRU dengan LSTM.
+6. Apakah ada cara lain untuk mendesain lapisan keluaran dari decoder?
 
 :begin_tab:`mxnet`
-[Discussions](https://discuss.d2l.ai/t/345)
+[Diskusi](https://discuss.d2l.ai/t/345)
 :end_tab:
 
 :begin_tab:`pytorch`
-[Discussions](https://discuss.d2l.ai/t/1062)
+[Diskusi](https://discuss.d2l.ai/t/1062)
 :end_tab:
 
 :begin_tab:`tensorflow`
-[Discussions](https://discuss.d2l.ai/t/3865)
+[Diskusi](https://discuss.d2l.ai/t/3865)
 :end_tab:
 
 :begin_tab:`jax`
-[Discussions](https://discuss.d2l.ai/t/18022)
+[Diskusi](https://discuss.d2l.ai/t/18022)
 :end_tab:
-
