@@ -1,19 +1,8 @@
 # Gated Recurrent Units (GRU)
 :label:`sec_gru`
 
+Ketika RNN, terutama arsitektur LSTM (:numref:`sec_lstm`), semakin populer selama tahun 2010-an, beberapa peneliti mulai bereksperimen dengan arsitektur yang lebih sederhana dengan harapan untuk mempertahankan ide utama dalam menggabungkan status internal dan mekanisme penggandaan, tetapi dengan tujuan untuk mempercepat perhitungan. Gated Recurrent Unit (GRU) :cite:`Cho.Van-Merrienboer.Bahdanau.ea.2014` menawarkan versi streamline dari memori sel LSTM yang sering kali memberikan kinerja yang sebanding namun dengan keuntungan lebih cepat dalam perhitungan :cite:`Chung.Gulcehre.Cho.ea.2014`.
 
-As RNNs and particularly the LSTM architecture (:numref:`sec_lstm`)
-rapidly gained popularity during the 2010s,
-a number of researchers began to experiment 
-with simplified architectures in hopes 
-of retaining the key idea of incorporating
-an internal state and multiplicative gating mechanisms
-but with the aim of speeding up computation.
-The gated recurrent unit (GRU) :cite:`Cho.Van-Merrienboer.Bahdanau.ea.2014` 
-offered a streamlined version of the LSTM memory cell
-that often achieves comparable performance
-but with the advantage of being faster 
-to compute :cite:`Chung.Gulcehre.Cho.ea.2014`.
 
 ```{.python .input  n=5}
 %load_ext d2lbook.tab
@@ -49,36 +38,14 @@ import jax
 from jax import numpy as jnp
 ```
 
-## Reset Gate and Update Gate
+## Gerbang Reset (_Reset Gate_) dan Gerbang Update (_Update Gate_)
 
-Here, the LSTM's three gates are replaced by two:
-the *reset gate* and the *update gate*.
-As with LSTMs, these gates are given sigmoid activations,
-forcing their values to lie in the interval $(0, 1)$.
-Intuitively, the reset gate controls how much of the previous state 
-we might still want to remember.
-Likewise, an update gate would allow us to control 
-how much of the new state is just a copy of the old one.
-:numref:`fig_gru_1` illustrates the inputs for both
-the reset and update gates in a GRU, 
-given the input of the current time step
-and the hidden state of the previous time step.
-The outputs of the gates are given 
-by two fully connected layers
-with a sigmoid activation function.
+Pada GRU, tiga gerbang pada LSTM digantikan dengan dua gerbang: *gerbang reset* dan *gerbang update*. Seperti pada LSTM, kedua gerbang ini diberikan aktivasi sigmoid, memaksa nilai mereka berada pada interval $(0, 1)$. Secara intuitif, gerbang reset mengendalikan seberapa banyak status sebelumnya yang masih perlu diingat. Begitu pula, gerbang update memungkinkan kita mengendalikan seberapa banyak status baru yang merupakan salinan dari status lama. :numref:`fig_gru_1` menggambarkan input untuk gerbang reset dan gerbang update pada GRU, diberikan input dari waktu langkah saat ini dan status tersembunyi dari waktu langkah sebelumnya. Output dari gerbang-gerbang ini dihasilkan oleh dua lapisan fully connected dengan fungsi aktivasi sigmoid.
 
-![Computing the reset gate and the update gate in a GRU model.](../img/gru-1.svg)
+![Menghitung gerbang reset dan gerbang update pada model GRU.](../img/gru-1.svg)
 :label:`fig_gru_1`
 
-Mathematically, for a given time step $t$,
-suppose that the input is a minibatch
-$\mathbf{X}_t \in \mathbb{R}^{n \times d}$ 
-(number of examples $=n$; number of inputs $=d$)
-and the hidden state of the previous time step 
-is $\mathbf{H}_{t-1} \in \mathbb{R}^{n \times h}$ 
-(number of hidden units $=h$). 
-Then the reset gate $\mathbf{R}_t \in \mathbb{R}^{n \times h}$ 
-and update gate $\mathbf{Z}_t \in \mathbb{R}^{n \times h}$ are computed as follows:
+Secara matematis, pada waktu langkah $t$, misalkan input adalah sebuah minibatch $\mathbf{X}_t \in \mathbb{R}^{n \times d}$ (jumlah contoh $=n$; jumlah input $=d$) dan status tersembunyi dari waktu langkah sebelumnya adalah $\mathbf{H}_{t-1} \in \mathbb{R}^{n \times h}$ (jumlah unit tersembunyi $=h$). Maka, gerbang reset $\mathbf{R}_t \in \mathbb{R}^{n \times h}$ dan gerbang update $\mathbf{Z}_t \in \mathbb{R}^{n \times h}$ dihitung sebagai berikut:
 
 $$
 \begin{aligned}
@@ -87,94 +54,81 @@ $$
 \end{aligned}
 $$
 
-where $\mathbf{W}_{\textrm{xr}}, \mathbf{W}_{\textrm{xz}} \in \mathbb{R}^{d \times h}$ 
-and $\mathbf{W}_{\textrm{hr}}, \mathbf{W}_{\textrm{hz}} \in \mathbb{R}^{h \times h}$ 
-are weight parameters and $\mathbf{b}_\textrm{r}, \mathbf{b}_\textrm{z} \in \mathbb{R}^{1 \times h}$ 
-are bias parameters.
+di mana $\mathbf{W}_{\textrm{xr}}, \mathbf{W}_{\textrm{xz}} \in \mathbb{R}^{d \times h}$ dan $\mathbf{W}_{\textrm{hr}}, \mathbf{W}_{\textrm{hz}} \in \mathbb{R}^{h \times h}$ adalah parameter bobot, dan $\mathbf{b}_\textrm{r}, \mathbf{b}_\textrm{z} \in \mathbb{R}^{1 \times h}$ adalah parameter bias.
 
 
-## Candidate Hidden State
+## Status Tersembunyi Kandidat (_Candidate Hidden State_)
 
-Next, we integrate the reset gate $\mathbf{R}_t$ 
-with the regular updating mechanism
-in :eqref:`rnn_h_with_state`,
-leading to the following
-*candidate hidden state*
-$\tilde{\mathbf{H}}_t \in \mathbb{R}^{n \times h}$ at time step $t$:
+Selanjutnya, kita integrasikan gerbang reset $\mathbf{R}_t$ dengan mekanisme pembaruan reguler pada persamaan :eqref:`rnn_h_with_state`, sehingga menghasilkan *status tersembunyi kandidat* $\tilde{\mathbf{H}}_t \in \mathbb{R}^{n \times h}$ pada waktu langkah $t$:
 
 $$\tilde{\mathbf{H}}_t = \tanh(\mathbf{X}_t \mathbf{W}_{\textrm{xh}} + \left(\mathbf{R}_t \odot \mathbf{H}_{t-1}\right) \mathbf{W}_{\textrm{hh}} + \mathbf{b}_\textrm{h}),$$
 :eqlabel:`gru_tilde_H`
 
-where $\mathbf{W}_{\textrm{xh}} \in \mathbb{R}^{d \times h}$ and $\mathbf{W}_{\textrm{hh}} \in \mathbb{R}^{h \times h}$
-are weight parameters,
-$\mathbf{b}_\textrm{h} \in \mathbb{R}^{1 \times h}$
-is the bias,
-and the symbol $\odot$ is the Hadamard (elementwise) product operator.
-Here we use a tanh activation function.
+di mana $\mathbf{W}_{\textrm{xh}} \in \mathbb{R}^{d \times h}$ dan $\mathbf{W}_{\textrm{hh}} \in \mathbb{R}^{h \times h}$ adalah parameter bobot,
+$\mathbf{b}_\textrm{h} \in \mathbb{R}^{1 \times h}$ adalah bias,
+dan simbol $\odot$ adalah operator perkalian Hadamard (perkalian elemen-per-elemen).
+Di sini, kita menggunakan fungsi aktivasi tanh.
 
-The result is a *candidate*, since we still need 
-to incorporate the action of the update gate.
-Comparing with :eqref:`rnn_h_with_state`,
-the influence of the previous states
-can now be reduced with the
-elementwise multiplication of
-$\mathbf{R}_t$ and $\mathbf{H}_{t-1}$
-in :eqref:`gru_tilde_H`.
-Whenever the entries in the reset gate $\mathbf{R}_t$ are close to 1, 
-we recover a vanilla RNN such as that in :eqref:`rnn_h_with_state`.
-For all entries of the reset gate $\mathbf{R}_t$ that are close to 0, 
-the candidate hidden state is the result of an MLP with $\mathbf{X}_t$ as input. 
-Any pre-existing hidden state is thus *reset* to defaults.
+Hasilnya adalah *kandidat*, karena kita masih perlu mengintegrasikan aksi dari gerbang update.
+Dibandingkan dengan persamaan :eqref:`rnn_h_with_state`,
+pengaruh dari status sebelumnya sekarang dapat dikurangi dengan perkalian elemen-per-elemen antara
+$\mathbf{R}_t$ dan $\mathbf{H}_{t-1}$
+pada persamaan :eqref:`gru_tilde_H`.
+Apabila elemen-elemen dalam gerbang reset $\mathbf{R}_t$ mendekati 1,
+maka kita mendapatkan kembali RNN standar seperti yang ada pada persamaan :eqref:`rnn_h_with_state`.
+Untuk semua elemen pada gerbang reset $\mathbf{R}_t$ yang mendekati 0,
+status tersembunyi kandidat merupakan hasil dari MLP dengan $\mathbf{X}_t$ sebagai input.
+Dengan demikian, status tersembunyi yang sudah ada sebelumnya di-*reset* ke nilai default.
 
-:numref:`fig_gru_2` illustrates the computational flow after applying the reset gate.
+:numref:`fig_gru_2` menggambarkan alur komputasi setelah menerapkan gerbang reset.
 
-![Computing the candidate hidden state in a GRU model.](../img/gru-2.svg)
+![Menghitung status tersembunyi kandidat pada model GRU.](../img/gru-2.svg)
 :label:`fig_gru_2`
 
 
 ## Hidden State
 
-Finally, we need to incorporate the effect of the update gate $\mathbf{Z}_t$.
-This determines the extent to which the new hidden state $\mathbf{H}_t \in \mathbb{R}^{n \times h}$ 
-matches the old state $\mathbf{H}_{t-1}$ compared with how much 
-it resembles the new candidate state $\tilde{\mathbf{H}}_t$.
-The update gate $\mathbf{Z}_t$ can be used for this purpose, 
-simply by taking elementwise convex combinations 
-of $\mathbf{H}_{t-1}$ and $\tilde{\mathbf{H}}_t$.
-This leads to the final update equation for the GRU:
+Akhirnya, kita perlu mengintegrasikan efek dari gerbang update $\mathbf{Z}_t$.
+Ini menentukan sejauh mana status tersembunyi baru $\mathbf{H}_t \in \mathbb{R}^{n \times h}$ 
+menyerupai status lama $\mathbf{H}_{t-1}$ dibandingkan dengan seberapa banyak 
+status tersebut menyerupai status kandidat baru $\tilde{\mathbf{H}}_t$.
+Gerbang update $\mathbf{Z}_t$ dapat digunakan untuk tujuan ini,
+dengan cara mengambil kombinasi cembung elemen-per-elemen dari 
+$\mathbf{H}_{t-1}$ dan $\tilde{\mathbf{H}}_t$.
+Ini menghasilkan persamaan pembaruan akhir untuk GRU:
 
 $$\mathbf{H}_t = \mathbf{Z}_t \odot \mathbf{H}_{t-1}  + (1 - \mathbf{Z}_t) \odot \tilde{\mathbf{H}}_t.$$
 
+Kapanpun gerbang update $\mathbf{Z}_t$ mendekati 1,
+kita hanya mempertahankan status lama.
+Dalam kasus ini informasi dari $\mathbf{X}_t$ diabaikan,
+sehingga secara efektif melewati langkah waktu $t$ dalam rantai dependensi.
+Sebaliknya, kapanpun $\mathbf{Z}_t$ mendekati 0,
+status laten baru $\mathbf{H}_t$ mendekati status laten kandidat $\tilde{\mathbf{H}}_t$.
+:numref:`fig_gru_3` menunjukkan alur komputasi setelah gerbang update diaktifkan.
 
-Whenever the update gate $\mathbf{Z}_t$ is close to 1,
-we simply retain the old state. 
-In this case the information from $\mathbf{X}_t$ is ignored, 
-effectively skipping time step $t$ in the dependency chain. 
-By contrast, whenever $\mathbf{Z}_t$ is close to 0,
-the new latent state $\mathbf{H}_t$ approaches the candidate latent state $\tilde{\mathbf{H}}_t$. 
-:numref:`fig_gru_3` shows the computational flow after the update gate is in action.
-
-![Computing the hidden state in a GRU model.](../img/gru-3.svg)
+![Menghitung status tersembunyi pada model GRU.](../img/gru-3.svg)
 :label:`fig_gru_3`
 
+Sebagai rangkuman, GRU memiliki dua fitur pembeda berikut:
 
-In summary, GRUs have the following two distinguishing features:
+* Gerbang reset membantu menangkap ketergantungan jangka pendek dalam urutan.
+* Gerbang update membantu menangkap ketergantungan jangka panjang dalam urutan.
 
-* Reset gates help capture short-term dependencies in sequences.
-* Update gates help capture long-term dependencies in sequences.
 
-## Implementation from Scratch
+## Implementasi dari Awal
 
-To gain a better understanding of the GRU model, let's implement it from scratch.
+Untuk mendapatkan pemahaman yang lebih baik tentang model GRU, mari kita implementasikan dari awal.
 
-### (**Initializing Model Parameters**)
+### (**Inisialisasi Parameter Model**)
 
-The first step is to initialize the model parameters.
-We draw the weights from a Gaussian distribution
-with standard deviation to be `sigma` and set the bias to 0. 
-The hyperparameter `num_hiddens` defines the number of hidden units.
-We instantiate all weights and biases relating to the update gate, 
-the reset gate, and the candidate hidden state.
+Langkah pertama adalah menginisialisasi parameter model.
+Kita akan menarik bobot dari distribusi Gaussian
+dengan standar deviasi `sigma` dan menetapkan bias ke 0.
+Hyperparameter `num_hiddens` mendefinisikan jumlah unit tersembunyi.
+Kita menginstansiasi semua bobot dan bias yang terkait dengan gerbang update, 
+gerbang reset, dan status tersembunyi kandidat.
+
 
 ```{.python .input}
 %%tab pytorch, mxnet, tensorflow
@@ -225,18 +179,20 @@ class GRUScratch(d2l.Module):
         self.W_xh, self.W_hh, self.b_h = triple('h')  # Candidate hidden state
 ```
 
-### Defining the Model
+### Mendefinisikan Model
 
-Now we are ready to [**define the GRU forward computation**].
-Its structure is the same as that of the basic RNN cell, 
-except that the update equations are more complex.
+Sekarang kita siap untuk [**mendefinisikan perhitungan maju GRU**].
+Strukturnya sama dengan sel RNN dasar, 
+kecuali bahwa persamaan update-nya lebih kompleks.
+
 
 ```{.python .input}
 %%tab pytorch, mxnet, tensorflow
 @d2l.add_to_class(GRUScratch)
+```python
 def forward(self, inputs, H=None):
     if H is None:
-        # Initial state with shape: (batch_size, num_hiddens)
+        # Status awal dengan bentuk: (batch_size, num_hiddens)
         if tab.selected('mxnet'):
             H = d2l.zeros((inputs.shape[1], self.num_hiddens),
                           ctx=inputs.ctx)
@@ -262,8 +218,8 @@ def forward(self, inputs, H=None):
 %%tab jax
 @d2l.add_to_class(GRUScratch)
 def forward(self, inputs, H=None):
-    # Use lax.scan primitive instead of looping over the
-    # inputs, since scan saves time in jit compilation
+    # Menggunakan primitif lax.scan untuk menggantikan perulangan pada
+    # input, karena scan menghemat waktu dalam kompilasi jit.
     def scan_fn(H, X):
         Z = d2l.sigmoid(d2l.matmul(X, self.W_xz) + d2l.matmul(H, self.W_hz) +
                         self.b_z)
@@ -272,7 +228,7 @@ def forward(self, inputs, H=None):
         H_tilde = d2l.tanh(d2l.matmul(X, self.W_xh) +
                            d2l.matmul(R * H, self.W_hh) + self.b_h)
         H = Z * H + (1 - Z) * H_tilde
-        return H, H  # return carry, y
+        return H, H  # Mengembalikan carry, y
 
     if H is None:
         batch_size = inputs.shape[1]
@@ -280,15 +236,14 @@ def forward(self, inputs, H=None):
     else:
         carry = H
 
-    # scan takes the scan_fn, initial carry state, xs with leading axis to be scanned
+    # scan menerima scan_fn, status carry awal, xs dengan leading axis yang akan di-scan
     carry, outputs = jax.lax.scan(scan_fn, carry, inputs)
     return outputs, carry
 ```
 
-### Training
+### Pelatihan
 
-[**Training**] a language model on *The Time Machine* dataset
-works in exactly the same manner as in :numref:`sec_rnn-scratch`.
+[**Melatih**] model bahasa pada dataset *The Time Machine* dilakukan dengan cara yang sama seperti pada :numref:`sec_rnn-scratch`.
 
 ```{.python .input}
 %%tab all
@@ -305,10 +260,11 @@ if tab.selected('tensorflow'):
 trainer.fit(model, data)
 ```
 
-## [**Concise Implementation**]
+## [**Implementasi Singkat**]
 
-In high-level APIs, we can directly instantiate a GRU model.
-This encapsulates all the configuration detail that we made explicit above.
+Pada API tingkat tinggi, kita dapat langsung menginstansiasi model GRU.
+Ini mengenkapsulasi semua detail konfigurasi yang telah kita buat secara eksplisit di atas.
+
 
 ```{.python .input}
 %%tab pytorch, mxnet, tensorflow
@@ -344,8 +300,8 @@ class GRU(d2l.RNN):
         return outputs, H
 ```
 
-The code is significantly faster in training as it uses compiled operators 
-rather than Python.
+Kode ini secara signifikan lebih cepat dalam pelatihan karena menggunakan operator yang telah dikompilasi dibandingkan dengan Python.
+
 
 ```{.python .input}
 %%tab all
@@ -361,8 +317,8 @@ if tab.selected('tensorflow'):
 trainer.fit(model, data)
 ```
 
-After training, we print out the perplexity on the training set
-and the predicted sequence following the provided prefix.
+Setelah selesai melatih model, kita akan mencetak nilai *perplexity* pada data pelatihan dan urutan prediksi yang dihasilkan setelah diberikan awalan (*prefix*) tertentu.
+
 
 ```{.python .input}
 %%tab mxnet, pytorch
@@ -379,34 +335,29 @@ model.predict('it has', 20, data.vocab)
 model.predict('it has', 20, data.vocab, trainer.state.params)
 ```
 
-## Summary
+## Ringkasan
 
-Compared with LSTMs, GRUs achieve similar performance but tend to be lighter computationally.
-Generally, compared with simple RNNs, gated RNNS, just like LSTMs and GRUs,
-can better capture dependencies for sequences with large time step distances.
-GRUs contain basic RNNs as their extreme case whenever the reset gate is switched on. 
-They can also skip subsequences by turning on the update gate.
+Dibandingkan dengan LSTMs, GRUs memberikan performa yang serupa tetapi cenderung lebih ringan secara komputasi. Secara umum, dibandingkan dengan RNN sederhana, RNN dengan *gated mechanism* seperti LSTM dan GRU lebih baik dalam menangkap ketergantungan pada urutan yang memiliki jarak langkah waktu yang besar. GRU mengandung RNN dasar sebagai kasus ekstremnya ketika *reset gate* diaktifkan sepenuhnya. Mereka juga dapat melewati suburutan dengan mengaktifkan *update gate*.
 
+## Latihan
 
-## Exercises
-
-1. Assume that we only want to use the input at time step $t'$ to predict the output at time step $t > t'$. What are the best values for the reset and update gates for each time step?
-1. Adjust the hyperparameters and analyze their influence on running time, perplexity, and the output sequence.
-1. Compare runtime, perplexity, and the output strings for `rnn.RNN` and `rnn.GRU` implementations with each other.
-1. What happens if you implement only parts of a GRU, e.g., with only a reset gate or only an update gate?
+1. Asumsikan kita hanya ingin menggunakan input pada langkah waktu $t'$ untuk memprediksi keluaran pada langkah waktu $t > t'$. Apa nilai terbaik untuk *reset gate* dan *update gate* pada setiap langkah waktu?
+2. Atur hiperparameter dan analisis pengaruhnya terhadap waktu eksekusi, *perplexity*, dan urutan keluaran.
+3. Bandingkan waktu eksekusi, *perplexity*, dan urutan keluaran untuk implementasi `rnn.RNN` dan `rnn.GRU`.
+4. Apa yang terjadi jika Anda hanya mengimplementasikan sebagian dari GRU, misalnya hanya dengan *reset gate* atau hanya dengan *update gate*?
 
 :begin_tab:`mxnet`
-[Discussions](https://discuss.d2l.ai/t/342)
+[Diskusi](https://discuss.d2l.ai/t/342)
 :end_tab:
 
 :begin_tab:`pytorch`
-[Discussions](https://discuss.d2l.ai/t/1056)
+[Diskusi](https://discuss.d2l.ai/t/1056)
 :end_tab:
 
 :begin_tab:`tensorflow`
-[Discussions](https://discuss.d2l.ai/t/3860)
+[Diskusi](https://discuss.d2l.ai/t/3860)
 :end_tab:
 
 :begin_tab:`jax`
-[Discussions](https://discuss.d2l.ai/t/18017)
+[Diskusi](https://discuss.d2l.ai/t/18017)
 :end_tab:
