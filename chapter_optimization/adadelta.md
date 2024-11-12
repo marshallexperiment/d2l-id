@@ -1,43 +1,44 @@
 # Adadelta
 :label:`sec_adadelta`
 
-Adadelta is yet another variant of AdaGrad (:numref:`sec_adagrad`). The main difference lies in the fact that it decreases the amount by which the learning rate is adaptive to coordinates. Moreover, traditionally it referred to as not having a learning rate since it uses the amount of change itself as calibration for future change. The algorithm was proposed in :citet:`Zeiler.2012`. It is fairly straightforward, given the discussion of previous algorithms so far.
+Adadelta adalah varian lain dari AdaGrad (:numref:`sec_adagrad`). Perbedaan utamanya adalah pada pengurangan adaptivitas learning rate terhadap koordinat. Selain itu, secara tradisional, Adadelta disebut tidak memiliki learning rate karena menggunakan jumlah perubahan itu sendiri sebagai kalibrasi untuk perubahan di masa depan. Algoritma ini diusulkan oleh :citet:`Zeiler.2012`. Berdasarkan pembahasan algoritma sebelumnya, konsep Adadelta cukup sederhana.
 
-## The Algorithm
+## Algoritma
 
-In a nutshell, Adadelta uses two state variables, $\mathbf{s}_t$ to store a leaky average of the second moment of the gradient and $\Delta\mathbf{x}_t$ to store a leaky average of the second moment of the change of parameters in the model itself. Note that we use the original notation and naming of the authors for compatibility with other publications and implementations (there is no other real reason why one should use different Greek variables to indicate a parameter serving the same purpose in momentum, Adagrad, RMSProp, and Adadelta).
+Secara singkat, Adadelta menggunakan dua variabel status: $\mathbf{s}_t$ untuk menyimpan rata-rata bocor dari momen kedua gradien dan $\Delta\mathbf{x}_t$ untuk menyimpan rata-rata bocor dari momen kedua perubahan parameter dalam model itu sendiri. Perlu dicatat bahwa kita menggunakan notasi dan nama asli dari penulis untuk kompatibilitas dengan publikasi dan implementasi lainnya (tidak ada alasan khusus mengapa kita harus menggunakan variabel Yunani yang berbeda untuk menunjukkan parameter yang sama seperti pada momentum, Adagrad, RMSProp, dan Adadelta).
 
-Here are the technical details of Adadelta. Given the parameter du jour is $\rho$, we obtain the following leaky updates similarly to :numref:`sec_rmsprop`:
+Berikut adalah rincian teknis dari Adadelta. Diberikan parameter du jour $\rho$, kita mendapatkan pembaruan bocor berikut yang mirip dengan :numref:`sec_rmsprop`:
 
 $$\begin{aligned}
     \mathbf{s}_t & = \rho \mathbf{s}_{t-1} + (1 - \rho) \mathbf{g}_t^2.
 \end{aligned}$$
 
-The difference to :numref:`sec_rmsprop` is that we perform updates with the rescaled gradient $\mathbf{g}_t'$, i.e.,
+Perbedaannya dengan :numref:`sec_rmsprop` adalah bahwa kita melakukan pembaruan dengan gradien yang telah diskalakan ulang $\mathbf{g}_t'$, yaitu
 
 $$\begin{aligned}
     \mathbf{x}_t  & = \mathbf{x}_{t-1} - \mathbf{g}_t'. \\
 \end{aligned}$$
 
-So what is the rescaled gradient $\mathbf{g}_t'$? We can calculate it as follows:
+Jadi, apa itu gradien yang diskalakan ulang $\mathbf{g}_t'$? Kita dapat menghitungnya sebagai berikut:
 
 $$\begin{aligned}
     \mathbf{g}_t' & = \frac{\sqrt{\Delta\mathbf{x}_{t-1} + \epsilon}}{\sqrt{{\mathbf{s}_t + \epsilon}}} \odot \mathbf{g}_t, \\
 \end{aligned}$$
 
-where $\Delta \mathbf{x}_{t-1}$ is the leaky average of the squared rescaled gradients $\mathbf{g}_t'$. We initialize $\Delta \mathbf{x}_{0}$ to be $0$ and update it at each step with $\mathbf{g}_t'$, i.e.,
+di mana $\Delta \mathbf{x}_{t-1}$ adalah rata-rata bocor dari gradien yang telah diskalakan ulang $\mathbf{g}_t'$. Kita menginisialisasi $\Delta \mathbf{x}_{0}$ dengan $0$ dan memperbaruinya di setiap langkah menggunakan $\mathbf{g}_t'$, yaitu
 
 $$\begin{aligned}
     \Delta \mathbf{x}_t & = \rho \Delta\mathbf{x}_{t-1} + (1 - \rho) {\mathbf{g}_t'}^2,
 \end{aligned}$$
 
-and $\epsilon$ (a small value such as $10^{-5}$) is added to maintain numerical stability.
+dan $\epsilon$ (nilai kecil seperti $10^{-5}$) ditambahkan untuk menjaga stabilitas numerik.
 
 
 
-## Implementation
+## Implementasi
 
-Adadelta needs to maintain two state variables for each variable, $\mathbf{s}_t$ and $\Delta\mathbf{x}_t$. This yields the following implementation.
+Adadelta perlu mempertahankan dua variabel status untuk setiap variabel, yaitu $\mathbf{s}_t$ dan $\Delta\mathbf{x}_t$. Hal ini menghasilkan implementasi berikut.
+
 
 ```{.python .input}
 #@tab mxnet
@@ -106,7 +107,8 @@ def adadelta(params, grads, states, hyperparams):
         delta[:].assign(rho * delta + (1 - rho) * g * g)
 ```
 
-Choosing $\rho = 0.9$ amounts to a half-life time of 10 for each parameter update. This tends to work quite well. We get the following behavior.
+Memilih $\rho = 0.9$ setara dengan waktu paruh 10 untuk setiap pembaruan parameter. Pilihan ini cenderung bekerja dengan baik. Kita mendapatkan perilaku sebagai berikut.
+
 
 ```{.python .input}
 #@tab all
@@ -115,7 +117,7 @@ d2l.train_ch11(adadelta, init_adadelta_states(feature_dim),
                {'rho': 0.9}, data_iter, feature_dim);
 ```
 
-For a concise implementation we simply use the Adadelta algorithm from high-level APIs. This yields the following one-liner for a much more compact invocation.
+Untuk implementasi ringkas, kita cukup menggunakan algoritma Adadelta dari API tingkat tinggi. Hal ini menghasilkan satu baris kode untuk pemanggilan yang jauh lebih sederhana.
 
 ```{.python .input}
 #@tab mxnet
@@ -130,34 +132,33 @@ d2l.train_concise_ch11(trainer, {'rho': 0.9}, data_iter)
 
 ```{.python .input}
 #@tab tensorflow
-# adadelta is not converging at default learning rate
-# but it is converging at lr = 5.0
+# Adadelta tidak mengalami konvergensi pada learning rate default
+# tetapi mengalami konvergensi pada lr = 5.0
 trainer = tf.keras.optimizers.Adadelta
 d2l.train_concise_ch11(trainer, {'learning_rate':5.0, 'rho': 0.9}, data_iter)
 ```
 
-## Summary
+## Ringkasan
 
-* Adadelta has no learning rate parameter. Instead, it uses the rate of change in the parameters itself to adapt the learning rate.
-* Adadelta requires two state variables to store the second moments of gradient and the change in parameters.
-* Adadelta uses leaky averages to keep a running estimate of the appropriate statistics.
+* Adadelta tidak memiliki parameter learning rate. Sebagai gantinya, ia menggunakan laju perubahan pada parameter itu sendiri untuk menyesuaikan learning rate.
+* Adadelta memerlukan dua variabel status untuk menyimpan momen kedua dari gradien dan perubahan parameter.
+* Adadelta menggunakan rata-rata bocor untuk mempertahankan estimasi statistik yang sesuai secara berkelanjutan.
 
-## Exercises
+## Latihan
 
-1. Adjust the value of $\rho$. What happens?
-1. Show how to implement the algorithm without the use of $\mathbf{g}_t'$. Why might this be a good idea?
-1. Is Adadelta really learning rate free? Could you find optimization problems that break Adadelta?
-1. Compare Adadelta to Adagrad and RMS prop to discuss their convergence behavior.
+1. Sesuaikan nilai $\rho$. Apa yang terjadi?
+2. Tunjukkan bagaimana cara mengimplementasikan algoritma tanpa menggunakan $\mathbf{g}_t'$. Mengapa ini mungkin ide yang baik?
+3. Apakah Adadelta benar-benar bebas learning rate? Bisakah Anda menemukan masalah optimisasi yang membuat Adadelta gagal?
+4. Bandingkan Adadelta dengan Adagrad dan RMSProp untuk mendiskusikan perilaku konvergensinya.
 
 :begin_tab:`mxnet`
-[Discussions](https://discuss.d2l.ai/t/357)
+[Diskusi](https://discuss.d2l.ai/t/357)
 :end_tab:
 
 :begin_tab:`pytorch`
-[Discussions](https://discuss.d2l.ai/t/1076)
+[Diskusi](https://discuss.d2l.ai/t/1076)
 :end_tab:
 
-
 :begin_tab:`tensorflow`
-[Discussions](https://discuss.d2l.ai/t/1077)
+[Diskusi](https://discuss.d2l.ai/t/1077)
 :end_tab:
