@@ -3,28 +3,19 @@
 tab.interact_select('mxnet', 'pytorch', 'tensorflow', 'jax')
 ```
 
-# Self-Attention and Positional Encoding
+# Self-Attention dan Positional Encoding
 :label:`sec_self-attention-and-positional-encoding`
 
-In deep learning, we often use CNNs or RNNs to encode sequences.
-Now with attention mechanisms in mind, 
-imagine feeding a sequence of tokens 
-into an attention mechanism
-such that at every step,
-each token has its own query, keys, and values.
-Here, when computing the value of a token's representation at the next layer,
-the token can attend (via its query vector) to any other's token 
-(matching based on their key vectors).
-Using the full set of query-key compatibility scores,
-we can compute, for each token, a representation
-by building the appropriate weighted sum
-over the other tokens. 
-Because every token is attending to each other token
-(unlike the case where decoder steps attend to encoder steps),
-such architectures are typically described as *self-attention* models :cite:`Lin.Feng.Santos.ea.2017,Vaswani.Shazeer.Parmar.ea.2017`, 
-and elsewhere described as *intra-attention* model :cite:`Cheng.Dong.Lapata.2016,Parikh.Tackstrom.Das.ea.2016,Paulus.Xiong.Socher.2017`.
-In this section, we will discuss sequence encoding using self-attention,
-including using additional information for the sequence order.
+Dalam deep learning, kita sering menggunakan CNN atau RNN untuk meng-encode urutan (sequence). Sekarang dengan mekanisme attention dalam pikiran, 
+bayangkan memberi makan serangkaian token ke mekanisme attention sedemikian rupa sehingga pada setiap langkah, setiap token memiliki query, key, dan value sendiri-sendiri.
+Di sini, saat menghitung nilai dari representasi token pada lapisan berikutnya, token dapat memperhatikan (melalui vektor query-nya) 
+token lain (berdasarkan kecocokan dengan vektor key mereka).
+
+Dengan menggunakan seluruh set skor kompatibilitas query-key, kita dapat menghitung representasi untuk setiap token dengan membangun penjumlahan berbobot yang tepat atas 
+token-token lain. Karena setiap token memperhatikan setiap token lain (berbeda dengan kasus ketika langkah-langkah decoder memperhatikan langkah-langkah encoder), arsitektur 
+seperti ini biasanya disebut sebagai model *self-attention* :cite:`Lin.Feng.Santos.ea.2017,Vaswani.Shazeer.Parmar.ea.2017`, dan di tempat lain disebut sebagai model *intra-attention* :cite:`Cheng.Dong.Lapata.2016,Parikh.Tackstrom.Das.ea.2016,Paulus.Xiong.Socher.2017`. 
+Pada bagian ini, kita akan membahas encoding urutan menggunakan self-attention, termasuk penggunaan informasi tambahan untuk urutan tersebut.
+
 
 ```{.python .input}
 %%tab mxnet
@@ -60,22 +51,21 @@ import jax
 
 ## [**Self-Attention**]
 
-Given a sequence of input tokens
-$\mathbf{x}_1, \ldots, \mathbf{x}_n$ where any $\mathbf{x}_i \in \mathbb{R}^d$ ($1 \leq i \leq n$),
-its self-attention outputs
-a sequence of the same length
-$\mathbf{y}_1, \ldots, \mathbf{y}_n$,
-where
+Diberikan sebuah urutan input token
+$\mathbf{x}_1, \ldots, \mathbf{x}_n$ di mana setiap $\mathbf{x}_i \in \mathbb{R}^d$ ($1 \leq i \leq n$),
+output self-attention memiliki urutan dengan panjang yang sama
+$\mathbf{y}_1, \ldots, \mathbf{y}_n$, di mana
 
 $$\mathbf{y}_i = f(\mathbf{x}_i, (\mathbf{x}_1, \mathbf{x}_1), \ldots, (\mathbf{x}_n, \mathbf{x}_n)) \in \mathbb{R}^d$$
 
-according to the definition of attention pooling in
+sesuai dengan definisi attention pooling pada
 :eqref:`eq_attention_pooling`.
-Using multi-head attention,
-the following code snippet
-computes the self-attention of a tensor
-with shape (batch size, number of time steps or sequence length in tokens, $d$).
-The output tensor has the same shape.
+Dengan menggunakan multi-head attention,
+potongan kode berikut ini
+menghitung self-attention dari tensor
+dengan bentuk (ukuran batch, jumlah time step atau panjang urutan dalam token, $d$).
+Tensor output memiliki bentuk yang sama.
+
 
 ```{.python .input}
 %%tab pytorch
@@ -132,132 +122,112 @@ d2l.check_shape(attention.init_with_output(d2l.get_key(), X, X, X, valid_lens,
                 (batch_size, num_queries, num_hiddens))
 ```
 
-## Comparing CNNs, RNNs, and Self-Attention
+## Membandingkan CNNs, RNNs, dan Self-Attention
 :label:`subsec_cnn-rnn-self-attention`
 
-Let's
-compare architectures for mapping
-a sequence of $n$ tokens
-to another one of equal length,
-where each input or output token is represented by
-a $d$-dimensional vector.
-Specifically,
-we will consider CNNs, RNNs, and self-attention.
-We will compare their
-computational complexity, 
-sequential operations,
-and maximum path lengths.
-Note that sequential operations prevent parallel computation,
-while a shorter path between
-any combination of sequence positions
-makes it easier to learn long-range dependencies 
-within the sequence :cite:`Hochreiter.Bengio.Frasconi.ea.2001`.
+Mari kita
+membandingkan arsitektur untuk memetakan
+sebuah urutan dengan $n$ token
+ke urutan lain dengan panjang yang sama,
+di mana setiap token input atau output direpresentasikan oleh
+sebuah vektor berdimensi $d$.
+Secara spesifik,
+kita akan mempertimbangkan CNNs, RNNs, dan self-attention.
+Kita akan membandingkan
+kompleksitas komputasi, 
+operasi sekuensial,
+dan panjang jalur maksimum.
+Perlu dicatat bahwa operasi sekuensial mencegah komputasi paralel,
+sementara jalur yang lebih pendek antara
+kombinasi posisi dalam urutan
+memudahkan pembelajaran ketergantungan jangka panjang 
+dalam urutan tersebut :cite:`Hochreiter.Bengio.Frasconi.ea.2001`.
 
 
-![Comparing CNN (padding tokens are omitted), RNN, and self-attention architectures.](../img/cnn-rnn-self-attention.svg)
+![Membandingkan arsitektur CNN (token padding diabaikan), RNN, dan self-attention.](../img/cnn-rnn-self-attention.svg)
 :label:`fig_cnn-rnn-self-attention`
 
 
 
-Let's regard any text sequence as a "one-dimensional image". Similarly, one-dimensional CNNs can process local features such as $n$-grams in text.
-Given a sequence of length $n$,
-consider a convolutional layer whose kernel size is $k$,
-and whose numbers of input and output channels are both $d$.
-The computational complexity of the convolutional layer is $\mathcal{O}(knd^2)$.
-As :numref:`fig_cnn-rnn-self-attention` shows,
-CNNs are hierarchical,
-so there are $\mathcal{O}(1)$ sequential operations
-and the maximum path length is $\mathcal{O}(n/k)$.
-For example, $\mathbf{x}_1$ and $\mathbf{x}_5$
-are within the receptive field of a two-layer CNN
-with kernel size 3 in :numref:`fig_cnn-rnn-self-attention`.
+Mari kita anggap setiap urutan teks sebagai "gambar satu dimensi". Demikian pula, CNN satu dimensi dapat memproses fitur lokal seperti $n$-gram dalam teks.
+Diberikan sebuah urutan dengan panjang $n$,
+pertimbangkan lapisan konvolusional dengan ukuran kernel $k$,
+dan jumlah saluran input dan output keduanya adalah $d$.
+Kompleksitas komputasi dari lapisan konvolusional adalah $\mathcal{O}(knd^2)$.
+Seperti yang ditunjukkan pada :numref:`fig_cnn-rnn-self-attention`,
+CNN bersifat hierarkis,
+sehingga terdapat $\mathcal{O}(1)$ operasi sekuensial
+dan panjang jalur maksimum adalah $\mathcal{O}(n/k)$.
+Sebagai contoh, $\mathbf{x}_1$ dan $\mathbf{x}_5$
+berada dalam receptive field dari dua lapisan CNN
+dengan ukuran kernel 3 pada :numref:`fig_cnn-rnn-self-attention`.
 
-When updating the hidden state of RNNs,
-multiplication of the $d \times d$ weight matrix
-and the $d$-dimensional hidden state has 
-a computational complexity of $\mathcal{O}(d^2)$.
-Since the sequence length is $n$,
-the computational complexity of the recurrent layer
-is $\mathcal{O}(nd^2)$.
-According to :numref:`fig_cnn-rnn-self-attention`,
-there are $\mathcal{O}(n)$ sequential operations
-that cannot be parallelized
-and the maximum path length is also $\mathcal{O}(n)$.
+Saat memperbarui hidden state dari RNN,
+perkalian matriks berat $d \times d$
+dan hidden state berdimensi $d$ memiliki
+kompleksitas komputasi $\mathcal{O}(d^2)$.
+Karena panjang urutannya adalah $n$,
+kompleksitas komputasi dari lapisan rekuren
+adalah $\mathcal{O}(nd^2)$.
+Menurut :numref:`fig_cnn-rnn-self-attention`,
+terdapat $\mathcal{O}(n)$ operasi sekuensial
+yang tidak dapat diparalelisasi
+dan panjang jalur maksimum juga $\mathcal{O}(n)$.
 
-In self-attention,
-the queries, keys, and values 
-are all $n \times d$ matrices.
-Consider the scaled dot product attention in
+Pada self-attention,
+queries, keys, dan values 
+semuanya adalah matriks $n \times d$.
+Pertimbangkan scaled dot product attention pada
 :eqref:`eq_softmax_QK_V`,
-where an $n \times d$ matrix is multiplied by
-a $d \times n$ matrix,
-then the output $n \times n$ matrix is multiplied
-by an $n \times d$ matrix.
-As a result,
-the self-attention
-has a $\mathcal{O}(n^2d)$ computational complexity.
-As we can see from :numref:`fig_cnn-rnn-self-attention`,
-each token is directly connected
-to any other token via self-attention.
-Therefore,
-computation can be parallel with $\mathcal{O}(1)$ sequential operations
-and the maximum path length is also $\mathcal{O}(1)$.
+di mana sebuah matriks $n \times d$ dikalikan dengan
+sebuah matriks $d \times n$,
+kemudian output matriks $n \times n$ dikalikan
+dengan matriks $n \times d$.
+Sebagai hasilnya,
+self-attention memiliki kompleksitas komputasi $\mathcal{O}(n^2d)$.
+Seperti yang dapat kita lihat dari :numref:`fig_cnn-rnn-self-attention`,
+setiap token terhubung langsung
+dengan token lainnya melalui self-attention.
+Oleh karena itu,
+komputasi dapat dilakukan secara paralel dengan $\mathcal{O}(1)$ operasi sekuensial
+dan panjang jalur maksimum juga $\mathcal{O}(1)$.
 
-All in all,
-both CNNs and self-attention enjoy parallel computation
-and self-attention has the shortest maximum path length.
-However, the quadratic computational complexity with respect to the sequence length
-makes self-attention prohibitively slow for very long sequences.
-
-
+Secara keseluruhan,
+baik CNN maupun self-attention mendukung komputasi paralel
+dan self-attention memiliki panjang jalur maksimum yang paling pendek.
+Namun, kompleksitas komputasi kuadratik terhadap panjang urutan
+membuat self-attention sangat lambat untuk urutan yang sangat panjang.
 
 
 
 ## [**Positional Encoding**]
 :label:`subsec_positional-encoding`
 
+Tidak seperti RNN yang memproses token dalam suatu urutan secara berulang satu per satu, self-attention meninggalkan operasi sekuensial demi komputasi paralel.
+Perhatikan bahwa self-attention sendiri tidak mempertahankan urutan dari urutan token.
+Bagaimana jika sangat penting bagi model untuk mengetahui dalam urutan apa input diterima?
 
-Unlike RNNs, which recurrently process
-tokens of a sequence one-by-one,
-self-attention ditches
-sequential operations in favor of 
-parallel computation.
-Note that self-attention by itself
-does not preserve the order of the sequence. 
-What do we do if it really matters 
-that the model knows in which order
-the input sequence arrived?
+Pendekatan dominan untuk mempertahankan informasi tentang urutan token adalah dengan merepresentasikannya kepada model sebagai input tambahan yang diasosiasikan dengan setiap token.
+Input-input ini disebut *positional encodings*, dan mereka dapat dipelajari atau ditetapkan *a priori*.
+Sekarang kita akan menjelaskan skema sederhana untuk positional encodings tetap yang berdasarkan pada fungsi sinus dan kosinus :cite:`Vaswani.Shazeer.Parmar.ea.2017`.
 
-The dominant approach for preserving 
-information about the order of tokens
-is to represent this to the model 
-as an additional input associated 
-with each token. 
-These inputs are called *positional encodings*,
-and they can either be learned or fixed *a priori*.
-We now describe a simple scheme for fixed positional encodings
-based on sine and cosine functions :cite:`Vaswani.Shazeer.Parmar.ea.2017`.
-
-Suppose that the input representation 
+Misalkan representasi input 
 $\mathbf{X} \in \mathbb{R}^{n \times d}$ 
-contains the $d$-dimensional embeddings 
-for $n$ tokens of a sequence.
-The positional encoding outputs
+mengandung embedding berdimensi $d$ 
+untuk $n$ token dari suatu urutan.
+Positional encoding akan menghasilkan
 $\mathbf{X} + \mathbf{P}$
-using a positional embedding matrix 
-$\mathbf{P} \in \mathbb{R}^{n \times d}$ of the same shape,
-whose element on the $i^\textrm{th}$ row 
-and the $(2j)^\textrm{th}$
-or the $(2j + 1)^\textrm{th}$ column is
+dengan menggunakan matriks embedding posisi 
+$\mathbf{P} \in \mathbb{R}^{n \times d}$ dengan bentuk yang sama,
+yang elemennya pada baris ke-$i$ 
+dan kolom ke-$(2j)$ atau $(2j + 1)$ adalah
 
 $$\begin{aligned} p_{i, 2j} &= \sin\left(\frac{i}{10000^{2j/d}}\right),\\p_{i, 2j+1} &= \cos\left(\frac{i}{10000^{2j/d}}\right).\end{aligned}$$
 :eqlabel:`eq_positional-encoding-def`
 
-At first glance,
-this trigonometric function
-design looks weird.
-Before we give explanations of this design,
-let's first implement it in the following `PositionalEncoding` class.
+Sekilas, desain fungsi trigonometri ini terlihat aneh.
+Sebelum kita memberikan penjelasan tentang desain ini, mari kita implementasikan terlebih dahulu dalam kelas `PositionalEncoding` berikut.
+
 
 ```{.python .input}
 %%tab mxnet
@@ -343,19 +313,18 @@ class PositionalEncoding(nn.Module):  #@save
         return nn.Dropout(self.dropout)(X, deterministic=not training)
 ```
 
-In the positional embedding matrix $\mathbf{P}$,
-[**rows correspond to positions within a sequence
-and columns represent different positional encoding dimensions**].
-In the example below,
-we can see that
-the $6^{\textrm{th}}$ and the $7^{\textrm{th}}$
-columns of the positional embedding matrix 
-have a higher frequency than 
-the $8^{\textrm{th}}$ and the $9^{\textrm{th}}$
-columns.
-The offset between 
-the $6^{\textrm{th}}$ and the $7^{\textrm{th}}$ (same for the $8^{\textrm{th}}$ and the $9^{\textrm{th}}$) columns
-is due to the alternation of sine and cosine functions.
+Dalam matriks embedding posisi $\mathbf{P}$,
+[**baris-baris berkorespondensi dengan posisi dalam urutan,
+sedangkan kolom-kolom merepresentasikan dimensi-dimensi yang berbeda dari positional encoding**].
+Dalam contoh berikut,
+kita dapat melihat bahwa
+kolom ke-$6$ dan kolom ke-$7$ dari matriks embedding posisi 
+memiliki frekuensi yang lebih tinggi dibandingkan
+kolom ke-$8$ dan kolom ke-$9$.
+Perbedaan ini terjadi karena adanya perbedaan fase antara
+kolom ke-$6$ dan kolom ke-$7$ (sama halnya untuk kolom ke-$8$ dan kolom ke-$9$),
+yang disebabkan oleh pergantian antara fungsi sinus dan kosinus.
+
 
 ```{.python .input}
 %%tab mxnet
@@ -401,14 +370,15 @@ d2l.plot(d2l.arange(num_steps), P[0, :, 6:10].T, xlabel='Row (position)',
          figsize=(6, 2.5), legend=["Col %d" % d for d in d2l.arange(6, 10)])
 ```
 
-### Absolute Positional Information
+### Informasi Posisi Absolut
 
-To see how the monotonically decreased frequency
-along the encoding dimension relates to absolute positional information,
-let's print out [**the binary representations**] of $0, 1, \ldots, 7$.
-As we can see, the lowest bit, the second-lowest bit, 
-and the third-lowest bit alternate on every number, 
-every two numbers, and every four numbers, respectively.
+Untuk melihat bagaimana frekuensi yang menurun secara monoton 
+sepanjang dimensi encoding berhubungan dengan informasi posisi absolut,
+mari kita cetak [**representasi biner**] dari $0, 1, \ldots, 7$.
+Seperti yang dapat kita lihat, bit terendah, bit kedua terendah, 
+dan bit ketiga terendah bergantian setiap angka, 
+setiap dua angka, dan setiap empat angka, secara berturut-turut.
+
 
 ```{.python .input}
 %%tab all
@@ -416,16 +386,15 @@ for i in range(8):
     print(f'{i} in binary is {i:>03b}')
 ```
 
-In binary representations, a higher bit 
-has a lower frequency than a lower bit.
-Similarly, as demonstrated in the heat map below,
-[**the positional encoding decreases
-frequencies along the encoding dimension**]
-by using trigonometric functions.
-Since the outputs are float numbers,
-such continuous representations
-are more space-efficient
-than binary representations.
+Dalam representasi biner, bit yang lebih tinggi 
+memiliki frekuensi yang lebih rendah dibandingkan dengan bit yang lebih rendah.
+Demikian pula, seperti yang ditunjukkan pada peta panas di bawah ini,
+[**encoding posisi menurunkan frekuensi sepanjang dimensi encoding**]
+dengan menggunakan fungsi trigonometri.
+Karena outputnya adalah angka desimal,
+representasi yang berkelanjutan seperti ini
+lebih efisien dalam hal ruang dibandingkan dengan representasi biner.
+
 
 ```{.python .input}
 %%tab mxnet
@@ -455,28 +424,28 @@ d2l.show_heatmaps(P, xlabel='Column (encoding dimension)',
                   ylabel='Row (position)', figsize=(3.5, 4), cmap='Blues')
 ```
 
-### Relative Positional Information
+### Informasi Posisi Relatif
 
-Besides capturing absolute positional information,
-the above positional encoding
-also allows
-a model to easily learn to attend by relative positions.
-This is because
-for any fixed position offset $\delta$,
-the positional encoding at position $i + \delta$
-can be represented by a linear projection
-of that at position $i$.
+Selain menangkap informasi posisi absolut,
+encoding posisi di atas
+juga memungkinkan
+model untuk dengan mudah mempelajari perhatian berdasarkan posisi relatif.
+Ini karena
+untuk setiap offset posisi tetap $\delta$,
+encoding posisi pada posisi $i + \delta$
+dapat direpresentasikan melalui proyeksi linier
+dari encoding posisi pada posisi $i$.
 
 
-This projection can be explained
-mathematically.
-Denoting
+Proyeksi ini dapat dijelaskan
+secara matematis.
+Misalkan
 $\omega_j = 1/10000^{2j/d}$,
-any pair of $(p_{i, 2j}, p_{i, 2j+1})$ 
-in :eqref:`eq_positional-encoding-def`
-can 
-be linearly projected to $(p_{i+\delta, 2j}, p_{i+\delta, 2j+1})$
-for any fixed offset $\delta$:
+setiap pasangan $(p_{i, 2j}, p_{i, 2j+1})$ 
+pada :eqref:`eq_positional-encoding-def`
+dapat 
+diproyeksikan secara linier menjadi $(p_{i+\delta, 2j}, p_{i+\delta, 2j+1})$
+untuk setiap offset tetap $\delta$:
 
 $$\begin{aligned}
 \begin{bmatrix} \cos(\delta \omega_j) & \sin(\delta \omega_j) \\  -\sin(\delta \omega_j) & \cos(\delta \omega_j) \\ \end{bmatrix}
@@ -487,39 +456,39 @@ $$\begin{aligned}
 \begin{bmatrix} p_{i+\delta, 2j} \\  p_{i+\delta, 2j+1} \\ \end{bmatrix},
 \end{aligned}$$
 
-where the $2\times 2$ projection matrix does not depend on any position index $i$.
+dimana matriks proyeksi berukuran $2\times 2$ tidak bergantung pada indeks posisi $i$.
 
-## Summary
+## Ringkasan
 
-In self-attention, the queries, keys, and values all come from the same place.
-Both CNNs and self-attention enjoy parallel computation
-and self-attention has the shortest maximum path length.
-However, the quadratic computational complexity
-with respect to the sequence length
-makes self-attention prohibitively slow
-for very long sequences.
-To use the sequence order information, 
-we can inject absolute or relative positional information 
-by adding positional encoding to the input representations.
+Pada self-attention, query, key, dan value semuanya berasal dari tempat yang sama.
+Baik CNN maupun self-attention dapat menikmati komputasi paralel
+dan self-attention memiliki panjang jalur maksimum yang terpendek.
+Namun, kompleksitas komputasi kuadratik
+terhadap panjang urutan
+membuat self-attention sangat lambat
+untuk urutan yang sangat panjang.
+Untuk menggunakan informasi urutan,
+kita dapat menyuntikkan informasi posisi absolut atau relatif
+dengan menambahkan encoding posisi ke dalam representasi input.
 
-## Exercises
+## Latihan
 
-1. Suppose that we design a deep architecture to represent a sequence by stacking self-attention layers with positional encoding. What could the possible issues be?
-1. Can you design a learnable positional encoding method?
-1. Can we assign different learned embeddings according to different offsets between queries and keys that are compared in self-attention? Hint: you may refer to relative position embeddings :cite:`shaw2018self,huang2018music`.
+1. Misalkan kita merancang arsitektur yang dalam untuk merepresentasikan sebuah urutan dengan menumpuk lapisan self-attention dengan encoding posisi. Apa kemungkinan masalah yang akan muncul?
+2. Bisakah kamu merancang metode encoding posisi yang dapat dipelajari?
+3. Bisakah kita memberikan embedding yang berbeda yang dipelajari sesuai dengan offset yang berbeda antara query dan key yang dibandingkan pada self-attention? Petunjuk: kamu dapat merujuk ke embedding posisi relatif :cite:`shaw2018self,huang2018music`.
 
 :begin_tab:`mxnet`
-[Discussions](https://discuss.d2l.ai/t/1651)
+[Diskusi](https://discuss.d2l.ai/t/1651)
 :end_tab:
 
 :begin_tab:`pytorch`
-[Discussions](https://discuss.d2l.ai/t/1652)
+[Diskusi](https://discuss.d2l.ai/t/1652)
 :end_tab:
 
 :begin_tab:`tensorflow`
-[Discussions](https://discuss.d2l.ai/t/3870)
+[Diskusi](https://discuss.d2l.ai/t/3870)
 :end_tab:
 
 :begin_tab:`jax`
-[Discussions](https://discuss.d2l.ai/t/18030)
+[Diskusi](https://discuss.d2l.ai/t/18030)
 :end_tab:
