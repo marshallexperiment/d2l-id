@@ -1,20 +1,21 @@
-# Converting Raw Text into Sequence Data
+# Mengonversi Teks Mentah menjadi Data Urutan
 :label:`sec_text-sequence`
 
-Throughout this book,
-we will often work with text data
-represented as sequences
-of words, characters, or word pieces.
-To get going, we will need some basic
-tools for converting raw text
-into sequences of the appropriate form.
-Typical preprocessing pipelines
-execute the following steps:
+Sepanjang buku ini,
+kita akan sering bekerja dengan data teks
+yang direpresentasikan sebagai urutan
+kata, karakter, atau potongan kata.
+Untuk memulainya, kita membutuhkan beberapa alat dasar
+untuk mengonversi teks mentah
+menjadi urutan dalam bentuk yang sesuai.
+Pipeline *preprocessing* yang umum
+melakukan langkah-langkah berikut:
 
-1. Load text as strings into memory.
-1. Split the strings into tokens (e.g., words or characters).
-1. Build a vocabulary dictionary to associate each vocabulary element with a numerical index.
-1. Convert the text into sequences of numerical indices.
+1. Memuat teks sebagai string ke dalam memori.
+2. Memecah string menjadi token (misalnya, kata atau karakter).
+3. Membangun kamus kosakata untuk menghubungkan setiap elemen kosakata dengan indeks numerik.
+4. Mengonversi teks menjadi urutan indeks numerik.
+
 
 ```{.python .input  n=1}
 %load_ext d2lbook.tab
@@ -59,22 +60,21 @@ import random
 import re
 ```
 
-## Reading the Dataset
+## Membaca Dataset
 
-Here, we will work with H. G. Wells'
-[The Time Machine](http://www.gutenberg.org/ebooks/35),
-a book containing just over 30,000 words.
-While real applications will typically
-involve significantly larger datasets,
-this is sufficient to demonstrate
-the preprocessing pipeline.
-The following `_download` method
-(**reads the raw text into a string**).
+Di sini, kita akan bekerja dengan buku karya H. G. Wells berjudul [The Time Machine](http://www.gutenberg.org/ebooks/35),
+sebuah buku yang berisi lebih dari 30.000 kata.
+Meskipun aplikasi nyata biasanya
+melibatkan dataset yang jauh lebih besar,
+ini sudah cukup untuk mendemonstrasikan
+*preprocessing pipeline*.
+Metode `_download` berikut (**membaca teks mentah ke dalam sebuah string**).
+
 
 ```{.python .input  n=5}
 %%tab all
 class TimeMachine(d2l.DataModule): #@save
-    """The Time Machine dataset."""
+    """dataset Time Machine."""
     def _download(self):
         fname = d2l.download(d2l.DATA_URL + 'timemachine.txt', self.root,
                              '090b5e7e70c295757f55df93cb0a180b9691891a')
@@ -86,7 +86,7 @@ raw_text = data._download()
 raw_text[:60]
 ```
 
-For simplicity, we ignore punctuation and capitalization when preprocessing the raw text.
+Untuk menyederhanakan, kita mengabaikan tanda baca dan kapitalisasi saat melakukan *preprocessing* pada teks mentah.
 
 ```{.python .input  n=6}
 %%tab all
@@ -98,23 +98,23 @@ text = data._preprocess(raw_text)
 text[:60]
 ```
 
-## Tokenization
+## Tokenisasi
 
-*Tokens* are the atomic (indivisible) units of text.
-Each time step corresponds to 1 token,
-but what precisely constitutes a token is a design choice.
-For example, we could represent the sentence
+*Token* adalah unit terkecil yang tidak dapat dibagi dari teks.
+Setiap langkah waktu (time step) sesuai dengan 1 token,
+tetapi apa yang tepatnya merupakan sebuah token adalah keputusan desain.
+Sebagai contoh, kita bisa merepresentasikan kalimat
 "Baby needs a new pair of shoes"
-as a sequence of 7 words,
-where the set of all words comprise
-a large vocabulary (typically tens
-or hundreds of thousands of words).
-Or we would represent the same sentence
-as a much longer sequence of 30 characters,
-using a much smaller vocabulary
-(there are only 256 distinct ASCII characters).
-Below, we tokenize our preprocessed text
-into a sequence of characters.
+sebagai sebuah urutan dari 7 kata,
+di mana kumpulan dari semua kata tersebut membentuk
+kosakata yang besar (biasanya puluhan
+atau bahkan ratusan ribu kata).
+Atau kita bisa merepresentasikan kalimat yang sama
+sebagai urutan yang lebih panjang dari 30 karakter,
+dengan kosakata yang jauh lebih kecil
+(hanya ada 256 karakter ASCII yang berbeda).
+Di bawah ini, kita akan melakukan tokenisasi pada teks yang telah diproses
+menjadi sebuah urutan karakter.
 
 ```{.python .input  n=7}
 %%tab all
@@ -128,36 +128,37 @@ tokens = data._tokenize(text)
 
 ## Vocabulary
 
-These tokens are still strings.
-However, the inputs to our models
-must ultimately consist
-of numerical inputs.
-[**Next, we introduce a class
-for constructing *vocabularies*,
-i.e., objects that associate
-each distinct token value
-with a unique index.**]
-First, we determine the set of unique tokens in our training *corpus*.
-We then assign a numerical index to each unique token.
-Rare vocabulary elements are often dropped for convenience.
-Whenever we encounter a token at training or test time
-that had not been previously seen or was dropped from the vocabulary,
-we represent it by a special "&lt;unk&gt;" token,
-signifying that this is an *unknown* value.
+Token-token ini masih dalam bentuk string.
+Namun, masukan ke model kita
+pada akhirnya harus terdiri dari
+input numerik.
+[**Selanjutnya, kita memperkenalkan kelas
+untuk membangun *kosakata*,
+yaitu, objek yang mengaitkan
+setiap nilai token yang unik
+dengan indeks yang unik.**]
+Pertama, kita menentukan kumpulan token unik dalam *corpus* pelatihan kita.
+Kemudian kita memberikan indeks numerik untuk setiap token unik.
+Elemen kosakata yang jarang muncul sering kali dihapus untuk kemudahan.
+Setiap kali kita menemukan token pada saat pelatihan atau pengujian
+yang belum pernah dilihat sebelumnya atau dihapus dari kosakata (_vocabulary_),
+kita merepresentasikannya dengan token khusus "&lt;unk&gt;",
+yang menandakan bahwa ini adalah nilai *unknown* atau tidak dikenal.
+
 
 ```{.python .input  n=8}
 %%tab all
 class Vocab:  #@save
     """Vocabulary for text."""
-    def __init__(self, tokens=[], min_freq=0, reserved_tokens=[]):
-        # Flatten a 2D list if needed
+   def __init__(self, tokens=[], min_freq=0, reserved_tokens=[]):
+        # Memipihkan list 2D jika diperlukan
         if tokens and isinstance(tokens[0], list):
             tokens = [token for line in tokens for token in line]
-        # Count token frequencies
+        # Menghitung frekuensi token
         counter = collections.Counter(tokens)
         self.token_freqs = sorted(counter.items(), key=lambda x: x[1],
                                   reverse=True)
-        # The list of unique tokens
+        # Daftar token unik
         self.idx_to_token = list(sorted(set(['<unk>'] + reserved_tokens + [
             token for token, freq in self.token_freqs if freq >= min_freq])))
         self.token_to_idx = {token: idx
@@ -167,26 +168,30 @@ class Vocab:  #@save
         return len(self.idx_to_token)
 
     def __getitem__(self, tokens):
+        # Mendapatkan indeks dari token, atau indeks untuk token tidak dikenal jika token tidak ada
         if not isinstance(tokens, (list, tuple)):
             return self.token_to_idx.get(tokens, self.unk)
         return [self.__getitem__(token) for token in tokens]
 
     def to_tokens(self, indices):
+        # Mengonversi indeks menjadi token
         if hasattr(indices, '__len__') and len(indices) > 1:
             return [self.idx_to_token[int(index)] for index in indices]
         return self.idx_to_token[indices]
 
     @property
-    def unk(self):  # Index for the unknown token
+    def unk(self):  # Indeks untuk token tidak dikenal
         return self.token_to_idx['<unk>']
+
 ```
 
-We now [**construct a vocabulary**] for our dataset,
-converting the sequence of strings
-into a list of numerical indices.
-Note that we have not lost any information
-and can easily convert our dataset
-back to its original (string) representation.
+Sekarang kita akan [**membangun kosakata**] untuk dataset kita,
+mengonversi urutan string
+menjadi daftar indeks numerik.
+Perhatikan bahwa kita tidak kehilangan informasi apa pun
+dan dapat dengan mudah mengonversi dataset kita
+kembali ke representasi aslinya (string).
+
 
 ```{.python .input  n=9}
 %%tab all
@@ -196,19 +201,20 @@ print('indices:', indices)
 print('words:', vocab.to_tokens(indices))
 ```
 
-## Putting It All Together
+## Menyatukan Semua
 
-Using the above classes and methods,
-we [**package everything into the following
-`build` method of the `TimeMachine` class**],
-which returns `corpus`, a list of token indices, and `vocab`,
-the vocabulary of *The Time Machine* corpus.
-The modifications we did here are:
-(i) we tokenize text into characters, not words,
-to simplify the training in later sections;
-(ii) `corpus` is a single list, not a list of token lists,
-since each text line in *The Time Machine* dataset
-is not necessarily a sentence or paragraph.
+Dengan menggunakan kelas dan metode di atas,
+kita akan [**mengemas semuanya ke dalam
+metode `build` dari kelas `TimeMachine` berikut**],
+yang mengembalikan `corpus`, berupa daftar indeks token, dan `vocab`,
+yaitu kosakata dari korpus *The Time Machine*.
+Modifikasi yang kita lakukan di sini adalah:
+(i) kita melakukan tokenisasi teks menjadi karakter, bukan kata,
+untuk menyederhanakan pelatihan pada bagian selanjutnya;
+(ii) `corpus` adalah sebuah daftar tunggal, bukan daftar dari daftar token,
+karena setiap baris teks dalam dataset *The Time Machine*
+tidak selalu merupakan sebuah kalimat atau paragraf.
+
 
 ```{.python .input  n=10}
 %%tab all
@@ -223,13 +229,14 @@ corpus, vocab = data.build(raw_text)
 len(corpus), len(vocab)
 ```
 
-## Exploratory Language Statistics
+## Statistik Eksplorasi Bahasa
 :label:`subsec_natural-lang-stat`
 
-Using the real corpus and the `Vocab` class defined over words,
-we can inspect basic statistics concerning word use in our corpus.
-Below, we construct a vocabulary from words used in *The Time Machine*
-and print the ten most frequently occurring of them.
+Dengan menggunakan korpus nyata dan kelas `Vocab` yang didefinisikan berdasarkan kata,
+kita dapat memeriksa statistik dasar terkait penggunaan kata dalam korpus kita.
+Di bawah ini, kita membangun kosakata dari kata-kata yang digunakan dalam *The Time Machine*
+dan mencetak sepuluh kata yang paling sering muncul.
+
 
 ```{.python .input  n=11}
 %%tab all
@@ -238,32 +245,32 @@ vocab = Vocab(words)
 vocab.token_freqs[:10]
 ```
 
-Note that (**the ten most frequent words**)
-are not all that descriptive.
-You might even imagine that
-we might see a very similar list
-if we had chosen any book at random.
-Articles like "the" and "a",
-pronouns like "i" and "my",
-and prepositions like "of", "to", and "in"
-occur often because they serve common syntactic roles.
-Such words that are common but not particularly descriptive
-are often called (***stop words***) and,
-in previous generations of text classifiers
-based on so-called bag-of-words representations,
-they were most often filtered out.
-However, they carry meaning and
-it is not necessary to filter them out
-when working with modern RNN- and
-Transformer-based neural models.
-If you look further down the list,
-you will notice
-that word frequency decays quickly.
-The $10^{\textrm{th}}$ most frequent word
-is less than $1/5$ as common as the most popular.
-Word frequency tends to follow a power law distribution
-(specifically the Zipfian) as we go down the ranks.
-To get a better idea, we [**plot the figure of the word frequency**].
+Perhatikan bahwa (**sepuluh kata yang paling sering muncul**) 
+tidak begitu bersifat deskriptif. 
+Anda bahkan mungkin membayangkan bahwa 
+daftar yang sangat mirip dapat muncul 
+jika kita memilih buku secara acak. 
+Kata-kata seperti "the" dan "a", 
+kata ganti seperti "i" dan "my", 
+dan preposisi seperti "of", "to", dan "in" 
+sering muncul karena peran sintaktisnya yang umum.
+Kata-kata umum namun tidak begitu deskriptif ini 
+sering disebut sebagai (***stop words***) dan,
+dalam generasi sebelumnya pada klasifikasi teks 
+yang berbasis pada representasi *bag-of-words*, 
+kata-kata ini paling sering dihilangkan.
+Namun, mereka tetap memiliki makna,
+dan tidak perlu dihapus saat bekerja dengan 
+model neural modern berbasis RNN dan Transformer.
+Jika Anda melihat lebih jauh ke bawah daftar,
+Anda akan memperhatikan bahwa
+frekuensi kata menurun dengan cepat.
+Kata yang paling sering muncul ke-$10$ 
+kurang dari $1/5$ seumum kata yang paling populer.
+Frekuensi kata cenderung mengikuti distribusi hukum pangkat
+(lebih spesifiknya distribusi Zipfian) saat kita bergerak ke peringkat yang lebih rendah.
+Untuk mendapatkan pemahaman yang lebih baik, kita [**membuat plot dari frekuensi kata**].
+
 
 ```{.python .input  n=12}
 %%tab all
@@ -272,25 +279,27 @@ d2l.plot(freqs, xlabel='token: x', ylabel='frequency: n(x)',
          xscale='log', yscale='log')
 ```
 
-After dealing with the first few words as exceptions,
-all the remaining words roughly follow a straight line on a log--log plot.
-This phenomenon is captured by *Zipf's law*,
-which states that the frequency $n_i$
-of the $i^\textrm{th}$ most frequent word is:
+Setelah menangani beberapa kata pertama sebagai pengecualian,
+semua kata lainnya kira-kira mengikuti garis lurus pada plot log-log.
+Fenomena ini dijelaskan oleh *hukum Zipf*,
+yang menyatakan bahwa frekuensi $n_i$
+dari kata ke-$i$ yang paling sering muncul adalah:
+
 
 $$n_i \propto \frac{1}{i^\alpha},$$
 :eqlabel:`eq_zipf_law`
 
-which is equivalent to
+yang setara dengan
 
 $$\log n_i = -\alpha \log i + c,$$
 
-where $\alpha$ is the exponent that characterizes
-the distribution and $c$ is a constant.
-This should already give us pause for thought if we want
-to model words by counting statistics.
-After all, we will significantly overestimate the frequency of the tail, also known as the infrequent words. But [**what about the other word combinations, such as two consecutive words (bigrams), three consecutive words (trigrams)**], and beyond?
-Let's see whether the bigram frequency behaves in the same manner as the single word (unigram) frequency.
+di mana $\alpha$ adalah eksponen yang mencirikan
+distribusi dan $c$ adalah konstanta.
+Hal ini seharusnya sudah membuat kita berpikir dua kali jika kita ingin
+memodelkan kata berdasarkan statistik hitungan.
+Bagaimanapun, kita akan secara signifikan melebih-lebihkan frekuensi dari kata-kata yang berada di bagian akhir distribusi, atau yang dikenal sebagai kata-kata yang jarang muncul. Tetapi [**bagaimana dengan kombinasi kata lainnya, seperti dua kata berturut-turut (bigram), tiga kata berturut-turut (trigram)**], dan seterusnya?
+Mari kita lihat apakah frekuensi bigram berperilaku dengan cara yang sama seperti frekuensi kata tunggal (unigram).
+
 
 ```{.python .input  n=13}
 %%tab all
@@ -299,7 +308,8 @@ bigram_vocab = Vocab(bigram_tokens)
 bigram_vocab.token_freqs[:10]
 ```
 
-One thing is notable here. Out of the ten most frequent word pairs, nine are composed of both stop words and only one is relevant to the actual book---"the time". Furthermore, let's see whether the trigram frequency behaves in the same manner.
+Satu hal yang perlu diperhatikan di sini. Dari sepuluh pasang kata yang paling sering muncul, sembilan di antaranya terdiri dari *stop words*, dan hanya satu yang relevan dengan isi buku sebenarnya—yaitu "the time". Selanjutnya, mari kita lihat apakah frekuensi trigram berperilaku dengan cara yang sama.
+
 
 ```{.python .input  n=14}
 %%tab all
@@ -309,7 +319,7 @@ trigram_vocab = Vocab(trigram_tokens)
 trigram_vocab.token_freqs[:10]
 ```
 
-Now, let's [**visualize the token frequency**] among these three models: unigrams, bigrams, and trigrams.
+Sekarang, mari kita [**visualisasikan frekuensi token**] di antara ketiga model ini: unigram, bigram, dan trigram.
 
 ```{.python .input  n=15}
 %%tab all
@@ -320,47 +330,47 @@ d2l.plot([freqs, bigram_freqs, trigram_freqs], xlabel='token: x',
          legend=['unigram', 'bigram', 'trigram'])
 ```
 
-This figure is quite exciting.
-First, beyond unigram words, sequences of words
-also appear to be following Zipf's law,
-albeit with a smaller exponent
-$\alpha$ in :eqref:`eq_zipf_law`,
-depending on the sequence length.
-Second, the number of distinct $n$-grams is not that large.
-This gives us hope that there is quite a lot of structure in language.
-Third, many $n$-grams occur very rarely.
-This makes certain methods unsuitable for language modeling
-and motivates the use of deep learning models.
-We will discuss this in the next section.
+Gambar ini cukup menarik.
+Pertama, di luar kata unigram, urutan kata
+juga tampaknya mengikuti hukum Zipf,
+meskipun dengan eksponen $\alpha$ yang lebih kecil
+dalam :eqref:`eq_zipf_law`,
+tergantung pada panjang urutannya.
+Kedua, jumlah $n$-gram yang berbeda tidak terlalu besar.
+Ini memberi kita harapan bahwa terdapat cukup banyak struktur dalam bahasa.
+Ketiga, banyak $n$-gram yang sangat jarang muncul.
+Hal ini membuat beberapa metode kurang cocok untuk pemodelan bahasa
+dan memotivasi penggunaan model pembelajaran mendalam.
+Kita akan membahas ini di bagian berikutnya.
 
 
-## Summary
 
-Text is among the most common forms of sequence data encountered in deep learning.
-Common choices for what constitutes a token are characters, words, and word pieces.
-To preprocess text, we usually (i) split text into tokens; (ii) build a vocabulary to map token strings to numerical indices; and (iii) convert text data into token indices for models to manipulate.
-In practice, the frequency of words tends to follow Zipf's law. This is true not just for individual words (unigrams), but also for $n$-grams.
+## Ringkasan
+
+Teks adalah salah satu bentuk data urutan yang paling umum ditemui dalam pembelajaran mendalam.
+Pilihan umum untuk apa yang dianggap sebagai token adalah karakter, kata, dan potongan kata.
+Untuk melakukan *preprocessing* teks, kita biasanya (i) memecah teks menjadi token; (ii) membangun kosakata untuk memetakan string token ke indeks numerik; dan (iii) mengonversi data teks menjadi indeks token agar dapat dimanipulasi oleh model.
+Dalam praktiknya, frekuensi kata cenderung mengikuti hukum Zipf. Hal ini berlaku tidak hanya untuk kata individual (unigram), tetapi juga untuk $n$-gram.
 
 
-## Exercises
+## Latihan
 
-1. In the experiment of this section, tokenize text into words and vary the `min_freq` argument value of the `Vocab` instance. Qualitatively characterize how changes in `min_freq` impact the size of the resulting vocabulary.
-1. Estimate the exponent of Zipfian distribution for unigrams, bigrams, and trigrams in this corpus.
-1. Find some other sources of data (download a standard machine learning dataset, pick another public domain book,
-   scrape a website, etc). For each, tokenize the data at both the word and character levels. How do the vocabulary sizes compare with *The Time Machine* corpus at equivalent values of `min_freq`. Estimate the exponent of the Zipfian distribution corresponding to the unigram and bigram distributions for these corpora. How do they compare with the values that you observed for *The Time Machine* corpus?
+1. Dalam percobaan pada bagian ini, tokenisasi teks menjadi kata-kata dan variasikan nilai argumen `min_freq` pada instance `Vocab`. Karakterisasikan secara kualitatif bagaimana perubahan `min_freq` memengaruhi ukuran kosakata yang dihasilkan.
+2. Estimasikan eksponen distribusi Zipfian untuk unigram, bigram, dan trigram dalam korpus ini.
+3. Temukan beberapa sumber data lainnya (unduh dataset pembelajaran mesin standar, pilih buku lain yang berada dalam domain publik, *scrape* sebuah situs web, dll). Untuk masing-masing, lakukan tokenisasi data pada tingkat kata dan karakter. Bagaimana perbandingan ukuran kosakata dengan korpus *The Time Machine* pada nilai `min_freq` yang setara? Estimasikan eksponen distribusi Zipfian yang sesuai dengan distribusi unigram dan bigram untuk korpus ini. Bagaimana perbandingannya dengan nilai yang Anda amati pada korpus *The Time Machine*?
 
 :begin_tab:`mxnet`
-[Discussions](https://discuss.d2l.ai/t/117)
+[Diskusi](https://discuss.d2l.ai/t/117)
 :end_tab:
 
 :begin_tab:`pytorch`
-[Discussions](https://discuss.d2l.ai/t/118)
+[Diskusi](https://discuss.d2l.ai/t/118)
 :end_tab:
 
 :begin_tab:`tensorflow`
-[Discussions](https://discuss.d2l.ai/t/1049)
+[Diskusi](https://discuss.d2l.ai/t/1049)
 :end_tab:
 
 :begin_tab:`jax`
-[Discussions](https://discuss.d2l.ai/t/18011)
+[Diskusi](https://discuss.d2l.ai/t/18011)
 :end_tab:
