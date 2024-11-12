@@ -1,22 +1,23 @@
-# Attention Pooling by Similarity
+# Attention Pooling dengan Similaritas
 
 :label:`sec_attention-pooling`
 
-Now that we have introduced the primary components of the attention mechanism, let's use them in a rather classical setting, namely regression and classification via kernel density estimation :cite:`Nadaraya.1964,Watson.1964`. This detour simply provides additional background: it is entirely optional and can be skipped if needed. 
-At their core, Nadaraya--Watson estimators rely on some similarity kernel $\alpha(\mathbf{q}, \mathbf{k})$ relating queries $\mathbf{q}$ to keys $\mathbf{k}$. Some common kernels are
+Sekarang setelah kita memperkenalkan komponen utama dari mekanisme perhatian (attention mechanism), mari kita menggunakannya dalam pengaturan yang lebih klasik, yaitu regresi dan klasifikasi melalui estimasi kepadatan kernel (*kernel density estimation*) :cite:`Nadaraya.1964,Watson.1964`. Pembahasan ini hanya merupakan penjelasan tambahan: sepenuhnya opsional dan dapat dilewatkan jika diinginkan.
+Pada intinya, estimator Nadaraya--Watson mengandalkan beberapa kernel similaritas $\alpha(\mathbf{q}, \mathbf{k})$ yang menghubungkan query $\mathbf{q}$ dengan kunci $\mathbf{k}$. Beberapa kernel umum adalah:
 
 $$\begin{aligned}
 \alpha(\mathbf{q}, \mathbf{k}) & = \exp\left(-\frac{1}{2} \|\mathbf{q} - \mathbf{k}\|^2 \right) && \textrm{Gaussian;} \\
-\alpha(\mathbf{q}, \mathbf{k}) & = 1 \textrm{ if } \|\mathbf{q} - \mathbf{k}\| \leq 1 && \textrm{Boxcar;} \\
+\alpha(\mathbf{q}, \mathbf{k}) & = 1 \textrm{ jika } \|\mathbf{q} - \mathbf{k}\| \leq 1 && \textrm{Boxcar;} \\
 \alpha(\mathbf{q}, \mathbf{k}) & = \mathop{\mathrm{max}}\left(0, 1 - \|\mathbf{q} - \mathbf{k}\|\right) && \textrm{Epanechikov.}
 \end{aligned}
 $$
 
-There are many more choices that we could pick. See a [Wikipedia article](https://en.wikipedia.org/wiki/Kernel_(statistics)) for a more extensive review and how the choice of kernels is related to kernel density estimation, sometimes also called *Parzen Windows* :cite:`parzen1957consistent`. All of the kernels are heuristic and can be tuned. For instance, we can adjust the width, not only on a global basis but even on a per-coordinate basis. Regardless, all of them lead to the following equation for regression and classification alike:
+Ada banyak pilihan lain yang bisa kita ambil. Lihat artikel [Wikipedia](https://en.wikipedia.org/wiki/Kernel_(statistics)) untuk ulasan yang lebih luas dan bagaimana pemilihan kernel terkait dengan estimasi kepadatan kernel, yang kadang-kadang disebut juga sebagai *Parzen Windows* :cite:`parzen1957consistent`. Semua kernel ini adalah heuristik dan dapat disesuaikan. Sebagai contoh, kita dapat menyesuaikan lebar kernel, tidak hanya secara global tetapi bahkan per koordinat. Namun demikian, semua kernel tersebut mengarah ke persamaan berikut untuk regresi dan klasifikasi:
 
 $$f(\mathbf{q}) = \sum_i \mathbf{v}_i \frac{\alpha(\mathbf{q}, \mathbf{k}_i)}{\sum_j \alpha(\mathbf{q}, \mathbf{k}_j)}.$$
 
-In the case of a (scalar) regression with observations $(\mathbf{x}_i, y_i)$ for features and labels respectively, $\mathbf{v}_i = y_i$ are scalars, $\mathbf{k}_i = \mathbf{x}_i$ are vectors, and the query $\mathbf{q}$ denotes the new location where $f$ should be evaluated. In the case of (multiclass) classification, we use one-hot-encoding of $y_i$ to obtain $\mathbf{v}_i$. One of the convenient properties of this estimator is that it requires no training. Even more so, if we suitably narrow the kernel with increasing amounts of data, the approach is consistent :cite:`mack1982weak`, i.e., it will converge to some statistically optimal solution. Let's start by inspecting some kernels.
+Dalam kasus regresi (skalar) dengan pengamatan $(\mathbf{x}_i, y_i)$ untuk fitur dan label masing-masing, $\mathbf{v}_i = y_i$ adalah skalar, $\mathbf{k}_i = \mathbf{x}_i$ adalah vektor, dan query $\mathbf{q}$ menunjukkan lokasi baru di mana $f$ harus dievaluasi. Dalam kasus klasifikasi (multikelas), kita menggunakan *one-hot encoding* dari $y_i$ untuk mendapatkan $\mathbf{v}_i$. Salah satu sifat yang nyaman dari estimator ini adalah bahwa ia tidak memerlukan pelatihan. Bahkan lebih baik lagi, jika kita mempersempit kernel dengan tepat saat jumlah data meningkat, pendekatan ini akan konsisten :cite:`mack1982weak`, yaitu akan konvergen ke beberapa solusi yang optimal secara statistik. Mari kita mulai dengan memeriksa beberapa kernel.
+
 
 ```{.python .input}
 %load_ext d2lbook.tab
@@ -60,9 +61,11 @@ from jax import numpy as jnp
 from flax import linen as nn
 ```
 
-## [**Kernels and Data**]
+## [**Kernel dan Data**]
 
-All the kernels $\alpha(\mathbf{k}, \mathbf{q})$ defined in this section are *translation and rotation invariant*; that is, if we shift and rotate $\mathbf{k}$ and $\mathbf{q}$ in the same manner, the value of $\alpha$ remains unchanged. For simplicity we thus pick scalar arguments $k, q \in \mathbb{R}$ and pick the key $k = 0$ as the origin. This yields:
+Semua kernel $\alpha(\mathbf{k}, \mathbf{q})$ yang didefinisikan dalam bagian ini bersifat *invarian terhadap translasi dan rotasi*; artinya, jika kita menggeser dan memutar $\mathbf{k}$ dan $\mathbf{q}$ dengan 
+cara yang sama, nilai $\alpha$ tetap tidak berubah. Untuk kesederhanaan, kita memilih argumen skalar $k, q \in \mathbb{R}$ dan memilih kunci $k = 0$ sebagai titik asal. Ini menghasilkan:
+
 
 ```{.python .input}
 %%tab all
@@ -107,13 +110,14 @@ for kernel, name, ax in zip(kernels, names, axes):
 d2l.plt.show()
 ```
 
-Different kernels correspond to different notions of range and smoothness. For instance, the boxcar kernel only attends to observations within a distance of $1$ (or some otherwise defined hyperparameter) and does so indiscriminately. 
+Kernel yang berbeda sesuai dengan konsep rentang dan kehalusan yang berbeda. Sebagai contoh, kernel boxcar hanya memperhatikan observasi dalam jarak $1$ (atau beberapa hiperparameter yang didefinisikan lainnya) dan melakukannya secara tidak diskriminatif.
 
-To see Nadaraya--Watson estimation in action, let's define some training data. In the following we use the dependency
+Untuk melihat estimasi Nadaraya--Watson dalam tindakan, mari kita definisikan beberapa data pelatihan. Dalam contoh berikut, kita menggunakan ketergantungan
 
 $$y_i = 2\sin(x_i) + x_i + \epsilon,$$
 
-where $\epsilon$ is drawn from a normal distribution with zero mean and unit variance. We draw 40 training examples.
+di mana $\epsilon$ diambil dari distribusi normal dengan mean nol dan varians satu. Kita mengambil 40 contoh pelatihan.
+
 
 ```{.python .input}
 %%tab all
@@ -137,19 +141,20 @@ x_val = d2l.arange(0, 5, 0.1)
 y_val = f(x_val)
 ```
 
-## [**Attention Pooling via Nadaraya--Watson Regression**]
+## [**Pooling Attention melalui Regresi Nadaraya--Watson**]
 
-Now that we have data and kernels, all we need is a function that computes the kernel regression estimates. Note that we also want to obtain the relative kernel weights in order to perform some minor diagnostics. Hence we first compute the kernel between all training features (covariates) `x_train` and all validation features `x_val`. This yields a matrix, which we subsequently normalize. When multiplied with the training labels `y_train` we obtain the estimates.
+Sekarang kita memiliki data dan kernel, yang kita butuhkan hanyalah sebuah fungsi yang menghitung estimasi regresi kernel. Perhatikan bahwa kita juga ingin memperoleh bobot kernel relatif untuk melakukan beberapa diagnostik kecil. Oleh karena itu, pertama-tama kita menghitung kernel antara semua fitur pelatihan (`x_train`) dan semua fitur validasi (`x_val`). Ini menghasilkan matriks, yang kemudian kita normalisasi. Ketika dikalikan dengan label pelatihan (`y_train`), kita akan mendapatkan estimasi.
 
-Recall attention pooling in :eqref:`eq_attention_pooling`. Let each validation feature be a query, and each training feature--label pair be a key--value pair. As a result, the  normalized relative kernel weights (`attention_w` below) are the *attention weights*.
+Ingat kembali pooling perhatian pada :eqref:`eq_attention_pooling`. Biarkan setiap fitur validasi menjadi query, dan setiap pasangan fitur-label pelatihan menjadi pasangan kunci--nilai. Sebagai hasilnya, bobot kernel relatif yang telah dinormalisasi (`attention_w` di bawah) adalah *bobot perhatian*.
+
 
 ```{.python .input}
 %%tab all
 def nadaraya_watson(x_train, y_train, x_val, kernel):
     dists = d2l.reshape(x_train, (-1, 1)) - d2l.reshape(x_val, (1, -1))
-    # Each column/row corresponds to each query/key
+    # Setiap kolom/baris berhubungan dengan setiap query/key
     k = d2l.astype(kernel(dists), d2l.float32)
-    # Normalization over keys for each query
+    # Normalisasi atas key untuk setiap query
     attention_w = k / d2l.reduce_sum(k, 0)
     if tab.selected('pytorch'):
         y_hat = y_train@attention_w
@@ -162,7 +167,8 @@ def nadaraya_watson(x_train, y_train, x_val, kernel):
     return y_hat, attention_w
 ```
 
-Let's have a look at the kind of estimates that the different kernels produce.
+Mari kita lihat jenis estimasi yang dihasilkan oleh kernel yang berbeda.
+
 
 ```{.python .input}
 %%tab all
@@ -191,19 +197,22 @@ def plot(x_train, y_train, x_val, y_val, kernels, names, attention=False):
 plot(x_train, y_train, x_val, y_val, kernels, names)
 ```
 
-The first thing that stands out is that all three nontrivial kernels (Gaussian, Boxcar, and Epanechikov) produce fairly workable estimates that are not too far from the true function. Only the constant kernel that leads to the trivial estimate $f(x) = \frac{1}{n} \sum_i y_i$ produces a rather unrealistic result. Let's inspect the attention weighting a bit more closely:
+Hal pertama yang menonjol adalah bahwa ketiga kernel non-trivial (Gaussian, Boxcar, dan Epanechikov) menghasilkan estimasi yang cukup dapat digunakan dan tidak terlalu jauh dari fungsi sebenarnya. Hanya kernel 
+konstan yang menghasilkan estimasi trivial $f(x) = \frac{1}{n} \sum_i y_i$ yang memberikan hasil yang agak tidak realistis. Mari kita inspeksi bobot perhatian (attention weighting) ini dengan lebih dekat:
+
 
 ```{.python .input}
 %%tab all
 plot(x_train, y_train, x_val, y_val, kernels, names, attention=True)
 ```
 
-The visualization clearly shows why the estimates for Gaussian, Boxcar, and Epanechikov are very similar: after all, they are derived from very similar attention weights, despite the different functional form of the kernel. This raises the question as to whether this is always the case. 
+Visualisasi dengan jelas menunjukkan mengapa estimasi untuk Gaussian, Boxcar, dan Epanechikov sangat mirip: bagaimanapun, estimasi ini diperoleh dari bobot perhatian yang sangat mirip, meskipun bentuk fungsional dari kernel berbeda. Hal ini menimbulkan pertanyaan apakah ini selalu terjadi.
 
-## [**Adapting Attention Pooling**]
+## [**Menyesuaikan Attention Pooling**]
 
-We could replace the Gaussian kernel with one of a different width. That is, we could use 
-$\alpha(\mathbf{q}, \mathbf{k}) = \exp\left(-\frac{1}{2 \sigma^2} \|\mathbf{q} - \mathbf{k}\|^2 \right)$ where $\sigma^2$ determines the width of the kernel. Let's see whether this affects the outcomes.
+Kita dapat mengganti kernel Gaussian dengan kernel yang memiliki lebar berbeda. Artinya, kita dapat menggunakan 
+$\alpha(\mathbf{q}, \mathbf{k}) = \exp\left(-\frac{1}{2 \sigma^2} \|\mathbf{q} - \mathbf{k}\|^2 \right)$ di mana $\sigma^2$ menentukan lebar kernel. Mari kita lihat apakah hal ini mempengaruhi hasil yang diperoleh.
+
 
 ```{.python .input}
 %%tab all
@@ -217,45 +226,47 @@ kernels = [gaussian_with_width(sigma) for sigma in sigmas]
 plot(x_train, y_train, x_val, y_val, kernels, names)
 ```
 
-Clearly, the narrower the kernel, the less smooth the estimate. At the same time, it adapts better to the local variations. Let's look at the corresponding attention weights.
+Jelas bahwa semakin sempit kernel, semakin kurang halus estimasi yang diperoleh. Pada saat yang sama, estimasi ini menjadi lebih adaptif terhadap variasi lokal. Mari kita lihat bobot perhatian yang sesuai.
+
 
 ```{.python .input}
 %%tab all
 plot(x_train, y_train, x_val, y_val, kernels, names, attention=True)
 ```
 
-As we would expect, the narrower the kernel, the narrower the range of large attention weights. It is also clear that picking the same width might not be ideal. In fact, :citet:`Silverman86` proposed a heuristic that depends on the local density. Many more such "tricks" have been proposed. For instance, :citet:`norelli2022asif` used a similar nearest-neighbor interpolation technique for designing cross-modal image and text representations. 
+Seperti yang kita duga, semakin sempit kernel, semakin sempit pula rentang bobot perhatian yang besar. Hal ini juga jelas menunjukkan bahwa menggunakan lebar yang sama mungkin tidak ideal. Faktanya, :citet:`Silverman86` mengusulkan sebuah heuristik yang bergantung pada kepadatan lokal. Banyak "trik" lain yang telah diusulkan. Sebagai contoh, :citet:`norelli2022asif` menggunakan teknik interpolasi tetangga terdekat yang serupa untuk merancang representasi silang-modal gambar dan teks.
 
-The astute reader might wonder why we are providing this deep dive for a method that is over half a century old. First, it is one of the earliest precursors of modern attention mechanisms. Second, it is great for visualization. Third, and just as importantly, it demonstrates the limits of hand-crafted attention mechanisms. A much better strategy is to *learn* the mechanism, by learning the representations for queries and keys. This is what we will embark on in the following sections.
+Pembaca yang jeli mungkin bertanya-tanya mengapa kita memberikan pembahasan mendalam untuk metode yang sudah ada lebih dari setengah abad. Pertama, ini adalah salah satu pendahulu paling awal dari mekanisme perhatian modern. Kedua, metode ini sangat baik untuk visualisasi. Ketiga, dan sama pentingnya, ini menunjukkan batasan dari mekanisme perhatian yang dibuat secara manual. Strategi yang jauh lebih baik adalah dengan *mempelajari* mekanisme tersebut, dengan mempelajari representasi untuk query dan key. Inilah yang akan kita lakukan pada bagian berikutnya.
 
 
-## Summary
+## Ringkasan
 
-Nadaraya--Watson kernel regression is an early precursor of the current attention mechanisms. 
-It can be used directly with little to no training or tuning, either for classification or regression. 
-The attention weight is assigned according to the similarity (or distance) between query and key, and according to how many similar observations are available. 
+Regresi kernel Nadaraya--Watson adalah salah satu pendahulu paling awal dari mekanisme perhatian saat ini.
+Metode ini dapat digunakan langsung dengan sedikit atau tanpa pelatihan atau penyesuaian, baik untuk klasifikasi maupun regresi.
+Bobot perhatian diberikan berdasarkan kesamaan (atau jarak) antara query dan key, serta berdasarkan berapa banyak pengamatan yang serupa tersedia.
 
-## Exercises
 
-1. Parzen windows density estimates are given by $\hat{p}(\mathbf{x}) = \frac{1}{n} \sum_i k(\mathbf{x}, \mathbf{x}_i)$. Prove that for binary classification the function $\hat{p}(\mathbf{x}, y=1) - \hat{p}(\mathbf{x}, y=-1)$, as obtained by Parzen windows is equivalent to Nadaraya--Watson classification. 
-1. Implement stochastic gradient descent to learn a good value for kernel widths in Nadaraya--Watson regression. 
-    1. What happens if you just use the above estimates to minimize $(f(\mathbf{x_i}) - y_i)^2$ directly? Hint: $y_i$ is part of the terms used to compute $f$.
-    1. Remove $(\mathbf{x}_i, y_i)$ from the estimate for $f(\mathbf{x}_i)$ and optimize over the kernel widths. Do you still observe overfitting?
-1. Assume that all $\mathbf{x}$ lie on the unit sphere, i.e., all satisfy $\|\mathbf{x}\| = 1$. Can you simplify the $\|\mathbf{x} - \mathbf{x}_i\|^2$ term in the exponential? Hint: we will later see that this is very closely related to dot product attention. 
-1. Recall that :citet:`mack1982weak` proved that Nadaraya--Watson estimation is consistent. How quickly should you reduce the scale for the attention mechanism as you get more data? Provide some intuition for your answer. Does it depend on the dimensionality of the data? How?
+## Latihan
+
+1. Estimasi densitas Parzen windows diberikan oleh $\hat{p}(\mathbf{x}) = \frac{1}{n} \sum_i k(\mathbf{x}, \mathbf{x}_i)$. Buktikan bahwa untuk klasifikasi biner, fungsi $\hat{p}(\mathbf{x}, y=1) - \hat{p}(\mathbf{x}, y=-1)$, seperti yang diperoleh oleh Parzen windows, setara dengan klasifikasi Nadaraya--Watson.
+2. Implementasikan stochastic gradient descent untuk mempelajari nilai yang baik untuk lebar kernel dalam regresi Nadaraya--Watson.
+   1. Apa yang terjadi jika Anda hanya menggunakan estimasi di atas untuk meminimalkan $(f(\mathbf{x_i}) - y_i)^2$ secara langsung? Petunjuk: $y_i$ adalah bagian dari term yang digunakan untuk menghitung $f$.
+   2. Hapus pasangan $(\mathbf{x}_i, y_i)$ dari estimasi $f(\mathbf{x}_i)$ dan optimalkan lebar kernel. Apakah Anda masih mengamati overfitting?
+3. Asumsikan bahwa semua $\mathbf{x}$ berada di bola satuan, yaitu semua memenuhi $\|\mathbf{x}\| = 1$. Dapatkah Anda menyederhanakan term $\|\mathbf{x} - \mathbf{x}_i\|^2$ dalam eksponensial? Petunjuk: kita nantinya akan melihat bahwa ini sangat terkait dengan perhatian produk titik (dot product attention).
+4. Ingat bahwa :citet:`mack1982weak` membuktikan bahwa estimasi Nadaraya--Watson adalah konsisten. Seberapa cepat Anda harus mengurangi skala untuk mekanisme perhatian seiring dengan bertambahnya data? Berikan beberapa intuisi untuk jawaban Anda. Apakah ini bergantung pada dimensi data? Bagaimana?
 
 :begin_tab:`mxnet`
-[Discussions](https://discuss.d2l.ai/t/1598)
+[Diskusi](https://discuss.d2l.ai/t/1598)
 :end_tab:
 
 :begin_tab:`pytorch`
-[Discussions](https://discuss.d2l.ai/t/1599)
+[Diskusi](https://discuss.d2l.ai/t/1599)
 :end_tab:
 
 :begin_tab:`tensorflow`
-[Discussions](https://discuss.d2l.ai/t/3866)
+[Diskusi](https://discuss.d2l.ai/t/3866)
 :end_tab:
 
 :begin_tab:`jax`
-[Discussions](https://discuss.d2l.ai/t/18026)
+[Diskusi](https://discuss.d2l.ai/t/18026)
 :end_tab:
