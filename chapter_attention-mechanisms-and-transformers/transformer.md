@@ -3,29 +3,19 @@
 tab.interact_select('mxnet', 'pytorch', 'tensorflow', 'jax')
 ```
 
-# The Transformer Architecture
+# Arsitektur Transformer
 :label:`sec_transformer`
 
-
-We have compared CNNs, RNNs, and self-attention in
+Kita telah membandingkan CNN, RNN, dan self-attention di
 :numref:`subsec_cnn-rnn-self-attention`.
-Notably, self-attention
-enjoys both parallel computation and
-the shortest maximum path length.
-Therefore,
-it is appealing to design deep architectures
-by using self-attention.
-Unlike earlier self-attention models
-that still rely on RNNs for input representations :cite:`Cheng.Dong.Lapata.2016,Lin.Feng.Santos.ea.2017,Paulus.Xiong.Socher.2017`,
-the Transformer model
-is solely based on attention mechanisms
-without any convolutional or recurrent layer :cite:`Vaswani.Shazeer.Parmar.ea.2017`.
-Though originally proposed
-for sequence-to-sequence learning on text data,
-Transformers have been
-pervasive in a wide range of
-modern deep learning applications,
-such as in areas to do with language, vision, speech, and reinforcement learning.
+Secara khusus, self-attention menikmati keuntungan dalam hal komputasi paralel dan memiliki panjang jalur maksimum terpendek.
+Oleh karena itu, menarik untuk merancang arsitektur dalam dengan menggunakan self-attention.
+Berbeda dengan model self-attention sebelumnya yang masih mengandalkan RNN untuk representasi input :cite:`Cheng.Dong.Lapata.2016,Lin.Feng.Santos.ea.2017,Paulus.Xiong.Socher.2017`,
+model Transformer sepenuhnya didasarkan pada mekanisme perhatian (attention) tanpa lapisan konvolusional atau berulang :cite:`Vaswani.Shazeer.Parmar.ea.2017`.
+Meskipun awalnya diusulkan untuk pembelajaran sequence-to-sequence pada data teks,
+Transformer telah menjadi model yang pervasif di berbagai aplikasi pembelajaran mendalam modern,
+seperti dalam bidang bahasa, visi, ucapan, dan pembelajaran penguatan.
+
 
 ```{.python .input}
 %%tab mxnet
@@ -66,104 +56,100 @@ import pandas as pd
 
 ## Model
 
-As an instance of the encoder--decoder
-architecture,
-the overall architecture of
-the Transformer
-is presented in :numref:`fig_transformer`.
-As we can see,
-the Transformer is composed of an encoder and a decoder.
-In contrast to
+Sebagai salah satu contoh dari arsitektur encoder--decoder,
+keseluruhan arsitektur Transformer
+diperlihatkan di :numref:`fig_transformer`.
+Seperti yang dapat kita lihat,
+Transformer terdiri dari encoder dan decoder.
+Berbeda dengan
 Bahdanau attention
-for sequence-to-sequence learning
-in :numref:`fig_s2s_attention_details`,
-the input (source) and output (target)
-sequence embeddings
-are added with positional encoding
-before being fed into
-the encoder and the decoder
-that stack modules based on self-attention.
+untuk pembelajaran sequence-to-sequence di :numref:`fig_s2s_attention_details`,
+embedding dari input (sumber) dan output (target)
+ditambahkan dengan positional encoding
+sebelum dimasukkan ke dalam
+encoder dan decoder
+yang menyusun modul-modul berdasarkan self-attention.
 
-![The Transformer architecture.](../img/transformer.svg)
+
+![Arsitektur Transformer.](../img/transformer.svg)
 :width:`320px`
 :label:`fig_transformer`
 
+Sekarang kita memberikan gambaran umum tentang
+arsitektur Transformer pada :numref:`fig_transformer`.
+Secara umum,
+Transformer encoder adalah tumpukan dari beberapa lapisan identik,
+di mana setiap lapisan
+memiliki dua sublayer (keduanya disebut sebagai $\textrm{sublayer}$).
+Yang pertama
+adalah multi-head self-attention pooling,
+dan yang kedua adalah jaringan feed-forward positionwise.
+Secara khusus,
+dalam encoder self-attention,
+queries, keys, dan values semuanya berasal dari
+keluaran dari lapisan encoder sebelumnya.
+Terinspirasi oleh desain ResNet pada :numref:`sec_resnet`,
+digunakan koneksi residual
+di sekitar kedua sublayer.
+Pada Transformer,
+untuk setiap input $\mathbf{x} \in \mathbb{R}^d$ pada posisi apa pun dari urutan,
+kita membutuhkan bahwa $\textrm{sublayer}(\mathbf{x}) \in \mathbb{R}^d$ sehingga
+koneksi residual $\mathbf{x} + \textrm{sublayer}(\mathbf{x}) \in \mathbb{R}^d$ dapat dilakukan.
+Penambahan dari koneksi residual ini langsung
+diikuti oleh layer normalization :cite:`Ba.Kiros.Hinton.2016`.
+Hasilnya, Transformer encoder mengeluarkan representasi vektor berdimensi $d$
+untuk setiap posisi dari urutan input.
 
-Now we provide an overview of the
-Transformer architecture in :numref:`fig_transformer`.
-At a high level,
-the Transformer encoder is a stack of multiple identical layers,
-where each layer
-has two sublayers (either is denoted as $\textrm{sublayer}$).
-The first
-is a multi-head self-attention pooling
-and the second is a positionwise feed-forward network.
-Specifically,
-in the encoder self-attention,
-queries, keys, and values are all from the
-outputs of the previous encoder layer.
-Inspired by the ResNet design of :numref:`sec_resnet`,
-a residual connection is employed
-around both sublayers.
-In the Transformer,
-for any input $\mathbf{x} \in \mathbb{R}^d$ at any position of the sequence,
-we require that $\textrm{sublayer}(\mathbf{x}) \in \mathbb{R}^d$ so that
-the residual connection $\mathbf{x} + \textrm{sublayer}(\mathbf{x}) \in \mathbb{R}^d$ is feasible.
-This addition from the residual connection is immediately
-followed by layer normalization :cite:`Ba.Kiros.Hinton.2016`.
-As a result, the Transformer encoder outputs a $d$-dimensional vector representation
-for each position of the input sequence.
+Transformer decoder juga merupakan tumpukan dari beberapa lapisan identik
+dengan koneksi residual dan normalisasi lapisan.
+Selain dua sublayer yang dijelaskan di
+encoder, decoder menambahkan
+sublayer ketiga yang dikenal sebagai
+encoder--decoder attention,
+di antara kedua sublayer tersebut.
+Dalam encoder--decoder attention,
+queries berasal dari
+keluaran dari sublayer self-attention decoder,
+dan keys dan values berasal dari
+keluaran Transformer encoder.
+Dalam decoder self-attention,
+queries, keys, dan values semuanya berasal dari
+keluaran dari lapisan decoder sebelumnya.
+Namun, setiap posisi dalam decoder hanya
+diizinkan untuk melakukan attend pada semua posisi di decoder
+hingga posisi tersebut.
+*Masked* attention ini
+mempertahankan sifat autoregressive,
+memastikan bahwa prediksi hanya bergantung
+pada token output yang telah dihasilkan.
 
-The Transformer decoder is also a stack of multiple identical layers
-with residual connections and layer normalizations.
-As well as the two sublayers described in
-the encoder, the decoder inserts
-a third sublayer, known as
-the encoder--decoder attention,
-between these two.
-In the encoder--decoder attention,
-queries are from the
-outputs of the decoder's self-attention sublayer,
-and the keys and values are
-from the Transformer encoder outputs.
-In the decoder self-attention,
-queries, keys, and values are all from the
-outputs of the previous decoder layer.
-However, each position in the decoder is
-allowed only to attend to all positions in the decoder
-up to that position.
-This *masked* attention
-preserves the autoregressive property,
-ensuring that the prediction only depends
-on those output tokens that have been generated.
+Kita telah mendeskripsikan dan mengimplementasikan
+multi-head attention berdasarkan scaled dot products
+di :numref:`sec_multihead-attention`
+dan positional encoding di :numref:`subsec_positional-encoding`.
+Selanjutnya, kita akan mengimplementasikan
+sisa dari model Transformer.
 
-
-We have already described and implemented
-multi-head attention based on scaled dot products
-in :numref:`sec_multihead-attention`
-and positional encoding in :numref:`subsec_positional-encoding`.
-In the following, we will implement
-the rest of the Transformer model.
-
-## [**Positionwise Feed-Forward Networks**]
+## [**Jaringan Feed-Forward Positionwise**]
 :label:`subsec_positionwise-ffn`
 
-The positionwise feed-forward network transforms
-the representation at all the sequence positions
-using the same MLP.
-This is why we call it *positionwise*.
-In the implementation below,
-the input `X` with shape
-(batch size, number of time steps or sequence length in tokens,
-number of hidden units or feature dimension)
-will be transformed by a two-layer MLP into
-an output tensor of shape
-(batch size, number of time steps, `ffn_num_outputs`).
+Jaringan feed-forward positionwise mengubah
+representasi di semua posisi urutan
+menggunakan MLP yang sama.
+Itulah mengapa kita menyebutnya *positionwise*.
+Dalam implementasi di bawah ini,
+input `X` dengan bentuk
+(ukuran batch, jumlah time steps atau panjang urutan dalam token,
+jumlah unit tersembunyi atau dimensi fitur)
+akan diubah oleh MLP dua lapis menjadi
+tensorn output dengan bentuk
+(ukuran batch, jumlah time steps, `ffn_num_outputs`).
+
 
 ```{.python .input}
 %%tab mxnet
 class PositionWiseFFN(nn.Block):  #@save
-    """The positionwise feed-forward network."""
+    """Jaringan feed-forward positionwise."""
     def __init__(self, ffn_num_hiddens, ffn_num_outputs):
         super().__init__()
         self.dense1 = nn.Dense(ffn_num_hiddens, flatten=False,
@@ -177,7 +163,7 @@ class PositionWiseFFN(nn.Block):  #@save
 ```{.python .input}
 %%tab pytorch
 class PositionWiseFFN(nn.Module):  #@save
-    """The positionwise feed-forward network."""
+    """Jaringan feed-forward positionwise."""
     def __init__(self, ffn_num_hiddens, ffn_num_outputs):
         super().__init__()
         self.dense1 = nn.LazyLinear(ffn_num_hiddens)
@@ -191,7 +177,7 @@ class PositionWiseFFN(nn.Module):  #@save
 ```{.python .input}
 %%tab tensorflow
 class PositionWiseFFN(tf.keras.layers.Layer):  #@save
-    """The positionwise feed-forward network."""
+    """Jaringan feed-forward positionwise."""
     def __init__(self, ffn_num_hiddens, ffn_num_outputs):
         super().__init__()
         self.dense1 = tf.keras.layers.Dense(ffn_num_hiddens)
@@ -205,7 +191,7 @@ class PositionWiseFFN(tf.keras.layers.Layer):  #@save
 ```{.python .input}
 %%tab jax
 class PositionWiseFFN(nn.Module):  #@save
-    """The positionwise feed-forward network."""
+    """Jaringan feed-forward positionwise."""
     ffn_num_hiddens: int
     ffn_num_outputs: int
 
@@ -217,15 +203,9 @@ class PositionWiseFFN(nn.Module):  #@save
         return self.dense2(nn.relu(self.dense1(X)))
 ```
 
-The following example
-shows that [**the innermost dimension
-of a tensor changes**] to
-the number of outputs in
-the positionwise feed-forward network.
-Since the same MLP transforms
-at all the positions,
-when the inputs at all these positions are the same,
-their outputs are also identical.
+Contoh berikut menunjukkan bahwa [**dimensi terdalam dari sebuah tensor berubah**] menjadi jumlah keluaran pada jaringan feed-forward positionwise. 
+Karena MLP yang sama mentransformasi di semua posisi, ketika input di semua posisi tersebut sama, maka output mereka juga identik.
+
 
 ```{.python .input}
 %%tab mxnet
@@ -253,35 +233,16 @@ ffn = PositionWiseFFN(4, 8)
 ffn.init_with_output(d2l.get_key(), jnp.ones((2, 3, 4)))[0][0]
 ```
 
-## Residual Connection and Layer Normalization
+## Koneksi Residual dan Normalisasi Lapisan
 
-Now let's focus on the "add & norm" component in :numref:`fig_transformer`.
-As we described at the beginning of this section,
-this is a residual connection immediately
-followed by layer normalization.
-Both are key to effective deep architectures.
+Sekarang mari kita fokus pada komponen "add & norm" dalam :numref:`fig_transformer`. Seperti yang telah dijelaskan di awal bagian ini, komponen ini adalah koneksi residual yang langsung diikuti dengan normalisasi lapisan. Keduanya adalah kunci arsitektur dalam yang efektif.
 
-In :numref:`sec_batch_norm`,
-we explained how batch normalization
-recenters and rescales across the examples within
-a minibatch.
-As discussed in :numref:`subsec_layer-normalization-in-bn`,
-layer normalization is the same as batch normalization
-except that the former
-normalizes across the feature dimension,
-thus enjoying benefits of scale independence and batch size independence.
-Despite its pervasive applications
-in computer vision,
-batch normalization
-is usually empirically
-less effective than layer normalization
-in natural language processing
-tasks, where the inputs are often
-variable-length sequences.
+Di :numref:`sec_batch_norm`, kita telah menjelaskan bagaimana batch normalization merecenter dan mereskalakan berdasarkan contoh-contoh dalam minibatch. Seperti yang dijelaskan dalam :numref:`subsec_layer-normalization-in-bn`, layer normalization mirip dengan batch normalization kecuali bahwa yang pertama menormalkan berdasarkan dimensi fitur, sehingga memiliki keuntungan ketergantungan pada skala dan ukuran batch.
 
-The following code snippet
-[**compares the normalization across different dimensions
-by layer normalization and batch normalization**].
+Meskipun batch normalization banyak digunakan dalam visi komputer, biasanya batch normalization secara empiris kurang efektif dibandingkan layer normalization pada tugas-tugas pemrosesan bahasa alami, di mana input sering kali berupa urutan dengan panjang yang bervariasi.
+
+Kode berikut membandingkan [**normalisasi pada berbagai dimensi menggunakan layer normalization dan batch normalization**].
+
 
 ```{.python .input}
 %%tab mxnet
@@ -290,7 +251,7 @@ ln.initialize()
 bn = nn.BatchNorm()
 bn.initialize()
 X = d2l.tensor([[1, 2], [2, 3]])
-# Compute mean and variance from X in the training mode
+# Menghitung rata-rata dan variansi dari X dalam mode pelatihan
 with autograd.record():
     print('layer norm:', ln(X), '\nbatch norm:', bn(X))
 ```
@@ -300,7 +261,7 @@ with autograd.record():
 ln = nn.LayerNorm(2)
 bn = nn.LazyBatchNorm1d()
 X = d2l.tensor([[1, 2], [2, 3]], dtype=torch.float32)
-# Compute mean and variance from X in the training mode
+# Menghitung rata-rata dan variansi dari X dalam mode pelatihan
 print('layer norm:', ln(X), '\nbatch norm:', bn(X))
 ```
 
@@ -317,20 +278,21 @@ print('layer norm:', ln(X), '\nbatch norm:', bn(X, training=True))
 ln = nn.LayerNorm()
 bn = nn.BatchNorm()
 X = d2l.tensor([[1, 2], [2, 3]], dtype=d2l.float32)
-# Compute mean and variance from X in the training mode
+# Menghitung rata-rata dan variansi dari X dalam mode pelatihan
 print('layer norm:', ln.init_with_output(d2l.get_key(), X)[0],
       '\nbatch norm:', bn.init_with_output(d2l.get_key(), X,
                                            use_running_average=False)[0])
 ```
 
-Now we can implement the `AddNorm` class
-[**using a residual connection followed by layer normalization**].
-Dropout is also applied for regularization.
+Sekarang kita bisa mengimplementasikan kelas `AddNorm`
+[**menggunakan koneksi residual diikuti dengan normalisasi lapisan (layer normalization)**].
+Dropout juga diterapkan untuk regularisasi.
+
 
 ```{.python .input}
 %%tab mxnet
 class AddNorm(nn.Block):  #@save
-    """The residual connection followed by layer normalization."""
+    """Koneksi residual diikuti dengan normalisasi lapisan (layer normalization)."""
     def __init__(self, dropout):
         super().__init__()
         self.dropout = nn.Dropout(dropout)
@@ -343,7 +305,7 @@ class AddNorm(nn.Block):  #@save
 ```{.python .input}
 %%tab pytorch
 class AddNorm(nn.Module):  #@save
-    """The residual connection followed by layer normalization."""
+    """Koneksi residual diikuti dengan normalisasi lapisan (layer normalization)."""
     def __init__(self, norm_shape, dropout):
         super().__init__()
         self.dropout = nn.Dropout(dropout)
@@ -356,7 +318,7 @@ class AddNorm(nn.Module):  #@save
 ```{.python .input}
 %%tab tensorflow
 class AddNorm(tf.keras.layers.Layer):  #@save
-    """The residual connection followed by layer normalization."""
+    """Koneksi residual diikuti dengan normalisasi lapisan (layer normalization)."""
     def __init__(self, norm_shape, dropout):
         super().__init__()
         self.dropout = tf.keras.layers.Dropout(dropout)
@@ -369,7 +331,7 @@ class AddNorm(tf.keras.layers.Layer):  #@save
 ```{.python .input}
 %%tab jax
 class AddNorm(nn.Module):  #@save
-    """The residual connection followed by layer normalization."""
+    """Koneksi residual diikuti dengan normalisasi lapisan (layer normalization)."""
     dropout: int
 
     @nn.compact
@@ -378,9 +340,8 @@ class AddNorm(nn.Module):  #@save
             nn.Dropout(self.dropout)(Y, deterministic=not training) + X)
 ```
 
-The residual connection requires that
-the two inputs are of the same shape
-so that [**the output tensor also has the same shape after the addition operation**].
+Koneksi residual mengharuskan dua input memiliki bentuk yang sama sehingga [**tensor output juga memiliki bentuk yang sama setelah operasi penjumlahan**].
+
 
 ```{.python .input}
 %%tab mxnet
@@ -418,19 +379,15 @@ d2l.check_shape(output, shape)
 ## Encoder
 :label:`subsec_transformer-encoder`
 
-With all the essential components to assemble
-the Transformer encoder,
-let's start by
-implementing [**a single layer within the encoder**].
-The following `TransformerEncoderBlock` class
-contains two sublayers: multi-head self-attention and positionwise feed-forward networks,
-where a residual connection followed by layer normalization is employed
-around both sublayers.
+Dengan semua komponen penting untuk merangkai encoder Transformer, mari kita mulai dengan mengimplementasikan [**satu lapisan dalam encoder**].
+Kelas `TransformerEncoderBlock` berikut ini berisi dua sublapisan: multi-head self-attention dan jaringan feed-forward secara posisi,
+di mana koneksi residual diikuti dengan normalisasi lapisan digunakan di sekitar kedua sublapisan tersebut.
+
 
 ```{.python .input}
 %%tab mxnet
 class TransformerEncoderBlock(nn.Block):  #@save
-    """The Transformer encoder block."""
+    """Transformer encoder block."""
     def __init__(self, num_hiddens, ffn_num_hiddens, num_heads, dropout,
                  use_bias=False):
         super().__init__()
@@ -448,7 +405,7 @@ class TransformerEncoderBlock(nn.Block):  #@save
 ```{.python .input}
 %%tab pytorch
 class TransformerEncoderBlock(nn.Module):  #@save
-    """The Transformer encoder block."""
+    """Transformer encoder block."""
     def __init__(self, num_hiddens, ffn_num_hiddens, num_heads, dropout,
                  use_bias=False):
         super().__init__()
@@ -466,7 +423,7 @@ class TransformerEncoderBlock(nn.Module):  #@save
 ```{.python .input}
 %%tab tensorflow
 class TransformerEncoderBlock(tf.keras.layers.Layer):  #@save
-    """The Transformer encoder block."""
+    """Transformer encoder block."""
     def __init__(self, key_size, query_size, value_size, num_hiddens,
                  norm_shape, ffn_num_hiddens, num_heads, dropout, bias=False):
         super().__init__()
@@ -486,7 +443,7 @@ class TransformerEncoderBlock(tf.keras.layers.Layer):  #@save
 ```{.python .input}
 %%tab jax
 class TransformerEncoderBlock(nn.Module):  #@save
-    """The Transformer encoder block."""
+    """Transformer encoder block."""
     num_hiddens: int
     ffn_num_hiddens: int
     num_heads: int
@@ -507,9 +464,10 @@ class TransformerEncoderBlock(nn.Module):  #@save
         return self.addnorm2(Y, self.ffn(Y), training=training), attention_weights
 ```
 
-As we can see,
-[**no layer in the Transformer encoder
-changes the shape of its input.**]
+Seperti yang dapat kita lihat,
+[**tidak ada lapisan di dalam encoder Transformer
+yang mengubah bentuk dari inputnya.**]
+
 
 ```{.python .input}
 %%tab mxnet
@@ -548,18 +506,19 @@ encoder_blk = TransformerEncoderBlock(24, 48, 8, 0.5)
 d2l.check_shape(output, X.shape)
 ```
 
-In the following [**Transformer encoder**] implementation,
-we stack `num_blks` instances of the above `TransformerEncoderBlock` classes.
-Since we use the fixed positional encoding
-whose values are always between $-1$ and $1$,
-we multiply values of the learnable input embeddings
-by the square root of the embedding dimension
-to rescale before summing up the input embedding and the positional encoding.
+Dalam implementasi [**encoder Transformer**] berikut,
+kita menumpuk `num_blks` instance dari kelas `TransformerEncoderBlock` yang telah dijelaskan sebelumnya.
+Karena kita menggunakan positional encoding yang tetap
+yang nilainya selalu berada dalam rentang $-1$ hingga $1$,
+kita mengalikan nilai embedding input yang dapat dipelajari
+dengan akar kuadrat dari dimensi embedding
+untuk melakukan rescaling sebelum menjumlahkan embedding input dan positional encoding.
+
 
 ```{.python .input}
 %%tab mxnet
 class TransformerEncoder(d2l.Encoder):  #@save
-    """The Transformer encoder."""
+    """Transformer encoder."""
     def __init__(self, vocab_size, num_hiddens, ffn_num_hiddens,
                  num_heads, num_blks, dropout, use_bias=False):
         super().__init__()
@@ -573,9 +532,9 @@ class TransformerEncoder(d2l.Encoder):  #@save
         self.initialize()
 
     def forward(self, X, valid_lens):
-        # Since positional encoding values are between -1 and 1, the embedding
-        # values are multiplied by the square root of the embedding dimension
-        # to rescale before they are summed up
+        # Karena nilai positional encoding berada dalam rentang -1 hingga 1, nilai embedding
+        # dikalikan dengan akar kuadrat dari dimensi embedding
+        # untuk melakukan rescaling sebelum dijumlahkan.
         X = self.pos_encoding(self.embedding(X) * math.sqrt(self.num_hiddens))
         self.attention_weights = [None] * len(self.blks)
         for i, blk in enumerate(self.blks):
@@ -588,7 +547,7 @@ class TransformerEncoder(d2l.Encoder):  #@save
 ```{.python .input}
 %%tab pytorch
 class TransformerEncoder(d2l.Encoder):  #@save
-    """The Transformer encoder."""
+    """Transformer encoder."""
     def __init__(self, vocab_size, num_hiddens, ffn_num_hiddens,
                  num_heads, num_blks, dropout, use_bias=False):
         super().__init__()
@@ -601,9 +560,9 @@ class TransformerEncoder(d2l.Encoder):  #@save
                 num_hiddens, ffn_num_hiddens, num_heads, dropout, use_bias))
 
     def forward(self, X, valid_lens):
-        # Since positional encoding values are between -1 and 1, the embedding
-        # values are multiplied by the square root of the embedding dimension
-        # to rescale before they are summed up
+        # Karena nilai positional encoding berada dalam rentang -1 hingga 1, nilai embedding
+        # dikalikan dengan akar kuadrat dari dimensi embedding
+        # untuk melakukan rescaling sebelum dijumlahkan.
         X = self.pos_encoding(self.embedding(X) * math.sqrt(self.num_hiddens))
         self.attention_weights = [None] * len(self.blks)
         for i, blk in enumerate(self.blks):
@@ -616,7 +575,7 @@ class TransformerEncoder(d2l.Encoder):  #@save
 ```{.python .input}
 %%tab tensorflow
 class TransformerEncoder(d2l.Encoder):  #@save
-    """The Transformer encoder."""
+    """Transformer encoder."""
     def __init__(self, vocab_size, key_size, query_size, value_size,
                  num_hiddens, norm_shape, ffn_num_hiddens, num_heads,
                  num_blks, dropout, bias=False):
@@ -630,9 +589,9 @@ class TransformerEncoder(d2l.Encoder):  #@save
             num_blks)]
 
     def call(self, X, valid_lens, **kwargs):
-        # Since positional encoding values are between -1 and 1, the embedding
-        # values are multiplied by the square root of the embedding dimension
-        # to rescale before they are summed up
+        # Karena nilai positional encoding berada dalam rentang -1 hingga 1, nilai embedding
+        # dikalikan dengan akar kuadrat dari dimensi embedding
+        # untuk melakukan rescaling sebelum dijumlahkan.
         X = self.pos_encoding(self.embedding(X) * tf.math.sqrt(
             tf.cast(self.num_hiddens, dtype=tf.float32)), **kwargs)
         self.attention_weights = [None] * len(self.blks)
@@ -665,9 +624,9 @@ class TransformerEncoder(d2l.Encoder):  #@save
                      for _ in range(self.num_blks)]
 
     def __call__(self, X, valid_lens, training=False):
-        # Since positional encoding values are between -1 and 1, the embedding
-        # values are multiplied by the square root of the embedding dimension
-        # to rescale before they are summed up
+        # Karena nilai positional encoding berada dalam rentang -1 hingga 1, nilai embedding
+        # dikalikan dengan akar kuadrat dari dimensi embedding
+        # untuk melakukan rescaling sebelum dijumlahkan.
         X = self.embedding(X) * math.sqrt(self.num_hiddens)
         X = self.pos_encoding(X, training=training)
         attention_weights = [None] * len(self.blks)
@@ -679,9 +638,9 @@ class TransformerEncoder(d2l.Encoder):  #@save
         return X
 ```
 
-Below we specify hyperparameters to [**create a two-layer Transformer encoder**].
-The shape of the Transformer encoder output
-is (batch size, number of time steps, `num_hiddens`).
+Di bawah ini kita menentukan hyperparameter untuk [**membuat encoder Transformer dengan dua lapisan**]. 
+Bentuk keluaran dari encoder Transformer adalah 
+(batch size, jumlah langkah waktu, `num_hiddens`).
 
 ```{.python .input}
 %%tab mxnet
@@ -714,48 +673,45 @@ d2l.check_shape(encoder.init_with_output(d2l.get_key(),
 
 ## Decoder
 
-As shown in :numref:`fig_transformer`,
-[**the Transformer decoder
-is composed of multiple identical layers**].
-Each layer is implemented in the following
-`TransformerDecoderBlock` class,
-which contains three sublayers:
-decoder self-attention,
+Seperti yang ditunjukkan pada :numref:`fig_transformer`,
+[**decoder Transformer terdiri dari beberapa lapisan yang identik**].
+Setiap lapisan diimplementasikan dalam kelas 
+`TransformerDecoderBlock` berikut,
+yang terdiri dari tiga sublapisan:
+self-attention pada decoder,
 encoder--decoder attention,
-and positionwise feed-forward networks.
-These sublayers employ
-a residual connection around them
-followed by layer normalization.
+dan jaringan feed-forward positionwise.
+Setiap sublapisan ini menggunakan
+koneksi residual di sekitar mereka
+diikuti dengan normalisasi lapisan.
 
 
-As we described earlier in this section,
-in the masked multi-head decoder self-attention
-(the first sublayer),
-queries, keys, and values
-all come from the outputs of the previous decoder layer.
-When training sequence-to-sequence models,
-tokens at all the positions (time steps)
-of the output sequence
-are known.
-However,
-during prediction
-the output sequence is generated token by token;
-thus,
-at any decoder time step
-only the generated tokens
-can be used in the decoder self-attention.
-To preserve autoregression in the decoder,
-its masked self-attention
-specifies  `dec_valid_lens` so that
-any query
-only attends to
-all positions in the decoder
-up to the query position.
+Seperti yang telah kita jelaskan di bagian ini,
+dalam masked multi-head self-attention decoder 
+(sublapisan pertama),
+queries, keys, dan values
+semua berasal dari keluaran lapisan decoder sebelumnya.
+Saat melatih model sequence-to-sequence,
+token di semua posisi (time steps) dari urutan output diketahui.
+Namun,
+selama prediksi,
+urutan output dihasilkan token demi token;
+sehingga,
+pada setiap langkah waktu decoder,
+hanya token yang telah dihasilkan 
+yang dapat digunakan dalam self-attention decoder.
+Untuk menjaga autoregression di dalam decoder,
+masked self-attention di dalamnya
+menentukan `dec_valid_lens` sehingga
+setiap query hanya mengacu pada
+semua posisi di dalam decoder
+hingga posisi query.
+
 
 ```{.python .input}
 %%tab mxnet
 class TransformerDecoderBlock(nn.Block):
-    # The i-th block in the Transformer decoder
+    # Blok ke-i dalam Transformer decoder
     def __init__(self, num_hiddens, ffn_num_hiddens, num_heads, dropout, i):
         super().__init__()
         self.i = i
@@ -770,11 +726,11 @@ class TransformerDecoderBlock(nn.Block):
 
     def forward(self, X, state):
         enc_outputs, enc_valid_lens = state[0], state[1]
-        # During training, all the tokens of any output sequence are processed
-        # at the same time, so state[2][self.i] is None as initialized. When
-        # decoding any output sequence token by token during prediction,
-        # state[2][self.i] contains representations of the decoded output at
-        # the i-th block up to the current time step
+        # Selama pelatihan, semua token dari setiap urutan output diproses
+        # secara bersamaan, sehingga state[2][self.i] adalah None seperti yang diinisialisasi. 
+        # Ketika mendekode setiap token urutan output satu per satu selama prediksi,
+        # state[2][self.i] berisi representasi dari output yang telah didekode pada
+        # blok ke-i hingga langkah waktu saat ini.
         if state[2][self.i] is None:
             key_values = X
         else:
@@ -783,8 +739,8 @@ class TransformerDecoderBlock(nn.Block):
 
         if autograd.is_training():
             batch_size, num_steps, _ = X.shape
-            # Shape of dec_valid_lens: (batch_size, num_steps), where every
-            # row is [1, 2, ..., num_steps]
+            # Bentuk dari dec_valid_lens: (batch_size, num_steps), di mana setiap
+            # baris adalah [1, 2, ..., num_steps]
             dec_valid_lens = np.tile(np.arange(1, num_steps + 1, ctx=X.ctx),
                                      (batch_size, 1))
         else:
@@ -792,7 +748,7 @@ class TransformerDecoderBlock(nn.Block):
         # Self-attention
         X2 = self.attention1(X, key_values, key_values, dec_valid_lens)
         Y = self.addnorm1(X, X2)
-        # Encoder-decoder attention. Shape of enc_outputs:
+        # Encoder-decoder attention. Bentuk dari enc_outputs:
         # (batch_size, num_steps, num_hiddens)
         Y2 = self.attention2(Y, enc_outputs, enc_outputs, enc_valid_lens)
         Z = self.addnorm2(Y, Y2)
@@ -802,7 +758,7 @@ class TransformerDecoderBlock(nn.Block):
 ```{.python .input}
 %%tab pytorch
 class TransformerDecoderBlock(nn.Module):
-    # The i-th block in the Transformer decoder
+    # Blok ke-i dalam Transformer decoder
     def __init__(self, num_hiddens, ffn_num_hiddens, num_heads, dropout, i):
         super().__init__()
         self.i = i
@@ -817,11 +773,11 @@ class TransformerDecoderBlock(nn.Module):
 
     def forward(self, X, state):
         enc_outputs, enc_valid_lens = state[0], state[1]
-        # During training, all the tokens of any output sequence are processed
-        # at the same time, so state[2][self.i] is None as initialized. When
-        # decoding any output sequence token by token during prediction,
-        # state[2][self.i] contains representations of the decoded output at
-        # the i-th block up to the current time step
+        # Selama pelatihan, semua token dari setiap urutan output diproses
+        # secara bersamaan, sehingga state[2][self.i] adalah None seperti yang diinisialisasi. Ketika
+        # mendekode setiap token urutan output secara bertahap selama prediksi,
+        # state[2][self.i] berisi representasi dari output yang sudah didekode
+        # pada blok ke-i hingga langkah waktu saat ini
         if state[2][self.i] is None:
             key_values = X
         else:
@@ -829,8 +785,8 @@ class TransformerDecoderBlock(nn.Module):
         state[2][self.i] = key_values
         if self.training:
             batch_size, num_steps, _ = X.shape
-            # Shape of dec_valid_lens: (batch_size, num_steps), where every
-            # row is [1, 2, ..., num_steps]
+            # Bentuk dari dec_valid_lens: (batch_size, num_steps), di mana setiap
+            # baris adalah [1, 2, ..., num_steps]
             dec_valid_lens = torch.arange(
                 1, num_steps + 1, device=X.device).repeat(batch_size, 1)
         else:
@@ -838,7 +794,7 @@ class TransformerDecoderBlock(nn.Module):
         # Self-attention
         X2 = self.attention1(X, key_values, key_values, dec_valid_lens)
         Y = self.addnorm1(X, X2)
-        # Encoder-decoder attention. Shape of enc_outputs:
+        # Encoder-decoder attention. Bentuk dari enc_outputs:
         # (batch_size, num_steps, num_hiddens)
         Y2 = self.attention2(Y, enc_outputs, enc_outputs, enc_valid_lens)
         Z = self.addnorm2(Y, Y2)
@@ -848,7 +804,7 @@ class TransformerDecoderBlock(nn.Module):
 ```{.python .input}
 %%tab tensorflow
 class TransformerDecoderBlock(tf.keras.layers.Layer):
-    # The i-th block in the Transformer decoder
+    # Blok ke-i dalam Transformer decoder
     def __init__(self, key_size, query_size, value_size, num_hiddens,
                  norm_shape, ffn_num_hiddens, num_heads, dropout, i):
         super().__init__()
@@ -864,11 +820,11 @@ class TransformerDecoderBlock(tf.keras.layers.Layer):
 
     def call(self, X, state, **kwargs):
         enc_outputs, enc_valid_lens = state[0], state[1]
-        # During training, all the tokens of any output sequence are processed
-        # at the same time, so state[2][self.i] is None as initialized. When
-        # decoding any output sequence token by token during prediction,
-        # state[2][self.i] contains representations of the decoded output at
-        # the i-th block up to the current time step
+        # Selama pelatihan, semua token dari setiap urutan output diproses
+        # secara bersamaan, sehingga state[2][self.i] adalah None seperti yang diinisialisasi.
+        # Ketika mendekode setiap token urutan output secara bertahap selama prediksi,
+        # state[2][self.i] berisi representasi dari output yang sudah didekode
+        # pada blok ke-i hingga langkah waktu saat ini
         if state[2][self.i] is None:
             key_values = X
         else:
@@ -876,8 +832,8 @@ class TransformerDecoderBlock(tf.keras.layers.Layer):
         state[2][self.i] = key_values
         if kwargs["training"]:
             batch_size, num_steps, _ = X.shape
-            # Shape of dec_valid_lens: (batch_size, num_steps), where every
-            # row is [1, 2, ..., num_steps]
+            # Bentuk dari dec_valid_lens: (batch_size, num_steps), di mana setiap
+            # baris adalah [1, 2, ..., num_steps]
             dec_valid_lens = tf.repeat(
                 tf.reshape(tf.range(1, num_steps + 1),
                            shape=(-1, num_steps)), repeats=batch_size, axis=0)
@@ -887,7 +843,7 @@ class TransformerDecoderBlock(tf.keras.layers.Layer):
         X2 = self.attention1(X, key_values, key_values, dec_valid_lens,
                              **kwargs)
         Y = self.addnorm1(X, X2, **kwargs)
-        # Encoder-decoder attention. Shape of enc_outputs:
+        # Encoder-decoder attention. Bentuk dari enc_outputs:
         # (batch_size, num_steps, num_hiddens)
         Y2 = self.attention2(Y, enc_outputs, enc_outputs, enc_valid_lens,
                              **kwargs)
@@ -898,7 +854,7 @@ class TransformerDecoderBlock(tf.keras.layers.Layer):
 ```{.python .input}
 %%tab jax
 class TransformerDecoderBlock(nn.Module):
-    # The i-th block in the Transformer decoder
+    # Blok ke-i dalam Transformer decoder
     num_hiddens: int
     ffn_num_hiddens: int
     num_heads: int
@@ -919,11 +875,11 @@ class TransformerDecoderBlock(nn.Module):
 
     def __call__(self, X, state, training=False):
         enc_outputs, enc_valid_lens = state[0], state[1]
-        # During training, all the tokens of any output sequence are processed
-        # at the same time, so state[2][self.i] is None as initialized. When
-        # decoding any output sequence token by token during prediction,
-        # state[2][self.i] contains representations of the decoded output at
-        # the i-th block up to the current time step
+        # Selama pelatihan, semua token dari setiap urutan output diproses secara bersamaan,
+        # sehingga state[2][self.i] diinisialisasi sebagai None.
+        # Saat mendekode urutan output token demi token selama prediksi,
+        # state[2][self.i] berisi representasi dari output yang telah didekode
+        # pada blok ke-i hingga langkah waktu saat ini.
         if state[2][self.i] is None:
             key_values = X
         else:
@@ -931,8 +887,8 @@ class TransformerDecoderBlock(nn.Module):
         state[2][self.i] = key_values
         if training:
             batch_size, num_steps, _ = X.shape
-            # Shape of dec_valid_lens: (batch_size, num_steps), where every
-            # row is [1, 2, ..., num_steps]
+            # Bentuk dari dec_valid_lens: (batch_size, num_steps), di mana setiap
+            # baris adalah [1, 2, ..., num_steps]
             dec_valid_lens = jnp.tile(jnp.arange(1, num_steps + 1),
                                       (batch_size, 1))
         else:
@@ -941,7 +897,7 @@ class TransformerDecoderBlock(nn.Module):
         X2, attention_w1 = self.attention1(X, key_values, key_values,
                                            dec_valid_lens, training=training)
         Y = self.addnorm1(X, X2, training=training)
-        # Encoder-decoder attention. Shape of enc_outputs:
+        # Encoder-decoder attention. Bentuk dari enc_outputs:
         # (batch_size, num_steps, num_hiddens)
         Y2, attention_w2 = self.attention2(Y, enc_outputs, enc_outputs,
                                            enc_valid_lens, training=training)
@@ -949,11 +905,10 @@ class TransformerDecoderBlock(nn.Module):
         return self.addnorm3(Z, self.ffn(Z), training=training), state, attention_w1, attention_w2
 ```
 
-To facilitate scaled dot product operations
-in the encoder--decoder attention
-and addition operations in the residual connections,
-[**the feature dimension (`num_hiddens`) of the decoder is
-the same as that of the encoder.**]
+Untuk memfasilitasi operasi dot product berskala dalam attention encoder--decoder
+dan operasi penjumlahan dalam koneksi residual,
+[**dimensi fitur (`num_hiddens`) dari decoder adalah sama dengan dimensi dari encoder.**]
+
 
 ```{.python .input}
 %%tab mxnet
@@ -990,14 +945,15 @@ d2l.check_shape(decoder_blk.init_with_output(d2l.get_key(), X, state)[0][0],
                 X.shape)
 ```
 
-Now we [**construct the entire Transformer decoder**]
-composed of `num_blks` instances of `TransformerDecoderBlock`.
-In the end,
-a fully connected layer computes the prediction
-for all the `vocab_size` possible output tokens.
-Both of the decoder self-attention weights
-and the encoder--decoder attention weights
-are stored for later visualization.
+Sekarang kita [**membangun keseluruhan Transformer decoder**]
+yang terdiri dari `num_blks` instance `TransformerDecoderBlock`.
+Pada akhirnya,
+sebuah layer fully connected menghitung prediksi
+untuk semua token keluaran yang mungkin dengan `vocab_size`.
+Baik bobot self-attention pada decoder
+maupun bobot attention encoder--decoder
+disimpan untuk visualisasi di kemudian hari.
+
 
 ```{.python .input}
 %%tab mxnet
@@ -1153,16 +1109,17 @@ class TransformerDecoder(nn.Module):
         return self.dense(X), state
 ```
 
-## [**Training**]
+## [**Pelatihan**]
 
-Let's instantiate an encoder--decoder model
-by following the Transformer architecture.
-Here we specify that
-both the Transformer encoder and the Transformer decoder
-have two layers using 4-head attention.
-As in :numref:`sec_seq2seq_training`,
-we train the Transformer model
-for sequence-to-sequence learning on the English--French machine translation dataset.
+Mari kita instansiasi sebuah model encoder--decoder
+dengan mengikuti arsitektur Transformer.
+Di sini kita menetapkan bahwa
+baik Transformer encoder maupun Transformer decoder
+memiliki dua lapisan yang menggunakan 4-head attention.
+Seperti pada :numref:`sec_seq2seq_training`,
+kita melatih model Transformer
+untuk pembelajaran sequence-to-sequence pada dataset terjemahan mesin Inggris--Prancis.
+
 
 ```{.python .input}
 %%tab all
@@ -1201,9 +1158,10 @@ if tab.selected('tensorflow'):
 trainer.fit(model, data)
 ```
 
-After training,
-we use the Transformer model
-to [**translate a few English sentences**] into French and compute their BLEU scores.
+Setelah pelatihan,
+kita menggunakan model Transformer
+untuk [**menerjemahkan beberapa kalimat bahasa Inggris**] ke dalam bahasa Prancis dan menghitung skor BLEU-nya.
+
 
 ```{.python .input}
 %%tab all
@@ -1225,9 +1183,9 @@ for en, fr, p in zip(engs, fras, preds):
           f'{d2l.bleu(" ".join(translation), fr, k=2):.3f}')
 ```
 
-Let's [**visualize the Transformer attention weights**] when translating the final English sentence into French.
-The shape of the encoder self-attention weights
-is (number of encoder layers, number of attention heads, `num_steps` or number of queries, `num_steps` or number of key-value pairs).
+Mari kita [**visualisasikan bobot perhatian Transformer**] ketika menerjemahkan kalimat bahasa Inggris terakhir menjadi bahasa Prancis.
+Bentuk dari bobot perhatian self-attention pada encoder adalah (jumlah lapisan encoder, jumlah kepala perhatian, `num_steps` atau jumlah kueri, `num_steps` atau jumlah pasangan kunci-nilai).
+
 
 ```{.python .input}
 %%tab pytorch, mxnet, tensorflow
@@ -1278,17 +1236,12 @@ d2l.show_heatmaps(
     figsize=(7, 3.5))
 ```
 
-[**To visualize the decoder self-attention weights and the encoder--decoder attention weights,
-we need more data manipulations.**]
-For example,
-we fill the masked attention weights with zero.
-Note that
-the decoder self-attention weights
-and the encoder--decoder attention weights
-both have the same queries:
-the beginning-of-sequence token followed by
-the output tokens and possibly
-end-of-sequence tokens.
+[**Untuk memvisualisasikan bobot self-attention decoder dan bobot encoder--decoder attention, kita membutuhkan lebih banyak manipulasi data.**]
+Sebagai contoh, kita mengisi bobot perhatian yang ter-mask dengan nilai nol.
+Perhatikan bahwa bobot self-attention decoder dan bobot encoder--decoder attention
+keduanya memiliki kueri yang sama:
+token awal urutan (beginning-of-sequence) diikuti oleh token output dan mungkin token akhir urutan (end-of-sequence).
+
 
 ```{.python .input}
 %%tab mxnet
@@ -1362,10 +1315,10 @@ d2l.show_heatmaps(
     titles=['Head %d' % i for i in range(1, 5)], figsize=(7, 3.5))
 ```
 
-Similar to the case in the encoder self-attention,
-via the specified valid length of the input sequence,
-[**no query from the output sequence
-attends to those padding tokens from the input sequence.**]
+Mirip dengan kasus pada self-attention encoder,
+melalui panjang yang valid dari urutan input yang telah ditentukan,
+[**tidak ada query dari urutan output yang memperhatikan token padding dari urutan input.**]
+
 
 ```{.python .input}
 %%tab all
@@ -1375,48 +1328,32 @@ d2l.show_heatmaps(
     figsize=(7, 3.5))
 ```
 
-Although the Transformer architecture
-was originally proposed for sequence-to-sequence learning,
-as we will discover later in the book,
-either the Transformer encoder
-or the Transformer decoder
-is often individually used
-for different deep learning tasks.
+Meskipun arsitektur Transformer awalnya diusulkan untuk pembelajaran sequence-to-sequence, seperti yang akan kita bahas nanti di buku ini, baik encoder Transformer maupun decoder Transformer sering kali digunakan secara individual untuk berbagai tugas pembelajaran mendalam.
 
-## Summary
+## Ringkasan
 
-The Transformer is an instance of the encoder--decoder architecture,
-though either the encoder or the decoder can be used individually in practice.
-In the Transformer architecture, multi-head self-attention is used
-for representing the input sequence and the output sequence,
-though the decoder has to preserve the autoregressive property via a masked version.
-Both the residual connections and the layer normalization in the Transformer
-are important for training a very deep model.
-The positionwise feed-forward network in the Transformer model
-transforms the representation at all the sequence positions using the same MLP.
+Transformer adalah contoh dari arsitektur encoder-decoder, meskipun pada praktiknya baik encoder maupun decoder dapat digunakan secara individual. Dalam arsitektur Transformer, multi-head self-attention digunakan untuk merepresentasikan urutan input dan urutan output, meskipun decoder harus mempertahankan sifat autoregresif melalui versi yang dimasking. Baik koneksi residual maupun normalisasi lapisan dalam Transformer penting untuk melatih model yang sangat dalam. Network feed-forward positionwise dalam model Transformer mentransformasi representasi pada semua posisi urutan dengan menggunakan MLP yang sama.
 
+## Latihan
 
-## Exercises
-
-1. Train a deeper Transformer in the experiments. How does it affect the training speed and the translation performance?
-1. Is it a good idea to replace scaled dot product attention with additive attention in the Transformer? Why?
-1. For language modeling, should we use the Transformer encoder, decoder, or both? How would you design this method?
-1. What challenges can Transformers face if input sequences are very long? Why?
-1. How would you improve the computational and memory efficiency of Transformers? Hint: you may refer to the survey paper by :citet:`Tay.Dehghani.Bahri.ea.2020`.
+1. Latih Transformer yang lebih dalam dalam eksperimen. Bagaimana ini mempengaruhi kecepatan pelatihan dan kinerja terjemahan?
+2. Apakah mengganti scaled dot product attention dengan additive attention di Transformer adalah ide yang bagus? Mengapa?
+3. Untuk pemodelan bahasa, apakah kita harus menggunakan encoder Transformer, decoder Transformer, atau keduanya? Bagaimana Anda akan merancang metode ini?
+4. Tantangan apa yang bisa dihadapi oleh Transformer jika urutan input sangat panjang? Mengapa?
+5. Bagaimana Anda akan meningkatkan efisiensi komputasi dan memori Transformer? Petunjuk: Anda dapat merujuk pada makalah survei oleh :citet:`Tay.Dehghani.Bahri.ea.2020`.
 
 :begin_tab:`mxnet`
-[Discussions](https://discuss.d2l.ai/t/348)
+[Diskusi](https://discuss.d2l.ai/t/348)
 :end_tab:
 
 :begin_tab:`pytorch`
-[Discussions](https://discuss.d2l.ai/t/1066)
+[Diskusi](https://discuss.d2l.ai/t/1066)
 :end_tab:
 
 :begin_tab:`tensorflow`
-[Discussions](https://discuss.d2l.ai/t/3871)
+[Diskusi](https://discuss.d2l.ai/t/3871)
 :end_tab:
 
 :begin_tab:`jax`
-[Discussions](https://discuss.d2l.ai/t/18031)
+[Diskusi](https://discuss.d2l.ai/t/18031)
 :end_tab:
-
