@@ -120,16 +120,16 @@
 - [x] ./chapter_recurrent-modern/beam-search.md
 
 # 11 - chapter_attention-and-transformers
-- [ ] ./chapter_attention-and-transformers/vision-transformer.md
-- [ ] ./chapter_attention-and-transformers/transformer.md
-- [ ] ./chapter_attention-and-transformers/self-attention-and-positional-encoding.md
-- [ ] ./chapter_attention-and-transformers/multihead-attention.md
-- [ ] ./chapter_attention-and-transformers/index.md
-- [ ] ./chapter_attention-and-transformers/attention-cues.md
-- [ ] ./chapter_attention-and-transformers/bahdanau-attention.md
-- [ ] ./chapter_attention-and-transformers/large-pretraining-transformers.md
-- [ ] ./chapter_attention-and-transformers/nadaraya-watson.md
-- [ ] ./chapter_attention-and-transformers/attention-scoring-functions.md
+- [x] ./chapter_attention-and-transformers/vision-transformer.md
+- [x] ./chapter_attention-and-transformers/transformer.md
+- [x] ./chapter_attention-and-transformers/self-attention-and-positional-encoding.md
+- [x] ./chapter_attention-and-transformers/multihead-attention.md
+- [x] ./chapter_attention-and-transformers/index.md
+- [x] ./chapter_attention-and-transformers/queries-keys-values.md
+- [x] ./chapter_attention-and-transformers/bahdanau-attention.md
+- [x] ./chapter_attention-and-transformers/large-pretraining-transformers.md
+- [x] ./chapter_attention-and-transformers/attention-pooling.md
+- [x] ./chapter_attention-and-transformers/attention-scoring-functions.md
 
 # 12 - chapter_optimization
 
