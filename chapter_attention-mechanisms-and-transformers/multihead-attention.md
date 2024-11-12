@@ -6,37 +6,34 @@ tab.interact_select('mxnet', 'pytorch', 'tensorflow', 'jax')
 # Multi-Head Attention
 :label:`sec_multihead-attention`
 
+Dalam praktiknya, dengan diberikan set query, key, dan value yang sama, kita mungkin ingin model kita menggabungkan pengetahuan dari
+perilaku berbeda dari mekanisme attention yang sama,
+seperti menangkap ketergantungan berbagai rentang
+(misalnya, rentang pendek vs. rentang panjang) dalam sebuah urutan.
+Dengan demikian, mungkin bermanfaat untuk membiarkan mekanisme attention kita menggunakan berbagai subruang representasi dari query, key, dan value secara bersamaan.
 
-In practice, given the same set of queries, keys, and values we may want our model to combine knowledge from
-different behaviors of the same attention mechanism,
-such as capturing dependencies of various ranges
-(e.g., shorter-range vs. longer-range) within a sequence.
-Thus, it may be beneficial to allow our attention mechanism to jointly use different representation subspaces of queries, keys, and values.
-
-
-To this end, instead of performing 
-a single attention pooling,
-queries, keys, and values
-can be transformed
-with $h$ independently learned linear projections.
-Then these $h$ projected queries, keys, and values
-are fed into attention pooling in parallel.
-In the end,
-$h$ attention-pooling outputs
-are concatenated and 
-transformed with another learned linear projection
-to produce the final output.
-This design
-is called *multi-head attention*,
-where each of the $h$ attention pooling outputs
-is a *head* :cite:`Vaswani.Shazeer.Parmar.ea.2017`.
-Using fully connected layers
-to perform learnable linear transformations,
+Untuk tujuan ini, alih-alih melakukan 
+sebuah attention pooling tunggal,
+query, key, dan value 
+dapat ditransformasikan dengan $h$ proyeksi linear yang dipelajari secara independen.
+Kemudian $h$ query, key, dan value yang diproyeksikan ini 
+diberikan pada attention pooling secara paralel.
+Pada akhirnya,
+$h$ output dari attention pooling 
+digabungkan dan ditransformasikan dengan proyeksi linear lain yang dipelajari
+untuk menghasilkan output akhir.
+Desain ini disebut *multi-head attention*,
+dimana setiap dari $h$ output attention pooling 
+disebut *head* :cite:`Vaswani.Shazeer.Parmar.ea.2017`.
+Menggunakan lapisan fully connected 
+untuk melakukan transformasi linear yang dapat dipelajari,
 :numref:`fig_multi-head-attention`
-describes multi-head attention.
+menjelaskan multi-head attention.
 
-![Multi-head attention, where multiple heads are concatenated then linearly transformed.](../img/multi-head-attention.svg)
+![Multi-head attention, di mana beberapa head digabungkan kemudian ditransformasikan secara linear.](../img/multi-head-attention.svg)
 :label:`fig_multi-head-attention`
+
+
 
 ```{.python .input}
 %%tab mxnet
@@ -71,52 +68,51 @@ import jax
 
 ## Model
 
-Before providing the implementation of multi-head attention,
-let's formalize this model mathematically.
-Given a query $\mathbf{q} \in \mathbb{R}^{d_q}$,
-a key $\mathbf{k} \in \mathbb{R}^{d_k}$,
-and a value $\mathbf{v} \in \mathbb{R}^{d_v}$,
-each attention head $\mathbf{h}_i$  ($i = 1, \ldots, h$)
-is computed as
+Sebelum memberikan implementasi dari multi-head attention,
+mari kita formalisasikan model ini secara matematis.
+Diberikan sebuah query $\mathbf{q} \in \mathbb{R}^{d_q}$,
+sebuah key $\mathbf{k} \in \mathbb{R}^{d_k}$,
+dan sebuah value $\mathbf{v} \in \mathbb{R}^{d_v}$,
+setiap head attention $\mathbf{h}_i$  ($i = 1, \ldots, h$)
+dihitung sebagai
 
 $$\mathbf{h}_i = f(\mathbf W_i^{(q)}\mathbf q, \mathbf W_i^{(k)}\mathbf k,\mathbf W_i^{(v)}\mathbf v) \in \mathbb R^{p_v},$$
 
-where 
+dimana 
 $\mathbf W_i^{(q)}\in\mathbb R^{p_q\times d_q}$,
 $\mathbf W_i^{(k)}\in\mathbb R^{p_k\times d_k}$,
-and $\mathbf W_i^{(v)}\in\mathbb R^{p_v\times d_v}$
-are learnable parameters and
-$f$ is attention pooling,
-such as
-additive attention and scaled dot product attention
-in :numref:`sec_attention-scoring-functions`.
-The multi-head attention output
-is another linear transformation via 
-learnable parameters
+dan $\mathbf W_i^{(v)}\in\mathbb R^{p_v\times d_v}$
+adalah parameter yang dapat dipelajari dan
+$f$ adalah attention pooling,
+seperti 
+additive attention dan scaled dot product attention
+di :numref:`sec_attention-scoring-functions`.
+Output dari multi-head attention 
+adalah transformasi linear lain melalui 
+parameter yang dapat dipelajari
 $\mathbf W_o\in\mathbb R^{p_o\times h p_v}$
-of the concatenation of $h$ heads:
+dari gabungan $h$ head:
 
 $$\mathbf W_o \begin{bmatrix}\mathbf h_1\\\vdots\\\mathbf h_h\end{bmatrix} \in \mathbb{R}^{p_o}.$$
 
-Based on this design, each head may attend
-to different parts of the input.
-More sophisticated functions 
-than the simple weighted average can be expressed.
+Berdasarkan desain ini, setiap head dapat memberikan perhatian
+pada bagian input yang berbeda.
+Fungsi yang lebih canggih daripada sekadar rata-rata berbobot dapat diekspresikan.
 
-## Implementation
+## Implementasi
 
-In our implementation,
-we [**choose the scaled dot product attention
-for each head**] of the multi-head attention.
-To avoid significant growth of computational cost and parametrization cost,
-we set $p_q = p_k = p_v = p_o / h$.
-Note that $h$ heads can be computed in parallel
-if we set the number of outputs 
-of linear transformations
-for the query, key, and value
-to $p_q h = p_k h = p_v h = p_o$.
-In the following implementation,
-$p_o$ is specified via the argument `num_hiddens`.
+Dalam implementasi ini,
+kita [**memilih scaled dot product attention
+untuk setiap head**] dari multi-head attention.
+Untuk menghindari pertumbuhan yang signifikan dalam biaya komputasi dan parameterisasi,
+kita menetapkan $p_q = p_k = p_v = p_o / h$.
+Perhatikan bahwa $h$ head dapat dihitung secara paralel
+jika kita menetapkan jumlah output
+dari transformasi linear
+untuk query, key, dan value menjadi $p_q h = p_k h = p_v h = p_o$.
+Dalam implementasi berikut,
+$p_o$ ditentukan melalui argumen `num_hiddens`.
+
 
 ```{.python .input}
 %%tab mxnet
@@ -133,26 +129,26 @@ class MultiHeadAttention(d2l.Module):  #@save
         self.W_o = nn.Dense(num_hiddens, use_bias=use_bias, flatten=False)
 
     def forward(self, queries, keys, values, valid_lens):
-        # Shape of queries, keys, or values:
-        # (batch_size, no. of queries or key-value pairs, num_hiddens)
-        # Shape of valid_lens: (batch_size,) or (batch_size, no. of queries)
-        # After transposing, shape of output queries, keys, or values:
-        # (batch_size * num_heads, no. of queries or key-value pairs,
+        # Bentuk queries, keys, atau values:
+        # (batch_size, jumlah queries atau pasangan key-value, num_hiddens)
+        # Bentuk valid_lens: (batch_size,) atau (batch_size, jumlah queries)
+        # Setelah ditranspos, bentuk output queries, keys, atau values:
+        # (batch_size * num_heads, jumlah queries atau pasangan key-value,
         # num_hiddens / num_heads)
         queries = self.transpose_qkv(self.W_q(queries))
         keys = self.transpose_qkv(self.W_k(keys))
         values = self.transpose_qkv(self.W_v(values))
 
         if valid_lens is not None:
-            # On axis 0, copy the first item (scalar or vector) for num_heads
-            # times, then copy the next item, and so on
+            # Pada axis 0, salin item pertama (skalar atau vektor) sebanyak num_heads
+            # kali, lalu salin item berikutnya, dan seterusnya
             valid_lens = valid_lens.repeat(self.num_heads, axis=0)
 
-        # Shape of output: (batch_size * num_heads, no. of queries,
+        # Bentuk output: (batch_size * num_heads, jumlah queries,
         # num_hiddens / num_heads)
         output = self.attention(queries, keys, values, valid_lens)
         
-        # Shape of output_concat: (batch_size, no. of queries, num_hiddens)
+        # Bentuk output_concat: (batch_size, jumlah queries, num_hiddens)
         output_concat = self.transpose_output(output)
         return self.W_o(output_concat)
 ```
@@ -171,26 +167,26 @@ class MultiHeadAttention(d2l.Module):  #@save
         self.W_o = nn.LazyLinear(num_hiddens, bias=bias)
 
     def forward(self, queries, keys, values, valid_lens):
-        # Shape of queries, keys, or values:
-        # (batch_size, no. of queries or key-value pairs, num_hiddens)
-        # Shape of valid_lens: (batch_size,) or (batch_size, no. of queries)
-        # After transposing, shape of output queries, keys, or values:
-        # (batch_size * num_heads, no. of queries or key-value pairs,
+        # Bentuk dari queries, keys, atau values:
+        # (batch_size, jumlah queries atau pasangan key-value, num_hiddens)
+        # Bentuk dari valid_lens: (batch_size,) atau (batch_size, jumlah queries)
+        # Setelah transpos, bentuk output queries, keys, atau values:
+        # (batch_size * num_heads, jumlah queries atau pasangan key-value,
         # num_hiddens / num_heads)
         queries = self.transpose_qkv(self.W_q(queries))
         keys = self.transpose_qkv(self.W_k(keys))
         values = self.transpose_qkv(self.W_v(values))
 
         if valid_lens is not None:
-            # On axis 0, copy the first item (scalar or vector) for num_heads
-            # times, then copy the next item, and so on
+            # Pada axis 0, salin item pertama (skalar atau vektor) sebanyak num_heads
+            # kali, lalu salin item berikutnya, dan seterusnya
             valid_lens = torch.repeat_interleave(
                 valid_lens, repeats=self.num_heads, dim=0)
 
-        # Shape of output: (batch_size * num_heads, no. of queries,
+        # Bentuk dari output: (batch_size * num_heads, jumlah queries,
         # num_hiddens / num_heads)
         output = self.attention(queries, keys, values, valid_lens)
-        # Shape of output_concat: (batch_size, no. of queries, num_hiddens)
+        # Bentuk dari output_concat: (batch_size, jumlah queries, num_hiddens)
         output_concat = self.transpose_output(output)
         return self.W_o(output_concat)
 ```
@@ -210,26 +206,26 @@ class MultiHeadAttention(d2l.Module):  #@save
         self.W_o = tf.keras.layers.Dense(num_hiddens, use_bias=bias)
     
     def call(self, queries, keys, values, valid_lens, **kwargs):
-        # Shape of queries, keys, or values:
-        # (batch_size, no. of queries or key-value pairs, num_hiddens)
-        # Shape of valid_lens: (batch_size,) or (batch_size, no. of queries)
-        # After transposing, shape of output queries, keys, or values:
-        # (batch_size * num_heads, no. of queries or key-value pairs,
+        # Bentuk dari queries, keys, atau values:
+        # (batch_size, jumlah queries atau pasangan key-value, num_hiddens)
+        # Bentuk dari valid_lens: (batch_size,) atau (batch_size, jumlah queries)
+        # Setelah ditranspos, bentuk dari output queries, keys, atau values:
+        # (batch_size * num_heads, jumlah queries atau pasangan key-value,
         # num_hiddens / num_heads)
         queries = self.transpose_qkv(self.W_q(queries))
         keys = self.transpose_qkv(self.W_k(keys))
         values = self.transpose_qkv(self.W_v(values))
         
         if valid_lens is not None:
-            # On axis 0, copy the first item (scalar or vector) for num_heads
-            # times, then copy the next item, and so on
+            # Pada axis 0, salin item pertama (skalar atau vektor) sebanyak num_heads
+            # kali, lalu salin item berikutnya, dan seterusnya
             valid_lens = tf.repeat(valid_lens, repeats=self.num_heads, axis=0)
             
-        # Shape of output: (batch_size * num_heads, no. of queries,
+        # Bentuk dari output: (batch_size * num_heads, jumlah queries,
         # num_hiddens / num_heads)
         output = self.attention(queries, keys, values, valid_lens, **kwargs)
         
-        # Shape of output_concat: (batch_size, no. of queries, num_hiddens)
+        # Bentuk dari output_concat: (batch_size, jumlah queries, num_hiddens)
         output_concat = self.transpose_output(output)
         return self.W_o(output_concat)
 ```
@@ -251,55 +247,56 @@ class MultiHeadAttention(nn.Module):  #@save
 
     @nn.compact
     def __call__(self, queries, keys, values, valid_lens, training=False):
-        # Shape of queries, keys, or values:
-        # (batch_size, no. of queries or key-value pairs, num_hiddens)
-        # Shape of valid_lens: (batch_size,) or (batch_size, no. of queries)
-        # After transposing, shape of output queries, keys, or values:
-        # (batch_size * num_heads, no. of queries or key-value pairs,
+        # Bentuk dari queries, keys, atau values:
+        # (batch_size, jumlah queries atau pasangan key-value, num_hiddens)
+        # Bentuk dari valid_lens: (batch_size,) atau (batch_size, jumlah queries)
+        # Setelah ditranspos, bentuk dari output queries, keys, atau values:
+        # (batch_size * num_heads, jumlah queries atau pasangan key-value,
         # num_hiddens / num_heads)
         queries = self.transpose_qkv(self.W_q(queries))
         keys = self.transpose_qkv(self.W_k(keys))
         values = self.transpose_qkv(self.W_v(values))
 
         if valid_lens is not None:
-            # On axis 0, copy the first item (scalar or vector) for num_heads
-            # times, then copy the next item, and so on
+            # Pada axis 0, salin item pertama (skalar atau vektor) sebanyak num_heads
+            # kali, lalu salin item berikutnya, dan seterusnya
             valid_lens = jnp.repeat(valid_lens, self.num_heads, axis=0)
 
-        # Shape of output: (batch_size * num_heads, no. of queries,
+        # Bentuk dari output: (batch_size * num_heads, jumlah queries,
         # num_hiddens / num_heads)
         output, attention_weights = self.attention(
             queries, keys, values, valid_lens, training=training)
-        # Shape of output_concat: (batch_size, no. of queries, num_hiddens)
+        # Bentuk dari output_concat: (batch_size, jumlah queries, num_hiddens)
         output_concat = self.transpose_output(output)
         return self.W_o(output_concat), attention_weights
 ```
 
-To allow for [**parallel computation of multiple heads**],
-the above `MultiHeadAttention` class uses two transposition methods as defined below.
-Specifically,
-the `transpose_output` method reverses the operation
-of the `transpose_qkv` method.
+Untuk memungkinkan [**komputasi paralel dari beberapa kepala**],
+kelas `MultiHeadAttention` di atas menggunakan dua metode transposisi seperti yang didefinisikan di bawah ini.
+Secara spesifik,
+metode `transpose_output` membalikkan operasi
+dari metode `transpose_qkv`.
+
 
 ```{.python .input}
 %%tab mxnet
 @d2l.add_to_class(MultiHeadAttention)  #@save
 def transpose_qkv(self, X):
-    """Transposition for parallel computation of multiple attention heads."""
-    # Shape of input X: (batch_size, no. of queries or key-value pairs,
-    # num_hiddens). Shape of output X: (batch_size, no. of queries or
-    # key-value pairs, num_heads, num_hiddens / num_heads)
+    """Transposisi untuk komputasi paralel dari beberapa kepala atensi."""
+    # Bentuk input X: (batch_size, jumlah query atau pasangan key-value,
+    # num_hiddens). Bentuk output X: (batch_size, jumlah query atau
+    # pasangan key-value, num_heads, num_hiddens / num_heads)
     X = X.reshape(X.shape[0], X.shape[1], self.num_heads, -1)
-    # Shape of output X: (batch_size, num_heads, no. of queries or key-value
-    # pairs, num_hiddens / num_heads)
+    # Bentuk output X: (batch_size, num_heads, jumlah query atau pasangan
+    # key-value, num_hiddens / num_heads)
     X = X.transpose(0, 2, 1, 3)
-    # Shape of output: (batch_size * num_heads, no. of queries or key-value
-    # pairs, num_hiddens / num_heads)
+    # Bentuk output: (batch_size * num_heads, jumlah query atau pasangan
+    # key-value, num_hiddens / num_heads)
     return X.reshape(-1, X.shape[2], X.shape[3])
 
 @d2l.add_to_class(MultiHeadAttention)  #@save
 def transpose_output(self, X):
-    """Reverse the operation of transpose_qkv."""
+    """Membalikkan operasi dari transpose_qkv."""
     X = X.reshape(-1, self.num_heads, X.shape[1], X.shape[2])
     X = X.transpose(0, 2, 1, 3)
     return X.reshape(X.shape[0], X.shape[1], -1)
@@ -309,21 +306,21 @@ def transpose_output(self, X):
 %%tab pytorch
 @d2l.add_to_class(MultiHeadAttention)  #@save
 def transpose_qkv(self, X):
-    """Transposition for parallel computation of multiple attention heads."""
-    # Shape of input X: (batch_size, no. of queries or key-value pairs,
-    # num_hiddens). Shape of output X: (batch_size, no. of queries or
-    # key-value pairs, num_heads, num_hiddens / num_heads)
+    """Transposisi untuk komputasi paralel dari beberapa kepala atensi."""
+    # Bentuk input X: (batch_size, jumlah query atau pasangan key-value,
+    # num_hiddens). Bentuk output X: (batch_size, jumlah query atau
+    # pasangan key-value, num_heads, num_hiddens / num_heads)
     X = X.reshape(X.shape[0], X.shape[1], self.num_heads, -1)
-    # Shape of output X: (batch_size, num_heads, no. of queries or key-value
-    # pairs, num_hiddens / num_heads)
+    # Bentuk output X: (batch_size, num_heads, jumlah query atau pasangan
+    # key-value, num_hiddens / num_heads)
     X = X.permute(0, 2, 1, 3)
-    # Shape of output: (batch_size * num_heads, no. of queries or key-value
-    # pairs, num_hiddens / num_heads)
+    # Bentuk output: (batch_size * num_heads, jumlah query atau pasangan
+    # key-value, num_hiddens / num_heads)
     return X.reshape(-1, X.shape[2], X.shape[3])
 
 @d2l.add_to_class(MultiHeadAttention)  #@save
 def transpose_output(self, X):
-    """Reverse the operation of transpose_qkv."""
+    """Membalikkan operasi dari transpose_qkv."""
     X = X.reshape(-1, self.num_heads, X.shape[1], X.shape[2])
     X = X.permute(0, 2, 1, 3)
     return X.reshape(X.shape[0], X.shape[1], -1)
@@ -333,21 +330,21 @@ def transpose_output(self, X):
 %%tab tensorflow
 @d2l.add_to_class(MultiHeadAttention)  #@save
 def transpose_qkv(self, X):
-    """Transposition for parallel computation of multiple attention heads."""
-    # Shape of input X: (batch_size, no. of queries or key-value pairs,
-    # num_hiddens). Shape of output X: (batch_size, no. of queries or
-    # key-value pairs, num_heads, num_hiddens / num_heads)
+    """Transposisi untuk komputasi paralel dari beberapa kepala atensi."""
+    # Bentuk input X: (batch_size, jumlah query atau pasangan key-value,
+    # num_hiddens). Bentuk output X: (batch_size, jumlah query atau
+    # pasangan key-value, num_heads, num_hiddens / num_heads)
     X = tf.reshape(X, shape=(X.shape[0], X.shape[1], self.num_heads, -1))
-    # Shape of output X: (batch_size, num_heads, no. of queries or key-value
-    # pairs, num_hiddens / num_heads)
+    # Bentuk output X: (batch_size, num_heads, jumlah query atau pasangan
+    # key-value, num_hiddens / num_heads)
     X = tf.transpose(X, perm=(0, 2, 1, 3))
-    # Shape of output: (batch_size * num_heads, no. of queries or key-value
-    # pairs, num_hiddens / num_heads)
+    # Bentuk output: (batch_size * num_heads, jumlah query atau pasangan
+    # key-value, num_hiddens / num_heads)
     return tf.reshape(X, shape=(-1, X.shape[2], X.shape[3]))
 
 @d2l.add_to_class(MultiHeadAttention)  #@save
 def transpose_output(self, X):
-    """Reverse the operation of transpose_qkv."""
+    """Membalikkan operasi dari transpose_qkv."""
     X = tf.reshape(X, shape=(-1, self.num_heads, X.shape[1], X.shape[2]))
     X = tf.transpose(X, perm=(0, 2, 1, 3))
     return tf.reshape(X, shape=(X.shape[0], X.shape[1], -1))
@@ -357,31 +354,32 @@ def transpose_output(self, X):
 %%tab jax
 @d2l.add_to_class(MultiHeadAttention)  #@save
 def transpose_qkv(self, X):
-    """Transposition for parallel computation of multiple attention heads."""
-    # Shape of input X: (batch_size, no. of queries or key-value pairs,
-    # num_hiddens). Shape of output X: (batch_size, no. of queries or
-    # key-value pairs, num_heads, num_hiddens / num_heads)
+    """Transposisi untuk komputasi paralel dari beberapa kepala atensi."""
+    # Bentuk input X: (batch_size, jumlah query atau pasangan key-value,
+    # num_hiddens). Bentuk output X: (batch_size, jumlah query atau
+    # pasangan key-value, num_heads, num_hiddens / num_heads)
     X = X.reshape((X.shape[0], X.shape[1], self.num_heads, -1))
-    # Shape of output X: (batch_size, num_heads, no. of queries or key-value
-    # pairs, num_hiddens / num_heads)
+    # Bentuk output X: (batch_size, num_heads, jumlah query atau pasangan
+    # key-value, num_hiddens / num_heads)
     X = jnp.transpose(X, (0, 2, 1, 3))
-    # Shape of output: (batch_size * num_heads, no. of queries or key-value
-    # pairs, num_hiddens / num_heads)
+    # Bentuk output: (batch_size * num_heads, jumlah query atau pasangan
+    # key-value, num_hiddens / num_heads)
     return X.reshape((-1, X.shape[2], X.shape[3]))
 
 @d2l.add_to_class(MultiHeadAttention)  #@save
 def transpose_output(self, X):
-    """Reverse the operation of transpose_qkv."""
+    """Membalikkan operasi dari transpose_qkv."""
     X = X.reshape((-1, self.num_heads, X.shape[1], X.shape[2]))
     X = jnp.transpose(X, (0, 2, 1, 3))
     return X.reshape((X.shape[0], X.shape[1], -1))
 ```
 
-Let's [**test our implemented**] `MultiHeadAttention` class
-using a toy example where keys and values are the same.
-As a result,
-the shape of the multi-head attention output
-is (`batch_size`, `num_queries`, `num_hiddens`).
+Mari kita [**menguji implementasi**] kelas `MultiHeadAttention` kita
+menggunakan contoh sederhana di mana kunci (keys) dan nilai (values) adalah sama.
+Sebagai hasilnya,
+bentuk dari output multi-head attention adalah
+(`batch_size`, `num_queries`, `num_hiddens`).
+
 
 ```{.python .input}
 %%tab pytorch
@@ -446,31 +444,31 @@ d2l.check_shape(attention.init_with_output(d2l.get_key(), X, Y, Y, valid_lens,
                 (batch_size, num_queries, num_hiddens))
 ```
 
-## Summary
+## Ringkasan
 
-Multi-head attention combines knowledge of the same attention pooling 
-via different representation subspaces of queries, keys, and values.
-To compute multiple heads of multi-head attention in parallel, 
-proper tensor manipulation is needed.
+Multi-head attention menggabungkan pengetahuan dari pooling attention yang sama 
+melalui subruang representasi yang berbeda dari query, key, dan value.
+Untuk menghitung beberapa head dari multi-head attention secara paralel, 
+dibutuhkan manipulasi tensor yang tepat.
 
 
-## Exercises
+## Latihan
 
-1. Visualize attention weights of multiple heads in this experiment.
-1. Suppose that we have a trained model based on multi-head attention and we want to prune less important attention heads to increase the prediction speed. How can we design experiments to measure the importance of an attention head?
+1. Visualisasikan bobot perhatian (attention weights) dari beberapa head dalam percobaan ini.
+2. Misalkan kita memiliki model yang telah dilatih berdasarkan multi-head attention dan kita ingin memangkas head perhatian yang kurang penting untuk meningkatkan kecepatan prediksi. Bagaimana kita dapat merancang eksperimen untuk mengukur pentingnya sebuah head perhatian?
 
 :begin_tab:`mxnet`
-[Discussions](https://discuss.d2l.ai/t/1634)
+[Diskusi](https://discuss.d2l.ai/t/1634)
 :end_tab:
 
 :begin_tab:`pytorch`
-[Discussions](https://discuss.d2l.ai/t/1635)
+[Diskusi](https://discuss.d2l.ai/t/1635)
 :end_tab:
 
 :begin_tab:`tensorflow`
-[Discussions](https://discuss.d2l.ai/t/3869)
+[Diskusi](https://discuss.d2l.ai/t/3869)
 :end_tab:
 
 :begin_tab:`jax`
-[Discussions](https://discuss.d2l.ai/t/18029)
+[Diskusi](https://discuss.d2l.ai/t/18029)
 :end_tab:
