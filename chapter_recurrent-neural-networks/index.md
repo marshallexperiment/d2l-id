@@ -1,142 +1,130 @@
 # Recurrent Neural Networks
 :label:`chap_rnn`
 
-Up until now, we have focused primarily on fixed-length data.
-When introducing linear and logistic regression
-in :numref:`chap_regression` and :numref:`chap_classification`
-and multilayer perceptrons in :numref:`chap_perceptrons`,
-we were happy to assume that each feature vector $\mathbf{x}_i$
-consisted of a fixed number of components $x_1, \dots, x_d$,
-where each numerical feature $x_j$
-corresponded to a particular attribute.
-These datasets are sometimes called *tabular*,
-because they can be arranged in tables,
-where each example $i$ gets its own row,
-and each attribute gets its own column.
-Crucially, with tabular data, we seldom
-assume any particular structure over the columns.
+Sejauh ini, kita telah berfokus terutama pada data dengan panjang tetap.
+Ketika memperkenalkan regresi linier dan logistik di :numref:`chap_regression` dan :numref:`chap_classification`,
+serta *multilayer perceptrons* di :numref:`chap_perceptrons`,
+kita berasumsi bahwa setiap vektor fitur $\mathbf{x}_i$
+terdiri dari sejumlah komponen tetap $x_1, \dots, x_d$,
+di mana setiap fitur numerik $x_j$
+sesuai dengan atribut tertentu.
+Dataset ini kadang-kadang disebut *tabular*,
+karena dapat diatur dalam tabel,
+di mana setiap contoh $i$ mendapatkan barisnya sendiri,
+dan setiap atribut memiliki kolomnya sendiri.
+Hal yang penting, dengan data tabular, kita jarang
+mengasumsikan adanya struktur tertentu di antara kolom.
 
-Subsequently, in :numref:`chap_cnn`,
-we moved on to image data, where inputs consist
-of the raw pixel values at each coordinate in an image.
-Image data hardly fitted the bill
-of a protypical tabular dataset.
-There, we needed to call upon convolutional neural networks (CNNs)
-to handle the hierarchical structure and invariances.
-However, our data were still of fixed length.
-Every Fashion-MNIST image is represented
-as a $28 \times 28$ grid of pixel values.
-Moreover, our goal was to develop a model
-that looked at just one image and then
-outputted a single prediction.
-But what should we do when faced with a
-sequence of images, as in a video,
-or when tasked with producing
-a sequentially structured prediction,
-as in the case of image captioning?
+Selanjutnya, pada :numref:`chap_cnn`,
+kita beralih ke data gambar, di mana input terdiri
+dari nilai piksel mentah pada setiap koordinat dalam sebuah gambar.
+Data gambar sulit diatur dalam format tabular.
+Di sini, kita membutuhkan *convolutional neural networks* (CNN)
+untuk menangani struktur hierarkis dan invariansi.
+Namun, data kita masih memiliki panjang tetap.
+Setiap gambar di Fashion-MNIST direpresentasikan
+sebagai grid nilai piksel $28 \times 28$.
+Selain itu, tujuan kita adalah mengembangkan model
+yang hanya melihat satu gambar dan kemudian
+menghasilkan satu prediksi.
+Namun, apa yang harus kita lakukan ketika dihadapkan pada
+urutan gambar, seperti pada video,
+atau ketika ditugaskan menghasilkan prediksi
+yang terstruktur secara berurutan,
+seperti pada kasus pembuatan keterangan gambar?
 
-A great many learning tasks require dealing with sequential data.
-Image captioning, speech synthesis, and music generation
-all require that models produce outputs consisting of sequences.
-In other domains, such as time series prediction,
-video analysis, and musical information retrieval,
-a model must learn from inputs that are sequences.
-These demands often arise simultaneously:
-tasks such as translating passages of text
-from one natural language to another,
-engaging in dialogue, or controlling a robot,
-demand that models both ingest and output
-sequentially structured data.
+Banyak sekali tugas pembelajaran yang membutuhkan pengelolaan data berurutan.
+Pembuatan keterangan gambar, sintesis ucapan, dan pembuatan musik
+semuanya memerlukan model yang menghasilkan output berupa urutan.
+Di domain lain, seperti prediksi deret waktu,
+analisis video, dan pengambilan informasi musik,
+model harus belajar dari input yang berupa urutan.
+Kebutuhan ini sering muncul bersamaan:
+tugas-tugas seperti menerjemahkan teks
+dari satu bahasa ke bahasa lain,
+melakukan dialog, atau mengendalikan robot,
+membutuhkan model yang dapat mengonsumsi dan menghasilkan
+data yang terstruktur secara berurutan.
 
+*Recurrent Neural Networks* (RNN) adalah model pembelajaran mendalam
+yang menangkap dinamika urutan melalui
+koneksi *recurrent*, yang dapat dianggap sebagai
+siklus dalam jaringan node.
+Ini mungkin terasa kontra-intuitif pada awalnya.
+Lagi pula, sifat *feedforward* dari jaringan saraf
+membuat urutan komputasi menjadi jelas.
+Namun, koneksi *recurrent* didefinisikan secara tepat
+sehingga tidak ada ambiguitas yang muncul.
+RNN *diurai* ke langkah-langkah waktu (atau langkah urutan),
+dengan parameter yang *sama* digunakan pada setiap langkah.
+Sementara koneksi standar diterapkan secara *sinkron*
+untuk menyebarkan aktivasi setiap lapisan ke lapisan berikutnya
+*pada langkah waktu yang sama*,
+koneksi *recurrent* bersifat *dinamis*,
+mengirimkan informasi di antara langkah-langkah waktu berdekatan.
+Sebagaimana terlihat pada pandangan yang diurai di :numref:`fig_unfolded-rnn`,
+RNN dapat dianggap sebagai jaringan saraf *feedforward*
+di mana parameter setiap lapisan (baik konvensional maupun *recurrent*)
+dibagikan di seluruh langkah waktu.
 
-Recurrent neural networks (RNNs) are deep learning models
-that capture the dynamics of sequences via
-*recurrent* connections, which can be thought of
-as cycles in the network of nodes.
-This might seem counterintuitive at first.
-After all, it is the feedforward nature of neural networks
-that makes the order of computation unambiguous.
-However, recurrent edges are defined in a precise way
-that ensures that no such ambiguity can arise.
-Recurrent neural networks are *unrolled* across time steps (or sequence steps),
-with the *same* underlying parameters applied at each step.
-While the standard connections are applied *synchronously*
-to propagate each layer's activations
-to the subsequent layer *at the same time step*,
-the recurrent connections are *dynamic*,
-passing information across adjacent time steps.
-As the unfolded view in :numref:`fig_unfolded-rnn` reveals,
-RNNs can be thought of as feedforward neural networks
-where each layer's parameters (both conventional and recurrent)
-are shared across time steps.
-
-
-![On the left recurrent connections are depicted via cyclic edges. On the right, we unfold the RNN over time steps. Here, recurrent edges span adjacent time steps, while conventional connections are computed synchronously.](../img/unfolded-rnn.svg)
+![Di sebelah kiri, koneksi *recurrent* digambarkan melalui edge siklis. Di sebelah kanan, kita mengurai RNN ke langkah waktu. Di sini, koneksi *recurrent* melintasi langkah waktu berdekatan, sementara koneksi konvensional dihitung secara sinkron.](../img/unfolded-rnn.svg)
 :label:`fig_unfolded-rnn`
 
+Seperti jaringan saraf pada umumnya,
+RNN memiliki sejarah panjang yang melintasi disiplin,
+berawal dari model otak yang dipopulerkan
+oleh ilmuwan kognitif dan kemudian diadopsi
+sebagai alat pemodelan praktis yang digunakan
+oleh komunitas pembelajaran mesin.
+Seperti pembelajaran mendalam pada umumnya,
+dalam buku ini kita mengadopsi perspektif pembelajaran mesin,
+dengan fokus pada RNN sebagai alat praktis yang naik
+ke popularitas pada 2010-an berkat
+hasil terobosan pada berbagai tugas seperti
+pengenalan tulisan tangan :cite:`graves2008novel`,
+terjemahan mesin :cite:`Sutskever.Vinyals.Le.2014`,
+dan pengenalan diagnosis medis :cite:`Lipton.Kale.2016`.
+Pembaca yang tertarik dengan materi latar belakang yang lebih luas dapat membaca tinjauan komprehensif yang tersedia untuk umum :cite:`Lipton.Berkowitz.Elkan.2015`.
+Kami juga mencatat bahwa sekuensialitas tidaklah unik bagi RNN.
+Misalnya, CNN yang sudah kita bahas
+dapat diadaptasi untuk menangani data dengan panjang yang bervariasi,
+misalnya, gambar dengan resolusi yang berbeda-beda.
+Selain itu, RNN baru-baru ini kehilangan pangsa pasar yang cukup besar terhadap model Transformer,
+yang akan dibahas di :numref:`chap_attention-and-transformers`.
+Namun, RNN menjadi terkenal sebagai model default
+untuk menangani struktur berurutan yang kompleks dalam pembelajaran mendalam,
+dan tetap menjadi model pokok untuk pemodelan sekuensial hingga hari ini.
+Kisah RNN dan pemodelan urutan sangat terkait erat, dan ini adalah bab tentang dasar-dasar masalah pemodelan urutan
+serta bab tentang RNN.
 
-Like neural networks more broadly,
-RNNs have a long discipline-spanning history,
-originating as models of the brain popularized
-by cognitive scientists and subsequently adopted
-as practical modeling tools employed
-by the machine learning community.
-As we do for deep learning more broadly,
-in this book we adopt the machine learning perspective,
-focusing on RNNs as practical tools that rose
-to popularity in the 2010s owing to
-breakthrough results on such diverse tasks
-as handwriting recognition :cite:`graves2008novel`,
-machine translation :cite:`Sutskever.Vinyals.Le.2014`,
-and recognizing medical diagnoses :cite:`Lipton.Kale.2016`.
-We point the reader interested in more
-background material to a publicly available
-comprehensive review :cite:`Lipton.Berkowitz.Elkan.2015`.
-We also note that sequentiality is not unique to RNNs.
-For example, the CNNs that we already introduced
-can be adapted to handle data of varying length,
-e.g., images of varying resolution.
-Moreover, RNNs have recently ceded considerable
-market share to Transformer models,
-which will be covered in :numref:`chap_attention-and-transformers`.
-However, RNNs rose to prominence as the default models
-for handling complex sequential structure in deep learning,
-and remain staple models for sequential modeling to this day.
-The stories of RNNs and of sequence modeling
-are inextricably linked, and this is as much
-a chapter about the ABCs of sequence modeling problems
-as it is a chapter about RNNs.
+Satu wawasan kunci membuka jalan bagi revolusi dalam pemodelan urutan.
+Sementara input dan target untuk banyak tugas dasar dalam pembelajaran mesin
+tidak mudah direpresentasikan sebagai vektor dengan panjang tetap,
+mereka seringkali dapat direpresentasikan sebagai
+urutan dengan panjang bervariasi dari vektor dengan panjang tetap.
+Sebagai contoh, dokumen dapat direpresentasikan sebagai urutan kata;
+rekam medis seringkali dapat direpresentasikan sebagai urutan kejadian
+(pertemuan, obat-obatan, prosedur, tes laboratorium, diagnosis);
+video dapat direpresentasikan sebagai urutan gambar diam dengan panjang yang bervariasi.
 
+Meskipun model urutan muncul dalam berbagai area aplikasi,
+penelitian dasar di area ini sebagian besar didorong
+oleh kemajuan dalam tugas-tugas inti pemrosesan bahasa alami.
+Oleh karena itu, di sepanjang bab ini, kita akan fokus
+pada eksposisi dan contoh teks data.
+Jika Anda menguasai contoh-contoh ini,
+maka menerapkan model-model ini pada modalitas data lain
+seharusnya relatif mudah.
+Pada bagian berikut, kita memperkenalkan notasi dasar untuk urutan dan beberapa ukuran evaluasi
+untuk menilai kualitas output model yang terstruktur secara berurutan.
+Setelah itu, kita membahas konsep dasar model bahasa
+dan menggunakan diskusi ini untuk memotivasi model RNN pertama kita.
+Terakhir, kita menjelaskan metode untuk menghitung gradien
+saat melakukan *backpropagation* melalui RNN dan mengeksplorasi beberapa tantangan
+yang sering ditemui saat melatih jaringan ini,
+memotivasi arsitektur RNN modern yang akan dijelaskan
+di :numref:`chap_modern_rnn`.
 
-One key insight paved the way for a revolution in sequence modeling.
-While the inputs and targets for many fundamental tasks in machine learning
-cannot easily be represented as fixed-length vectors,
-they can often nevertheless be represented as
-varying-length sequences of fixed-length vectors.
-For example, documents can be represented as sequences of words;
-medical records can often be represented as sequences of events
-(encounters, medications, procedures, lab tests, diagnoses);
-videos can be represented as varying-length sequences of still images.
-
-
-While sequence models have popped up in numerous application areas,
-basic research in the area has been driven predominantly
-by advances on core tasks in natural language processing.
-Thus, throughout this chapter, we will focus
-our exposition and examples on text data.
-If you get the hang of these examples,
-then applying the models to other data modalities
-should be relatively straightforward.
-In the next few sections, we introduce basic
-notation for sequences and some evaluation measures
-for assessing the quality of sequentially structured model outputs.
-After that, we discuss basic concepts of a language model
-and use this discussion to motivate our first RNN models.
-Finally, we describe the method for calculating gradients
-when backpropagating through RNNs and explore some challenges
-that are often encountered when training such networks,
-motivating the modern RNN architectures that will follow
-in :numref:`chap_modern_rnn`.
 
 ```toc
 :maxdepth: 2
