@@ -135,7 +135,8 @@ x.grad  # Gradien awalnya `None` secara default
 x = tf.Variable(x)
 ```
 
-(**We now calculate our function of `x` and assign the result to `y`.**)
+(**Sekarang kita menghitung fungsi dari `x` dan menetapkan hasilnya ke `y`.**)
+
 
 ```{.python .input  n=10}
 %%tab mxnet
