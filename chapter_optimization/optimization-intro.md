@@ -1,29 +1,14 @@
-# Optimization and Deep Learning
+# Optimisasi dan Deep Learning
 :label:`sec_optimization-intro`
 
-In this section, we will discuss the relationship between optimization and deep learning as well as the challenges of using optimization in deep learning.
-For a deep learning problem, we will usually define a *loss function* first. Once we have the loss function, we can use an optimization algorithm in attempt to minimize the loss.
-In optimization, a loss function is often referred to as the *objective function* of the optimization problem. By tradition and convention most optimization algorithms are concerned with *minimization*. If we ever need to maximize an objective there is a simple solution: just flip the sign on the objective.
+Di bagian ini, kita akan membahas hubungan antara optimisasi dan deep learning serta tantangan dalam menggunakan optimisasi di deep learning. Untuk masalah deep learning, biasanya kita akan mendefinisikan *fungsi loss* terlebih dahulu. Setelah kita memiliki fungsi loss, kita dapat menggunakan algoritma optimisasi untuk mencoba meminimalkan loss tersebut. Dalam optimisasi, fungsi loss sering disebut sebagai *fungsi objektif* dari masalah optimisasi. Berdasarkan tradisi dan konvensi, sebagian besar algoritma optimisasi berfokus pada *minimisasi*. Jika kita perlu memaksimalkan suatu objektif, ada solusi sederhana: cukup balik tanda pada objektif tersebut.
 
-## Goal of Optimization
+## Tujuan Optimisasi
 
-Although optimization provides a way to minimize the loss function for deep
-learning, in essence, the goals of optimization and deep learning are
-fundamentally different.
-The former is primarily concerned with minimizing an
-objective whereas the latter is concerned with finding a suitable model, given a
-finite amount of data.
-In :numref:`sec_generalization_basics`,
-we discussed the difference between these two goals in detail.
-For instance,
-training error and generalization error generally differ: since the objective
-function of the optimization algorithm is usually a loss function based on the
-training dataset, the goal of optimization is to reduce the training error.
-However, the goal of deep learning (or more broadly, statistical inference) is to
-reduce the generalization error.
-To accomplish the latter we need to pay
-attention to overfitting in addition to using the optimization algorithm to
-reduce the training error.
+Meskipun optimisasi menyediakan cara untuk meminimalkan fungsi loss pada deep learning, pada dasarnya tujuan dari optimisasi dan deep learning berbeda secara fundamental. Yang pertama terutama berfokus pada meminimalkan suatu objektif, sedangkan yang terakhir berfokus pada menemukan model yang sesuai, mengingat data yang terbatas. Dalam :numref:`sec_generalization_basics`, kita telah membahas perbedaan antara kedua tujuan ini secara rinci.
+
+Sebagai contoh, error pelatihan dan error generalisasi biasanya berbeda: karena fungsi objektif dari algoritma optimisasi biasanya adalah fungsi loss berdasarkan dataset pelatihan, tujuan optimisasi adalah mengurangi error pelatihan. Namun, tujuan deep learning (atau lebih luas lagi, inferensi statistik) adalah untuk mengurangi error generalisasi. Untuk mencapai yang terakhir, kita perlu memperhatikan overfitting selain menggunakan algoritma optimisasi untuk mengurangi error pelatihan.
+
 
 ```{.python .input}
 #@tab mxnet
@@ -52,21 +37,8 @@ from mpl_toolkits import mplot3d
 import tensorflow as tf
 ```
 
-To illustrate the aforementioned different goals,
-let's consider
-the empirical risk and the risk.
-As described
-in :numref:`subsec_empirical-risk-and-risk`,
-the empirical risk
-is an average loss
-on the training dataset
-while the risk is the expected loss
-on the entire population of data.
-Below we define two functions:
-the risk function `f`
-and the empirical risk function `g`.
-Suppose that we have only a finite amount of training data.
-As a result, here `g` is less smooth than `f`.
+Untuk mengilustrasikan perbedaan tujuan yang telah disebutkan, mari kita pertimbangkan risiko empiris dan risiko. Seperti yang dijelaskan dalam :numref:`subsec_empirical-risk-and-risk`, risiko empiris adalah rata-rata loss pada dataset pelatihan, sedangkan risiko adalah loss yang diharapkan pada seluruh populasi data. Di bawah ini kita mendefinisikan dua fungsi: fungsi risiko `f` dan fungsi risiko empiris `g`. Misalkan kita hanya memiliki sejumlah data pelatihan yang terbatas. Akibatnya, `g` di sini menjadi kurang mulus dibandingkan dengan `f`.
+
 
 ```{.python .input}
 #@tab all
@@ -77,7 +49,7 @@ def g(x):
     return f(x) + 0.2 * d2l.cos(5 * np.pi * x)
 ```
 
-The graph below illustrates that the minimum of the empirical risk on a training dataset may be at a different location from the minimum of the risk (generalization error).
+Grafik di bawah ini mengilustrasikan bahwa minimum dari risiko empiris pada dataset pelatihan mungkin berada di lokasi yang berbeda dari minimum risiko (error generalisasi).
 
 ```{.python .input}
 #@tab all
@@ -92,36 +64,23 @@ annotate('min of\nempirical risk', (1.0, -1.2), (0.5, -1.1))
 annotate('min of risk', (1.1, -1.05), (0.95, -0.5))
 ```
 
-## Optimization Challenges in Deep Learning
+## Tantangan Optimisasi dalam Deep Learning
 
-In this chapter, we are going to focus specifically on the performance of optimization algorithms in minimizing the objective function, rather than a
-model's generalization error.
-In :numref:`sec_linear_regression`
-we distinguished between analytical solutions and numerical solutions in
-optimization problems.
-In deep learning, most objective functions are
-complicated and do not have analytical solutions. Instead, we must use numerical
-optimization algorithms.
-The optimization algorithms in this chapter
-all fall into this
-category.
+Di bab ini, kita akan fokus secara spesifik pada kinerja algoritma optimisasi dalam meminimalkan fungsi objektif, bukan error generalisasi model. Dalam :numref:`sec_linear_regression`, kita membedakan antara solusi analitik dan solusi numerik dalam masalah optimisasi. Dalam deep learning, sebagian besar fungsi objektif adalah kompleks dan tidak memiliki solusi analitik. Sebaliknya, kita harus menggunakan algoritma optimisasi numerik. Algoritma optimisasi dalam bab ini semuanya termasuk dalam kategori ini.
 
-There are many challenges in deep learning optimization. Some of the most vexing ones are local minima, saddle points, and vanishing gradients.
-Let's have a look at them.
+Ada banyak tantangan dalam optimisasi deep learning. Beberapa tantangan yang paling sulit adalah minimum lokal, saddle points, dan vanishing gradients. Mari kita lihat satu per satu.
 
 
-### Local Minima
+### Minimum Lokal
 
-For any objective function $f(x)$,
-if the value of $f(x)$ at $x$ is smaller than the values of $f(x)$ at any other points in the vicinity of $x$, then $f(x)$ could be a local minimum.
-If the value of $f(x)$ at $x$ is the minimum of the objective function over the entire domain,
-then $f(x)$ is the global minimum.
+Untuk setiap fungsi objektif $f(x)$, jika nilai $f(x)$ pada titik $x$ lebih kecil dari nilai $f(x)$ di titik lain di sekitar $x$, maka $f(x)$ bisa menjadi minimum lokal. Jika nilai $f(x)$ pada $x$ adalah nilai minimum dari fungsi objektif di seluruh domain, maka $f(x)$ adalah minimum global.
 
-For example, given the function
+Sebagai contoh, dengan fungsi
 
-$$f(x) = x \cdot \textrm{cos}(\pi x) \textrm{ for } -1.0 \leq x \leq 2.0,$$
+$$f(x) = x \cdot \textrm{cos}(\pi x) \textrm{ untuk } -1.0 \leq x \leq 2.0,$$
 
-we can approximate the local minimum and global minimum of this function.
+kita dapat memperkirakan minimum lokal dan minimum global dari fungsi ini.
+
 
 ```{.python .input}
 #@tab all
@@ -131,16 +90,13 @@ annotate('local minimum', (-0.3, -0.25), (-0.77, -1.0))
 annotate('global minimum', (1.1, -0.95), (0.6, 0.8))
 ```
 
-The objective function of deep learning models usually has many local optima.
-When the numerical solution of an optimization problem is near the local optimum, the numerical solution obtained by the final iteration may only minimize the objective function *locally*, rather than *globally*, as the gradient of the objective function's solutions approaches or becomes zero.
-Only some degree of noise might knock the parameter out of the local minimum. In fact, this is one of the beneficial properties of
-minibatch stochastic gradient descent where the natural variation of gradients over minibatches is able to dislodge the parameters from local minima.
+Fungsi objektif dari model deep learning biasanya memiliki banyak optimum lokal. Ketika solusi numerik dari suatu masalah optimisasi berada di dekat optimum lokal, solusi numerik yang diperoleh pada iterasi akhir mungkin hanya meminimalkan fungsi objektif *secara lokal*, bukan *secara global*, karena gradien dari solusi fungsi objektif mendekati atau menjadi nol. Hanya beberapa derajat noise yang mungkin bisa menggeser parameter keluar dari minimum lokal. Faktanya, ini adalah salah satu sifat menguntungkan dari stochastic gradient descent minibatch, di mana variasi alami dari gradien pada minibatch mampu melepaskan parameter dari minimum lokal.
 
 
 ### Saddle Points
 
-Besides local minima, saddle points are another reason for gradients to vanish. A *saddle point* is any location where all gradients of a function vanish but which is neither a global nor a local minimum.
-Consider the function $f(x) = x^3$. Its first and second derivative vanish for $x=0$. Optimization might stall at this point, even though it is not a minimum.
+Selain minimum lokal, saddle points adalah alasan lain mengapa gradien bisa menghilang. *Saddle point* adalah setiap lokasi di mana semua gradien dari suatu fungsi menghilang, tetapi bukan merupakan minimum global maupun minimum lokal. Pertimbangkan fungsi $f(x) = x^3$. Turunan pertama dan kedua dari fungsi ini hilang untuk $x=0$. Proses optimisasi mungkin terhenti pada titik ini, meskipun titik ini bukan minimum.
+
 
 ```{.python .input}
 #@tab all
@@ -149,7 +105,7 @@ d2l.plot(x, [x**3], 'x', 'f(x)')
 annotate('saddle point', (0, -0.2), (-0.52, -5.0))
 ```
 
-Saddle points in higher dimensions are even more insidious, as the example below shows. Consider the function $f(x, y) = x^2 - y^2$. It has its saddle point at $(0, 0)$. This is a maximum with respect to $y$ and a minimum with respect to $x$. Moreover, it *looks* like a saddle, which is where this mathematical property got its name.
+Saddle points dalam dimensi yang lebih tinggi bahkan lebih sulit diatasi, seperti yang ditunjukkan oleh contoh di bawah ini. Pertimbangkan fungsi $f(x, y) = x^2 - y^2$. Fungsi ini memiliki saddle point pada $(0, 0)$. Titik ini merupakan maksimum terhadap $y$ dan minimum terhadap $x$. Selain itu, bentuknya *terlihat* seperti pelana, yang menjadi asal dari nama properti matematis ini.
 
 ```{.python .input}
 #@tab mxnet
@@ -186,25 +142,18 @@ d2l.plt.xlabel('x')
 d2l.plt.ylabel('y');
 ```
 
-We assume that the input of a function is a $k$-dimensional vector and its
-output is a scalar, so its Hessian matrix will have $k$ eigenvalues.
-The solution of the
-function could be a local minimum, a local maximum, or a saddle point at a
-position where the function gradient is zero:
+Kita asumsikan bahwa input dari suatu fungsi adalah sebuah vektor berdimensi $k$ dan outputnya adalah sebuah skalar, sehingga matriks Hessian-nya akan memiliki $k$ nilai eigen. Solusi dari fungsi tersebut bisa berupa minimum lokal, maksimum lokal, atau saddle point pada posisi di mana gradien fungsi tersebut bernilai nol:
 
-* When the eigenvalues of the function's Hessian matrix at the zero-gradient position are all positive, we have a local minimum for the function.
-* When the eigenvalues of the function's Hessian matrix at the zero-gradient position are all negative, we have a local maximum for the function.
-* When the eigenvalues of the function's Hessian matrix at the zero-gradient position are negative and positive, we have a saddle point for the function.
+* Ketika nilai-nilai eigen dari matriks Hessian fungsi pada posisi gradien nol semuanya positif, maka kita memiliki minimum lokal untuk fungsi tersebut.
+* Ketika nilai-nilai eigen dari matriks Hessian fungsi pada posisi gradien nol semuanya negatif, maka kita memiliki maksimum lokal untuk fungsi tersebut.
+* Ketika nilai-nilai eigen dari matriks Hessian fungsi pada posisi gradien nol memiliki nilai negatif dan positif, maka kita memiliki saddle point untuk fungsi tersebut.
 
-For high-dimensional problems the likelihood that at least *some* of the eigenvalues are negative is quite high. This makes saddle points more likely than local minima. We will discuss some exceptions to this situation in the next section when introducing convexity. In short, convex functions are those where the eigenvalues of the Hessian are never negative. Sadly, though, most deep learning problems do not fall into this category. Nonetheless it is a great tool to study optimization algorithms.
+Untuk masalah berdimensi tinggi, kemungkinan bahwa setidaknya *beberapa* nilai eigen adalah negatif cukup tinggi. Ini membuat saddle points lebih mungkin terjadi dibandingkan minimum lokal. Kita akan membahas beberapa pengecualian terhadap situasi ini di bagian berikutnya saat memperkenalkan konsep convexity. Singkatnya, fungsi konveks adalah fungsi di mana nilai-nilai eigen dari Hessian-nya tidak pernah negatif. Sayangnya, sebagian besar masalah deep learning tidak termasuk dalam kategori ini. Meskipun demikian, konsep ini adalah alat yang berguna untuk mempelajari algoritma optimisasi.
 
-### Vanishing Gradients
+### Gradien yang Menghilang
 
-Probably the most insidious problem to encounter is the vanishing gradient.
-Recall our commonly-used activation functions and their derivatives in :numref:`subsec_activation-functions`.
-For instance, assume that we want to minimize the function $f(x) = \tanh(x)$ and we happen to get started at $x = 4$. As we can see, the gradient of $f$ is close to nil.
-More specifically, $f'(x) = 1 - \tanh^2(x)$ and thus $f'(4) = 0.0013$.
-Consequently, optimization will get stuck for a long time before we make progress. This turns out to be one of the reasons that training deep learning models was quite tricky prior to the introduction of the ReLU activation function.
+Masalah yang mungkin paling sulit diatasi adalah gradien yang menghilang. Ingat kembali fungsi aktivasi yang sering kita gunakan dan turunannya dalam :numref:`subsec_activation-functions`. Sebagai contoh, misalkan kita ingin meminimalkan fungsi $f(x) = \tanh(x)$ dan kebetulan memulai pada $x = 4$. Seperti yang dapat kita lihat, gradien dari $f$ mendekati nol. Lebih spesifik, $f'(x) = 1 - \tanh^2(x)$ dan dengan demikian $f'(4) = 0.0013$. Akibatnya, proses optimisasi akan terhenti untuk waktu yang lama sebelum kita dapat membuat kemajuan. Ini ternyata menjadi salah satu alasan mengapa pelatihan model deep learning cukup sulit sebelum diperkenalkannya fungsi aktivasi ReLU.
+
 
 ```{.python .input}
 #@tab all
@@ -213,38 +162,37 @@ d2l.plot(x, [d2l.tanh(x)], 'x', 'f(x)')
 annotate('vanishing gradient', (4, 1), (2, 0.0))
 ```
 
-As we saw, optimization for deep learning is full of challenges. Fortunately there exists a robust range of algorithms that perform well and that are easy to use even for beginners. Furthermore, it is not really necessary to find *the* best solution. Local optima or even approximate solutions thereof are still very useful.
+Seperti yang kita lihat, optimisasi untuk deep learning penuh dengan tantangan. Untungnya, ada berbagai algoritma yang kuat yang bekerja dengan baik dan mudah digunakan bahkan bagi pemula. Lebih lanjut, tidak perlu menemukan *solusi terbaik* secara mutlak. Optimum lokal atau bahkan solusi perkiraan dari optimum tersebut masih sangat berguna.
 
-## Summary
+## Ringkasan
 
-* Minimizing the training error does *not* guarantee that we find the best set of parameters to minimize the generalization error.
-* The optimization problems may have many local minima.
-* The problem may have even more saddle points, as generally the problems are not convex.
-* Vanishing gradients can cause optimization to stall. Often a reparametrization of the problem helps. Good initialization of the parameters can be beneficial, too.
+* Meminimalkan error pelatihan *tidak* menjamin bahwa kita menemukan set parameter terbaik untuk meminimalkan error generalisasi.
+* Masalah optimisasi dapat memiliki banyak minimum lokal.
+* Masalah ini bahkan mungkin memiliki lebih banyak saddle points, karena umumnya masalah ini tidak konveks.
+* Gradien yang menghilang dapat menyebabkan optimisasi terhenti. Sering kali, mereparametrisasi masalah dapat membantu. Inisialisasi parameter yang baik juga dapat bermanfaat.
 
 
-## Exercises
+## Latihan
 
-1. Consider a simple MLP with a single hidden layer of, say, $d$ dimensions in the hidden layer and a single output. Show that for any local minimum there are at least $d!$ equivalent solutions that behave identically.
-1. Assume that we have a symmetric random matrix $\mathbf{M}$ where the entries
-   $M_{ij} = M_{ji}$ are each drawn from some probability distribution
-   $p_{ij}$. Furthermore assume that $p_{ij}(x) = p_{ij}(-x)$, i.e., that the
-   distribution is symmetric (see e.g., :citet:`Wigner.1958` for details).
-    1. Prove that the distribution over eigenvalues is also symmetric. That is, for any eigenvector $\mathbf{v}$ the probability that the associated eigenvalue $\lambda$ satisfies $P(\lambda > 0) = P(\lambda < 0)$.
-    1. Why does the above *not* imply $P(\lambda > 0) = 0.5$?
-1. What other challenges involved in deep learning optimization can you think of?
-1. Assume that you want to balance a (real) ball on a (real) saddle.
-    1. Why is this hard?
-    1. Can you exploit this effect also for optimization algorithms?
+1. Pertimbangkan sebuah MLP sederhana dengan satu hidden layer, misalnya berdimensi $d$ pada hidden layer dan satu output. Tunjukkan bahwa untuk setiap minimum lokal terdapat setidaknya $d!$ solusi ekuivalen yang berperilaku identik.
+2. Misalkan kita memiliki matriks acak simetris $\mathbf{M}$ di mana elemen-elemen
+   $M_{ij} = M_{ji}$ masing-masing ditarik dari beberapa distribusi probabilitas
+   $p_{ij}$. Selain itu, anggap bahwa $p_{ij}(x) = p_{ij}(-x)$, yaitu distribusinya simetris (lihat, misalnya, :citet:`Wigner.1958` untuk detailnya).
+    1. Buktikan bahwa distribusi nilai eigen juga simetris. Artinya, untuk setiap eigenvektor $\mathbf{v}$, probabilitas bahwa nilai eigen yang terkait $\lambda$ memenuhi $P(\lambda > 0) = P(\lambda < 0)$.
+    2. Mengapa hal di atas *tidak* menyiratkan $P(\lambda > 0) = 0.5$?
+3. Tantangan lain apa yang menurut Anda terlibat dalam optimisasi deep learning?
+4. Misalkan Anda ingin menyeimbangkan sebuah bola (nyata) pada sebuah pelana (nyata).
+    1. Mengapa ini sulit?
+    2. Dapatkah Anda memanfaatkan efek ini juga untuk algoritma optimisasi?
 
 :begin_tab:`mxnet`
-[Discussions](https://discuss.d2l.ai/t/349)
+[Diskusi](https://discuss.d2l.ai/t/349)
 :end_tab:
 
 :begin_tab:`pytorch`
-[Discussions](https://discuss.d2l.ai/t/487)
+[Diskusi](https://discuss.d2l.ai/t/487)
 :end_tab:
 
 :begin_tab:`tensorflow`
-[Discussions](https://discuss.d2l.ai/t/489)
+[Diskusi](https://discuss.d2l.ai/t/489)
 :end_tab:
