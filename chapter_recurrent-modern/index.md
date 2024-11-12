@@ -1,67 +1,66 @@
-# Modern Recurrent Neural Networks
-:label:`chap_modern_rnn`
+# RNN Modern
 
-The previous chapter introduced the key ideas 
-behind recurrent neural networks (RNNs). 
-However, just as with convolutional neural networks,
-there has been a tremendous amount of innovation
-in RNN architectures, culminating in several complex
-designs that have proven successful in practice. 
-In particular, the most popular designs 
-feature mechanisms for mitigating the notorious
-numerical instability faced by RNNs,
-as typified by vanishing and exploding gradients.
-Recall that in :numref:`chap_rnn` we dealt 
-with exploding gradients by applying a blunt
-gradient clipping heuristic. 
-Despite the efficacy of this hack,
-it leaves open the problem of vanishing gradients. 
+Bab sebelumnya memperkenalkan ide-ide kunci 
+di balik jaringan saraf berulang (recurrent neural networks/RNNs). 
+Namun, seperti halnya dengan jaringan saraf konvolusional (CNNs),
+ada banyak inovasi dalam arsitektur RNN,
+yang akhirnya menghasilkan beberapa desain kompleks 
+yang terbukti berhasil dalam praktiknya. 
+Secara khusus, desain paling populer 
+menampilkan mekanisme untuk mengurangi 
+ketidakstabilan numerik yang terkenal pada RNN,
+seperti yang ditandai oleh gradient vanishing dan exploding gradient.
+Ingat bahwa dalam :numref:`chap_rnn`, kita menangani 
+exploding gradient dengan menggunakan teknik 
+heuristik clipping gradient yang sederhana. 
+Meskipun teknik ini efektif, 
+teknik ini belum menyelesaikan masalah gradient vanishing. 
 
-In this chapter, we introduce the key ideas behind 
-the most successful RNN architectures for sequences,
-which stem from two papers.
-The first, *Long Short-Term Memory* :cite:`Hochreiter.Schmidhuber.1997`,
-introduces the *memory cell*, a unit of computation that replaces 
-traditional nodes in the hidden layer of a network.
-With these memory cells, networks are able 
-to overcome difficulties with training 
-encountered by earlier recurrent networks.
-Intuitively, the memory cell avoids 
-the vanishing gradient problem
-by keeping values in each memory cell's internal state
-cascading along a recurrent edge with weight 1 
-across many successive time steps. 
-A set of multiplicative gates help the network
-to determine not only the inputs to allow 
-into the memory state, 
-but when the content of the memory state 
-should influence the model's output. 
+Di bab ini, kami memperkenalkan ide-ide kunci di balik 
+arsitektur RNN paling sukses untuk data urutan,
+yang berasal dari dua makalah. 
+Makalah pertama, *Long Short-Term Memory* :cite:`Hochreiter.Schmidhuber.1997`,
+memperkenalkan *memory cell* (sel memori), 
+sebuah unit komputasi yang menggantikan 
+node tradisional di lapisan tersembunyi jaringan.
+Dengan memory cell ini, jaringan mampu 
+mengatasi kesulitan dalam pelatihan 
+yang dihadapi oleh RNN sebelumnya.
+Secara intuitif, memory cell menghindari 
+masalah gradient vanishing dengan menjaga nilai 
+dalam status internal setiap memory cell
+yang mengalir melalui edge berulang dengan bobot 1 
+di banyak langkah waktu berturut-turut. 
+Sekelompok gerbang (gates) multiplikatif membantu jaringan
+menentukan tidak hanya input yang boleh masuk 
+ke status memori, tetapi juga kapan isi status memori 
+harus memengaruhi output model. 
 
-The second paper, *Bidirectional Recurrent Neural Networks* :cite:`Schuster.Paliwal.1997`,
-introduces an architecture in which information 
-from both the future (subsequent time steps) 
-and the past (preceding time steps)
-are used to determine the output 
-at any point in the sequence.
-This is in contrast to previous networks, 
-in which only past input can affect the output.
-Bidirectional RNNs have become a mainstay 
-for sequence labeling tasks in natural language processing,
-among a myriad of other tasks. 
-Fortunately, the two innovations are not mutually exclusive, 
-and have been successfully combined for phoneme classification
-:cite:`Graves.Schmidhuber.2005` and handwriting recognition :cite:`graves2008novel`.
+Makalah kedua, *Bidirectional Recurrent Neural Networks* :cite:`Schuster.Paliwal.1997`,
+memperkenalkan arsitektur di mana informasi 
+dari masa depan (langkah waktu berikutnya) 
+dan masa lalu (langkah waktu sebelumnya)
+digunakan untuk menentukan output 
+pada titik mana pun dalam urutan.
+Ini berbeda dengan jaringan sebelumnya, 
+di mana hanya input dari masa lalu yang dapat memengaruhi output.
+Bidirectional RNN telah menjadi arsitektur utama 
+untuk tugas pelabelan urutan dalam pemrosesan bahasa alami,
+di antara banyak tugas lainnya. 
+Untungnya, kedua inovasi ini tidak saling eksklusif 
+dan telah berhasil digabungkan untuk klasifikasi fonem
+:cite:`Graves.Schmidhuber.2005` dan pengenalan tulisan tangan :cite:`graves2008novel`.
 
+Bagian pertama dari bab ini akan menjelaskan arsitektur LSTM,
+versi yang lebih ringan bernama Gated Recurrent Unit (GRU),
+ide-ide utama di balik Bidirectional RNN 
+dan penjelasan singkat tentang cara lapisan RNN 
+digabungkan untuk membentuk Deep RNN. 
+Selanjutnya, kita akan mengeksplorasi aplikasi RNN
+dalam tugas sequence-to-sequence, 
+memperkenalkan penerjemahan mesin (machine translation)
+bersama dengan ide-ide kunci seperti arsitektur *encoder--decoder* dan *beam search*.
 
-The first sections in this chapter will explain the LSTM architecture,
-a lighter-weight version called the gated recurrent unit (GRU),
-the key ideas behind bidirectional RNNs 
-and a brief explanation of how RNN layers 
-are stacked together to form deep RNNs. 
-Subsequently, we will explore the application of RNNs
-in sequence-to-sequence tasks, 
-introducing machine translation
-along with key ideas such as *encoder--decoder* architectures and *beam search*.
 
 ```toc
 :maxdepth: 2
