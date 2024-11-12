@@ -3,7 +3,7 @@
 tab.interact_select('mxnet', 'pytorch', 'tensorflow', 'jax')
 ```
 
-# Fungsi Skor Perhatian
+# Fungsi Skor Perhatian (_Attention Scoring Function_)
 :label:`sec_attention-scoring-functions`
 
 Dalam :numref:`sec_attention-pooling`, kita telah menggunakan sejumlah kernel berbasis jarak yang berbeda, termasuk kernel Gaussian untuk memodelkan interaksi antara *query* dan *key*. Ternyata, fungsi jarak sedikit lebih mahal untuk dihitung dibandingkan dengan produk titik (*dot product*). Oleh karena itu, dengan operasi *softmax* untuk memastikan bobot perhatian yang tidak negatif, banyak pekerjaan yang dilakukan dalam *fungsi skor perhatian* $a$ dalam :eqref:`eq_softmax_attention` dan :numref:`fig_attention_output` yang lebih sederhana untuk dihitung.
