@@ -3,47 +3,46 @@
 tab.interact_select('mxnet', 'pytorch', 'tensorflow')
 ```
 
-# Queries, Keys, and Values
+# Queries, Keys, dan Values
 :label:`sec_queries-keys-values`
 
-So far all the networks we have reviewed crucially relied on the input being of a well-defined size. For instance, the images in ImageNet are of size $224 \times 224$ pixels and CNNs are specifically tuned to this size. Even in natural language processing the input size for RNNs is well defined and fixed. Variable size is addressed by sequentially processing one token at a time, or by specially designed convolution kernels :cite:`Kalchbrenner.Grefenstette.Blunsom.2014`. This approach can lead to significant problems when the input is truly of varying size with varying information content, such as in :numref:`sec_seq2seq` in the transformation of text :cite:`Sutskever.Vinyals.Le.2014`. In particular, for long sequences it becomes quite difficult to keep track of everything that has already been generated or even viewed by the network. Even explicit tracking heuristics such as proposed by :citet:`yang2016neural` only offer limited benefit. 
+Sejauh ini, semua jaringan yang telah kita bahas sangat bergantung pada input dengan ukuran yang telah didefinisikan dengan baik. Misalnya, gambar di ImageNet berukuran $224 \times 224$ piksel, dan CNN khusus disetel untuk ukuran ini. Bahkan dalam natural language processing, ukuran input untuk RNN telah didefinisikan dengan baik dan tetap. Ukuran variabel diatasi dengan memproses satu token pada satu waktu secara berurutan, atau dengan kernel konvolusi yang dirancang khusus :cite:`Kalchbrenner.Grefenstette.Blunsom.2014`. Pendekatan ini dapat menimbulkan masalah signifikan ketika input benar-benar bervariasi dalam ukuran dan konten informasi, seperti dalam :numref:`sec_seq2seq` dalam transformasi teks :cite:`Sutskever.Vinyals.Le.2014`. Terutama untuk urutan panjang, akan menjadi sangat sulit untuk melacak segala sesuatu yang telah dihasilkan atau bahkan dilihat oleh jaringan. Bahkan heuristik pelacakan eksplisit seperti yang diusulkan oleh :citet:`yang2016neural` hanya menawarkan manfaat yang terbatas.
 
-Compare this to databases. In their simplest form they are collections of keys ($k$) and values ($v$). For instance, our database $\mathcal{D}$ might consist of tuples \{("Zhang", "Aston"), ("Lipton", "Zachary"), ("Li", "Mu"), ("Smola", "Alex"), ("Hu", "Rachel"), ("Werness", "Brent")\} with the last name being the key and the first name being the value. We can operate on $\mathcal{D}$, for instance with the exact query ($q$) for "Li" which would return the value "Mu". If ("Li", "Mu") was not a record in $\mathcal{D}$, there would be no valid answer. If we also allowed for approximate matches, we would retrieve ("Lipton", "Zachary") instead. This quite simple and trivial example nonetheless teaches us a number of useful things:
+Bandingkan ini dengan basis data (database). Dalam bentuk yang paling sederhana, basis data adalah kumpulan kunci ($k$) dan nilai ($v$). Misalnya, basis data kita $\mathcal{D}$ mungkin terdiri dari pasangan \{("Zhang", "Aston"), ("Lipton", "Zachary"), ("Li", "Mu"), ("Smola", "Alex"), ("Hu", "Rachel"), ("Werness", "Brent")\}, dengan nama belakang sebagai kunci dan nama depan sebagai nilai. Kita bisa melakukan operasi pada $\mathcal{D}$, misalnya dengan query ($q$) yang tepat untuk "Li", yang akan mengembalikan nilai "Mu". Jika ("Li", "Mu") bukan catatan di $\mathcal{D}$, tidak akan ada jawaban yang valid. Jika kita juga mengizinkan pencocokan mendekati, kita akan mendapatkan ("Lipton", "Zachary") sebagai gantinya. Contoh yang cukup sederhana dan sepele ini tetap mengajarkan kita beberapa hal yang berguna:
 
-* We can design queries $q$ that operate on ($k$,$v$) pairs in such a manner as to be valid regardless of the  database size. 
-* The same query can receive different answers, according to the contents of the database. 
-* The "code" being executed for operating on a large state space (the database) can be quite simple (e.g., exact match, approximate match, top-$k$). 
-* There is no need to compress or simplify the database to make the operations effective. 
+* Kita bisa merancang query $q$ yang beroperasi pada pasangan ($k$, $v$) sedemikian rupa sehingga tetap valid terlepas dari ukuran basis data.
+* Query yang sama dapat menerima jawaban yang berbeda, tergantung pada isi basis data.
+* "Kode" yang dijalankan untuk operasi pada ruang keadaan besar (basis data) bisa sangat sederhana (misalnya pencocokan tepat, pencocokan mendekati, top-$k$).
+* Tidak perlu mengompresi atau menyederhanakan basis data agar operasi menjadi efektif.
 
-Clearly we would not have introduced a simple database here if it wasn't for the purpose of explaining deep learning. Indeed, this leads to one of the most exciting concepts introduced in deep learning in the past decade: the *attention mechanism* :cite:`Bahdanau.Cho.Bengio.2014`. We will cover the specifics of its application to machine translation later. For now, simply consider the following: denote by $\mathcal{D} \stackrel{\textrm{def}}{=} \{(\mathbf{k}_1, \mathbf{v}_1), \ldots (\mathbf{k}_m, \mathbf{v}_m)\}$ a database of $m$ tuples of *keys* and *values*. Moreover, denote by $\mathbf{q}$ a *query*. Then we can define the *attention* over $\mathcal{D}$ as
+Jelas, kita tidak akan memperkenalkan basis data yang sederhana di sini jika tidak untuk tujuan menjelaskan deep learning. Faktanya, ini mengarah pada salah satu konsep paling menarik yang diperkenalkan dalam deep learning dalam dekade terakhir: *attention mechanism* :cite:`Bahdanau.Cho.Bengio.2014`. Kami akan membahas rincian penggunaannya dalam machine translation nanti. Untuk saat ini, anggap saja berikut ini: misalkan $\mathcal{D} \stackrel{\textrm{def}}{=} \{(\mathbf{k}_1, \mathbf{v}_1), \ldots (\mathbf{k}_m, \mathbf{v}_m)\}$ adalah basis data yang berisi $m$ pasangan *keys* dan *values*. Selain itu, misalkan $\mathbf{q}$ adalah *query*. Maka kita dapat mendefinisikan *attention* terhadap $\mathcal{D}$ sebagai
 
 $$\textrm{Attention}(\mathbf{q}, \mathcal{D}) \stackrel{\textrm{def}}{=} \sum_{i=1}^m \alpha(\mathbf{q}, \mathbf{k}_i) \mathbf{v}_i,$$
 :eqlabel:`eq_attention_pooling`
 
-where $\alpha(\mathbf{q}, \mathbf{k}_i) \in \mathbb{R}$ ($i = 1, \ldots, m$) are scalar attention weights. The operation itself is typically referred to as *attention pooling*. The name *attention* derives from the fact that the operation pays particular attention to the terms for which the weight $\alpha$ is significant (i.e., large). As such, the attention over $\mathcal{D}$ generates a linear combination of values contained in the database. In fact, this contains the above example as a special case where all but one weight is zero. We have a number of special cases:
+di mana $\alpha(\mathbf{q}, \mathbf{k}_i) \in \mathbb{R}$ ($i = 1, \ldots, m$) adalah bobot attention skalar. Operasi itu sendiri sering disebut sebagai *attention pooling*. Nama *attention* berasal dari fakta bahwa operasi ini memberikan perhatian khusus pada elemen-elemen di mana bobot $\alpha$ signifikan (yaitu besar). Dengan demikian, attention terhadap $\mathcal{D}$ menghasilkan kombinasi linear dari nilai-nilai yang terkandung dalam basis data. Bahkan, ini mengandung contoh di atas sebagai kasus khusus di mana semua bobot kecuali satu adalah nol. Kita memiliki sejumlah kasus khusus:
 
-* The weights $\alpha(\mathbf{q}, \mathbf{k}_i)$ are nonnegative. In this case the output of the attention mechanism is contained in the convex cone spanned by the values $\mathbf{v}_i$. 
-* The weights $\alpha(\mathbf{q}, \mathbf{k}_i)$ form a convex combination, i.e., $\sum_i \alpha(\mathbf{q}, \mathbf{k}_i) = 1$ and $\alpha(\mathbf{q}, \mathbf{k}_i) \geq 0$ for all $i$. This is the most common setting in deep learning. 
-* Exactly one of the weights $\alpha(\mathbf{q}, \mathbf{k}_i)$ is $1$, while all others are $0$. This is akin to a traditional database query. 
-* All weights are equal, i.e., $\alpha(\mathbf{q}, \mathbf{k}_i) = \frac{1}{m}$ for all $i$. This amounts to averaging across the entire database, also called average pooling in deep learning. 
+* Bobot $\alpha(\mathbf{q}, \mathbf{k}_i)$ bernilai non-negatif. Dalam hal ini, output dari mekanisme attention berada dalam kerucut cembung yang dibentuk oleh nilai-nilai $\mathbf{v}_i$.
+* Bobot $\alpha(\mathbf{q}, \mathbf{k}_i)$ membentuk kombinasi cembung, yaitu $\sum_i \alpha(\mathbf{q}, \mathbf{k}_i) = 1$ dan $\alpha(\mathbf{q}, \mathbf{k}_i) \geq 0$ untuk semua $i$. Ini adalah pengaturan yang paling umum dalam deep learning.
+* Tepat satu dari bobot $\alpha(\mathbf{q}, \mathbf{k}_i)$ bernilai $1$, sementara yang lainnya adalah $0$. Ini mirip dengan query basis data tradisional.
+* Semua bobot bernilai sama, yaitu $\alpha(\mathbf{q}, \mathbf{k}_i) = \frac{1}{m}$ untuk semua $i$. Ini setara dengan rata-rata seluruh basis data, yang juga disebut average pooling dalam deep learning.
 
-A common strategy for ensuring that the weights sum up to $1$ is to normalize them via 
+Strategi umum untuk memastikan bahwa bobot-bobot tersebut berjumlah $1$ adalah dengan menormalkannya melalui
 
 $$\alpha(\mathbf{q}, \mathbf{k}_i) = \frac{\alpha(\mathbf{q}, \mathbf{k}_i)}{{\sum_j} \alpha(\mathbf{q}, \mathbf{k}_j)}.$$
 
-In particular, to ensure that the weights are also nonnegative, one can resort to exponentiation. This means that we can now pick *any* function  $a(\mathbf{q}, \mathbf{k})$ and then apply the softmax operation used for multinomial models to it via
+Secara khusus, untuk memastikan bahwa bobot juga bernilai non-negatif, kita dapat menggunakan eksponensiasi. Ini berarti kita dapat memilih *fungsi apapun* $a(\mathbf{q}, \mathbf{k})$ dan kemudian menerapkan operasi softmax yang digunakan untuk model multinomial melalui
 
 $$\alpha(\mathbf{q}, \mathbf{k}_i) = \frac{\exp(a(\mathbf{q}, \mathbf{k}_i))}{\sum_j \exp(a(\mathbf{q}, \mathbf{k}_j))}. $$
 :eqlabel:`eq_softmax_attention`
 
-This operation is readily available in all deep learning frameworks. It is differentiable and its gradient never vanishes, all of which are desirable properties in a model. Note though, the attention mechanism introduced above is not the only option. For instance, we can design a non-differentiable attention model that can be trained using reinforcement learning methods :cite:`Mnih.Heess.Graves.ea.2014`. As one would expect, training such a model is quite complex. Consequently the bulk of modern attention research 
-follows the framework outlined in :numref:`fig_qkv`. We thus focus our exposition on this family of differentiable mechanisms. 
+Operasi ini tersedia di semua framework deep learning. Operasi ini diferensial dan gradiennya tidak pernah menghilang, yang semuanya merupakan sifat yang diinginkan dalam sebuah model. Perlu dicatat bahwa mekanisme attention yang diperkenalkan di atas bukan satu-satunya pilihan. Misalnya, kita bisa merancang model attention non-differentiable yang dapat dilatih menggunakan metode reinforcement learning :cite:`Mnih.Heess.Graves.ea.2014`. Seperti yang bisa diduga, melatih model semacam itu cukup kompleks. Akibatnya, sebagian besar penelitian attention modern mengikuti kerangka kerja yang diuraikan dalam :numref:`fig_qkv`. Oleh karena itu, kami akan fokus pada mekanisme yang dapat dibedakan dalam keluarga ini.
 
-![The attention mechanism computes a linear combination over values $\mathbf{v}_\mathit{i}$ via attention pooling,
-where weights are derived according to the compatibility between a query $\mathbf{q}$ and keys $\mathbf{k}_\mathit{i}$.](../img/qkv.svg)
+![Mekanisme attention menghitung kombinasi linear dari values $\mathbf{v}_\mathit{i}$ melalui attention pooling, di mana bobot diturunkan sesuai dengan kompatibilitas antara query $\mathbf{q}$ dan keys $\mathbf{k}_\mathit{i}$.](../img/qkv.svg)
 :label:`fig_qkv`
 
-What is quite remarkable is that the actual "code" for executing on the set of keys and values, namely the query, can be quite concise, even though the space to operate on is significant. This is a desirable property for a network layer as it does not require too many parameters to learn. Just as convenient is the fact that attention can operate on arbitrarily large databases without the need to change the way the attention pooling operation is performed.
+Yang cukup mengesankan adalah bahwa "kode" aktual untuk eksekusi pada set keys dan values, yaitu query, bisa sangat ringkas, meskipun ruang yang dioperasikan cukup signifikan. Ini adalah sifat yang diinginkan untuk sebuah layer jaringan karena tidak memerlukan terlalu banyak parameter untuk dipelajari. Sama mudahnya adalah kenyataan bahwa attention dapat beroperasi pada basis data yang ukurannya arbitrarily besar tanpa perlu mengubah cara operasi attention pooling dilakukan.
+
 
 ```{.python .input}
 %%tab mxnet
@@ -70,18 +69,19 @@ from d2l import jax as d2l
 from jax import numpy as jnp
 ```
 
-## Visualization
+## Visualisasi
 
-One of the benefits of the attention mechanism is that it can be quite intuitive, particularly when the weights are nonnegative and sum to $1$. In this case we might *interpret* large weights as a way for the model to select components of relevance. While this is a good intuition, it is important to remember that it is just that, an *intuition*. Regardless, we may want to visualize its effect on the given set of keys when applying a variety of different queries. This function will come in handy later.
+Salah satu manfaat dari mekanisme attention adalah bahwa mekanisme ini bisa sangat intuitif, terutama ketika bobotnya non-negatif dan berjumlah $1$. Dalam hal ini, kita mungkin *menginterpretasikan* bobot besar sebagai cara bagi model untuk memilih komponen yang relevan. Meskipun ini merupakan intuisi yang baik, penting untuk diingat bahwa ini hanyalah sebuah *intuisi*. Bagaimanapun, kita mungkin ingin memvisualisasikan efeknya pada sekumpulan keys tertentu ketika menerapkan berbagai queries. Fungsi ini akan berguna nanti.
 
-We thus define the `show_heatmaps` function. Note that it does not take a matrix (of attention weights) as its input but rather a tensor with four axes, allowing for an array of different queries and weights. Consequently the input `matrices` has the shape (number of rows for display, number of columns for display, number of queries, number of keys). This will come in handy later on when we want to visualize the workings that are to design Transformers.
+Oleh karena itu, kita mendefinisikan fungsi `show_heatmaps`. Perlu dicatat bahwa fungsi ini tidak menerima matriks (dari bobot attention) sebagai input, tetapi menerima tensor dengan empat sumbu, yang memungkinkan array dari berbagai queries dan bobot. Akibatnya, input `matrices` memiliki bentuk (jumlah baris untuk tampilan, jumlah kolom untuk tampilan, jumlah queries, jumlah keys). Ini akan berguna nanti ketika kita ingin memvisualisasikan cara kerja yang digunakan untuk merancang Transformers.
+
 
 ```{.python .input  n=17}
 %%tab all
 #@save
 def show_heatmaps(matrices, xlabel, ylabel, titles=None, figsize=(2.5, 2.5),
                   cmap='Reds'):
-    """Show heatmaps of matrices."""
+    """Menampilkan heatmaps dari matriks."""
     d2l.use_svg_display()
     num_rows, num_cols, _, _ = matrices.shape
     fig, axes = d2l.plt.subplots(num_rows, num_cols, figsize=figsize,
@@ -101,8 +101,8 @@ def show_heatmaps(matrices, xlabel, ylabel, titles=None, figsize=(2.5, 2.5),
     fig.colorbar(pcm, ax=axes, shrink=0.6);
 ```
 
-As a quick sanity check let's visualize the identity matrix, representing a case 
-where the attention weight is $1$ only when the query and the key are the same.
+Sebagai pemeriksaan cepat, mari kita visualisasikan matriks identitas, yang merepresentasikan sebuah kasus di mana bobot attention adalah $1$ hanya ketika query dan key adalah sama.
+
 
 ```{.python .input  n=20}
 %%tab all
@@ -110,33 +110,31 @@ attention_weights = d2l.reshape(d2l.eye(10), (1, 1, 10, 10))
 show_heatmaps(attention_weights, xlabel='Keys', ylabel='Queries')
 ```
 
-## Summary
+## Ringkasan
 
-The attention mechanism allows us to aggregate data from many (key, value) pairs. So far our discussion was 
-quite abstract, simply describing a way to pool data. We have not explained yet where those mysterious queries, keys, and values might arise from. Some intuition might help here: for instance, in a regression setting, the query might correspond to the location where the regression should be carried out. The keys are the locations where past data was observed and the values are the (regression) values themselves. This is the so-called Nadaraya--Watson estimator :cite:`Nadaraya.1964,Watson.1964` that we will be studying in the next section. 
+Mekanisme attention memungkinkan kita untuk mengagregasi data dari banyak pasangan (key, value). Sampai saat ini, diskusi kita masih cukup abstrak, hanya menjelaskan cara mengumpulkan data. Kita belum menjelaskan dari mana query, key, dan value yang misterius tersebut berasal. Beberapa intuisi mungkin membantu di sini: misalnya, dalam pengaturan regresi, query mungkin sesuai dengan lokasi di mana regresi harus dilakukan. Keys adalah lokasi di mana data sebelumnya diamati dan values adalah nilai-nilai (regresi) itu sendiri. Ini adalah estimator yang dikenal sebagai Nadaraya--Watson :cite:`Nadaraya.1964,Watson.1964` yang akan kita pelajari di bagian berikutnya.
 
-By design, the attention mechanism provides a *differentiable* means of control 
-by which a neural network can select elements from a set and to construct an associated weighted sum over representations. 
+Secara desain, mekanisme attention menyediakan cara *differentiable* (dapat diturunkan) untuk mengontrol di mana jaringan saraf dapat memilih elemen dari sebuah set dan membentuk jumlah tertimbang yang terkait dari representasi.
 
-## Exercises
+## Latihan
 
-1. Suppose that you wanted to reimplement approximate (key, query) matches as used in classical databases, which attention function would you pick? 
-1. Suppose that the attention function is given by $a(\mathbf{q}, \mathbf{k}_i) = \mathbf{q}^\top \mathbf{k}_i$ and that $\mathbf{k}_i = \mathbf{v}_i$ for $i = 1, \ldots, m$. Denote by $p(\mathbf{k}_i; \mathbf{q})$ the probability distribution over keys when using the softmax normalization in :eqref:`eq_softmax_attention`. Prove that $\nabla_{\mathbf{q}} \mathop{\textrm{Attention}}(\mathbf{q}, \mathcal{D}) = \textrm{Cov}_{p(\mathbf{k}_i; \mathbf{q})}[\mathbf{k}_i]$.
-1. Design a differentiable search engine using the attention mechanism. 
-1. Review the design of the Squeeze and Excitation Networks :cite:`Hu.Shen.Sun.2018` and interpret them through the lens of the attention mechanism. 
+1. Misalkan Anda ingin mengimplementasikan ulang pencocokan (key, query) secara aproksimasi seperti yang digunakan dalam basis data klasik, fungsi attention mana yang akan Anda pilih?
+2. Misalkan fungsi attention diberikan oleh $a(\mathbf{q}, \mathbf{k}_i) = \mathbf{q}^\top \mathbf{k}_i$ dan $\mathbf{k}_i = \mathbf{v}_i$ untuk $i = 1, \ldots, m$. Notasikan $p(\mathbf{k}_i; \mathbf{q})$ sebagai distribusi probabilitas atas keys ketika menggunakan normalisasi softmax dalam :eqref:`eq_softmax_attention`. Buktikan bahwa $\nabla_{\mathbf{q}} \mathop{\textrm{Attention}}(\mathbf{q}, \mathcal{D}) = \textrm{Cov}_{p(\mathbf{k}_i; \mathbf{q})}[\mathbf{k}_i]$.
+3. Desain mesin pencari yang dapat dibedakan menggunakan mekanisme attention.
+4. Tinjau desain dari Squeeze and Excitation Networks :cite:`Hu.Shen.Sun.2018` dan interpretasikan melalui perspektif mekanisme attention.
 
 :begin_tab:`mxnet`
-[Discussions](https://discuss.d2l.ai/t/1596)
+[Diskusi](https://discuss.d2l.ai/t/1596)
 :end_tab:
 
 :begin_tab:`pytorch`
-[Discussions](https://discuss.d2l.ai/t/1592)
+[Diskusi](https://discuss.d2l.ai/t/1592)
 :end_tab:
 
 :begin_tab:`tensorflow`
-[Discussions](https://discuss.d2l.ai/t/1710)
+[Diskusi](https://discuss.d2l.ai/t/1710)
 :end_tab:
 
 :begin_tab:`jax`
-[Discussions](https://discuss.d2l.ai/t/18024)
+[Diskusi](https://discuss.d2l.ai/t/18024)
 :end_tab:
