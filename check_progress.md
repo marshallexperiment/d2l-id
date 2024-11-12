@@ -109,15 +109,15 @@
 
 # 10 - chapter_recurrent-modern
 
-- [ ] ./chapter_recurrent-modern/bi-rnn.md
-- [ ] ./chapter_recurrent-modern/seq2seq.md
-- [ ] ./chapter_recurrent-modern/deep-rnn.md
-- [ ] ./chapter_recurrent-modern/gru.md
-- [ ] ./chapter_recurrent-modern/lstm.md
-- [ ] ./chapter_recurrent-modern/machine-translation-and-dataset.md
-- [ ] ./chapter_recurrent-modern/encoder-decoder.md
-- [ ] ./chapter_recurrent-modern/index.md
-- [ ] ./chapter_recurrent-modern/beam-search.md
+- [x] ./chapter_recurrent-modern/bi-rnn.md
+- [x] ./chapter_recurrent-modern/seq2seq.md
+- [x] ./chapter_recurrent-modern/deep-rnn.md
+- [x] ./chapter_recurrent-modern/gru.md
+- [x] ./chapter_recurrent-modern/lstm.md
+- [x] ./chapter_recurrent-modern/machine-translation-and-dataset.md
+- [x] ./chapter_recurrent-modern/encoder-decoder.md
+- [x] ./chapter_recurrent-modern/index.md
+- [x] ./chapter_recurrent-modern/beam-search.md
 
 # 11 - chapter_attention-and-transformers
 - [ ] ./chapter_attention-and-transformers/vision-transformer.md
