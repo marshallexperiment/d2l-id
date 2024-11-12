@@ -1,15 +1,16 @@
-# Recurrent Neural Network Implementation from Scratch
+# Implementasi Recurrent Neural Network dari Awal
 :label:`sec_rnn-scratch`
 
-We are now ready to implement an RNN from scratch.
-In particular, we will train this RNN to function
-as a character-level language model
-(see :numref:`sec_rnn`)
-and train it on a corpus consisting of 
-the entire text of H. G. Wells' *The Time Machine*,
-following the data processing steps 
-outlined in :numref:`sec_text-sequence`.
-We start by loading the dataset.
+Sekarang kita siap untuk mengimplementasikan RNN dari awal.
+Secara khusus, kita akan melatih RNN ini untuk berfungsi
+sebagai model bahasa tingkat karakter
+(lihat :numref:`sec_rnn`)
+dan melatihnya pada korpus yang terdiri dari
+keseluruhan teks dari *The Time Machine* karya H. G. Wells,
+mengikuti langkah-langkah pemrosesan data 
+yang dijelaskan di :numref:`sec_text-sequence`.
+Kita mulai dengan memuat dataset.
+
 
 ```{.python .input}
 %load_ext d2lbook.tab
@@ -53,18 +54,19 @@ from jax import numpy as jnp
 import math
 ```
 
-## RNN Model
+## Model RNN
 
-We begin by defining a class 
-to implement the RNN model
+Kita mulai dengan mendefinisikan sebuah kelas 
+untuk mengimplementasikan model RNN
 (:numref:`subsec_rnn_w_hidden_states`).
-Note that the number of hidden units `num_hiddens` 
-is a tunable hyperparameter.
+Perhatikan bahwa jumlah unit tersembunyi `num_hiddens` 
+adalah sebuah *hyperparameter* yang dapat disesuaikan.
+
 
 ```{.python .input}
 %%tab pytorch, mxnet, tensorflow
 class RNNScratch(d2l.Module):  #@save
-    """The RNN model implemented from scratch."""
+    """Model RNN yang diimplementasikan dari awal."""
     def __init__(self, num_inputs, num_hiddens, sigma=0.01):
         super().__init__()
         self.save_hyperparameters()
@@ -90,7 +92,7 @@ class RNNScratch(d2l.Module):  #@save
 ```{.python .input  n=7}
 %%tab jax
 class RNNScratch(nn.Module):  #@save
-    """The RNN model implemented from scratch."""
+    """Model RNN yang diimplementasikan dari awal."""
     num_inputs: int
     num_hiddens: int
     sigma: float = 0.01
@@ -103,15 +105,16 @@ class RNNScratch(nn.Module):  #@save
         self.b_h = self.param('b_h', nn.initializers.zeros, (self.num_hiddens))
 ```
 
-[**The `forward` method below defines how to compute 
-the output and hidden state at any time step,
-given the current input and the state of the model
-at the previous time step.**]
-Note that the RNN model loops through 
-the outermost dimension of `inputs`,
-updating the hidden state 
-one time step at a time.
-The model here uses a $\tanh$ activation function (:numref:`subsec_tanh`).
+[**Metode `forward` di bawah ini mendefinisikan cara menghitung 
+output dan *hidden state* pada setiap langkah waktu, 
+dengan diberikan input saat ini dan *state* model 
+pada langkah waktu sebelumnya.**]
+Perhatikan bahwa model RNN ini melakukan iterasi melalui 
+dimensi terluar dari `inputs`, 
+memperbarui *hidden state* 
+satu langkah waktu pada satu waktu.
+Model di sini menggunakan fungsi aktivasi $\tanh$ (:numref:`subsec_tanh`).
+
 
 ```{.python .input}
 %%tab pytorch, mxnet, tensorflow
@@ -154,7 +157,7 @@ def __call__(self, inputs, state=None):
     return outputs, state
 ```
 
-We can feed a minibatch of input sequences into an RNN model as follows.
+Kita dapat memasukkan *minibatch* dari urutan input ke dalam model RNN seperti berikut.
 
 ```{.python .input}
 %%tab pytorch, mxnet, tensorflow
@@ -172,47 +175,49 @@ X = d2l.ones((num_steps, batch_size, num_inputs))
 (outputs, state), _ = rnn.init_with_output(d2l.get_key(), X)
 ```
 
-Let's check whether the RNN model
-produces results of the correct shapes
-to ensure that the dimensionality 
-of the hidden state remains unchanged.
+Mari kita periksa apakah model RNN 
+menghasilkan bentuk output yang benar 
+untuk memastikan bahwa dimensi 
+*hidden state* tetap tidak berubah.
+
 
 ```{.python .input}
 %%tab all
 def check_len(a, n):  #@save
-    """Check the length of a list."""
-    assert len(a) == n, f'list\'s length {len(a)} != expected length {n}'
+    """Memeriksa panjang dari sebuah list."""
+    assert len(a) == n, f'panjang list {len(a)} != panjang yang diharapkan {n}'
     
 def check_shape(a, shape):  #@save
-    """Check the shape of a tensor."""
+    """Memeriksa bentuk dari sebuah tensor."""
     assert a.shape == shape, \
-            f'tensor\'s shape {a.shape} != expected shape {shape}'
+            f'bentuk tensor {a.shape} != bentuk yang diharapkan {shape}'
 
 check_len(outputs, num_steps)
 check_shape(outputs[0], (batch_size, num_hiddens))
 check_shape(state, (batch_size, num_hiddens))
 ```
 
-## RNN-Based Language Model
+## Model Bahasa Berbasis RNN
 
-The following `RNNLMScratch` class defines 
-an RNN-based language model,
-where we pass in our RNN 
-via the `rnn` argument
-of the `__init__` method.
-When training language models, 
-the inputs and outputs are 
-from the same vocabulary. 
-Hence, they have the same dimension,
-which is equal to the vocabulary size.
-Note that we use perplexity to evaluate the model. 
-As discussed in :numref:`subsec_perplexity`, this ensures 
-that sequences of different length are comparable.
+Kelas `RNNLMScratch` berikut mendefinisikan 
+model bahasa berbasis RNN,
+di mana kita memasukkan RNN kita 
+melalui argumen `rnn`
+dalam metode `__init__`.
+Saat melatih model bahasa, 
+input dan output berasal 
+dari kosakata yang sama. 
+Oleh karena itu, mereka memiliki dimensi yang sama,
+yaitu sama dengan ukuran kosakata.
+Perhatikan bahwa kita menggunakan *perplexity* untuk mengevaluasi model. 
+Seperti yang dibahas di :numref:`subsec_perplexity`, ini memastikan 
+bahwa urutan dengan panjang yang berbeda dapat dibandingkan.
+
 
 ```{.python .input}
 %%tab pytorch
 class RNNLMScratch(d2l.Classifier):  #@save
-    """The RNN-based language model implemented from scratch."""
+    """Model bahasa berbasis RNN yang diimplementasikan dari awal."""
     def __init__(self, rnn, vocab_size, lr=0.01):
         super().__init__()
         self.save_hyperparameters()
@@ -237,7 +242,7 @@ class RNNLMScratch(d2l.Classifier):  #@save
 ```{.python .input}
 %%tab mxnet, tensorflow
 class RNNLMScratch(d2l.Classifier):  #@save
-    """The RNN-based language model implemented from scratch."""
+    """Model bahasa berbasis RNN yang diimplementasikan dari awal."""
     def __init__(self, rnn, vocab_size, lr=0.01):
         super().__init__()
         self.save_hyperparameters()
@@ -268,7 +273,7 @@ class RNNLMScratch(d2l.Classifier):  #@save
 ```{.python .input  n=14}
 %%tab jax
 class RNNLMScratch(d2l.Classifier):  #@save
-    """The RNN-based language model implemented from scratch."""
+    """Model bahasa berbasis RNN yang diimplementasikan dari awal."""
     rnn: nn.Module
     vocab_size: int
     lr: float = 0.01
@@ -292,34 +297,34 @@ class RNNLMScratch(d2l.Classifier):  #@save
 
 ### [**One-Hot Encoding**]
 
-Recall that each token is represented 
-by a numerical index indicating the
-position in the vocabulary of the 
-corresponding word/character/word piece.
-You might be tempted to build a neural network
-with a single input node (at each time step),
-where the index could be fed in as a scalar value.
-This works when we are dealing with numerical inputs 
-like price or temperature, where any two values
-sufficiently close together
-should be treated similarly.
-But this does not quite make sense. 
-The $45^{\textrm{th}}$ and $46^{\textrm{th}}$ words 
-in our vocabulary happen to be "their" and "said",
-whose meanings are not remotely similar.
+Ingat bahwa setiap token direpresentasikan 
+oleh sebuah indeks numerik yang menunjukkan
+posisinya dalam kosakata untuk
+kata/karakter/potongan kata yang bersesuaian.
+Anda mungkin tergoda untuk membangun jaringan saraf
+dengan satu node input (pada setiap langkah waktu),
+di mana indeks dapat dimasukkan sebagai nilai skalar.
+Ini berfungsi jika kita menangani input numerik 
+seperti harga atau suhu, di mana dua nilai yang
+cukup berdekatan seharusnya diperlakukan mirip.
+Namun, pendekatan ini tidak sepenuhnya masuk akal.
+Kata ke-$45$ dan ke-$46$ 
+dalam kosakata kita kebetulan adalah "their" dan "said",
+yang artinya sama sekali tidak mirip.
 
-When dealing with such categorical data,
-the most common strategy is to represent
-each item by a *one-hot encoding*
-(recall from :numref:`subsec_classification-problem`).
-A one-hot encoding is a vector whose length
-is given by the size of the vocabulary $N$,
-where all entries are set to $0$,
-except for the entry corresponding 
-to our token, which is set to $1$.
-For example, if the vocabulary had five elements,
-then the one-hot vectors corresponding 
-to indices 0 and 2 would be the following.
+Saat menangani data kategorikal seperti ini,
+strategi yang paling umum adalah merepresentasikan
+setiap item dengan *one-hot encoding*
+(lihat kembali dari :numref:`subsec_classification-problem`).
+*One-hot encoding* adalah vektor yang panjangnya
+ditentukan oleh ukuran kosakata $N$,
+di mana semua entri diatur ke $0$,
+kecuali entri yang sesuai 
+dengan token kita, yang diatur ke $1$.
+Sebagai contoh, jika kosakata memiliki lima elemen,
+maka vektor *one-hot* yang sesuai 
+dengan indeks 0 dan 2 adalah sebagai berikut.
+
 
 ```{.python .input}
 %%tab mxnet
@@ -341,18 +346,19 @@ tf.one_hot(tf.constant([0, 2]), 5)
 jax.nn.one_hot(jnp.array([0, 2]), 5)
 ```
 
-(**The minibatches that we sample at each iteration
-will take the shape (batch size, number of time steps).
-Once representing each input as a one-hot vector,
-we can think of each minibatch as a three-dimensional tensor, 
-where the length along the third axis 
-is given by the vocabulary size (`len(vocab)`).**)
-We often transpose the input so that we will obtain an output 
-of shape (number of time steps, batch size, vocabulary size).
-This will allow us to loop more conveniently through the outermost dimension
-for updating hidden states of a minibatch,
-time step by time step
-(e.g., in the above `forward` method).
+(***Minibatch* yang kita sampel di setiap iterasi
+akan berbentuk (ukuran batch, jumlah langkah waktu).
+Setelah merepresentasikan setiap input sebagai vektor *one-hot*,
+kita dapat memandang setiap *minibatch* sebagai tensor tiga dimensi, 
+di mana panjang sepanjang sumbu ketiga 
+ditentukan oleh ukuran kosakata (`len(vocab)`).**)
+Kita sering melakukan transposisi pada input sehingga kita akan mendapatkan output 
+dengan bentuk (jumlah langkah waktu, ukuran batch, ukuran kosakata).
+Ini akan memungkinkan kita untuk melakukan iterasi lebih mudah melalui dimensi terluar
+untuk memperbarui *hidden state* dari sebuah *minibatch*,
+langkah demi langkah waktu
+(misalnya, dalam metode `forward` di atas).
+
 
 ```{.python .input}
 %%tab all
@@ -369,10 +375,11 @@ def one_hot(self, X):
         return jax.nn.one_hot(X.T, self.vocab_size)
 ```
 
-### Transforming RNN Outputs
+### Mentransformasi Output RNN
 
-The language model uses a fully connected output layer
-to transform RNN outputs into token predictions at each time step.
+Model bahasa menggunakan lapisan *fully connected* pada output 
+untuk mentransformasi output RNN menjadi prediksi token pada setiap langkah waktu.
+
 
 ```{.python .input}
 %%tab all
@@ -388,8 +395,8 @@ def forward(self, X, state=None):
     return self.output_layer(rnn_outputs)
 ```
 
-Let's [**check whether the forward computation
-produces outputs with the correct shape.**]
+Mari kita [**periksa apakah perhitungan *forward* menghasilkan output dengan bentuk yang benar.**]
+
 
 ```{.python .input}
 %%tab pytorch, mxnet, tensorflow
@@ -410,128 +417,55 @@ check_shape(outputs, (batch_size, num_steps, num_inputs))
 ## [**Gradient Clipping**]
 
 
-While you are already used to thinking of neural networks
-as "deep" in the sense that many layers
-separate the input and output 
-even within a single time step,
-the length of the sequence introduces
-a new notion of depth.
-In addition to the passing through the network
-in the input-to-output direction,
-inputs at the first time step
-must pass through a chain of $T$ layers
-along the time steps in order 
-to influence the output of the model
-at the final time step.
-Taking the backwards view, in each iteration,
-we backpropagate gradients through time,
-resulting in a chain of matrix-products 
-of length  $\mathcal{O}(T)$.
-As mentioned in :numref:`sec_numerical_stability`, 
-this can result in numerical instability, 
-causing the gradients either to explode or vanish,
-depending on the properties of the weight matrices. 
+Sementara Anda sudah terbiasa menganggap jaringan saraf sebagai "dalam" dalam arti bahwa banyak lapisan memisahkan input dan output bahkan dalam satu langkah waktu, panjang urutan memperkenalkan gagasan kedalaman yang baru. Selain melalui jaringan dalam arah input-ke-output, input pada langkah waktu pertama harus melewati rantai $T$ lapisan sepanjang langkah waktu agar dapat memengaruhi output model pada langkah waktu terakhir. 
 
-Dealing with vanishing and exploding gradients 
-is a fundamental problem when designing RNNs
-and has inspired some of the biggest advances
-in modern neural network architectures.
-In the next chapter, we will talk about
-specialized architectures that were designed
-in hopes of mitigating the vanishing gradient problem.
-However, even modern RNNs often suffer
-from exploding gradients.
-One inelegant but ubiquitous solution
-is to simply clip the gradients 
-forcing the resulting "clipped" gradients
-to take smaller values. 
+Jika kita melihat dari sudut pandang kebalikannya, dalam setiap iterasi, kita melakukan backpropagation gradien melalui waktu, yang menghasilkan rantai perkalian matriks dengan panjang $\mathcal{O}(T)$. Seperti yang disebutkan di :numref:`sec_numerical_stability`, ini dapat mengakibatkan ketidakstabilan numerik, yang menyebabkan gradien meledak atau menghilang, tergantung pada sifat matriks bobot.
 
+Mengatasi gradien yang menghilang dan meledak adalah masalah mendasar saat merancang RNN dan telah menginspirasi beberapa kemajuan terbesar dalam arsitektur jaringan saraf modern. Pada bab berikutnya, kita akan membahas arsitektur khusus yang dirancang untuk mengatasi masalah gradien yang menghilang. Namun, bahkan RNN modern sering mengalami gradien yang meledak. Salah satu solusi yang sederhana namun umum adalah dengan membatasi gradien, memaksa nilai gradien "terpotong" ini menjadi lebih kecil.
 
-Generally speaking, when optimizing some objective
-by gradient descent, we iteratively update
-the parameter of interest, say a vector $\mathbf{x}$,
-but pushing it in the direction of the 
-negative gradient $\mathbf{g}$
-(in stochastic gradient descent, 
-we calculate this gradient
-on a randomly sampled minibatch).
-For example, with learning rate $\eta > 0$,
-each update takes the form 
-$\mathbf{x} \gets \mathbf{x} - \eta \mathbf{g}$.
-Let's further assume that the objective function $f$
-is sufficiently smooth. 
-Formally, we say that the objective 
-is *Lipschitz continuous* with constant $L$,
-meaning that for any $\mathbf{x}$ and $\mathbf{y}$, we have
+Secara umum, ketika kita mengoptimalkan suatu tujuan dengan penurunan gradien, kita secara iteratif memperbarui parameter yang diinginkan, misalnya vektor $\mathbf{x}$, dengan mendorongnya ke arah gradien negatif $\mathbf{g}$ (dalam *stochastic gradient descent*, kita menghitung gradien ini pada *minibatch* yang dipilih secara acak). Misalnya, dengan laju pembelajaran $\eta > 0$, setiap pembaruan berbentuk $\mathbf{x} \gets \mathbf{x} - \eta \mathbf{g}$. 
+
+Mari kita asumsikan bahwa fungsi tujuan $f$ cukup mulus. Secara formal, kita mengatakan bahwa tujuan ini *Lipschitz continuous* dengan konstanta $L$, yang berarti bahwa untuk setiap $\mathbf{x}$ dan $\mathbf{y}$, kita memiliki
 
 $$|f(\mathbf{x}) - f(\mathbf{y})| \leq L \|\mathbf{x} - \mathbf{y}\|.$$
 
-As you can see, when we update the parameter vector by subtracting $\eta \mathbf{g}$,
-the change in the value of the objective
-depends on the learning rate,
-the norm of the gradient and $L$ as follows:
+Seperti yang dapat Anda lihat, ketika kita memperbarui vektor parameter dengan mengurangkan $\eta \mathbf{g}$, perubahan nilai fungsi tujuan bergantung pada laju pembelajaran, norma gradien, dan $L$ sebagai berikut:
 
 $$|f(\mathbf{x}) - f(\mathbf{x} - \eta\mathbf{g})| \leq L \eta\|\mathbf{g}\|.$$
 
-In other words, the objective cannot
-change by more than $L \eta \|\mathbf{g}\|$. 
-Having a small value for this upper bound 
-might be viewed as good or bad.
-On the downside, we are limiting the speed
-at which we can reduce the value of the objective.
-On the bright side, this limits by just how much
-we can go wrong in any one gradient step.
+Dengan kata lain, tujuan tidak dapat berubah lebih dari $L \eta \|\mathbf{g}\|$. Memiliki nilai kecil untuk batas atas ini dapat dianggap baik atau buruk. Di sisi negatif, kita membatasi kecepatan di mana kita dapat mengurangi nilai tujuan. Di sisi positif, ini membatasi sejauh mana kita bisa membuat kesalahan dalam satu langkah gradien.
 
+Ketika kita mengatakan bahwa gradien meledak, kita maksudkan bahwa $\|\mathbf{g}\|$ menjadi sangat besar. Dalam kasus terburuk, kita mungkin melakukan kerusakan besar dalam satu langkah gradien sehingga kita dapat membatalkan semua kemajuan yang telah dicapai selama ribuan iterasi pelatihan. Ketika gradien menjadi sangat besar, pelatihan jaringan saraf sering kali gagal karena tidak dapat mengurangi nilai tujuan. Terkadang, pelatihan akhirnya mencapai konvergensi tetapi tidak stabil karena lonjakan besar pada *loss*.
 
-When we say that gradients explode, 
-we mean that $\|\mathbf{g}\|$ 
-becomes excessively large.
-In this worst case, we might do so much
-damage in a single gradient step that we
-could undo all of the progress made over
-the course of thousands of training iterations.
-When gradients can be so large,
-neural network training often diverges,
-failing to reduce the value of the objective.
-At other times, training eventually converges
-but is unstable owing to massive spikes in the loss.
+Salah satu cara untuk membatasi ukuran $L \eta \|\mathbf{g}\|$ adalah dengan memperkecil laju pembelajaran $\eta$ hingga nilai yang sangat kecil. Ini memiliki keuntungan bahwa kita tidak mendistorsi pembaruan. Tetapi bagaimana jika kita hanya *sesekali* mendapatkan gradien besar? Pendekatan drastis ini akan memperlambat kemajuan kita di semua langkah, hanya untuk menangani peristiwa gradien meledak yang jarang terjadi. Alternatif populer adalah menggunakan heuristik *gradient clipping* yang memproyeksikan gradien $\mathbf{g}$ ke dalam bola dengan radius tertentu $\theta$ sebagai berikut:
 
-
-One way to limit the size of $L \eta \|\mathbf{g}\|$ 
-is to shrink the learning rate $\eta$ to tiny values.
-This has the advantage that we do not bias the updates.
-But what if we only *rarely* get large gradients?
-This drastic move slows down our progress at all steps,
-just to deal with the rare exploding gradient events.
-A popular alternative is to adopt a *gradient clipping* heuristic
-projecting the gradients $\mathbf{g}$ onto a ball 
-of some given radius $\theta$ as follows:
 
 (**$$\mathbf{g} \leftarrow \min\left(1, \frac{\theta}{\|\mathbf{g}\|}\right) \mathbf{g}.$$**)
 
-This ensures that the gradient norm never exceeds $\theta$ 
-and that the updated gradient is entirely aligned 
-with the original direction of $\mathbf{g}$.
-It also has the desirable side-effect 
-of limiting the influence any given minibatch 
-(and within it any given sample) 
-can exert on the parameter vector. 
-This bestows a certain degree of robustness to the model. 
-To be clear, it is a hack. 
-Gradient clipping means that we are not always
-following the true gradient and it is hard 
-to reason analytically about the possible side effects.
-However, it is a very useful hack,
-and is widely adopted in RNN implementations
-in most deep learning frameworks.
+Ini memastikan bahwa norma gradien tidak pernah melebihi $\theta$ 
+dan bahwa gradien yang diperbarui sepenuhnya selaras 
+dengan arah asli dari $\mathbf{g}$.
+Pendekatan ini juga memiliki efek samping yang diinginkan, 
+yaitu membatasi pengaruh yang dapat diberikan oleh setiap *minibatch* 
+(dan di dalamnya setiap sampel tertentu) 
+pada vektor parameter. 
+Ini memberikan tingkat ketahanan tertentu pada model. 
+Untuk lebih jelasnya, ini adalah trik. 
+*Gradient clipping* berarti kita tidak selalu
+mengikuti gradien sejati, dan sulit 
+untuk memprediksi secara analitik efek samping yang mungkin terjadi.
+Namun, ini adalah trik yang sangat berguna
+dan banyak digunakan dalam implementasi RNN
+di sebagian besar *framework* pembelajaran mendalam.
 
 
-Below we define a method to clip gradients,
-which is invoked by the `fit_epoch` method of
-the `d2l.Trainer` class (see :numref:`sec_linear_scratch`).
-Note that when computing the gradient norm,
-we are concatenating all model parameters,
-treating them as a single giant parameter vector.
+Di bawah ini, kita mendefinisikan metode untuk melakukan *gradient clipping*,
+yang dipanggil oleh metode `fit_epoch` dari
+kelas `d2l.Trainer` (lihat :numref:`sec_linear_scratch`).
+Perhatikan bahwa saat menghitung norma gradien,
+kita menggabungkan semua parameter model,
+dan memperlakukannya sebagai vektor parameter besar tunggal.
+
 
 ```{.python .input}
 %%tab mxnet
@@ -583,15 +517,16 @@ def clip_gradients(self, grad_clip_val, grads):
     return jax.tree_util.tree_map(clip, grads)
 ```
 
-## Training
+## Pelatihan
 
-Using *The Time Machine* dataset (`data`),
-we train a character-level language model (`model`)
-based on the RNN (`rnn`) implemented from scratch.
-Note that we first calculate the gradients,
-then clip them, and finally 
-update the model parameters
-using the clipped gradients.
+Dengan menggunakan dataset *The Time Machine* (`data`),
+kita melatih model bahasa tingkat karakter (`model`)
+berdasarkan RNN (`rnn`) yang diimplementasikan dari awal.
+Perhatikan bahwa kita pertama-tama menghitung gradien,
+kemudian melakukan *clipping* pada gradien tersebut, dan akhirnya 
+memperbarui parameter model
+menggunakan gradien yang sudah dipotong.
+
 
 ```{.python .input}
 %%tab all
@@ -608,38 +543,35 @@ if tab.selected('tensorflow'):
 trainer.fit(model, data)
 ```
 
-## Decoding
+## Dekode
 
-Once a language model has been learned,
-we can use it not only to predict the next token
-but to continue predicting each subsequent one,
-treating the previously predicted token as though
-it were the next in the input. 
-Sometimes we will just want to generate text
-as though we were starting at the beginning 
-of a document. 
-However, it is often useful to condition
-the language model on a user-supplied prefix.
-For example, if we were developing an
-autocomplete feature for a search engine
-or to assist users in writing emails,
-we would want to feed in what they 
-had written so far (the prefix), 
-and then generate a likely continuation.
+Setelah model bahasa dipelajari,
+kita dapat menggunakannya tidak hanya untuk memprediksi token berikutnya
+tetapi juga untuk terus memprediksi setiap token selanjutnya,
+dengan memperlakukan token yang diprediksi sebelumnya seolah-olah
+itu adalah token berikutnya dalam input. 
+Kadang-kadang kita hanya ingin menghasilkan teks
+seolah-olah kita memulai dari awal dokumen. 
+Namun, sering kali berguna untuk memberikan *prefix* yang ditentukan oleh pengguna pada model bahasa.
+Misalnya, jika kita mengembangkan fitur
+*autocomplete* untuk mesin pencari
+atau untuk membantu pengguna menulis email,
+kita ingin memasukkan apa yang telah mereka tulis sejauh ini (*prefix*),
+dan kemudian menghasilkan lanjutan yang mungkin.
 
+[**Metode `predict` berikut
+menghasilkan lanjutan, satu karakter pada satu waktu,
+setelah menerima `prefix` yang disediakan oleh pengguna**].
+Saat kita melakukan iterasi melalui karakter dalam `prefix`,
+kita terus menerus meneruskan *hidden state*
+ke langkah waktu berikutnya
+tetapi tidak menghasilkan output.
+Ini disebut sebagai periode *warm-up*.
+Setelah menerima *prefix*, kita sekarang siap untuk
+mulai menghasilkan karakter berikutnya,
+di mana masing-masing karakter akan dimasukkan kembali ke dalam model 
+sebagai input pada langkah waktu berikutnya.
 
-[**The following `predict` method
-generates a continuation, one character at a time,
-after ingesting a user-provided `prefix`**].
-When looping through the characters in `prefix`,
-we keep passing the hidden state
-to the next time step 
-but do not generate any output.
-This is called the *warm-up* period.
-After ingesting the prefix, we are now
-ready to begin emitting the subsequent characters,
-each of which will be fed back into the model 
-as the input at the next time step.
 
 ```{.python .input}
 %%tab pytorch, mxnet, tensorflow
@@ -682,8 +614,9 @@ def predict(self, prefix, num_preds, vocab, params):
     return ''.join([vocab.idx_to_token[i] for i in outputs])
 ```
 
-In the following, we specify the prefix 
-and have it generate 20 additional characters.
+Pada bagian berikut, kita menentukan *prefix* 
+dan memintanya untuk menghasilkan 20 karakter tambahan.
+
 
 ```{.python .input}
 %%tab mxnet, pytorch
@@ -700,52 +633,51 @@ model.predict('it has', 20, data.vocab)
 model.predict('it has', 20, data.vocab, trainer.state.params)
 ```
 
-While implementing the above RNN model from scratch is instructive, it is not convenient.
-In the next section, we will see how to leverage deep learning frameworks to whip up RNNs
-using standard architectures, and to reap performance gains 
-by relying on highly optimized library functions.
+Meskipun mengimplementasikan model RNN di atas dari awal sangat bermanfaat untuk pembelajaran, cara ini tidaklah praktis.
+Di bagian selanjutnya, kita akan melihat cara memanfaatkan *framework* pembelajaran mendalam untuk membangun RNN
+menggunakan arsitektur standar, serta mendapatkan peningkatan kinerja 
+dengan mengandalkan fungsi pustaka yang sangat dioptimalkan.
 
 
-## Summary
+## Ringkasan
 
-We can train RNN-based language models to generate text following the user-provided text prefix. 
-A simple RNN language model consists of input encoding, RNN modeling, and output generation.
-During training, gradient clipping can mitigate the problem of exploding gradients but does not address the problem of vanishing gradients. In the experiment, we implemented a simple RNN language model and trained it with gradient clipping on sequences of text, tokenized at the character level. By conditioning on a prefix, we can use a language model to generate likely continuations, which proves useful in many applications, e.g., autocomplete features.
+Kita dapat melatih model bahasa berbasis RNN untuk menghasilkan teks yang mengikuti awalan teks yang disediakan oleh pengguna. 
+Model bahasa RNN sederhana terdiri dari pengkodean input, pemodelan RNN, dan generasi output.
+Selama pelatihan, *gradient clipping* dapat mengatasi masalah gradien meledak tetapi tidak mengatasi masalah gradien yang menghilang. Pada eksperimen ini, kita mengimplementasikan model bahasa RNN sederhana dan melatihnya dengan *gradient clipping* pada urutan teks yang ditokenisasi di tingkat karakter. Dengan memberikan *prefix*, kita dapat menggunakan model bahasa untuk menghasilkan lanjutan yang mungkin, yang terbukti berguna dalam banyak aplikasi, misalnya, fitur *autocomplete*.
 
 
-## Exercises
+## Latihan
 
-1. Does the implemented language model predict the next token based on all the past tokens up to the very first token in *The Time Machine*? 
-1. Which hyperparameter controls the length of history used for prediction?
-1. Show that one-hot encoding is equivalent to picking a different embedding for each object.
-1. Adjust the hyperparameters (e.g., number of epochs, number of hidden units, number of time steps in a minibatch, and learning rate) to improve the perplexity. How low can you go while sticking with this simple architecture?
-1. Replace one-hot encoding with learnable embeddings. Does this lead to better performance?
-1. Conduct an experiment to determine how well this language model 
-   trained on *The Time Machine* works on other books by H. G. Wells,
-   e.g., *The War of the Worlds*.
-1. Conduct another experiment to evaluate the perplexity of this model
-   on books written by other authors. 
-1. Modify the prediction method so as to use sampling 
-   rather than picking the most likely next character.
-    * What happens?
-    * Bias the model towards more likely outputs, e.g., 
-    by sampling from $q(x_t \mid x_{t-1}, \ldots, x_1) \propto P(x_t \mid x_{t-1}, \ldots, x_1)^\alpha$ for $\alpha > 1$.
-1. Run the code in this section without clipping the gradient. What happens?
-1. Replace the activation function used in this section with ReLU 
-   and repeat the experiments in this section. Do we still need gradient clipping? Why?
+1. Apakah model bahasa yang diimplementasikan memprediksi token berikutnya berdasarkan semua token sebelumnya hingga token pertama dalam *The Time Machine*?
+2. Hyperparameter mana yang mengontrol panjang riwayat yang digunakan untuk prediksi?
+3. Tunjukkan bahwa *one-hot encoding* setara dengan memilih *embedding* yang berbeda untuk setiap objek.
+4. Sesuaikan *hyperparameter* (misalnya, jumlah epoch, jumlah unit tersembunyi, jumlah langkah waktu dalam *minibatch*, dan laju pembelajaran) untuk meningkatkan *perplexity*. Seberapa rendah yang bisa Anda capai dengan tetap mempertahankan arsitektur sederhana ini?
+5. Ganti *one-hot encoding* dengan *embedding* yang dapat dipelajari. Apakah ini menghasilkan kinerja yang lebih baik?
+6. Lakukan eksperimen untuk menentukan seberapa baik model bahasa ini, 
+   yang dilatih pada *The Time Machine*, bekerja pada buku lain oleh H. G. Wells, 
+   misalnya, *The War of the Worlds*.
+7. Lakukan eksperimen lain untuk mengevaluasi *perplexity* model ini pada buku-buku yang ditulis oleh penulis lain.
+8. Modifikasi metode prediksi agar menggunakan *sampling* 
+   daripada memilih karakter berikutnya yang paling mungkin.
+    * Apa yang terjadi?
+    * Arahkan model ke output yang lebih mungkin, misalnya, 
+      dengan mengambil sampel dari $q(x_t \mid x_{t-1}, \ldots, x_1) \propto P(x_t \mid x_{t-1}, \ldots, x_1)^\alpha$ untuk $\alpha > 1$.
+9. Jalankan kode di bagian ini tanpa melakukan *clipping* pada gradien. Apa yang terjadi?
+10. Ganti fungsi aktivasi yang digunakan dalam bagian ini dengan ReLU 
+    dan ulangi eksperimen dalam bagian ini. Apakah kita masih memerlukan *gradient clipping*? Mengapa?
 
 :begin_tab:`mxnet`
-[Discussions](https://discuss.d2l.ai/t/336)
+[Diskusi](https://discuss.d2l.ai/t/336)
 :end_tab:
 
 :begin_tab:`pytorch`
-[Discussions](https://discuss.d2l.ai/t/486)
+[Diskusi](https://discuss.d2l.ai/t/486)
 :end_tab:
 
 :begin_tab:`tensorflow`
-[Discussions](https://discuss.d2l.ai/t/1052)
+[Diskusi](https://discuss.d2l.ai/t/1052)
 :end_tab:
 
 :begin_tab:`jax`
-[Discussions](https://discuss.d2l.ai/t/18014)
+[Diskusi](https://discuss.d2l.ai/t/18014)
 :end_tab:
