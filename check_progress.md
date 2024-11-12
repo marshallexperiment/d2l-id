@@ -98,14 +98,14 @@
 
 # 9 - chapter_recurrent-neural-networks
 
-- [ ] ./chapter_recurrent-neural-networks/text-sequence.md
-- [ ] ./chapter_recurrent-neural-networks/rnn-concise.md
-- [ ] ./chapter_recurrent-neural-networks/language-model.md
-- [ ] ./chapter_recurrent-neural-networks/rnn.md
-- [ ] ./chapter_recurrent-neural-networks/bptt.md
-- [ ] ./chapter_recurrent-neural-networks/rnn-scratch.md
-- [ ] ./chapter_recurrent-neural-networks/index.md
-- [ ] ./chapter_recurrent-neural-networks/sequence.md
+- [x] ./chapter_recurrent-neural-networks/text-sequence.md
+- [x] ./chapter_recurrent-neural-networks/rnn-concise.md
+- [x] ./chapter_recurrent-neural-networks/language-model.md
+- [x] ./chapter_recurrent-neural-networks/rnn.md
+- [x] ./chapter_recurrent-neural-networks/bptt.md
+- [x] ./chapter_recurrent-neural-networks/rnn-scratch.md
+- [x] ./chapter_recurrent-neural-networks/index.md
+- [x] ./chapter_recurrent-neural-networks/sequence.md
 
 # 10 - chapter_recurrent-modern
 
