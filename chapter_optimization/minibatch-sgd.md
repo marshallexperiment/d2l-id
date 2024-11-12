@@ -1,38 +1,40 @@
 # Minibatch Stochastic Gradient Descent
 :label:`sec_minibatch_sgd`
 
-So far we encountered two extremes in the approach to gradient-based learning: :numref:`sec_gd` uses the full dataset to compute gradients and to update parameters, one pass at a time. Conversely :numref:`sec_sgd` processes one training example at a time to make progress.
-Either of them has its own drawbacks.
-Gradient descent is not particularly *data efficient* whenever data is very similar.
-Stochastic gradient descent is not particularly *computationally efficient* since CPUs and GPUs cannot exploit the full power of vectorization.
-This suggests that there might be something in between,
-and in fact, that is what we have been using so far in the examples we discussed.
+Sejauh ini kita telah menemukan dua pendekatan ekstrim dalam pembelajaran berbasis gradien: :numref:`sec_gd` menggunakan seluruh dataset untuk menghitung gradien dan memperbarui parameter, satu lintasan dalam satu waktu. Sebaliknya, :numref:`sec_sgd` memproses satu contoh pelatihan setiap kali untuk membuat kemajuan.
+Keduanya memiliki kekurangan masing-masing.
+Gradient descent tidak terlalu *efisien dalam data* ketika data sangat mirip.
+Stochastic gradient descent tidak terlalu *efisien secara komputasi* karena CPU dan GPU tidak dapat sepenuhnya memanfaatkan kekuatan vektorisasi.
+Hal ini menunjukkan bahwa mungkin ada sesuatu di antara keduanya,
+dan sebenarnya, itulah yang telah kita gunakan sejauh ini dalam contoh-contoh yang kita bahas.
 
-## Vectorization and Caches
+## Vektorisasi dan Cache
 
-At the heart of the decision to use minibatches is computational efficiency. This is most easily understood when considering parallelization to multiple GPUs and multiple servers. In this case we need to send at least one image to each GPU. With 8 GPUs per server and 16 servers we already arrive at a minibatch size no smaller than 128.
+Inti dari keputusan untuk menggunakan minibatch adalah efisiensi komputasi. Hal ini paling mudah dipahami ketika mempertimbangkan paralelisasi ke beberapa GPU dan beberapa server. Dalam kasus ini, kita perlu mengirim setidaknya satu gambar ke setiap GPU. Dengan 8 GPU per server dan 16 server, kita sudah sampai pada ukuran minibatch yang tidak lebih kecil dari 128.
 
-Things are a bit more subtle when it comes to single GPUs or even CPUs. These devices have multiple types of memory, often multiple types of computational units and different bandwidth constraints between them.
-For instance, a CPU has a small number of registers and then the L1, L2, and in some cases even L3 cache (which is shared among different processor cores).
-These caches are of increasing size and latency (and at the same time they are of decreasing bandwidth).
-Suffice to say, the processor is capable of performing many more operations than what the main memory interface is able to provide.
+Situasi menjadi sedikit lebih halus ketika berurusan dengan satu GPU atau bahkan CPU. Perangkat ini memiliki beberapa jenis memori, sering kali beberapa jenis unit komputasi, dan batasan bandwidth yang berbeda-beda di antara mereka.
+Misalnya, sebuah CPU memiliki sejumlah register kecil dan kemudian cache L1, L2, dan bahkan L3 dalam beberapa kasus (yang dibagi di antara berbagai inti prosesor).
+Cache-cache ini memiliki ukuran dan latensi yang meningkat (dan pada saat yang sama bandwidth yang menurun).
+Singkatnya, prosesor mampu melakukan lebih banyak operasi daripada antarmuka memori utama yang mampu menyediakannya.
 
-First, a 2GHz CPU with 16 cores and AVX-512 vectorization can process up to $2 \cdot 10^9 \cdot 16 \cdot 32 = 10^{12}$ bytes per second. The capability of GPUs easily exceeds this number by a factor of 100. On the other hand, a midrange server processor might not have much more than 100 GB/s bandwidth, i.e., less than one tenth of what would be required to keep the processor fed. To make matters worse, not all memory access is created equal: memory interfaces are typically 64 bit wide or wider (e.g., on GPUs up to 384 bit), hence reading a single byte incurs the cost of a much wider access.
+Pertama, CPU 2GHz dengan 16 inti dan vektorisasi AVX-512 dapat memproses hingga $2 \cdot 10^9 \cdot 16 \cdot 32 = 10^{12}$ byte per detik. Kemampuan GPU dengan mudah melebihi angka ini hingga 100 kali lipat. Di sisi lain, prosesor server kelas menengah mungkin tidak memiliki lebih dari 100 GB/s bandwidth, yaitu kurang dari sepersepuluh dari apa yang dibutuhkan untuk memberi makan prosesor. Lebih buruk lagi, tidak semua akses memori sama: antarmuka memori biasanya memiliki lebar 64 bit atau lebih (misalnya, pada GPU hingga 384 bit), sehingga membaca satu byte mengakibatkan biaya akses yang lebih lebar.
 
-Second, there is significant overhead for the first access whereas sequential access is relatively cheap (this is often called a burst read). There are many more things to keep in mind, such as caching when we have multiple sockets, chiplets, and other structures.
-See this [Wikipedia article](https://en.wikipedia.org/wiki/Cache_hierarchy)
-for a more in-depth discussion.
+Kedua, ada overhead yang signifikan untuk akses pertama sementara akses berurutan relatif murah (ini sering disebut sebagai burst read). Ada banyak hal lagi yang perlu diingat, seperti caching saat kita memiliki beberapa soket, chiplet, dan struktur lainnya.
+Lihat [artikel Wikipedia ini](https://en.wikipedia.org/wiki/Cache_hierarchy)
+untuk pembahasan lebih mendalam.
 
-The way to alleviate these constraints is to use a hierarchy of CPU caches that are actually fast enough to supply the processor with data. This is *the* driving force behind batching in deep learning. To keep matters simple, consider matrix-matrix multiplication, say $\mathbf{A} = \mathbf{B}\mathbf{C}$. We have a number of options for calculating $\mathbf{A}$. For instance, we could try the following:
+Cara untuk mengurangi keterbatasan ini adalah dengan menggunakan hierarki cache CPU yang benar-benar cukup cepat untuk memasok prosesor dengan data. Inilah pendorong utama di balik batching dalam deep learning. Untuk menyederhanakan, pertimbangkan perkalian matriks-matriks, misalnya $\mathbf{A} = \mathbf{B}\mathbf{C}$. Kita memiliki beberapa opsi untuk menghitung $\mathbf{A}$. Misalnya, kita dapat mencoba hal berikut:
 
-1. We could compute $\mathbf{A}_{ij} = \mathbf{B}_{i,:} \mathbf{C}_{:,j}$, i.e., we could compute it elementwise by means of dot products.
-1. We could compute $\mathbf{A}_{:,j} = \mathbf{B} \mathbf{C}_{:,j}$, i.e., we could compute it one column at a time. Likewise we could compute $\mathbf{A}$ one row $\mathbf{A}_{i,:}$ at a time.
-1. We could simply compute $\mathbf{A} = \mathbf{B} \mathbf{C}$.
-1. We could break $\mathbf{B}$ and $\mathbf{C}$ into smaller block matrices and compute $\mathbf{A}$ one block at a time.
+1. Kita dapat menghitung $\mathbf{A}_{ij} = \mathbf{B}_{i,:} \mathbf{C}_{:,j}$, yaitu kita dapat menghitungnya secara elemen-wise melalui dot product.
+2. Kita dapat menghitung $\mathbf{A}_{:,j} = \mathbf{B} \mathbf{C}_{:,j}$, yaitu kita dapat menghitungnya satu kolom pada satu waktu. Demikian pula, kita dapat menghitung $\mathbf{A}$ satu baris $\mathbf{A}_{i,:}$ pada satu waktu.
+3. Kita dapat menghitung $\mathbf{A} = \mathbf{B} \mathbf{C}$ secara langsung.
+4. Kita dapat memecah $\mathbf{B}$ dan $\mathbf{C}$ menjadi blok-blok matriks yang lebih kecil dan menghitung $\mathbf{A}$ satu blok pada satu waktu.
 
-If we follow the first option, we will need to copy one row and one column vector into the CPU each time we want to compute an element $\mathbf{A}_{ij}$. Even worse, due to the fact that matrix elements are aligned sequentially we are thus required to access many disjoint locations for one of the two vectors as we read them from memory. The second option is much more favorable. In it, we are able to keep the column vector $\mathbf{C}_{:,j}$ in the CPU cache while we keep on traversing through $\mathbf{B}$. This halves the memory bandwidth requirement with correspondingly faster access. Of course, option 3 is most desirable. Unfortunately, most matrices might not entirely fit into cache (this is what we are discussing after all). However, option 4 offers a practically useful alternative: we can move blocks of the matrix into cache and multiply them locally. Optimized libraries take care of this for us. Let's have a look at how efficient these operations are in practice.
+Jika kita mengikuti opsi pertama, kita perlu menyalin satu baris dan satu kolom vektor ke dalam CPU setiap kali kita ingin menghitung elemen $\mathbf{A}_{ij}$. Lebih buruk lagi, karena elemen matriks diatur secara berurutan, kita harus mengakses banyak lokasi yang tidak berurutan untuk salah satu dari dua vektor saat membacanya dari memori. Opsi kedua jauh lebih menguntungkan. Dalam hal ini, kita dapat menyimpan vektor kolom $\mathbf{C}_{:,j}$ dalam cache CPU sementara kita terus melakukan traversal melalui $\mathbf{B}$. Ini mengurangi setengah kebutuhan bandwidth memori dengan akses yang lebih cepat. Tentu saja, opsi 3 adalah yang paling diinginkan. Sayangnya, sebagian besar matriks mungkin tidak sepenuhnya muat di cache (inilah yang sedang kita bahas). Namun, opsi 4 menawarkan alternatif yang berguna secara praktis: kita dapat memindahkan blok-blok matriks ke dalam cache dan mengalikannya secara lokal. Pustaka yang dioptimalkan mengurus hal ini untuk kita. Mari kita lihat seberapa efisien operasi-operasi ini dalam praktik.
 
-Beyond computational efficiency, the overhead introduced by Python and by the deep learning framework itself is considerable. Recall that each time we execute a command the Python interpreter sends a command to the MXNet engine which needs to insert it into the computational graph and deal with it during scheduling. Such overhead can be quite detrimental. In short, it is highly advisable to use vectorization (and matrices) whenever possible.
+Selain efisiensi komputasi, overhead yang diperkenalkan oleh Python dan oleh framework deep learning itu sendiri cukup besar. Ingat bahwa setiap kali kita menjalankan perintah, interpreter Python mengirim perintah ke engine MXNet yang perlu memasukkannya ke dalam computational graph dan menangani scheduling. Overhead seperti itu dapat sangat merugikan. Singkatnya, sangat disarankan untuk menggunakan vektorisasi (dan matriks) jika memungkinkan.
+
+
 
 ```{.python .input}
 #@tab mxnet
@@ -75,45 +77,46 @@ B = tf.Variable(d2l.normal([256, 256], 0, 1))
 C = tf.Variable(d2l.normal([256, 256], 0, 1))
 ```
 
-Since we will benchmark the running time frequently in the rest of the book, let's define a timer.
+Karena kita akan mengukur waktu eksekusi secara berkala sepanjang sisa buku ini, mari kita definisikan sebuah timer.
+
 
 ```{.python .input}
 #@tab all
 class Timer:  #@save
-    """Record multiple running times."""
+    """Mencatat beberapa waktu eksekusi."""
     def __init__(self):
         self.times = []
         self.start()
 
     def start(self):
-        """Start the timer."""
+        """Mulai timer."""
         self.tik = time.time()
 
     def stop(self):
-        """Stop the timer and record the time in a list."""
+        """Hentikan timer dan catat waktu dalam sebuah list."""
         self.times.append(time.time() - self.tik)
         return self.times[-1]
 
     def avg(self):
-        """Return the average time."""
+        """Kembalikan waktu rata-rata."""
         return sum(self.times) / len(self.times)
 
     def sum(self):
-        """Return the sum of time."""
+        """Kembalikan jumlah total waktu."""
         return sum(self.times)
 
     def cumsum(self):
-        """Return the accumulated time."""
+        """Kembalikan waktu yang terakumulasi."""
         return np.array(self.times).cumsum().tolist()
 
 timer = Timer()
 ```
 
-Element-wise assignment simply iterates over all rows and columns of $\mathbf{B}$ and $\mathbf{C}$ respectively to assign the value to $\mathbf{A}$.
+Penugasan elemen-wise hanya mengiterasi semua baris dan kolom dari $\mathbf{B}$ dan $\mathbf{C}$ masing-masing untuk menetapkan nilai ke $\mathbf{A}$.
 
 ```{.python .input}
 #@tab mxnet
-# Compute A = BC one element at a time
+# Hitung A = BC satu elemen pada satu waktu
 timer.start()
 for i in range(256):
     for j in range(256):
@@ -124,7 +127,7 @@ timer.stop()
 
 ```{.python .input}
 #@tab pytorch
-# Compute A = BC one element at a time
+# Hitung A = BC satu elemen pada satu waktu
 timer.start()
 for i in range(256):
     for j in range(256):
@@ -134,7 +137,7 @@ timer.stop()
 
 ```{.python .input}
 #@tab tensorflow
-# Compute A = BC one element at a time
+# Hitung A = BC satu elemen pada satu waktu
 timer.start()
 for i in range(256):
     for j in range(256):
