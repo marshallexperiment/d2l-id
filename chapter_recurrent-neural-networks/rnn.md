@@ -1,33 +1,33 @@
 # Recurrent Neural Networks
 :label:`sec_rnn`
 
-
-In :numref:`sec_language-model` we described Markov models and $n$-grams for language modeling, where the conditional probability of token $x_t$ at time step $t$ only depends on the $n-1$ previous tokens.
-If we want to incorporate the possible effect of tokens earlier than time step $t-(n-1)$ on $x_t$,
-we need to increase $n$.
-However, the number of model parameters would also increase exponentially with it, as we need to store $|\mathcal{V}|^n$ numbers for a vocabulary set $\mathcal{V}$.
-Hence, rather than modeling $P(x_t \mid x_{t-1}, \ldots, x_{t-n+1})$ it is preferable to use a latent variable model,
+Pada :numref:`sec_language-model`, kita telah menjelaskan model Markov dan $n$-gram untuk pemodelan bahasa, di mana probabilitas bersyarat dari token $x_t$ pada langkah waktu $t$ hanya bergantung pada $n-1$ token sebelumnya.
+Jika kita ingin memasukkan kemungkinan efek dari token yang lebih awal dari langkah waktu $t-(n-1)$ pada $x_t$,
+kita perlu meningkatkan $n$.
+Namun, jumlah parameter model juga akan meningkat secara eksponensial bersamanya, karena kita perlu menyimpan $|\mathcal{V}|^n$ angka untuk set kosakata $\mathcal{V}$.
+Oleh karena itu, daripada memodelkan $P(x_t \mid x_{t-1}, \ldots, x_{t-n+1})$, lebih disukai untuk menggunakan model variabel laten,
 
 $$P(x_t \mid x_{t-1}, \ldots, x_1) \approx P(x_t \mid h_{t-1}),$$
 
-where $h_{t-1}$ is a *hidden state*  that stores the sequence information up to time step $t-1$.
-In general,
-the hidden state at any time step $t$ could be computed based on both the current input $x_{t}$ and the previous hidden state $h_{t-1}$:
+di mana $h_{t-1}$ adalah *hidden state* yang menyimpan informasi urutan hingga langkah waktu $t-1$.
+Secara umum,
+*hidden state* pada setiap langkah waktu $t$ dapat dihitung berdasarkan input saat ini $x_{t}$ dan *hidden state* sebelumnya $h_{t-1}$:
 
 $$h_t = f(x_{t}, h_{t-1}).$$
 :eqlabel:`eq_ht_xt`
 
-For a sufficiently powerful function $f$ in :eqref:`eq_ht_xt`, the latent variable model is not an approximation. After all, $h_t$ may simply store all the data it has observed so far.
-However, it could potentially make both computation and storage expensive.
+Dengan fungsi $f$ yang cukup kuat dalam :eqref:`eq_ht_xt`, model variabel laten bukanlah sebuah aproksimasi. Bagaimanapun, $h_t$ dapat menyimpan semua data yang telah diamati sejauh ini.
+Namun, ini dapat membuat komputasi dan penyimpanan menjadi mahal.
 
-Recall that we have discussed hidden layers with hidden units in :numref:`chap_perceptrons`.
-It is noteworthy that
-hidden layers and hidden states refer to two very different concepts.
-Hidden layers are, as explained, layers that are hidden from view on the path from input to output.
-Hidden states are technically speaking *inputs* to whatever we do at a given step,
-and they can only be computed by looking at data at previous time steps.
+Ingat bahwa kita telah membahas lapisan tersembunyi dengan unit tersembunyi pada :numref:`chap_perceptrons`.
+Perlu dicatat bahwa
+lapisan tersembunyi dan *hidden states* mengacu pada dua konsep yang sangat berbeda.
+Lapisan tersembunyi, seperti yang dijelaskan, adalah lapisan yang tersembunyi dari pandangan pada jalur dari input ke output.
+*Hidden states* secara teknis merupakan *input* untuk apa pun yang kita lakukan pada suatu langkah tertentu,
+dan hanya dapat dihitung dengan melihat data pada langkah waktu sebelumnya.
 
-*Recurrent neural networks* (RNNs) are neural networks with hidden states. Before introducing the RNN model, we first revisit the MLP model introduced in :numref:`sec_mlp`.
+*Recurrent Neural Networks* (RNNs) adalah jaringan saraf dengan *hidden states*. Sebelum memperkenalkan model RNN, pertama-tama kita meninjau kembali model MLP yang diperkenalkan pada :numref:`sec_mlp`.
+
 
 ```{.python .input}
 %load_ext d2lbook.tab
@@ -60,106 +60,97 @@ import jax
 from jax import numpy as jnp
 ```
 
-## Neural Networks without Hidden States
+## Neural Networks tanpa Hidden States
 
-Let's take a look at an MLP with a single hidden layer.
-Let the hidden layer's activation function be $\phi$.
-Given a minibatch of examples $\mathbf{X} \in \mathbb{R}^{n \times d}$ with batch size $n$ and $d$ inputs, the hidden layer output $\mathbf{H} \in \mathbb{R}^{n \times h}$ is calculated as
+Mari kita lihat sebuah MLP dengan satu lapisan tersembunyi.
+Misalkan fungsi aktivasi pada lapisan tersembunyi adalah $\phi$.
+Dengan diberikan *minibatch* dari contoh $\mathbf{X} \in \mathbb{R}^{n \times d}$ dengan ukuran batch $n$ dan $d$ masukan, keluaran lapisan tersembunyi $\mathbf{H} \in \mathbb{R}^{n \times h}$ dihitung sebagai
 
 $$\mathbf{H} = \phi(\mathbf{X} \mathbf{W}_{\textrm{xh}} + \mathbf{b}_\textrm{h}).$$
 :eqlabel:`rnn_h_without_state`
 
-In :eqref:`rnn_h_without_state`, we have the weight parameter $\mathbf{W}_{\textrm{xh}} \in \mathbb{R}^{d \times h}$, the bias parameter $\mathbf{b}_\textrm{h} \in \mathbb{R}^{1 \times h}$, and the number of hidden units $h$, for the hidden layer.
-So armed, we apply broadcasting (see :numref:`subsec_broadcasting`) during the summation.
-Next, the hidden layer output $\mathbf{H}$ is used as input of the output layer, which is given by
+Dalam :eqref:`rnn_h_without_state`, kita memiliki parameter bobot $\mathbf{W}_{\textrm{xh}} \in \mathbb{R}^{d \times h}$, parameter bias $\mathbf{b}_\textrm{h} \in \mathbb{R}^{1 \times h}$, dan jumlah unit tersembunyi $h$ untuk lapisan tersembunyi.
+Setelah itu, kita menerapkan *broadcasting* (lihat :numref:`subsec_broadcasting`) selama penjumlahan.
+Selanjutnya, keluaran lapisan tersembunyi $\mathbf{H}$ digunakan sebagai input lapisan keluaran, yang diberikan oleh
 
 $$\mathbf{O} = \mathbf{H} \mathbf{W}_{\textrm{hq}} + \mathbf{b}_\textrm{q},$$
 
-where $\mathbf{O} \in \mathbb{R}^{n \times q}$ is the output variable, $\mathbf{W}_{\textrm{hq}} \in \mathbb{R}^{h \times q}$ is the weight parameter, and $\mathbf{b}_\textrm{q} \in \mathbb{R}^{1 \times q}$ is the bias parameter of the output layer.  If it is a classification problem, we can use $\mathrm{softmax}(\mathbf{O})$ to compute the probability distribution of the output categories.
+di mana $\mathbf{O} \in \mathbb{R}^{n \times q}$ adalah variabel output, $\mathbf{W}_{\textrm{hq}} \in \mathbb{R}^{h \times q}$ adalah parameter bobot, dan $\mathbf{b}_\textrm{q} \in \mathbb{R}^{1 \times q}$ adalah parameter bias dari lapisan keluaran. Jika ini adalah masalah klasifikasi, kita dapat menggunakan $\mathrm{softmax}(\mathbf{O})$ untuk menghitung distribusi probabilitas dari kategori output.
 
-This is entirely analogous to the regression problem we solved previously in :numref:`sec_sequence`, hence we omit details.
-Suffice it to say that we can pick feature-label pairs at random and learn the parameters of our network via automatic differentiation and stochastic gradient descent.
+Ini sepenuhnya analog dengan masalah regresi yang kita selesaikan sebelumnya di :numref:`sec_sequence`, jadi kita menghilangkan detailnya.
+Cukup dikatakan bahwa kita dapat memilih pasangan fitur-label secara acak dan mempelajari parameter jaringan kita melalui diferensiasi otomatis dan *stochastic gradient descent*.
 
-## Recurrent Neural Networks with Hidden States
+
+## Recurrent Neural Networks dengan Hidden States
 :label:`subsec_rnn_w_hidden_states`
 
-Matters are entirely different when we have hidden states. Let's look at the structure in some more detail.
+Segalanya menjadi sangat berbeda ketika kita memiliki *hidden state*. Mari kita lihat strukturnya secara lebih rinci.
 
-Assume that we have
-a minibatch of inputs
+Misalkan kita memiliki *minibatch* dari input 
 $\mathbf{X}_t \in \mathbb{R}^{n \times d}$
-at time step $t$.
-In other words,
-for a minibatch of $n$ sequence examples,
-each row of $\mathbf{X}_t$ corresponds to one example at time step $t$ from the sequence.
-Next,
-denote by $\mathbf{H}_t  \in \mathbb{R}^{n \times h}$ the hidden layer output of time step $t$.
-Unlike with MLP, here we save the hidden layer output $\mathbf{H}_{t-1}$ from the previous time step and introduce a new weight parameter $\mathbf{W}_{\textrm{hh}} \in \mathbb{R}^{h \times h}$ to describe how to use the hidden layer output of the previous time step in the current time step. Specifically, the calculation of the hidden layer output of the current time step is determined by the input of the current time step together with the hidden layer output of the previous time step:
+pada langkah waktu $t$.
+Dengan kata lain,
+untuk *minibatch* dari $n$ contoh urutan,
+setiap baris dari $\mathbf{X}_t$ sesuai dengan satu contoh pada langkah waktu $t$ dari urutan tersebut.
+Selanjutnya,
+misalkan $\mathbf{H}_t  \in \mathbb{R}^{n \times h}$ adalah output lapisan tersembunyi pada langkah waktu $t$.
+Berbeda dengan MLP, di sini kita menyimpan output lapisan tersembunyi $\mathbf{H}_{t-1}$ dari langkah waktu sebelumnya dan memperkenalkan parameter bobot baru $\mathbf{W}_{\textrm{hh}} \in \mathbb{R}^{h \times h}$ untuk menggambarkan cara menggunakan output lapisan tersembunyi dari langkah waktu sebelumnya pada langkah waktu saat ini. Secara khusus, perhitungan output lapisan tersembunyi pada langkah waktu saat ini ditentukan oleh input pada langkah waktu saat ini bersamaan dengan output lapisan tersembunyi dari langkah waktu sebelumnya:
 
 $$\mathbf{H}_t = \phi(\mathbf{X}_t \mathbf{W}_{\textrm{xh}} + \mathbf{H}_{t-1} \mathbf{W}_{\textrm{hh}}  + \mathbf{b}_\textrm{h}).$$
 :eqlabel:`rnn_h_with_state`
 
-Compared with :eqref:`rnn_h_without_state`, :eqref:`rnn_h_with_state` adds one more term $\mathbf{H}_{t-1} \mathbf{W}_{\textrm{hh}}$ and thus
-instantiates :eqref:`eq_ht_xt`.
-From the relationship between hidden layer outputs $\mathbf{H}_t$ and $\mathbf{H}_{t-1}$ of adjacent time steps,
-we know that these variables captured and retained the sequence's historical information up to their current time step, just like the state or memory of the neural network's current time step. Therefore, such a hidden layer output is called a *hidden state*.
-Since the hidden state uses the same definition of the previous time step in the current time step, the computation of :eqref:`rnn_h_with_state` is *recurrent*. Hence, as we said, neural networks with hidden states
-based on recurrent computation are named
-*recurrent neural networks*.
-Layers that perform
-the computation of :eqref:`rnn_h_with_state`
-in RNNs
-are called *recurrent layers*.
+Dibandingkan dengan :eqref:`rnn_h_without_state`, :eqref:`rnn_h_with_state` menambahkan satu suku lagi $\mathbf{H}_{t-1} \mathbf{W}_{\textrm{hh}}$ dan dengan demikian mewujudkan :eqref:`eq_ht_xt`.
+Dari hubungan antara output lapisan tersembunyi $\mathbf{H}_t$ dan $\mathbf{H}_{t-1}$ pada langkah waktu yang berdekatan,
+kita tahu bahwa variabel-variabel ini menangkap dan menyimpan informasi historis urutan hingga langkah waktu saat ini, seperti halnya status atau memori langkah waktu saat ini dari jaringan saraf. Oleh karena itu, output lapisan tersembunyi semacam ini disebut sebagai *hidden state*.
+Karena *hidden state* menggunakan definisi yang sama dari langkah waktu sebelumnya pada langkah waktu saat ini, perhitungan :eqref:`rnn_h_with_state` bersifat *recurrent*. Oleh karena itu, seperti yang dikatakan sebelumnya, jaringan saraf dengan *hidden states* yang berdasarkan perhitungan berulang dinamakan *recurrent neural networks*.
+Lapisan yang melakukan perhitungan :eqref:`rnn_h_with_state` dalam RNN disebut *recurrent layers*.
 
-
-There are many different ways for constructing RNNs.
-Those with a hidden state defined by :eqref:`rnn_h_with_state` are very common.
-For time step $t$,
-the output of the output layer is similar to the computation in the MLP:
+Ada banyak cara berbeda untuk membangun RNN.
+RNN dengan *hidden state* yang didefinisikan oleh :eqref:`rnn_h_with_state` adalah yang paling umum.
+Pada langkah waktu $t$,
+output dari lapisan output mirip dengan perhitungan dalam MLP:
 
 $$\mathbf{O}_t = \mathbf{H}_t \mathbf{W}_{\textrm{hq}} + \mathbf{b}_\textrm{q}.$$
 
-Parameters of the RNN
-include the weights $\mathbf{W}_{\textrm{xh}} \in \mathbb{R}^{d \times h}, \mathbf{W}_{\textrm{hh}} \in \mathbb{R}^{h \times h}$,
-and the bias $\mathbf{b}_\textrm{h} \in \mathbb{R}^{1 \times h}$
-of the hidden layer,
-together with the weights $\mathbf{W}_{\textrm{hq}} \in \mathbb{R}^{h \times q}$
-and the bias $\mathbf{b}_\textrm{q} \in \mathbb{R}^{1 \times q}$
-of the output layer.
-It is worth mentioning that
-even at different time steps,
-RNNs always use these model parameters.
-Therefore, the parametrization cost of an RNN
-does not grow as the number of time steps increases.
+Parameter RNN meliputi bobot $\mathbf{W}_{\textrm{xh}} \in \mathbb{R}^{d \times h}, \mathbf{W}_{\textrm{hh}} \in \mathbb{R}^{h \times h}$,
+dan bias $\mathbf{b}_\textrm{h} \in \mathbb{R}^{1 \times h}$
+dari lapisan tersembunyi,
+bersama dengan bobot $\mathbf{W}_{\textrm{hq}} \in \mathbb{R}^{h \times q}$
+dan bias $\mathbf{b}_\textrm{q} \in \mathbb{R}^{1 \times q}$
+dari lapisan output.
+Perlu dicatat bahwa
+bahkan pada langkah waktu yang berbeda,
+RNN selalu menggunakan parameter model ini.
+Oleh karena itu, biaya parametrisasi dari sebuah RNN
+tidak bertambah seiring dengan meningkatnya jumlah langkah waktu.
 
-:numref:`fig_rnn` illustrates the computational logic of an RNN at three adjacent time steps.
-At any time step $t$,
-the computation of the hidden state can be treated as:
-(i) concatenating the input $\mathbf{X}_t$ at the current time step $t$ and the hidden state $\mathbf{H}_{t-1}$ at the previous time step $t-1$;
-(ii) feeding the concatenation result into a fully connected layer with the activation function $\phi$.
-The output of such a fully connected layer is the hidden state $\mathbf{H}_t$ of the current time step $t$.
-In this case,
-the model parameters are the concatenation of $\mathbf{W}_{\textrm{xh}}$ and $\mathbf{W}_{\textrm{hh}}$, and a bias of $\mathbf{b}_\textrm{h}$, all from :eqref:`rnn_h_with_state`.
-The hidden state of the current time step $t$, $\mathbf{H}_t$, will participate in computing the hidden state $\mathbf{H}_{t+1}$ of the next time step $t+1$.
-What is more, $\mathbf{H}_t$ will also be
-fed into the fully connected output layer
-to compute the output
-$\mathbf{O}_t$ of the current time step $t$.
+:numref:`fig_rnn` menggambarkan logika komputasi dari sebuah RNN pada tiga langkah waktu yang berdekatan.
+Pada langkah waktu $t$ mana pun,
+perhitungan *hidden state* dapat dianggap sebagai:
+(i) menggabungkan input $\mathbf{X}_t$ pada langkah waktu saat ini $t$ dan *hidden state* $\mathbf{H}_{t-1}$ pada langkah waktu sebelumnya $t-1$;
+(ii) memasukkan hasil penggabungan tersebut ke dalam lapisan *fully connected* dengan fungsi aktivasi $\phi$.
+Output dari lapisan *fully connected* ini adalah *hidden state* $\mathbf{H}_t$ pada langkah waktu saat ini $t$.
+Dalam hal ini,
+parameter model adalah penggabungan dari $\mathbf{W}_{\textrm{xh}}$ dan $\mathbf{W}_{\textrm{hh}}$, serta bias $\mathbf{b}_\textrm{h}$, semuanya dari :eqref:`rnn_h_with_state`.
+*Hidden state* dari langkah waktu saat ini $t$, $\mathbf{H}_t$, akan berpartisipasi dalam menghitung *hidden state* $\mathbf{H}_{t+1}$ pada langkah waktu berikutnya $t+1$.
+Selain itu, $\mathbf{H}_t$ juga akan
+dimasukkan ke dalam lapisan *fully connected* output
+untuk menghitung output
+$\mathbf{O}_t$ dari langkah waktu saat ini $t$.
 
-![An RNN with a hidden state.](../img/rnn.svg)
+![Sebuah RNN dengan *hidden state*.](../img/rnn.svg)
 :label:`fig_rnn`
 
-We just mentioned that the calculation of $\mathbf{X}_t \mathbf{W}_{\textrm{xh}} + \mathbf{H}_{t-1} \mathbf{W}_{\textrm{hh}}$ for the hidden state is equivalent to
-matrix multiplication of the
-concatenation of $\mathbf{X}_t$ and $\mathbf{H}_{t-1}$
-and the
-concatenation of $\mathbf{W}_{\textrm{xh}}$ and $\mathbf{W}_{\textrm{hh}}$.
-Though this can be proven mathematically,
-in the following we just use a simple code snippet as a demonstration.
-To begin with,
-we define matrices `X`, `W_xh`, `H`, and `W_hh`, whose shapes are (3, 1), (1, 4), (3, 4), and (4, 4), respectively.
-Multiplying `X` by `W_xh`, and `H` by `W_hh`, and then adding these two products,
-we obtain a matrix of shape (3, 4).
+Kita baru saja menyebutkan bahwa perhitungan $\mathbf{X}_t \mathbf{W}_{\textrm{xh}} + \mathbf{H}_{t-1} \mathbf{W}_{\textrm{hh}}$ untuk *hidden state* setara dengan
+perkalian matriks dari penggabungan $\mathbf{X}_t$ dan $\mathbf{H}_{t-1}$
+dengan penggabungan $\mathbf{W}_{\textrm{xh}}$ dan $\mathbf{W}_{\textrm{hh}}$.
+Meskipun ini dapat dibuktikan secara matematis,
+berikut ini kita hanya akan menggunakan cuplikan kode sederhana sebagai demonstrasi.
+Untuk memulai,
+kita mendefinisikan matriks `X`, `W_xh`, `H`, dan `W_hh`, yang masing-masing berbentuk (3, 1), (1, 4), (3, 4), dan (4, 4).
+Dengan mengalikan `X` dengan `W_xh`, dan `H` dengan `W_hh`, lalu menjumlahkan kedua hasil perkalian ini,
+kita akan memperoleh matriks berbentuk (3, 4).
+
 
 ```{.python .input}
 %%tab mxnet, pytorch
@@ -184,78 +175,79 @@ H, W_hh = jax.random.normal(d2l.get_key(), (3, 4)), jax.random.normal(
 d2l.matmul(X, W_xh) + d2l.matmul(H, W_hh)
 ```
 
-Now we concatenate the matrices `X` and `H`
-along columns (axis 1),
-and the matrices
-`W_xh` and `W_hh` along rows (axis 0).
-These two concatenations
-result in
-matrices of shape (3, 5)
-and of shape (5, 4), respectively.
-Multiplying these two concatenated matrices,
-we obtain the same output matrix of shape (3, 4)
-as above.
+Sekarang kita menggabungkan matriks `X` dan `H`
+sepanjang kolom (sumbu 1),
+dan matriks
+`W_xh` dan `W_hh` sepanjang baris (sumbu 0).
+Kedua penggabungan ini
+menghasilkan
+matriks dengan bentuk (3, 5)
+dan (5, 4), masing-masing.
+Dengan mengalikan kedua matriks yang telah digabungkan ini,
+kita akan memperoleh matriks output dengan bentuk (3, 4)
+sama seperti sebelumnya.
+
 
 ```{.python .input}
 %%tab all
 d2l.matmul(d2l.concat((X, H), 1), d2l.concat((W_xh, W_hh), 0))
 ```
 
-## RNN-Based Character-Level Language Models
+## Model Bahasa Tingkat Karakter Berbasis RNN
 
-Recall that for language modeling in :numref:`sec_language-model`,
-we aim to predict the next token based on
-the current and past tokens;
-thus we shift the original sequence by one token
-as the targets (labels).
-:citet:`Bengio.Ducharme.Vincent.ea.2003` first proposed
-to use a neural network for language modeling.
-In the following we illustrate how RNNs can be used to build a language model.
-Let the minibatch size be one, and the sequence of the text be "machine".
-To simplify training in subsequent sections,
-we tokenize text into characters rather than words
-and consider a *character-level language model*.
-:numref:`fig_rnn_train` demonstrates how to predict the next character based on the current and previous characters via an RNN for character-level language modeling.
+Ingat kembali bahwa untuk pemodelan bahasa di :numref:`sec_language-model`,
+tujuan kita adalah memprediksi token berikutnya berdasarkan
+token saat ini dan token sebelumnya;
+oleh karena itu kita menggeser urutan asli sebesar satu token
+sebagai target (label).
+:citet:`Bengio.Ducharme.Vincent.ea.2003` pertama kali mengusulkan
+untuk menggunakan jaringan saraf dalam pemodelan bahasa.
+Berikut ini kita ilustrasikan bagaimana RNN dapat digunakan untuk membangun model bahasa.
+Misalkan ukuran *minibatch* adalah satu, dan urutan teksnya adalah "machine".
+Untuk menyederhanakan pelatihan di bagian selanjutnya,
+kita memisahkan teks menjadi karakter alih-alih kata
+dan mempertimbangkan *model bahasa tingkat karakter*.
+:numref:`fig_rnn_train` menunjukkan bagaimana memprediksi karakter berikutnya berdasarkan karakter saat ini dan karakter sebelumnya melalui RNN untuk pemodelan bahasa tingkat karakter.
 
-![A character-level language model based on the RNN. The input and target sequences are "machin" and "achine", respectively.](../img/rnn-train.svg)
+![Model bahasa tingkat karakter berbasis RNN. Urutan input dan target masing-masing adalah "machin" dan "achine".](../img/rnn-train.svg)
 :label:`fig_rnn_train`
 
-During the training process,
-we run a softmax operation on the output from the output layer for each time step, and then use the cross-entropy loss to compute the error between the model output and the target.
-Because of the recurrent computation of the hidden state in the hidden layer, the output, $\mathbf{O}_3$,  of time step 3 in :numref:`fig_rnn_train` is determined by the text sequence "m", "a", and "c". Since the next character of the sequence in the training data is "h", the loss of time step 3 will depend on the probability distribution of the next character generated based on the feature sequence "m", "a", "c" and the target "h" of this time step.
+Selama proses pelatihan,
+kita menjalankan operasi *softmax* pada output dari lapisan output untuk setiap langkah waktu, lalu menggunakan *cross-entropy loss* untuk menghitung kesalahan antara output model dan target.
+Karena perhitungan berulang dari *hidden state* di lapisan tersembunyi, output $\mathbf{O}_3$ pada langkah waktu ke-3 di :numref:`fig_rnn_train` ditentukan oleh urutan teks "m", "a", dan "c". Karena karakter berikutnya dalam urutan pada data pelatihan adalah "h", maka *loss* pada langkah waktu ke-3 akan bergantung pada distribusi probabilitas dari karakter berikutnya yang dihasilkan berdasarkan urutan fitur "m", "a", "c" dan target "h" pada langkah waktu ini.
 
-In practice, each token is represented by a $d$-dimensional vector, and we use a batch size $n>1$. Therefore, the input $\mathbf X_t$ at time step $t$ will be an $n\times d$ matrix, which is identical to what we discussed in :numref:`subsec_rnn_w_hidden_states`.
+Dalam praktiknya, setiap token direpresentasikan oleh vektor berdimensi $d$, dan kita menggunakan ukuran batch $n>1$. Oleh karena itu, input $\mathbf X_t$ pada langkah waktu $t$ akan menjadi matriks $n\times d$, yang identik dengan yang kita bahas di :numref:`subsec_rnn_w_hidden_states`.
 
-In the following sections, we will implement RNNs
-for character-level language models.
-
-
-## Summary
-
-A neural network that uses recurrent computation for hidden states is called a recurrent neural network (RNN).
-The hidden state of an RNN can capture historical information of the sequence up to the current time step. With recurrent computation, the number of RNN model parameters does not grow as the number of time steps increases. As for applications, an RNN can be used to create character-level language models.
+Pada bagian berikut, kita akan mengimplementasikan RNN
+untuk model bahasa tingkat karakter.
 
 
-## Exercises
+## Ringkasan
 
-1. If we use an RNN to predict the next character in a text sequence, what is the required dimension for any output?
-1. Why can RNNs express the conditional probability of a token at some time step based on all the previous tokens in the text sequence?
-1. What happens to the gradient if you backpropagate through a long sequence?
-1. What are some of the problems associated with the language model described in this section?
+Jaringan saraf yang menggunakan perhitungan berulang untuk *hidden state* disebut *recurrent neural network* (RNN).
+*Hidden state* dari RNN dapat menangkap informasi historis urutan hingga langkah waktu saat ini. Dengan perhitungan berulang, jumlah parameter model RNN tidak bertambah seiring bertambahnya jumlah langkah waktu. Dalam aplikasi, RNN dapat digunakan untuk membuat model bahasa tingkat karakter.
+
+
+## Latihan
+
+1. Jika kita menggunakan RNN untuk memprediksi karakter berikutnya dalam urutan teks, berapakah dimensi yang diperlukan untuk setiap output?
+2. Mengapa RNN dapat mengekspresikan probabilitas bersyarat dari token pada langkah waktu tertentu berdasarkan semua token sebelumnya dalam urutan teks?
+3. Apa yang terjadi pada gradien jika Anda melakukan *backpropagation* melalui urutan yang panjang?
+4. Apa saja masalah yang terkait dengan model bahasa yang dijelaskan di bagian ini?
 
 
 :begin_tab:`mxnet`
-[Discussions](https://discuss.d2l.ai/t/337)
+[Diskusi](https://discuss.d2l.ai/t/337)
 :end_tab:
 
 :begin_tab:`pytorch`
-[Discussions](https://discuss.d2l.ai/t/1050)
+[Diskusi](https://discuss.d2l.ai/t/1050)
 :end_tab:
 
 :begin_tab:`tensorflow`
-[Discussions](https://discuss.d2l.ai/t/1051)
+[Diskusi](https://discuss.d2l.ai/t/1051)
 :end_tab:
 
 :begin_tab:`jax`
-[Discussions](https://discuss.d2l.ai/t/180013)
+[Diskusi](https://discuss.d2l.ai/t/180013)
 :end_tab:
