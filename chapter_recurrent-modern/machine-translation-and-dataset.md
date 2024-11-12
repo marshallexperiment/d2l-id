@@ -3,47 +3,45 @@
 tab.interact_select('mxnet', 'pytorch', 'tensorflow', 'jax')
 ```
 
-# Machine Translation and the Dataset
+# Penerjemahan Mesin dan Dataset
 :label:`sec_machine_translation`
 
-Among the major breakthroughs that prompted 
-widespread interest in modern RNNs
-was a major advance in the applied field of 
-statistical  *machine translation*.
-Here, the model is presented with a sentence in one language
-and must predict the corresponding sentence in another. 
-Note that here the sentences may be of different lengths,
-and that corresponding words in the two sentences 
-may not occur in the same order, 
-owing to differences 
-in the two language's grammatical structure. 
+Salah satu terobosan besar yang memicu minat yang luas terhadap RNN modern
+adalah kemajuan besar dalam bidang penerapan
+*penerjemahan mesin* statistik.
+Di sini, model diberikan sebuah kalimat dalam satu bahasa
+dan harus memprediksi kalimat yang sesuai dalam bahasa lain.
+Perlu dicatat bahwa di sini kalimat-kalimat tersebut mungkin memiliki panjang yang berbeda,
+dan kata-kata yang bersesuaian dalam kedua kalimat tersebut
+mungkin tidak muncul dalam urutan yang sama,
+karena perbedaan dalam struktur tata bahasa
+dari kedua bahasa tersebut.
 
+Banyak masalah yang memiliki sifat seperti pemetaan
+antara dua urutan yang "tidak selaras" seperti ini.
+Contohnya termasuk pemetaan 
+dari prompt dialog menjadi balasan
+atau dari pertanyaan menjadi jawaban.
+Secara luas, masalah-masalah seperti ini disebut
+*sequence-to-sequence* (seq2seq) 
+dan ini menjadi fokus kita
+baik untuk sisa dari bab ini
+dan sebagian besar dari :numref:`chap_attention-and-transformers`.
 
-Many problems have this flavor of mapping 
-between two such "unaligned" sequences.
-Examples include mapping 
-from dialog prompts to replies
-or from questions to answers.
-Broadly, such problems are called 
-*sequence-to-sequence* (seq2seq) problems 
-and they are our focus for 
-both the remainder of this chapter
-and much of :numref:`chap_attention-and-transformers`.
+Dalam bagian ini, kita akan memperkenalkan masalah penerjemahan mesin
+dan contoh dataset yang akan kita gunakan dalam contoh-contoh selanjutnya.
+Selama beberapa dekade, formulasi statistik untuk penerjemahan antar bahasa
+telah populer :cite:`Brown.Cocke.Della-Pietra.ea.1988,Brown.Cocke.Della-Pietra.ea.1990`,
+bahkan sebelum peneliti berhasil menggunakan pendekatan jaringan saraf
+(metode ini sering dikelompokkan dengan istilah *penerjemahan mesin berbasis jaringan saraf*).
 
-In this section, we introduce the machine translation problem
-and an example dataset that we will use in the subsequent examples.
-For decades, statistical formulations of translation between languages
-had been popular :cite:`Brown.Cocke.Della-Pietra.ea.1988,Brown.Cocke.Della-Pietra.ea.1990`,
-even before researchers got neural network approaches working
-(methods were often lumped together under the term *neural machine translation*).
+Pertama-tama kita akan memerlukan beberapa kode baru untuk memproses data kita.
+Berbeda dengan pemodelan bahasa yang kita lihat pada :numref:`sec_language-model`,
+di sini setiap contoh terdiri dari dua urutan teks terpisah,
+satu dalam bahasa sumber dan yang lainnya (terjemahan) dalam bahasa target.
+Cuplikan kode berikut akan menunjukkan bagaimana
+memuat data yang sudah diproses menjadi minibatch untuk pelatihan.
 
-
-First we will need some new code to process our data.
-Unlike the language modeling that we saw in :numref:`sec_language-model`,
-here each example consists of two separate text sequences,
-one in the source language and another (the translation) in the target language.
-The following code snippets will show how 
-to load the preprocessed data into minibatches for training.
 
 ```{.python .input  n=2}
 %%tab mxnet
@@ -74,16 +72,17 @@ from jax import numpy as jnp
 import os
 ```
 
-## [**Downloading and Preprocessing the Dataset**]
+## [**Mengunduh dan Memproses Dataset**]
 
-To begin, we download an English--French dataset
-that consists of [bilingual sentence pairs from the Tatoeba Project](http://www.manythings.org/anki/).
-Each line in the dataset is a tab-delimited pair 
-consisting of an English text sequence (the *source*) 
-and the translated French text sequence (the *target*).
-Note that each text sequence
-can be just one sentence,
-or a paragraph of multiple sentences.
+Untuk memulai, kita mengunduh dataset bahasa Inggris--Perancis
+yang terdiri dari [pasangan kalimat bilingual dari Proyek Tatoeba](http://www.manythings.org/anki/).
+Setiap baris dalam dataset ini adalah pasangan kalimat
+yang dipisahkan oleh tab, yang terdiri dari teks bahasa Inggris (sebagai *sumber*)
+dan teks terjemahan bahasa Perancis (sebagai *target*).
+Perlu dicatat bahwa setiap urutan teks
+dapat berupa satu kalimat saja,
+atau berupa paragraf dengan beberapa kalimat.
+
 
 ```{.python .input  n=5}
 %%tab all
@@ -104,20 +103,21 @@ raw_text = data._download()
 print(raw_text[:75])
 ```
 
-After downloading the dataset,
-we [**proceed with several preprocessing steps**]
-for the raw text data.
-For instance, we replace non-breaking space with space,
-convert uppercase letters to lowercase ones,
-and insert space between words and punctuation marks.
+Setelah mengunduh dataset,
+kita [**melanjutkan dengan beberapa langkah praproses**]
+untuk data teks mentah.
+Sebagai contoh, kita mengganti spasi tak terputus dengan spasi biasa,
+mengubah huruf besar menjadi huruf kecil,
+dan menambahkan spasi antara kata dan tanda baca.
+
 
 ```{.python .input  n=6}
 %%tab all
 @d2l.add_to_class(MTFraEng)  #@save
 def _preprocess(self, text):
-    # Replace non-breaking space with space
+    # Ganti spasi tak terputus dengan spasi biasa
     text = text.replace('\u202f', ' ').replace('\xa0', ' ')
-    # Insert space between words and punctuation marks
+    # Menambahkan spasi antara kata dan tanda baca
     no_space = lambda char, prev_char: char in ',.!?' and prev_char != ' '
     out = [' ' + char if i > 0 and no_space(char, text[i - 1]) else char
            for i, char in enumerate(text.lower())]
@@ -130,29 +130,12 @@ text = data._preprocess(raw_text)
 print(text[:80])
 ```
 
-## [**Tokenization**]
+## [**Tokenisasi**]
 
-Unlike the character-level tokenization
-in :numref:`sec_language-model`,
-for machine translation
-we prefer word-level tokenization here
-(today's state-of-the-art models use 
-more complex tokenization techniques).
-The following `_tokenize` method
-tokenizes the first `max_examples` text sequence pairs,
-where each token is either a word or a punctuation mark.
-We append the special “&lt;eos&gt;” token
-to the end of every sequence to indicate the
-end of the sequence.
-When a model is predicting
-by generating a sequence token after token,
-the generation of the “&lt;eos&gt;” token
-can suggest that the output sequence is complete.
-In the end, the method below returns
-two lists of token lists: `src` and `tgt`.
-Specifically, `src[i]` is a list of tokens from the
-$i^\textrm{th}$ text sequence in the source language (English here) 
-and `tgt[i]` is that in the target language (French here).
+Tidak seperti tokenisasi tingkat karakter yang dibahas di :numref:`sec_language-model`, untuk penerjemahan mesin kita lebih memilih tokenisasi tingkat kata di sini (model terbaru saat ini menggunakan teknik tokenisasi yang lebih kompleks). Metode `_tokenize` berikut ini melakukan tokenisasi pada pasangan urutan teks `max_examples` pertama, di mana setiap token adalah sebuah kata atau tanda baca. Kita menambahkan token khusus "&lt;eos&gt;" di akhir setiap urutan untuk menunjukkan akhir dari urutan tersebut.
+
+Ketika sebuah model memprediksi dengan menghasilkan urutan token satu per satu, generasi dari token "&lt;eos&gt;" dapat mengindikasikan bahwa urutan keluaran telah selesai. Pada akhirnya, metode di bawah ini mengembalikan dua daftar dari daftar token: `src` dan `tgt`. Secara spesifik, `src[i]` adalah daftar token dari urutan teks ke-$i$ dalam bahasa sumber (dalam hal ini bahasa Inggris) dan `tgt[i]` adalah daftar token dari urutan teks yang setara dalam bahasa target (dalam hal ini bahasa Perancis).
+
 
 ```{.python .input  n=7}
 %%tab all
@@ -175,15 +158,15 @@ src, tgt = data._tokenize(text)
 src[:6], tgt[:6]
 ```
 
-Let's [**plot the histogram of the number of tokens per text sequence.**]
-In this simple English--French dataset,
-most of the text sequences have fewer than 20 tokens.
+Mari kita [**plot histogram jumlah token per urutan teks.**]
+Pada dataset sederhana Inggris--Perancis ini, kebanyakan urutan teks memiliki kurang dari 20 token.
+
 
 ```{.python .input  n=8}
 %%tab all
 #@save
 def show_list_len_pair_hist(legend, xlabel, ylabel, xlist, ylist):
-    """Plot the histogram for list length pairs."""
+     """Plot the histogram for list length pairs."""
     d2l.set_figsize()
     _, _, patches = d2l.plt.hist(
         [[len(l) for l in xlist], [len(l) for l in ylist]])
@@ -200,58 +183,57 @@ show_list_len_pair_hist(['source', 'target'], '# tokens per sequence',
                         'count', src, tgt);
 ```
 
-## Loading Sequences of Fixed Length
+## Memuat Urutan dengan Panjang Tetap
 :label:`subsec_loading-seq-fixed-len`
 
-Recall that in language modeling
-[**each example sequence**],
-either a segment of one sentence
-or a span over multiple sentences,
-(**had a fixed length.**)
-This was specified by the `num_steps`
-(number of time steps or tokens) argument from :numref:`sec_language-model`.
-In machine translation, each example is
-a pair of source and target text sequences,
-where the two text sequences may have different lengths.
+Ingat bahwa dalam pemodelan bahasa
+[**setiap contoh urutan**], baik itu segmen dari satu kalimat
+atau rentang di beberapa kalimat,
+(**memiliki panjang tetap.**)
+Ini ditentukan oleh argumen `num_steps`
+(jumlah langkah waktu atau token) dari :numref:`sec_language-model`.
+Dalam terjemahan mesin, setiap contoh adalah
+sepasang urutan teks sumber dan target,
+di mana kedua urutan teks tersebut dapat memiliki panjang yang berbeda.
 
-For computational efficiency,
-we can still process a minibatch of text sequences
-at one time by *truncation* and *padding*.
-Suppose that every sequence in the same minibatch
-should have the same length `num_steps`.
-If a text sequence has fewer than `num_steps` tokens,
-we will keep appending the special "&lt;pad&gt;" token
-to its end until its length reaches `num_steps`.
-Otherwise, we will truncate the text sequence
-by only taking its first `num_steps` tokens
-and discarding the remaining.
-In this way, every text sequence
-will have the same length
-to be loaded in minibatches of the same shape.
-Furthermore, we also record length of the source sequence excluding padding tokens.
-This information will be needed by some models that we will cover later.
+Untuk efisiensi komputasi,
+kita masih dapat memproses sebuah minibatch urutan teks
+dalam satu waktu dengan cara *pemotongan* dan *pengisian*.
+Misalkan setiap urutan dalam minibatch yang sama
+harus memiliki panjang yang sama `num_steps`.
+Jika suatu urutan teks memiliki lebih sedikit dari `num_steps` token,
+kita akan terus menambahkan token khusus "&lt;pad&gt;" 
+hingga panjangnya mencapai `num_steps`.
+Sebaliknya, kita akan memotong urutan teks tersebut
+dengan hanya mengambil `num_steps` token pertama
+dan membuang sisanya.
+Dengan cara ini, setiap urutan teks
+akan memiliki panjang yang sama
+untuk dimuat dalam minibatch dengan bentuk yang sama.
+Selain itu, kita juga mencatat panjang urutan sumber tanpa menyertakan token padding.
+Informasi ini akan dibutuhkan oleh beberapa model yang akan kita bahas nanti.
 
+Karena dataset terjemahan mesin
+terdiri dari pasangan bahasa,
+kita dapat membangun dua kosakata
+untuk kedua bahasa sumber dan
+bahasa target secara terpisah.
+Dengan tokenisasi pada level kata,
+ukuran kosakata akan secara signifikan lebih besar
+daripada jika menggunakan tokenisasi pada level karakter.
+Untuk mengatasi hal ini,
+di sini kita memperlakukan token yang jarang muncul
+(muncul kurang dari dua kali)
+sebagai token yang tidak dikenal ("&lt;unk&gt;").
+Seperti yang akan kami jelaskan nanti (:numref:`fig_seq2seq`),
+saat pelatihan dengan urutan target,
+output decoder (token label)
+bisa sama dengan input decoder (token target),
+yang digeser satu token;
+dan token khusus awal urutan "&lt;bos&gt;" 
+akan digunakan sebagai token input pertama
+untuk memprediksi urutan target (:numref:`fig_seq2seq_predict`).
 
-Since the machine translation dataset
-consists of pairs of languages,
-we can build two vocabularies for
-both the source language and
-the target language separately.
-With word-level tokenization,
-the vocabulary size will be significantly larger
-than that using character-level tokenization.
-To alleviate this,
-here we treat infrequent tokens
-that appear less than twice
-as the same unknown ("&lt;unk&gt;") token.
-As we will explain later (:numref:`fig_seq2seq`),
-when training with target sequences,
-the decoder output (label tokens)
-can be the same decoder input (target tokens),
-shifted by one token;
-and the special beginning-of-sequence "&lt;bos&gt;" token
-will be used as the first input token
-for predicting the target sequence (:numref:`fig_seq2seq_predict`).
 
 ```{.python .input  n=9}
 %%tab all
@@ -287,10 +269,11 @@ def _build_arrays(self, raw_text, src_vocab=None, tgt_vocab=None):
             src_vocab, tgt_vocab)
 ```
 
-## [**Reading the Dataset**]
+## [**Membaca Dataset**]
 
-Finally, we define the `get_dataloader` method
-to return the data iterator.
+Terakhir, kita mendefinisikan metode `get_dataloader`
+untuk mengembalikan iterator data.
+
 
 ```{.python .input  n=10}
 %%tab all
@@ -300,7 +283,8 @@ def get_dataloader(self, train):
     return self.get_tensorloader(self.arrays, train, idx)
 ```
 
-Let's [**read the first minibatch from the English--French dataset.**]
+Mari kita [**baca minibatch pertama dari dataset Bahasa Inggris--Prancis.**]
+
 
 ```{.python .input  n=11}
 %%tab all
@@ -312,9 +296,9 @@ print('source len excluding pad:', d2l.astype(src_valid_len, d2l.int32))
 print('label:', d2l.astype(label, d2l.int32))
 ```
 
-We show a pair of source and target sequences
-processed by the above `_build_arrays` method
-(in the string format).
+Kami menampilkan sepasang urutan sumber dan urutan target
+yang diproses oleh metode `_build_arrays` di atas
+(dalam format string).
 
 ```{.python .input  n=12}
 %%tab all
@@ -334,28 +318,27 @@ print('source:', data.src_vocab.to_tokens(d2l.astype(src[0], d2l.int32)))
 print('target:', data.tgt_vocab.to_tokens(d2l.astype(tgt[0], d2l.int32)))
 ```
 
-## Summary
+## Ringkasan
 
-In natural language processing, *machine translation* refers to the task of automatically mapping from a sequence representing a string of text in a *source* language to a string representing a plausible translation in a *target* language. Using word-level tokenization, the vocabulary size will be significantly larger than that using character-level tokenization, but the sequence lengths will be much shorter. To mitigate the large vocabulary size, we can treat infrequent tokens as some "unknown" token. We can truncate and pad text sequences so that all of them will have the same length to be loaded in minibatches. Modern implementations often bucket sequences with similar lengths to avoid wasting excessive computation on padding. 
+Dalam pemrosesan bahasa alami, *machine translation* (penerjemahan mesin) mengacu pada tugas untuk secara otomatis memetakan dari urutan yang mewakili teks dalam bahasa *sumber* ke urutan yang mewakili terjemahan yang masuk akal dalam bahasa *target*. Menggunakan tokenisasi pada tingkat kata, ukuran kosakata akan jauh lebih besar dibandingkan dengan menggunakan tokenisasi pada tingkat karakter, namun panjang urutan akan jauh lebih pendek. Untuk mengurangi ukuran kosakata yang besar, kita dapat memperlakukan token yang jarang muncul sebagai "token tidak dikenal". Kita dapat memotong (truncate) dan menambahkan padding pada urutan teks agar semua urutan memiliki panjang yang sama sehingga dapat dimuat dalam bentuk minibatch. Implementasi modern sering kali mengelompokkan (bucket) urutan dengan panjang yang serupa untuk menghindari pemborosan komputasi yang berlebihan pada padding.
 
+## Latihan
 
-## Exercises
-
-1. Try different values of the `max_examples` argument in the `_tokenize` method. How does this affect the vocabulary sizes of the source language and the target language?
-1. Text in some languages such as Chinese and Japanese does not have word boundary indicators (e.g., space). Is word-level tokenization still a good idea for such cases? Why or why not?
+1. Coba nilai yang berbeda untuk argumen `max_examples` dalam metode `_tokenize`. Bagaimana hal ini memengaruhi ukuran kosakata bahasa sumber dan bahasa target?
+2. Teks dalam beberapa bahasa seperti Mandarin dan Jepang tidak memiliki penanda batas kata (misalnya, spasi). Apakah tokenisasi pada tingkat kata masih merupakan ide yang baik untuk kasus seperti itu? Mengapa atau mengapa tidak?
 
 :begin_tab:`mxnet`
-[Discussions](https://discuss.d2l.ai/t/344)
+[Diskusi](https://discuss.d2l.ai/t/344)
 :end_tab:
 
 :begin_tab:`pytorch`
-[Discussions](https://discuss.d2l.ai/t/1060)
+[Diskusi](https://discuss.d2l.ai/t/1060)
 :end_tab:
 
 :begin_tab:`tensorflow`
-[Discussions](https://discuss.d2l.ai/t/3863)
+[Diskusi](https://discuss.d2l.ai/t/3863)
 :end_tab:
 
 :begin_tab:`jax`
-[Discussions](https://discuss.d2l.ai/t/18020)
+[Diskusi](https://discuss.d2l.ai/t/18020)
 :end_tab:
