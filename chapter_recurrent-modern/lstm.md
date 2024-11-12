@@ -235,8 +235,8 @@ def forward(self, inputs, H_C=None):
 %%tab jax
 @d2l.add_to_class(LSTMScratch)
 def forward(self, inputs, H_C=None):
-    # Use lax.scan primitive instead of looping over the
-    # inputs, since scan saves time in jit compilation.
+    # Gunakan primitif `lax.scan` alih-alih melakukan looping melalui
+    # input, karena `scan` menghemat waktu dalam kompilasi JIT.
     def scan_fn(carry, X):
         H, C = carry
         I = d2l.sigmoid(d2l.matmul(X, self.W_xi) + (
@@ -258,7 +258,7 @@ def forward(self, inputs, H_C=None):
     else:
         carry = H_C
 
-    # scan takes the scan_fn, initial carry state, xs with leading axis to be scanned
+    # `scan` menerima `scan_fn`, status awal `carry`, dan `xs` dengan sumbu terdepan yang akan dipindai
     carry, outputs = jax.lax.scan(scan_fn, carry, inputs)
     return outputs, carry
 ```
