@@ -1,44 +1,45 @@
 # Adam
 :label:`sec_adam`
 
-In the discussions leading up to this section we encountered a number of techniques for efficient optimization. Let's recap them in detail here:
+Dalam pembahasan sebelumnya, kita telah menemukan beberapa teknik untuk optimisasi yang efisien. Mari kita ulas secara rinci di sini:
 
-* We saw that :numref:`sec_sgd` is more effective than Gradient Descent when solving optimization problems, e.g., due to its inherent resilience to redundant data. 
-* We saw that :numref:`sec_minibatch_sgd` affords significant additional efficiency arising from vectorization, using larger sets of observations in one minibatch. This is the key to efficient multi-machine, multi-GPU and overall parallel processing. 
-* :numref:`sec_momentum` added a mechanism for aggregating a history of past gradients to accelerate convergence.
-* :numref:`sec_adagrad` used per-coordinate scaling to allow for a computationally efficient preconditioner. 
-* :numref:`sec_rmsprop` decoupled per-coordinate scaling from a learning rate adjustment. 
+* Kita melihat bahwa :numref:`sec_sgd` lebih efektif daripada Gradient Descent dalam menyelesaikan masalah optimisasi, misalnya, karena ketahanannya terhadap data yang redundan.
+* Kita melihat bahwa :numref:`sec_minibatch_sgd` memberikan efisiensi tambahan yang signifikan melalui vektorisasi, dengan menggunakan set pengamatan yang lebih besar dalam satu minibatch. Ini adalah kunci untuk pemrosesan paralel yang efisien, baik pada mesin multi, multi-GPU, dan skala keseluruhan.
+* :numref:`sec_momentum` menambahkan mekanisme untuk menggabungkan sejarah gradien masa lalu guna mempercepat konvergensi.
+* :numref:`sec_adagrad` menggunakan penskalaan per-koordinat untuk memungkinkan preconditioner yang efisien secara komputasional.
+* :numref:`sec_rmsprop` memisahkan penskalaan per-koordinat dari penyesuaian learning rate.
 
-Adam :cite:`Kingma.Ba.2014` combines all these techniques into one efficient learning algorithm. As expected, this is an algorithm that has become rather popular as one of the more robust and effective optimization algorithms to use in deep learning. It is not without issues, though. In particular, :cite:`Reddi.Kale.Kumar.2019` show that there are situations where Adam can diverge due to poor variance control. In a follow-up work :citet:`Zaheer.Reddi.Sachan.ea.2018` proposed a hotfix to Adam, called Yogi which addresses these issues. More on this later. For now let's review the Adam algorithm. 
+Adam :cite:`Kingma.Ba.2014` menggabungkan semua teknik ini menjadi satu algoritma pembelajaran yang efisien. Seperti yang diharapkan, ini adalah algoritma yang cukup populer sebagai salah satu algoritma optimisasi yang lebih andal dan efektif untuk digunakan dalam deep learning. Namun, algoritma ini tidak tanpa masalah. Secara khusus, :cite:`Reddi.Kale.Kumar.2019` menunjukkan bahwa ada situasi di mana Adam dapat divergen karena pengendalian varians yang buruk. Dalam penelitian lanjutan, :citet:`Zaheer.Reddi.Sachan.ea.2018` mengusulkan perbaikan untuk Adam yang disebut Yogi, yang menangani masalah ini. Akan kita bahas lebih lanjut nanti. Untuk saat ini, mari kita tinjau algoritma Adam.
 
-## The Algorithm
+## Algoritma
 
-One of the key components of Adam is that it uses exponential weighted moving averages (also known as leaky averaging) to obtain an estimate of both the momentum and also the second moment of the gradient. That is, it uses the state variables
+Salah satu komponen utama dari Adam adalah penggunaan eksponensial weighted moving averages (juga dikenal sebagai leaky averaging) untuk mendapatkan estimasi baik dari momentum maupun momen kedua dari gradien. Artinya, algoritma ini menggunakan variabel status
 
 $$\begin{aligned}
     \mathbf{v}_t & \leftarrow \beta_1 \mathbf{v}_{t-1} + (1 - \beta_1) \mathbf{g}_t, \\
     \mathbf{s}_t & \leftarrow \beta_2 \mathbf{s}_{t-1} + (1 - \beta_2) \mathbf{g}_t^2.
 \end{aligned}$$
 
-Here $\beta_1$ and $\beta_2$ are nonnegative weighting parameters. Common choices for them are $\beta_1 = 0.9$ and $\beta_2 = 0.999$. That is, the variance estimate moves *much more slowly* than the momentum term. Note that if we initialize $\mathbf{v}_0 = \mathbf{s}_0 = 0$ we have a significant amount of bias initially towards smaller values. This can be addressed by using the fact that $\sum_{i=0}^{t-1} \beta^i = \frac{1 - \beta^t}{1 - \beta}$ to re-normalize terms. Correspondingly the normalized state variables are given by 
+Di sini, $\beta_1$ dan $\beta_2$ adalah parameter pembobotan yang tidak negatif. Pilihan umum untuk parameter ini adalah $\beta_1 = 0.9$ dan $\beta_2 = 0.999$. Artinya, estimasi varians bergerak *jauh lebih lambat* daripada istilah momentum. Perlu dicatat bahwa jika kita menginisialisasi $\mathbf{v}_0 = \mathbf{s}_0 = 0$, kita memiliki kecenderungan bias awal menuju nilai yang lebih kecil. Hal ini dapat diatasi dengan menggunakan fakta bahwa $\sum_{i=0}^{t-1} \beta^i = \frac{1 - \beta^t}{1 - \beta}$ untuk menormalkan ulang istilah-istilah tersebut. Dengan demikian, variabel status yang dinormalisasi diberikan oleh
 
-$$\hat{\mathbf{v}}_t = \frac{\mathbf{v}_t}{1 - \beta_1^t} \textrm{ and } \hat{\mathbf{s}}_t = \frac{\mathbf{s}_t}{1 - \beta_2^t}.$$
+$$\hat{\mathbf{v}}_t = \frac{\mathbf{v}_t}{1 - \beta_1^t} \textrm{ dan } \hat{\mathbf{s}}_t = \frac{\mathbf{s}_t}{1 - \beta_2^t}.$$
 
-Armed with the proper estimates we can now write out the update equations. First, we rescale the gradient in a manner very much akin to that of RMSProp to obtain
+Dengan estimasi yang tepat, sekarang kita dapat menuliskan persamaan pembaruan. Pertama, kita melakukan penskalaan ulang gradien mirip dengan RMSProp untuk mendapatkan
 
 $$\mathbf{g}_t' = \frac{\eta \hat{\mathbf{v}}_t}{\sqrt{\hat{\mathbf{s}}_t} + \epsilon}.$$
 
-Unlike RMSProp our update uses the momentum $\hat{\mathbf{v}}_t$ rather than the gradient itself. Moreover, there is a slight cosmetic difference as the rescaling happens using $\frac{1}{\sqrt{\hat{\mathbf{s}}_t} + \epsilon}$ instead of $\frac{1}{\sqrt{\hat{\mathbf{s}}_t + \epsilon}}$. The former works arguably slightly better in practice, hence the deviation from RMSProp. Typically we pick $\epsilon = 10^{-6}$ for a good trade-off between numerical stability and fidelity. 
+Berbeda dengan RMSProp, pembaruan kita menggunakan momentum $\hat{\mathbf{v}}_t$ alih-alih gradien itu sendiri. Selain itu, terdapat perbedaan kecil dalam kosmetika, di mana penskalaan terjadi menggunakan $\frac{1}{\sqrt{\hat{\mathbf{s}}_t} + \epsilon}$ alih-alih $\frac{1}{\sqrt{\hat{\mathbf{s}}_t + \epsilon}}$. Yang pertama umumnya sedikit lebih baik dalam praktik, sehingga berbeda dari RMSProp. Biasanya kita memilih $\epsilon = 10^{-6}$ untuk keseimbangan yang baik antara stabilitas numerik dan fidelitas.
 
-Now we have all the pieces in place to compute updates. This is slightly anticlimactic and we have a simple update of the form
+Sekarang kita memiliki semua bagian yang diperlukan untuk menghitung pembaruan. Ini sedikit antiklimaks dan kita memiliki pembaruan sederhana dalam bentuk
 
 $$\mathbf{x}_t \leftarrow \mathbf{x}_{t-1} - \mathbf{g}_t'.$$
 
-Reviewing the design of Adam its inspiration is clear. Momentum and scale are clearly visible in the state variables. Their rather peculiar definition forces us to debias terms (this could be fixed by a slightly different initialization and update condition). Second, the combination of both terms is pretty straightforward, given RMSProp. Last, the explicit learning rate $\eta$ allows us to control the step length to address issues of convergence. 
+Meninjau desain dari Adam, inspirasinya menjadi jelas. Momentum dan skala terlihat jelas dalam variabel status. Definisi mereka yang cukup unik memaksa kita untuk menghilangkan bias (ini bisa diatasi dengan sedikit mengubah inisialisasi dan kondisi pembaruan). Kedua, kombinasi dari kedua istilah cukup lugas, mengingat RMSProp. Terakhir, learning rate $\eta$ eksplisit memungkinkan kita untuk mengontrol panjang langkah guna mengatasi masalah konvergensi.
 
-## Implementation 
+## Implementasi
 
-Implementing Adam from scratch is not very daunting. For convenience we store the time step counter $t$ in the `hyperparams` dictionary. Beyond that all is straightforward.
+Mengimplementasikan Adam dari awal tidak terlalu sulit. Untuk kenyamanan, kita menyimpan penghitung langkah waktu $t$ dalam dictionary `hyperparams`. Selain itu, semuanya cukup sederhana.
+
 
 ```{.python .input}
 #@tab mxnet
@@ -112,7 +113,8 @@ def adam(params, grads, states, hyperparams):
                     / tf.math.sqrt(s_bias_corr) + eps)
 ```
 
-We are ready to use Adam to train the model. We use a learning rate of $\eta = 0.01$.
+Kita siap menggunakan Adam untuk melatih model. Kita akan menggunakan learning rate $\eta = 0.01$.
+
 
 ```{.python .input}
 #@tab all
@@ -121,7 +123,7 @@ d2l.train_ch11(adam, init_adam_states(feature_dim),
                {'lr': 0.01, 't': 1}, data_iter, feature_dim);
 ```
 
-A more concise implementation is straightforward since `adam` is one of the algorithms provided as part of the Gluon `trainer` optimization library. Hence we only need to pass configuration parameters for an implementation in Gluon.
+Implementasi yang lebih ringkas cukup mudah dilakukan karena `adam` adalah salah satu algoritma yang disediakan sebagai bagian dari pustaka optimasi `trainer` di Gluon. Oleh karena itu, kita hanya perlu memberikan parameter konfigurasi untuk implementasi di Gluon.
 
 ```{.python .input}
 #@tab mxnet
@@ -142,15 +144,16 @@ d2l.train_concise_ch11(trainer, {'learning_rate': 0.01}, data_iter)
 
 ## Yogi
 
-One of the problems of Adam is that it can fail to converge even in convex settings when the second moment estimate in $\mathbf{s}_t$ blows up. As a fix :citet:`Zaheer.Reddi.Sachan.ea.2018` proposed a refined update (and initialization) for $\mathbf{s}_t$. To understand what's going on, let's rewrite the Adam update as follows:
+Salah satu masalah dengan Adam adalah bahwa algoritma ini dapat gagal untuk konvergen bahkan dalam kondisi konveks ketika estimasi momen kedua pada $\mathbf{s}_t$ meningkat drastis. Sebagai solusinya, :citet:`Zaheer.Reddi.Sachan.ea.2018` mengusulkan pembaruan (dan inisialisasi) yang lebih halus untuk $\mathbf{s}_t$. Untuk memahami lebih lanjut, mari kita tuliskan ulang pembaruan Adam sebagai berikut:
 
 $$\mathbf{s}_t \leftarrow \mathbf{s}_{t-1} + (1 - \beta_2) \left(\mathbf{g}_t^2 - \mathbf{s}_{t-1}\right).$$
 
-Whenever $\mathbf{g}_t^2$ has high variance or updates are sparse, $\mathbf{s}_t$ might forget past values too quickly. A possible fix for this is to replace $\mathbf{g}_t^2 - \mathbf{s}_{t-1}$ by $\mathbf{g}_t^2 \odot \mathop{\textrm{sgn}}(\mathbf{g}_t^2 - \mathbf{s}_{t-1})$. Now the magnitude of the update no longer depends on the amount of deviation. This yields the Yogi updates
+Setiap kali $\mathbf{g}_t^2$ memiliki varians tinggi atau ketika pembaruan jarang terjadi, $\mathbf{s}_t$ mungkin akan melupakan nilai-nilai masa lalu terlalu cepat. Salah satu solusi potensial untuk masalah ini adalah menggantikan $\mathbf{g}_t^2 - \mathbf{s}_{t-1}$ dengan $\mathbf{g}_t^2 \odot \mathop{\textrm{sgn}}(\mathbf{g}_t^2 - \mathbf{s}_{t-1})$. Dengan demikian, besarnya pembaruan tidak lagi bergantung pada besar kecilnya deviasi. Hal ini menghasilkan pembaruan Yogi:
 
 $$\mathbf{s}_t \leftarrow \mathbf{s}_{t-1} + (1 - \beta_2) \mathbf{g}_t^2 \odot \mathop{\textrm{sgn}}(\mathbf{g}_t^2 - \mathbf{s}_{t-1}).$$
 
-The authors furthermore advise to initialize the momentum on a larger initial batch rather than just initial pointwise estimate. We omit the details since they are not material to the discussion and since even without this convergence remains pretty good.
+Para penulis juga menyarankan untuk menginisialisasi momentum pada batch awal yang lebih besar daripada hanya estimasi titik awal. Kami mengabaikan detail lebih lanjut karena tidak terlalu material dalam pembahasan ini dan karena, bahkan tanpa inisialisasi ini, konvergensi tetap cukup baik.
+
 
 ```{.python .input}
 #@tab mxnet
@@ -210,29 +213,30 @@ d2l.train_ch11(yogi, init_adam_states(feature_dim),
                {'lr': 0.01, 't': 1}, data_iter, feature_dim);
 ```
 
-## Summary
 
-* Adam combines features of many optimization algorithms into a fairly robust update rule. 
-* Created on the basis of RMSProp, Adam also uses EWMA on the minibatch stochastic gradient.
-* Adam uses bias correction to adjust for a slow startup when estimating momentum and a second moment. 
-* For gradients with significant variance we may encounter issues with convergence. They can be amended by using larger minibatches or by switching to an improved estimate for $\mathbf{s}_t$. Yogi offers such an alternative. 
+## Ringkasan
 
-## Exercises
+* Adam menggabungkan fitur dari banyak algoritma optimisasi menjadi sebuah aturan pembaruan yang cukup andal.
+* Didasarkan pada RMSProp, Adam juga menggunakan EWMA pada gradien stokastik minibatch.
+* Adam menggunakan koreksi bias untuk mengatasi startup yang lambat ketika mengestimasi momentum dan momen kedua.
+* Untuk gradien dengan varians signifikan, kita mungkin menemui masalah konvergensi. Hal ini dapat diatasi dengan menggunakan minibatch yang lebih besar atau beralih ke estimasi yang lebih baik untuk $\mathbf{s}_t$. Yogi menawarkan alternatif tersebut.
 
-1. Adjust the learning rate and observe and analyze the experimental results.
-1. Can you rewrite momentum and second moment updates such that it does not require bias correction?
-1. Why do you need to reduce the learning rate $\eta$ as we converge?
-1. Try to construct a case for which Adam diverges and Yogi converges?
+## Latihan
+
+1. Sesuaikan learning rate dan amati serta analisis hasil eksperimen.
+2. Bisakah Anda menulis ulang pembaruan momentum dan momen kedua sehingga tidak memerlukan koreksi bias?
+3. Mengapa Anda perlu mengurangi learning rate $\eta$ saat kita mendekati konvergensi?
+4. Coba buat sebuah kasus di mana Adam mengalami divergensi dan Yogi tetap konvergen.
 
 :begin_tab:`mxnet`
-[Discussions](https://discuss.d2l.ai/t/358)
+[Diskusi](https://discuss.d2l.ai/t/358)
 :end_tab:
 
 :begin_tab:`pytorch`
-[Discussions](https://discuss.d2l.ai/t/1078)
+[Diskusi](https://discuss.d2l.ai/t/1078)
 :end_tab:
-
 
 :begin_tab:`tensorflow`
-[Discussions](https://discuss.d2l.ai/t/1079)
+[Diskusi](https://discuss.d2l.ai/t/1079)
 :end_tab:
+
