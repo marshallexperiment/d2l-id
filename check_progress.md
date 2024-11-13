@@ -150,12 +150,12 @@
 
 - [x] ./chapter_computational-performance/hardware.md
 - [x] ./chapter_computational-performance/multiple-gpus-concise.md
-- [ ] ./chapter_computational-performance/multiple-gpus.md
-- [ ] ./chapter_computational-performance/index.md
-- [ ] ./chapter_computational-performance/auto-parallelism.md
-- [ ] ./chapter_computational-performance/async-computation.md
-- [ ] ./chapter_computational-performance/parameterserver.md
-- [ ] ./chapter_computational-performance/hybridize.md
+- [x] ./chapter_computational-performance/multiple-gpus.md
+- [x] ./chapter_computational-performance/index.md
+- [x] ./chapter_computational-performance/auto-parallelism.md
+- [x] ./chapter_computational-performance/async-computation.md
+- [x] ./chapter_computational-performance/parameterserver.md
+- [x] ./chapter_computational-performance/hybridize.md
 
 # 14 - chapter_computer-vision
 
