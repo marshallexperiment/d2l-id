@@ -1,232 +1,235 @@
 # Hardware
 :label:`sec_hardware`
 
-Building systems with great performance requires a good understanding of the algorithms and models to capture the statistical aspects of the problem. At the same time it is also indispensable to have at least a modicum of knowledge of the underlying hardware. The current section is no substitute for a proper course on hardware and system design. Instead, it might serve as a starting point for understanding why some algorithms are more efficient than others and how to achieve good throughput. A good design can easily make a difference of an order of magnitude and, in turn, this can make the difference between being able to train a network (e.g., in a week) and not at all (in 3 months, thus missing the deadline). 
-We will start by looking at computers. Then we will zoom in to look more carefully at CPUs and GPUs. Lastly we zoom out to review how multiple computers are connected in a server center or in the cloud. 
+Membangun sistem dengan performa tinggi memerlukan pemahaman yang baik mengenai algoritma dan model untuk menangkap aspek statistik dari masalah. Pada saat yang sama, juga sangat penting untuk memiliki setidaknya sedikit pengetahuan mengenai hardware yang mendasarinya. Bagian ini bukanlah pengganti untuk kursus yang benar tentang desain hardware dan sistem. Sebaliknya, bagian ini bisa menjadi titik awal untuk memahami mengapa beberapa algoritma lebih efisien daripada yang lain dan bagaimana mencapai throughput yang baik. Desain yang baik bisa dengan mudah membuat perbedaan hingga satu tingkat besar, yang pada gilirannya bisa membuat perbedaan antara mampu melatih sebuah jaringan (misalnya dalam satu minggu) dan tidak sama sekali (dalam 3 bulan, sehingga melewati batas waktu yang ada). 
+Kita akan memulai dengan melihat komputer secara umum. Lalu kita akan memperbesar untuk melihat lebih detail pada CPU dan GPU. Terakhir, kita akan memperkecil kembali untuk meninjau bagaimana beberapa komputer dihubungkan dalam pusat server atau di cloud.
 
-![Latency Numbers that every programmer should know.](../img/latencynumbers.png)
+![Angka Latensi yang perlu diketahui setiap programmer.](../img/latencynumbers.png)
 :label:`fig_latencynumbers`
 
-Impatient readers may be able to get by with :numref:`fig_latencynumbers`. It is taken from Colin Scott's [interactive post](https://people.eecs.berkeley.edu/%7Ercs/research/interactive_latency.html) that gives a good overview of the progress over the past decade. The original numbers are due to Jeff Dean's [Stanford talk from 2010](https://static.googleusercontent.com/media/research.google.com/en//people/jeff/Stanford-DL-Nov-2010.pdf).
-The discussion below explains some of the rationale for these numbers and how they can guide us in designing algorithms. The discussion below is very high level and cursory. It is clearly *no substitute* for a proper course but rather just meant to provide enough information for a statistical modeler to make suitable design decisions. For an in-depth overview of computer architecture we refer the reader to :cite:`Hennessy.Patterson.2011` or a recent course on the subject, such as the one by [Arste Asanovic](http://inst.eecs.berkeley.edu/%7Ecs152/sp19/).
+Pembaca yang tidak sabar mungkin bisa mendapatkan gambaran dari :numref:`fig_latencynumbers`. Gambar ini diambil dari [posting interaktif](https://people.eecs.berkeley.edu/%7Ercs/research/interactive_latency.html) oleh Colin Scott yang memberikan gambaran yang baik mengenai perkembangan selama dekade terakhir. Angka asli berasal dari [ceramah Stanford tahun 2010](https://static.googleusercontent.com/media/research.google.com/en//people/jeff/Stanford-DL-Nov-2010.pdf) oleh Jeff Dean.
+Diskusi di bawah ini menjelaskan beberapa alasan untuk angka-angka tersebut dan bagaimana mereka dapat membimbing kita dalam merancang algoritma. Diskusi ini sangat bersifat umum dan singkat. Jelas ini *bukan pengganti* kursus yang sebenarnya melainkan hanya dimaksudkan untuk memberikan cukup informasi agar seorang pemodel statistik dapat membuat keputusan desain yang sesuai. Untuk gambaran mendalam tentang arsitektur komputer, kami merekomendasikan pembaca pada :cite:`Hennessy.Patterson.2011` atau kursus terbaru mengenai subjek ini, seperti kursus yang diberikan oleh [Arste Asanovic](http://inst.eecs.berkeley.edu/%7Ecs152/sp19/).
 
-## Computers
+## Komputer
 
-Most deep learning researchers and practitioners have access to a computer with a fair amount of memory, computation, some form of an accelerator such as a GPU, or multiples thereof. A computer consists of the following key components:
+Sebagian besar peneliti dan praktisi deep learning memiliki akses ke komputer dengan kapasitas memori yang cukup besar, komputasi, beberapa bentuk akselerator seperti GPU, atau beberapa akselerator. Sebuah komputer terdiri dari komponen utama berikut:
 
-* A processor (also referred to as a CPU) that is able to execute the programs we give it (in addition to running an operating system and many other things), typically consisting of 8 or more cores.
-* Memory (RAM) to store and retrieve the results from computation, such as weight vectors and activations, and training data.
-* An Ethernet network connection (sometimes multiple) with speeds ranging from 1 GB/s to 100 GB/s. On high end servers more advanced interconnects can be found.
-* A high speed expansion bus (PCIe) to connect the system to one or more GPUs. Servers have up to 8 accelerators, often connected in an advanced topology, while desktop systems have 1 or 2, depending on the budget of the user and the size of the power supply.
-* Durable storage, such as a magnetic hard disk drive, a solid state drive, in many cases connected using the PCIe bus. It provides efficient transfer of training data to the system and storage of intermediate checkpoints as needed.
+* Sebuah prosesor (juga disebut CPU) yang mampu mengeksekusi program yang kita berikan (selain menjalankan sistem operasi dan banyak hal lainnya), biasanya terdiri dari 8 atau lebih core.
+* Memori (RAM) untuk menyimpan dan mengambil hasil dari komputasi, seperti vektor bobot dan aktivasi, serta data pelatihan.
+* Koneksi jaringan Ethernet (kadang beberapa) dengan kecepatan mulai dari 1 GB/s hingga 100 GB/s. Pada server kelas atas dapat ditemukan antarmuka interkoneksi yang lebih canggih.
+* Bus ekspansi kecepatan tinggi (PCIe) untuk menghubungkan sistem dengan satu atau lebih GPU. Server memiliki hingga 8 akselerator, sering kali dihubungkan dalam topologi yang canggih, sementara sistem desktop memiliki 1 atau 2, tergantung anggaran pengguna dan ukuran daya.
+* Penyimpanan tahan lama, seperti hard disk drive magnetik, solid state drive, sering kali terhubung menggunakan bus PCIe. Ini menyediakan transfer data pelatihan ke sistem dan penyimpanan checkpoint antara yang diperlukan.
 
-![Connectivity of components of a computer.](../img/mobo-symbol.svg)
+![Konektivitas komponen dari sebuah komputer.](../img/mobo-symbol.svg)
 :label:`fig_mobo-symbol`
 
-As :numref:`fig_mobo-symbol` indicates, most components (network, GPU, and storage) are connected to the CPU across the PCIe bus. It consists of multiple lanes that are directly attached to the CPU. For instance AMD's Threadripper 3 has 64 PCIe 4.0 lanes, each of which is capable 16 Gbit/s data transfer in both directions. The memory is directly attached to the CPU with a total bandwidth of up to 100 GB/s.
+Seperti yang ditunjukkan pada :numref:`fig_mobo-symbol`, sebagian besar komponen (jaringan, GPU, dan penyimpanan) terhubung ke CPU melalui bus PCIe. Bus ini terdiri dari beberapa jalur yang langsung terhubung ke CPU. Misalnya AMD Threadripper 3 memiliki 64 jalur PCIe 4.0, yang masing-masing mampu melakukan transfer data hingga 16 Gbit/s dalam kedua arah. Memori langsung terhubung ke CPU dengan total bandwidth hingga 100 GB/s.
 
-When we run code on a computer we need to shuffle data to the processors (CPUs or GPUs), perform computation, and then move the results off the processor back to RAM and durable storage. Hence, in order to get good performance we need to make sure that this works seamlessly without any one of the systems becoming a major bottleneck. For instance, if we cannot load images quickly enough the processor will not have any work to do. Likewise, if we cannot move matrices quickly enough to the CPU (or GPU), its processing elements will starve. Finally, if we want to synchronize multiple computers across the network, the latter should not slow down computation. One option is to interleave communication and computation. Let's have a look at the various components in more detail.
+Ketika kita menjalankan kode pada komputer, kita perlu memindahkan data ke prosesor (CPU atau GPU), melakukan komputasi, dan kemudian memindahkan hasil dari prosesor kembali ke RAM dan penyimpanan tahan lama. Oleh karena itu, untuk mendapatkan performa yang baik, kita harus memastikan bahwa proses ini berjalan mulus tanpa ada satu pun sistem yang menjadi hambatan utama. Misalnya, jika kita tidak dapat memuat gambar dengan cepat, prosesor tidak akan memiliki pekerjaan untuk dilakukan. Demikian pula, jika kita tidak dapat memindahkan matriks dengan cepat ke CPU (atau GPU), elemen pemrosesan akan kelaparan. Akhirnya, jika kita ingin menyinkronkan beberapa komputer melalui jaringan, hal ini tidak boleh memperlambat komputasi. Salah satu opsinya adalah menginterleaving komunikasi dan komputasi. Mari kita lihat berbagai komponen ini lebih detail.
 
 
-## Memory
+## Memori
 
-At its most basic memory is used to store data that needs to be readily accessible. At present CPU RAM is typically of the [DDR4](https://en.wikipedia.org/wiki/DDR4_SDRAM) variety, offering 20--25 GB/s bandwidth per module. Each module has a 64-bit-wide bus. Typically pairs of memory modules are used to allow for multiple channels. CPUs have between 2 and 4 memory channels, i.e., they have between 4 0GB/s and 100 GB/s peak memory bandwidth. Often there are two banks per channel. For instance AMD's Zen 3 Threadripper has 8 slots.
+Pada dasarnya, memori digunakan untuk menyimpan data yang perlu diakses dengan cepat. Saat ini, RAM CPU biasanya berjenis [DDR4](https://en.wikipedia.org/wiki/DDR4_SDRAM) yang menawarkan bandwidth sebesar 20-25 GB/s per modul. Setiap modul memiliki bus selebar 64-bit. Biasanya pasangan modul memori digunakan untuk memungkinkan beberapa channel. CPU memiliki antara 2 hingga 4 channel memori, yaitu memiliki bandwidth puncak antara 40 GB/s hingga 100 GB/s. Sering kali ada dua bank per channel. Misalnya, AMD Zen 3 Threadripper memiliki 8 slot.
 
-While these numbers are impressive, indeed, they only tell part of the story. When we want to read a portion from memory we first need to tell the memory module where the information can be found. That is, we first need to send the *address* to RAM. Once this is accomplished we can choose to read just a single 64 bit record or a long sequence of records. The latter is called *burst read*. In a nutshell, sending an address to memory and setting up the transfer takes approximately 100 ns (details depend on the specific timing coefficients of the memory chips used), every subsequent transfer takes only 0.2 ns. In short, the first read is 500 times as expensive as subsequent ones! Note that we could perform up to 10,000,000 random reads per second. This suggests that we avoid random memory access as far as possible and use burst reads (and writes) instead.
+Meskipun angka-angka ini mengesankan, mereka hanya menceritakan sebagian dari cerita. Ketika kita ingin membaca sebagian dari memori, pertama-tama kita perlu memberi tahu modul memori di mana informasi tersebut dapat ditemukan. Artinya, kita pertama-tama perlu mengirim *alamat* ke RAM. Setelah ini dilakukan, kita bisa memilih untuk membaca hanya satu catatan 64-bit atau serangkaian catatan panjang. Yang terakhir disebut *burst read*. Singkatnya, mengirimkan alamat ke memori dan mengatur transfer membutuhkan waktu sekitar 100 ns (detail tergantung pada koefisien waktu spesifik dari chip memori yang digunakan), setiap transfer berikutnya hanya membutuhkan waktu 0.2 ns. Singkatnya, pembacaan pertama adalah 500 kali lebih mahal daripada pembacaan berikutnya! Perhatikan bahwa kita bisa melakukan hingga 10 juta pembacaan acak per detik. Ini menunjukkan bahwa kita sebaiknya menghindari akses memori acak sejauh mungkin dan menggunakan burst read (dan write) sebagai gantinya.
 
-Matters are a bit more complex when we take into account that we have multiple *banks*. Each bank can read memory largely independently. This means two things. 
-On the one hand, the effective number of random reads is up to 4 times higher, provided that they are spread evenly across memory. It also means that it is still a bad idea to perform random reads since burst reads are 4 times faster, too. On the other hand, due to memory alignment to 64 bit boundaries it is a good idea to align any data structures with the same boundaries. Compilers do this pretty much [automatically](https://en.wikipedia.org/wiki/Data_structure_alignment) when the appropriate flags are set. Curious readers are encouraged to review a lecture on DRAMs such as the one by [Zeshan Chishti](http://web.cecs.pdx.edu/%7Ezeshan/ece585_lec5.pdf).
+Materi lebih kompleks ketika kita mempertimbangkan bahwa kita memiliki beberapa *bank*. Setiap bank bisa membaca memori secara hampir independen. Ini berarti dua hal:
+Di satu sisi, jumlah pembacaan acak yang efektif hingga 4 kali lebih tinggi, asalkan mereka tersebar merata di seluruh memori. Hal ini juga berarti bahwa melakukan pembacaan acak masih bukan ide yang baik karena burst read 4 kali lebih cepat juga. Di sisi lain, karena penyelarasan memori dengan batas 64-bit, ada baiknya untuk menyelaraskan struktur data dengan batas yang sama. Kompiler biasanya melakukan ini secara [otomatis](https://en.wikipedia.org/wiki/Data_structure_alignment) ketika flag yang sesuai diatur. Pembaca yang ingin tahu didorong untuk meninjau ceramah tentang DRAM seperti yang diberikan oleh [Zeshan Chishti](http://web.cecs.pdx.edu/%7Ezeshan/ece585_lec5.pdf).
 
-GPU memory is subject to even higher bandwidth requirements since they have many more processing elements than CPUs. By and large there are two options to address them. The first is to make the memory bus significantly wider. For instance, NVIDIA's RTX 2080 Ti has a 352-bit-wide bus. This allows for much more information to be transferred at the same time. Second, GPUs use specific high-performance memory. Consumer-grade devices, such as NVIDIA's RTX and Titan series typically use [GDDR6](https://en.wikipedia.org/wiki/GDDR6_SDRAM) chips with over 500 GB/s aggregate bandwidth. An alternative is to use HBM (high bandwidth memory) modules. They use a very different interface and connect directly with GPUs on a dedicated silicon wafer. This makes them very expensive and their use is typically limited to high-end server chips, such as the NVIDIA Volta V100 series of accelerators. Quite unsurprisingly, GPU memory is generally *much* smaller than CPU memory due to the higher cost of the former. For our purposes, by and large their performance characteristics are similar, just a lot faster. We can safely ignore the details for the purpose of this book. They only matter when tuning GPU kernels for high throughput.
+Memori GPU memiliki kebutuhan bandwidth yang lebih tinggi karena mereka memiliki lebih banyak elemen pemrosesan daripada CPU. Secara garis besar ada dua opsi untuk mengatasinya. Pertama adalah membuat bus memori jauh lebih lebar. Misalnya, NVIDIA RTX 2080 Ti memiliki bus selebar 352-bit. Hal ini memungkinkan lebih banyak informasi ditransfer pada saat yang sama. Kedua, GPU menggunakan memori kinerja tinggi tertentu. Perangkat kelas konsumen, seperti seri NVIDIA RTX dan Titan, biasanya menggunakan chip [GDDR6](https://en.wikipedia.org/wiki/GDDR6_SDRAM) dengan bandwidth agregat lebih dari 500 GB/s. Alternatif lainnya adalah menggunakan modul HBM (high bandwidth memory). Modul ini menggunakan antarmuka yang sangat berbeda dan terhubung langsung dengan GPU pada wafer silikon khusus. Ini membuatnya sangat mahal dan penggunaannya biasanya terbatas pada chip server kelas atas, seperti akselerator seri NVIDIA Volta V100. Tidak mengherankan, memori GPU umumnya *jauh* lebih kecil daripada memori CPU karena biaya yang lebih tinggi. Untuk keperluan kita, secara umum karakteristik performa mereka serupa, hanya saja lebih cepat. Kita bisa dengan aman mengabaikan detail-detail ini untuk tujuan buku ini. Detail ini hanya penting saat men-tuning kernel GPU untuk throughput yang tinggi.
 
-## Storage
 
-We saw that some of the key characteristics of RAM are *bandwidth* and *latency*. The same is true for storage devices, just that the differences can be even more extreme.
+
+## Penyimpanan
+
+Kita telah melihat bahwa beberapa karakteristik utama dari RAM adalah *bandwidth* dan *latency*. Hal yang sama juga berlaku untuk perangkat penyimpanan, hanya saja perbedaannya bisa menjadi lebih ekstrem.
 
 ### Hard Disk Drives
 
-*Hard disk drives* (HDDs) have been in use for over half a century. In a nutshell they contain a number of spinning platters with heads that can be positioned to read or write at any given track. High-end disks hold up to 16 TB on 9 platters. One of the key benefits of HDDs is that they are relatively inexpensive. One of their many downsides are their typically catastrophic failure modes and their relatively high read latency.
+*Hard disk drives* (HDDs) telah digunakan selama lebih dari setengah abad. Secara sederhana, HDD mengandung sejumlah piringan berputar dengan kepala yang dapat diposisikan untuk membaca atau menulis pada setiap jalur. Hard disk kelas atas dapat menyimpan hingga 16 TB pada 9 piringan. Salah satu keuntungan utama dari HDD adalah harganya yang relatif murah. Salah satu dari banyak kelemahannya adalah mode kegagalan yang biasanya katastropik dan latensi baca yang relatif tinggi.
 
-To understand the latter, consider the fact that HDDs spin at around 7,200 RPM (revolutions per minute). If they were much faster they would shatter due to the centrifugal force exerted on the platters. This has a major downside when it comes to accessing a specific sector on the disk: we need to wait until the platter has rotated in position (we can move the heads but not accelerate the actual disks). Hence it can take over 8 ms until the requested data is available. A common way this is expressed is to say that HDDs can operate at approximately 100 IOPs (input/output operations per second). This number has essentially remained unchanged for the past two decades. Worse still, it is equally difficult to increase bandwidth (it is in the order of 100--200 MB/s). After all, each head reads a track of bits, hence the bit rate only scales with the square root of the information density. As a result, HDDs are quickly becoming relegated to archival storage and low-grade storage for very large datasets.
+Untuk memahami yang terakhir, pertimbangkan fakta bahwa HDD berputar sekitar 7.200 RPM (putaran per menit). Jika mereka jauh lebih cepat, mereka akan hancur karena gaya sentrifugal yang diberikan pada piringan. Ini menjadi kelemahan utama ketika kita ingin mengakses sektor tertentu pada disk: kita perlu menunggu hingga piringan berputar ke posisi yang sesuai (kita bisa memindahkan kepala tetapi tidak mempercepat putaran disk itu sendiri). Oleh karena itu, dapat memakan waktu lebih dari 8 ms hingga data yang diminta tersedia. Cara umum untuk mengekspresikan ini adalah dengan mengatakan bahwa HDD dapat beroperasi pada sekitar 100 IOPs (input/output operations per second). Angka ini pada dasarnya tidak berubah selama dua dekade terakhir. Yang lebih buruk, sulit untuk meningkatkan bandwidth (berada pada kisaran 100--200 MB/s). Setiap kepala membaca jalur bit, sehingga laju bit hanya meningkat dengan akar kuadrat dari kepadatan informasi. Sebagai hasilnya, HDD dengan cepat menjadi penyimpanan arsip dan penyimpanan kelas rendah untuk dataset yang sangat besar.
 
 
 ### Solid State Drives
 
-Solid state drives (SSDs) use flash memory to store information persistently. This allows for *much faster* access to stored records. Modern SSDs can operate at 100,000 to 500,000 IOPs, i.e., up to 3 orders of magnitude faster than HDDs. Furthermore, their bandwidth can reach 1--3GB/s, i.e., one order of magnitude faster than HDDs. These improvements sound almost too good to be true. Indeed, they come with the following caveats, due to the way SSDs are designed.
+Solid State Drives (SSD) menggunakan memori flash untuk menyimpan informasi secara permanen. Ini memungkinkan akses yang *jauh lebih cepat* ke catatan yang disimpan. SSD modern dapat beroperasi pada 100.000 hingga 500.000 IOPs, yaitu hingga 3 kali lipat lebih cepat dari HDD. Selain itu, bandwidth mereka bisa mencapai 1--3GB/s, yaitu satu urutan lebih cepat daripada HDD. Peningkatan ini terdengar hampir terlalu bagus untuk menjadi kenyataan. Memang, peningkatan ini disertai dengan beberapa hal berikut, karena desain SSD.
 
-* SSDs store information in blocks (256 KB or larger). They can only be written as a whole, which takes significant time. Consequently bit-wise random writes on SSD have very poor performance. Likewise, writing data in general takes significant time since the block has to be read, erased and then rewritten with new information. By now SSD controllers and firmware have developed algorithms to mitigate this. Nonetheless, writes can be much slower, in particular for QLC (quad level cell) SSDs. The key for improved performance is to maintain a *queue* of operations, to prefer reads and to write in large blocks if possible.
-* The memory cells in SSDs wear out relatively quickly (often already after a few thousand writes). Wear-level protection algorithms are able to spread the degradation over many cells. That said, it is not recommended to use SSDs for swapping files or for large aggregations of log-files.
-* Lastly, the massive increase in bandwidth has forced computer designers to attach SSDs directly to the PCIe bus. The drives capable of handling this, referred to as NVMe (Non Volatile Memory enhanced), can use up to 4 PCIe lanes. This amounts to up to 8GB/s on PCIe 4.0.
+* SSD menyimpan informasi dalam blok (256 KB atau lebih besar). Mereka hanya dapat ditulis secara keseluruhan, yang membutuhkan waktu yang cukup lama. Akibatnya, penulisan acak bit-wise pada SSD memiliki performa yang sangat buruk. Demikian pula, menulis data secara umum memerlukan waktu yang signifikan karena blok harus dibaca, dihapus, dan kemudian ditulis ulang dengan informasi baru. Saat ini, pengontrol dan firmware SSD telah mengembangkan algoritma untuk mengatasi ini. Namun demikian, penulisan dapat jauh lebih lambat, terutama untuk SSD QLC (quad level cell). Kunci untuk meningkatkan performa adalah menjaga *antrian* operasi, lebih memprioritaskan baca, dan menulis dalam blok besar jika memungkinkan.
+* Sel memori dalam SSD habis lebih cepat (sering kali setelah beberapa ribu kali penulisan). Algoritma perlindungan wear-level mampu menyebarkan degradasi ke banyak sel. Namun demikian, tidak disarankan untuk menggunakan SSD untuk file swap atau untuk agregasi log-file yang besar.
+* Terakhir, peningkatan bandwidth yang besar memaksa desainer komputer untuk menghubungkan SSD secara langsung ke bus PCIe. Drive yang mampu menangani ini, disebut NVMe (Non Volatile Memory enhanced), dapat menggunakan hingga 4 jalur PCIe. Ini setara dengan hingga 8GB/s pada PCIe 4.0.
 
-### Cloud Storage
+### Penyimpanan Cloud
 
-Cloud storage provides a configurable range of performance. That is, the assignment of storage to virtual machines is dynamic, both in terms of quantity and in terms of speed, as chosen by users. We recommend that users increase the provisioned number of IOPs whenever latency is too high, e.g., during training with many small records.
+Penyimpanan cloud menyediakan rentang performa yang dapat dikonfigurasi. Artinya, penugasan penyimpanan ke mesin virtual bersifat dinamis, baik dalam hal kuantitas maupun dalam hal kecepatan, seperti yang dipilih oleh pengguna. Kami merekomendasikan agar pengguna meningkatkan jumlah IOPs yang disediakan kapan pun latensi terlalu tinggi, misalnya saat pelatihan dengan banyak catatan kecil.
 
-## CPUs
+## CPU
 
-Central processing units (CPUs) are the centerpiece of any computer. They consist of a number of key components: *processor cores* that are able to execute machine code, a *bus* connecting them (the specific topology differs significantly between processor models, generations, and vendors), and *caches* to allow for higher bandwidth and lower latency memory access than what is possible by reads from main memory. Lastly, almost all modern CPUs contain *vector processing units* to aid with high performance linear algebra and convolutions, as they are common in media processing and machine learning.
+Central Processing Units (CPUs) adalah pusat dari setiap komputer. Mereka terdiri dari sejumlah komponen utama: *inti (_core_) prosesor* yang dapat menjalankan kode mesin, sebuah *bus* yang menghubungkan mereka (topologi spesifiknya sangat berbeda antara model prosesor, generasi, dan vendor), dan *cache* untuk memungkinkan akses memori dengan bandwidth yang lebih tinggi dan latensi yang lebih rendah dibandingkan dengan apa yang mungkin dilakukan oleh pembacaan dari memori utama. Terakhir, hampir semua CPU modern mengandung *unit pemrosesan vektor* untuk membantu dengan aljabar linear kinerja tinggi dan konvolusi, karena hal ini umum dalam pemrosesan media dan machine learning.
 
-![Intel Skylake consumer quad-core CPU.](../img/skylake.svg)
+![CPU quad-core Intel Skylake kelas konsumen.](../img/skylake.svg)
 :label:`fig_skylake`
 
-:numref:`fig_skylake` depicts an Intel Skylake consumer-grade quad-core CPU. It has an integrated GPU, caches, and a ringbus connecting the four cores. Peripherals, such as Ethernet, WiFi, Bluetooth, SSD controller, and USB, are either part of the chipset or directly attached (PCIe) to the CPU.
+:numref:`fig_skylake` menggambarkan CPU Intel Skylake kelas konsumen dengan empat inti. CPU ini memiliki GPU terintegrasi, cache, dan ringbus yang menghubungkan keempat inti. Periferal, seperti Ethernet, WiFi, Bluetooth, pengontrol SSD, dan USB, merupakan bagian dari chipset atau terhubung langsung (PCIe) ke CPU.
 
 
-### Microarchitecture
 
-Each of the processor cores consists of a rather sophisticated set of components. While details differ between generations and vendors, the basic functionality is pretty much standard. The front-end loads instructions and tries to predict which path will be taken (e.g., for control flow). Instructions are then decoded from assembly code to microinstructions. Assembly code is often not the lowest level code that a processor executes. Instead, complex instructions may be decoded into a set of more lower level operations. These are then processed by the actual execution core. Often the latter is capable of performing many operations simultaneously. For instance, the ARM Cortex A77 core of :numref:`fig_cortexa77` is able to perform up to 8 operations simultaneously.
+### Mikroarsitektur
 
-![ARM Cortex A77 Microarchitecture.](../img/a77.svg)
+Setiap inti prosesor terdiri dari satu set komponen yang cukup canggih. Meskipun detailnya berbeda antara generasi dan vendor, fungsi dasar umumnya cukup standar. Front-end memuat instruksi dan mencoba memprediksi jalur mana yang akan diambil (misalnya, untuk aliran kontrol). Instruksi kemudian di-dekode dari kode assembly ke mikroinstruksi. Kode assembly sering kali bukan merupakan kode level terendah yang dieksekusi oleh prosesor. Sebagai gantinya, instruksi yang kompleks dapat di-dekode menjadi satu set operasi level yang lebih rendah. Instruksi-instruksi ini kemudian diproses oleh inti eksekusi aktual. Seringkali, inti ini mampu melakukan banyak operasi secara bersamaan. Misalnya, inti ARM Cortex A77 pada :numref:`fig_cortexa77` mampu melakukan hingga 8 operasi sekaligus.
+
+![Mikroarsitektur ARM Cortex A77.](../img/a77.svg)
 :label:`fig_cortexa77`
 
-This means that efficient programs might be able to perform more than one instruction per clock cycle, provided that they can be carried out independently. Not all units are created equal. Some specialize in integer instructions whereas others are optimized for floating point performance. To increase throughput, the processor might also follow  multiple code paths simultaneously in a branching instruction and then discard the results of the branches not taken. This is why branch prediction units matter (on the front-end) such that only the most promising paths are pursued.
+Artinya, program yang efisien dapat melakukan lebih dari satu instruksi per siklus clock, asalkan dapat dijalankan secara independen. Tidak semua unit diciptakan sama. Beberapa unit berspesialisasi dalam instruksi integer sementara yang lain dioptimalkan untuk kinerja titik mengambang. Untuk meningkatkan throughput, prosesor juga dapat mengikuti beberapa jalur kode secara bersamaan dalam instruksi bercabang dan kemudian membuang hasil dari cabang yang tidak diambil. Inilah alasan mengapa unit prediksi cabang sangat penting (pada front-end) agar hanya jalur yang paling menjanjikan yang diikuti.
 
-### Vectorization
+### Vektorisasi
 
-Deep learning is extremely compute-hungry. Hence, to make CPUs suitable for machine learning, one needs to perform many operations in one clock cycle. This is achieved via vector units. They have different names: on ARM they are called NEON, on x86 they (a recent generation) are referred to as [AVX2](https://en.wikipedia.org/wiki/Advanced_Vector_Extensions) units. A common aspect is that they are able to perform SIMD (single instruction multiple data) operations. :numref:`fig_neon128` shows how 8 short integers can be added in one clock cycle on ARM.
+Deep learning sangat membutuhkan banyak komputasi. Oleh karena itu, agar CPU cocok untuk machine learning, diperlukan banyak operasi yang dilakukan dalam satu siklus clock. Ini dicapai melalui unit vektor. Mereka memiliki nama yang berbeda: pada ARM mereka disebut NEON, pada x86 generasi terbaru mereka disebut unit [AVX2](https://en.wikipedia.org/wiki/Advanced_Vector_Extensions). Aspek umum dari unit-unit ini adalah bahwa mereka dapat melakukan operasi SIMD (single instruction multiple data). :numref:`fig_neon128` menunjukkan bagaimana 8 bilangan bulat pendek dapat dijumlahkan dalam satu siklus clock pada ARM.
 
-![128 bit NEON vectorization.](../img/neon128.svg)
+![Vektorisasi NEON 128 bit.](../img/neon128.svg)
 :label:`fig_neon128`
 
-Depending on architecture choices, such registers are up to 512 bits long, allowing for the combination of up to 64 pairs of numbers. For instance, we might be multiplying two numbers and adding them to a third, which is also known as a fused multiply-add. Intel's [OpenVino](https://01.org/openvinotoolkit) uses these to achieve respectable throughput for deep learning on server-grade CPUs. Note, though, that this number is entirely dwarfed by what GPUs are capable of achieving. For instance, NVIDIA's RTX 2080 Ti has 4,352 CUDA cores, each of which is capable of processing such an operation at any time.
+Tergantung pada pilihan arsitektur, register seperti ini dapat memiliki panjang hingga 512 bit, memungkinkan kombinasi hingga 64 pasang bilangan. Misalnya, kita dapat mengalikan dua bilangan dan menambahkannya ke bilangan ketiga, yang juga dikenal sebagai fused multiply-add. Intel's [OpenVino](https://01.org/openvinotoolkit) menggunakan ini untuk mencapai throughput yang baik untuk deep learning pada CPU kelas server. Namun, perlu dicatat bahwa angka ini sepenuhnya kalah jauh dibandingkan dengan apa yang mampu dicapai oleh GPU. Misalnya, NVIDIA RTX 2080 Ti memiliki 4.352 inti CUDA, yang masing-masing mampu memproses operasi semacam itu kapan saja.
 
 ### Cache
 
-Consider the following situation: we have a modest CPU core with 4 cores as depicted in :numref:`fig_skylake` above, running at 2 GHz frequency.
-Moreover, let's assume that we have an IPC (instructions per clock) count of 1 and that the units have AVX2 with 256-bit width enabled. Let's furthermore assume that at least one of the registers used for AVX2 operations needs to be retrieved from memory. This means that the CPU consumes $4 \times 256 \textrm{ bit} = 128 \textrm{ bytes}$ of data per clock cycle. Unless we are able to transfer $2 \times 10^9 \times 128 = 256 \times 10^9$ bytes to the processor per second the processing elements are going to starve. Unfortunately the memory interface of such a chip only supports 20--40 GB/s data transfer, i.e., one order of magnitude less. The fix is to avoid loading *new* data from memory as far as possible and rather to cache it locally on the CPU. This is where caches come in handy. Commonly the following names or concepts are used:
+Pertimbangkan situasi berikut: kita memiliki inti CPU yang cukup sederhana dengan 4 inti seperti yang digambarkan pada :numref:`fig_skylake` di atas, berjalan pada frekuensi 2 GHz.
+Selain itu, mari kita asumsikan bahwa kita memiliki IPC (instructions per clock) sebanyak 1 dan unit-unit tersebut telah mengaktifkan AVX2 dengan lebar 256-bit. Mari kita asumsikan juga bahwa setidaknya satu dari register yang digunakan untuk operasi AVX2 harus diambil dari memori. Ini berarti bahwa CPU mengonsumsi $4 \times 256 \textrm{ bit} = 128 \textrm{ bytes}$ data per siklus clock. Kecuali kita dapat mentransfer $2 \times 10^9 \times 128 = 256 \times 10^9$ byte ke prosesor per detik, elemen-elemen pemrosesan akan kekurangan data. Sayangnya, antarmuka memori dari chip semacam itu hanya mendukung transfer data 20--40 GB/s, yaitu sekitar satu orde magnitudo lebih rendah. Solusinya adalah menghindari pemuatan *data baru* dari memori sejauh mungkin dan lebih baik menyimpannya secara lokal di CPU. Inilah di mana cache menjadi sangat berguna. Berikut adalah beberapa nama atau konsep umum yang sering digunakan:
 
-* **Registers** are strictly speaking not part of the cache. They help stage instructions. That said, CPU registers are memory locations that a CPU can access at clock speed without any delay penalty. CPUs have tens of registers. It is up to the compiler (or programmer) to use registers efficiently. For instance the C programming language has a `register` keyword.
-* **L1 caches** are the first line of defense against high memory bandwidth requirements. L1 caches are tiny (typical sizes might be 32--64 KB) and often split into data and instructions caches. When data is found in the L1 cache, access is very fast. If they cannot be found there, the search progresses down the cache hierarchy.
-* **L2 caches** are the next stop. Depending on architecture design and processor size they might be exclusive. They might be accessible only by a given core or shared among multiple cores. L2 caches are larger (typically 256--512 KB per core) and slower than L1. Furthermore, to access something in L2 we first need to check to realize that the data is not in L1, which adds a small amount of extra latency.
-* **L3 caches** are shared among multiple cores and can be quite large. AMD's Epyc 3 server CPUs have a whopping 256 MB of cache spread across multiple chiplets. More typical numbers are in the 4--8 MB range.
+* **Register** secara teknis bukan bagian dari cache. Mereka membantu memuat instruksi. Namun, register CPU adalah lokasi memori yang dapat diakses CPU dengan kecepatan clock tanpa ada penalti keterlambatan. CPU memiliki puluhan register. Penggunaan register yang efisien tergantung pada compiler (atau programmer). Misalnya, bahasa pemrograman C memiliki kata kunci `register`.
+* **Cache L1** adalah lini pertama pertahanan terhadap kebutuhan bandwidth memori yang tinggi. Cache L1 berukuran kecil (biasanya 32--64 KB) dan sering dibagi menjadi cache data dan instruksi. Ketika data ditemukan di cache L1, akses sangat cepat. Jika data tidak ditemukan di sana, pencarian dilanjutkan ke hierarki cache berikutnya.
+* **Cache L2** adalah tempat pemberhentian berikutnya. Tergantung pada desain arsitektur dan ukuran prosesor, cache ini mungkin eksklusif. Cache L2 mungkin hanya dapat diakses oleh inti tertentu atau dibagi di antara beberapa inti. Cache L2 lebih besar (biasanya 256--512 KB per inti) dan lebih lambat daripada L1. Selain itu, untuk mengakses sesuatu di L2, kita pertama-tama perlu memeriksa dan menyadari bahwa data tersebut tidak ada di L1, yang menambah sedikit latensi tambahan.
+* **Cache L3** dibagi di antara beberapa inti dan dapat cukup besar. CPU server AMD Epyc 3 memiliki cache sebesar 256 MB yang tersebar di beberapa chiplet. Angka yang lebih umum adalah dalam kisaran 4--8 MB.
 
-Predicting which memory elements will be needed next is one of the key optimization parameters in chip design. For instance, it is advisable to traverse memory in a *forward* direction since most caching algorithms will try to *read ahead* rather than backwards. Likewise, keeping memory access patterns local is a good way of improving performance.
+Memprediksi elemen memori mana yang akan diperlukan selanjutnya adalah salah satu parameter optimasi utama dalam desain chip. Misalnya, disarankan untuk melakukan penelusuran memori ke arah *maju* karena sebagian besar algoritma caching akan mencoba untuk *membaca ke depan* daripada mundur. Demikian juga, menjaga pola akses memori tetap lokal adalah cara yang baik untuk meningkatkan performa.
 
-Adding caches is a double-edge sword. On the one hand they ensure that the processor cores do not starve of data. At the same time they increase chip size, using up area that otherwise could have been spent on increasing processing power. Moreover, *cache misses* can be expensive. Consider the worst case scenario, *false sharing*, as depicted in :numref:`fig_falsesharing`. A memory location is cached on processor 0 when a thread on processor 1 requests the data. To obtain it, processor 0 needs to stop what it is doing, write the information back to main memory and then let processor 1 read it from memory. During this operation both processors wait. Quite potentially such code runs *more slowly* on multiple processors when compared with an efficient single-processor implementation. This is one more reason for why there is a practical limit to cache sizes (besides their physical size).
+Menambahkan cache adalah pedang bermata dua. Di satu sisi, cache memastikan bahwa inti prosesor tidak kekurangan data. Pada saat yang sama, cache meningkatkan ukuran chip, menggunakan area yang seharusnya dapat digunakan untuk meningkatkan daya pemrosesan. Selain itu, *cache miss* dapat menjadi mahal. Pertimbangkan skenario terburuk, *false sharing*, seperti yang digambarkan pada :numref:`fig_falsesharing`. Sebuah lokasi memori di-cache pada prosesor 0 saat sebuah thread di prosesor 1 meminta data tersebut. Untuk mendapatkannya, prosesor 0 harus berhenti dari apa yang sedang dilakukannya, menulis kembali informasi tersebut ke memori utama dan kemudian membiarkan prosesor 1 membaca dari memori. Selama operasi ini, kedua prosesor harus menunggu. Potensialnya, kode semacam ini dapat berjalan *lebih lambat* pada beberapa prosesor dibandingkan dengan implementasi prosesor tunggal yang efisien. Inilah alasan lainnya mengapa ukuran cache dibatasi dalam praktiknya (selain masalah fisik ukuran cache).
 
-![False sharing (image courtesy of Intel).](../img/falsesharing.svg)
+![False sharing (gambar milik Intel).](../img/falsesharing.svg)
 :label:`fig_falsesharing`
 
-## GPUs and other Accelerators
 
-It is not an exaggeration to claim that deep learning would not have been successful without GPUs. By the same token, it is quite reasonable to argue that GPU manufacturers' fortunes have increased significantly due to deep learning. This co-evolution of hardware and algorithms has led to a situation where for better or worse deep learning is the preferable statistical modeling paradigm. Hence it pays to understand the specific benefits that GPUs and related accelerators such as the TPU :cite:`Jouppi.Young.Patil.ea.2017`.
 
-Of note is a distinction that is often made in practice: accelerators are optimized either for training or inference. For the latter we only need to compute the forward propagation in a network. No storage of intermediate data is needed for backpropagation. Moreover, we may not need very precise computation (FP16 or INT8 typically suffice). On the other hand, during training all intermediate results need storage to compute gradients. Moreover, accumulating gradients requires higher precision to avoid numerical underflow (or overflow). This means that FP16 (or mixed precision with FP32) is the minimum requirement. All of this necessitates faster and larger memory (HBM2 vs. GDDR6) and more processing power. For instance, NVIDIA's [Turing](https://devblogs.nvidia.com/nvidia-turing-architecture-in-depth/) T4 GPUs are optimized for inference whereas the V100 GPUs are preferable for training.
+## GPU dan Akselerator Lainnya
 
-Recall vectorization as illustrated in :numref:`fig_neon128`. Adding vector units to a processor core allowed us to increase throughput significantly. For example, in the example in :numref:`fig_neon128` we were able to perform 16 operations simultaneously.
-First,
-what if we added operations that optimized not just operations between vectors but also between matrices? This strategy led to tensor cores (to be covered shortly). 
-Second, what if we added many more cores? In a nutshell, these two strategies summarize the design decisions in GPUs. :numref:`fig_turing_processing_block` gives an overview of a basic processing block. It contains 16 integer and 16 floating point units. In addition to that, two tensor cores accelerate a narrow subset of additional operations relevant for deep learning. Each streaming multiprocessor consists of four such blocks.
+Tidak berlebihan untuk mengatakan bahwa deep learning tidak akan sukses tanpa adanya GPU. Pada saat yang sama, sangat wajar untuk mengatakan bahwa keberhasilan produsen GPU meningkat secara signifikan karena deep learning. Evolusi bersama antara perangkat keras dan algoritma ini telah mengarah pada situasi di mana, baik buruknya, deep learning menjadi paradigma pemodelan statistik yang lebih disukai. Oleh karena itu, sangat penting untuk memahami manfaat khusus yang dimiliki oleh GPU dan akselerator terkait seperti TPU :cite:`Jouppi.Young.Patil.ea.2017`.
 
-![NVIDIA Turing processing block (image courtesy of NVIDIA).](../img/turing-processing-block.png)
+Perlu dicatat adanya perbedaan yang sering kali dibuat dalam praktik: akselerator dioptimalkan baik untuk *training* atau *inference*. Untuk yang terakhir, kita hanya perlu melakukan komputasi forward propagation dalam jaringan. Tidak perlu menyimpan data antara untuk backpropagation. Selain itu, kita mungkin tidak memerlukan komputasi yang sangat presisi (FP16 atau INT8 umumnya sudah cukup). Di sisi lain, selama training, semua hasil antara perlu disimpan untuk menghitung gradien. Selain itu, mengakumulasi gradien memerlukan presisi yang lebih tinggi untuk menghindari underflow (atau overflow) numerik. Ini berarti FP16 (atau precision campuran dengan FP32) adalah persyaratan minimum. Semua ini memerlukan memori yang lebih cepat dan lebih besar (HBM2 vs. GDDR6) serta kekuatan pemrosesan yang lebih besar. Misalnya, GPU [Turing](https://devblogs.nvidia.com/nvidia-turing-architecture-in-depth/) T4 dari NVIDIA dioptimalkan untuk *inference*, sementara GPU V100 lebih disukai untuk *training*.
+
+Ingat vektorisasi seperti yang diilustrasikan pada :numref:`fig_neon128`. Menambahkan unit vektor ke inti prosesor memungkinkan kita untuk meningkatkan throughput secara signifikan. Misalnya, dalam contoh di :numref:`fig_neon128`, kita mampu melakukan 16 operasi secara bersamaan. Pertama, bagaimana jika kita menambahkan operasi yang tidak hanya dioptimalkan untuk operasi antar vektor tetapi juga antara matriks? Strategi ini menghasilkan tensor cores (yang akan kita bahas sebentar lagi). Kedua, bagaimana jika kita menambahkan banyak inti lagi? Singkatnya, dua strategi ini merangkum keputusan desain dalam GPU. :numref:`fig_turing_processing_block` memberikan gambaran dari blok pemrosesan dasar. Blok ini berisi 16 unit integer dan 16 unit floating point. Selain itu, dua tensor cores mempercepat subset operasi yang relevan untuk deep learning. Setiap *streaming multiprocessor* terdiri dari empat blok tersebut.
+
+![Blok pemrosesan NVIDIA Turing (gambar milik NVIDIA).](../img/turing-processing-block.png)
 :width:`150px`
 :label:`fig_turing_processing_block`
 
-Next, 12 streaming multiprocessors are grouped into graphics processing clusters which make up the high-end TU102 processors. Ample memory channels and an L2 cache complement the setup. :numref:`fig_turing` has the relevant details. One of the reasons for designing such a device is that individual blocks can be added or removed as needed to allow for more compact chips and to deal with yield issues (faulty modules might not be activated). Fortunately programming such devices is well hidden from the casual deep learning researcher beneath layers of CUDA and framework code. In particular, more than one of the programs might well be executed simultaneously on the GPU, provided that there are available resources. Nonetheless it pays to be aware of the limitations of the devices to avoid picking models that do not fit into device memory.
+Selanjutnya, 12 *streaming multiprocessors* dikelompokkan ke dalam *graphics processing clusters* yang membentuk prosesor TU102 kelas atas. Saluran memori yang memadai dan cache L2 melengkapi susunan ini. :numref:`fig_turing` memiliki detail terkait. Salah satu alasan mendesain perangkat seperti ini adalah karena blok individual dapat ditambahkan atau dihilangkan sesuai kebutuhan untuk memungkinkan pembuatan chip yang lebih ringkas dan untuk menangani masalah hasil produksi (modul yang rusak mungkin tidak diaktifkan). Untungnya, pemrograman perangkat ini tersembunyi dari peneliti deep learning di balik lapisan CUDA dan kode kerangka kerja. Secara khusus, lebih dari satu program mungkin dieksekusi secara bersamaan pada GPU, asalkan ada sumber daya yang tersedia. Namun demikian, penting untuk menyadari keterbatasan perangkat ini agar tidak memilih model yang tidak muat dalam memori perangkat.
 
-![NVIDIA Turing architecture (image courtesy of NVIDIA)](../img/turing.png)
+![Arsitektur NVIDIA Turing (gambar milik NVIDIA)](../img/turing.png)
 :width:`350px`
 :label:`fig_turing`
 
-A last aspect that is worth mentioning in more detail are *tensor cores*. They are an example of a recent trend of adding more optimized circuits that are specifically effective for deep learning. For instance, the TPU added a systolic array :cite:`Kung.1988` for fast matrix multiplication. There the design was to support a very small number (one for the first generation of TPUs) of large operations. Tensor cores are at the other end. They are optimized for small operations involving between $4 \times 4$ and $16 \times 16$ matrices, depending on their numerical precision. :numref:`fig_tensorcore` gives an overview of the optimizations.
+Aspek terakhir yang patut disebutkan lebih detail adalah *tensor cores*. Mereka adalah contoh tren terbaru dalam menambahkan sirkuit yang lebih dioptimalkan dan secara khusus efektif untuk deep learning. Misalnya, TPU menambahkan array sistolik :cite:`Kung.1988` untuk perkalian matriks yang cepat. Desain ini dimaksudkan untuk mendukung sejumlah kecil operasi besar (satu untuk generasi pertama TPU). Tensor cores berada di ujung lain. Mereka dioptimalkan untuk operasi kecil yang melibatkan matriks berukuran antara $4 \times 4$ dan $16 \times 16$, tergantung pada presisi numeriknya. :numref:`fig_tensorcore` memberikan gambaran tentang optimasi ini.
 
-![NVIDIA tensor cores in Turing (image courtesy of NVIDIA).](../img/tensorcore.jpg)
+![Tensor cores NVIDIA pada Turing (gambar milik NVIDIA).](../img/tensorcore.jpg)
 :width:`400px`
 :label:`fig_tensorcore`
 
-Obviously when optimizing for computation we end up making certain compromises. One of them is that GPUs are not very good at handling interrupts and sparse data. While there are notable exceptions, such as [Gunrock](https://github.com/gunrock/gunrock) :cite:`Wang.Davidson.Pan.ea.2016`, the access pattern of sparse matrices and vectors do not go well with the high bandwidth burst read operations where GPUs excel. Matching both goals is an area of active research. See e.g., [DGL](http://dgl.ai), a library tuned for deep learning on graphs.
-
-
-## Networks and Buses
-
-Whenever a single device is insufficient for optimization we need to transfer data to and from it to synchronize processing. This is where networks and buses come in handy. We have a number of design parameters: bandwidth, cost, distance, and flexibility.
-On one end we have WiFi that has a pretty good range, is very easy to use (no wires, after all), cheap but it offers comparatively mediocre bandwidth and latency. No machine learning researcher within their right mind would use it to build a cluster of servers. In what follows we focus on interconnects that are suitable for deep learning.
-
-* **PCIe** is a dedicated bus for very high bandwidth point-to-point connections (up to 32 GB/s on PCIe 4.0 in a 16-lane slot) per lane. Latency is in the order of single-digit microseconds (5 μs). PCIe links are precious. Processors only have a limited number of them: AMD's EPYC 3 has 128 lanes, Intel's Xeon has up to 48 lanes per chip; on desktop-grade CPUs the numbers are 20 (Ryzen 9) and 16 (Core i9) respectively. Since GPUs have typically 16 lanes, this limits the number of GPUs that can connect to the CPU at full bandwidth. After all, they need to share the links with other high bandwidth peripherals such as storage and Ethernet. Just like with RAM access, large bulk transfers are preferable due to reduced packet overhead.
-* **Ethernet** is the most commonly used way of connecting computers. While it is significantly slower than PCIe, it is very cheap and resilient to install and covers much longer distances. Typical bandwidth for low-grade servers is 1 GBit/s. Higher-end devices (e.g., [C5 instances](https://aws.amazon.com/ec2/instance-types/c5/) in the cloud) offer between 10 and 100 GBit/s bandwidth. As in all previous cases data transmission has significant overheads. Note that we almost never use raw Ethernet directly but rather a protocol that is executed on top of the physical interconnect (such as UDP or TCP/IP). This adds further overhead. Like PCIe, Ethernet is designed to connect two devices, e.g., a computer and a switch.
-* **Switches** allow us to connect multiple devices in a manner where any pair of them can carry out a (typically full bandwidth) point-to-point connection simultaneously. For instance, Ethernet switches might connect 40 servers at high cross-sectional bandwidth. Note that switches are not unique to traditional computer networks. Even PCIe lanes can be [switched](https://www.broadcom.com/products/pcie-switches-bridges/pcie-switches). This occurs, e.g., to connect a large number of GPUs to a host processor, as is the case for the [P2 instances](https://aws.amazon.com/ec2/instance-types/p2/).
-* **NVLink** is an alternative to PCIe when it comes to very high bandwidth interconnects. It offers up to 300 Gbit/s data transfer rate per link. Server GPUs (Volta V100) have six links whereas consumer-grade GPUs (RTX 2080 Ti) have only one link, operating at a reduced 100 Gbit/s rate. We recommend to use [NCCL](https://github.com/NVIDIA/nccl) to achieve high data transfer between GPUs.
+Tentu saja ketika mengoptimalkan untuk komputasi, kita akhirnya harus melakukan kompromi. Salah satu dari mereka adalah bahwa GPU tidak sangat baik dalam menangani interrupt dan data yang jarang (sparse data). Meskipun ada pengecualian yang mencolok, seperti [Gunrock](https://github.com/gunrock/gunrock) :cite:`Wang.Davidson.Pan.ea.2016`, pola akses matriks dan vektor yang jarang tidak cocok dengan operasi pembacaan burst bandwidth tinggi di mana GPU unggul. Menyeimbangkan kedua tujuan ini adalah area penelitian aktif. Lihat misalnya [DGL](http://dgl.ai), sebuah pustaka yang disetel untuk deep learning pada grafik.
 
 
 
-## More Latency Numbers
+## Jaringan dan Bus
 
-The summary in :numref:`table_latency_numbers` and :numref:`table_latency_numbers_tesla` are from [Eliot Eshelman](https://gist.github.com/eshelman) who maintains an updated version of the numbers as a [GitHub gist](https://gist.github.com/eshelman/343a1c46cb3fba142c1afdcdeec17646).
+Kapan pun sebuah perangkat tunggal tidak cukup untuk melakukan optimasi, kita perlu mentransfer data ke dan dari perangkat tersebut untuk menyinkronkan pemrosesan. Inilah tempat di mana jaringan dan bus berguna. Kita memiliki beberapa parameter desain: *bandwidth*, biaya, jarak, dan fleksibilitas.
+Di satu sisi, kita memiliki WiFi yang memiliki jangkauan cukup baik, sangat mudah digunakan (tanpa kabel), murah tetapi menawarkan *bandwidth* dan *latency* yang cukup buruk jika dibandingkan. Tidak ada peneliti machine learning yang waras akan menggunakan ini untuk membangun klaster server. Pada bagian berikut, kita akan fokus pada interkoneksi yang cocok untuk deep learning.
 
-:Common Latency Numbers.
+* **PCIe** adalah bus khusus untuk koneksi titik-ke-titik dengan bandwidth sangat tinggi (hingga 32 GB/s pada PCIe 4.0 di slot 16-lane) per jalur. Latensinya berada di kisaran mikrodetik satu digit (5 μs). Jalur PCIe sangat berharga. Prosesor hanya memiliki jumlah terbatas: AMD EPYC 3 memiliki 128 jalur, Intel Xeon memiliki hingga 48 jalur per chip; pada CPU kelas desktop, jumlahnya adalah 20 (Ryzen 9) dan 16 (Core i9). Karena GPU umumnya memiliki 16 jalur, ini membatasi jumlah GPU yang dapat terhubung ke CPU dengan bandwidth penuh. Bagaimanapun, GPU harus berbagi jalur dengan perangkat berbandwidth tinggi lainnya seperti penyimpanan dan Ethernet. Sama seperti akses RAM, transfer dalam jumlah besar lebih disukai karena mengurangi overhead paket.
+* **Ethernet** adalah cara yang paling umum digunakan untuk menghubungkan komputer. Meskipun Ethernet secara signifikan lebih lambat daripada PCIe, ia sangat murah dan tangguh untuk dipasang serta mencakup jarak yang lebih jauh. Bandwidth tipikal untuk server kelas rendah adalah 1 GBit/s. Perangkat kelas tinggi (misalnya, [C5 instances](https://aws.amazon.com/ec2/instance-types/c5/) di cloud) menawarkan antara 10 hingga 100 GBit/s bandwidth. Seperti pada semua kasus sebelumnya, transmisi data memiliki overhead yang signifikan. Perhatikan bahwa kita hampir tidak pernah menggunakan Ethernet mentah secara langsung, melainkan menggunakan protokol yang dijalankan di atas interkoneksi fisik (seperti UDP atau TCP/IP). Ini menambah overhead lebih lanjut. Seperti PCIe, Ethernet dirancang untuk menghubungkan dua perangkat, misalnya, sebuah komputer dan *switch*.
+* **Switches** memungkinkan kita untuk menghubungkan beberapa perangkat dengan cara di mana pasangan perangkat mana pun dapat melakukan koneksi titik-ke-titik (biasanya dengan bandwidth penuh) secara bersamaan. Misalnya, *Ethernet switches* mungkin menghubungkan 40 server dengan bandwidth lintas-seksional yang tinggi. Perlu diperhatikan bahwa *switch* tidak terbatas pada jaringan komputer tradisional. Bahkan jalur PCIe dapat di[*switch*](https://www.broadcom.com/products/pcie-switches-bridges/pcie-switches). Ini terjadi, misalnya, untuk menghubungkan sejumlah besar GPU ke prosesor utama, seperti halnya pada [P2 instances](https://aws.amazon.com/ec2/instance-types/p2/).
+* **NVLink** adalah alternatif untuk PCIe ketika datang ke interkoneksi dengan bandwidth sangat tinggi. NVLink menawarkan hingga 300 Gbit/s *data transfer rate* per tautan. GPU server (Volta V100) memiliki enam tautan, sementara GPU kelas konsumen (RTX 2080 Ti) hanya memiliki satu tautan, yang beroperasi pada laju 100 Gbit/s yang lebih rendah. Kami merekomendasikan untuk menggunakan [NCCL](https://github.com/NVIDIA/nccl) untuk mencapai transfer data yang tinggi antara GPU.
 
-| Action | Time | Notes |
-| :----------------------------------------- | -----: | :---------------------------------------------- |
-| L1 cache reference/hit                     | 1.5 ns | 4 cycles                                        |
-| Floating-point add/mult/FMA                | 1.5 ns | 4 cycles                                        |
-| L2 cache reference/hit                     |   5 ns | 12 ~ 17 cycles                                  |
-| Branch mispredict                          |   6 ns | 15 ~ 20 cycles                                  |
-| L3 cache hit (unshared cache)              |  16 ns | 42 cycles                                       |
-| L3 cache hit (shared in another core)      |  25 ns | 65 cycles                                       |
-| Mutex lock/unlock                          |  25 ns |                                                 |
-| L3 cache hit (modified in another core)    |  29 ns | 75 cycles                                       |
-| L3 cache hit (on a remote CPU socket)      |  40 ns | 100 ~ 300 cycles (40 ~ 116 ns)                  |
-| QPI hop to a another CPU (per hop)         |  40 ns |                                                 |
-| 64MB memory ref. (local CPU)          |  46 ns | TinyMemBench on Broadwell E5-2690v4             |
-| 64MB memory ref. (remote CPU)         |  70 ns | TinyMemBench on Broadwell E5-2690v4             |
-| 256MB memory ref. (local CPU)         |  75 ns | TinyMemBench on Broadwell E5-2690v4             |
-| Intel Optane random write                  |  94 ns | UCSD Non-Volatile Systems Lab                   |
-| 256MB memory ref. (remote CPU)        | 120 ns | TinyMemBench on Broadwell E5-2690v4             |
-| Intel Optane random read                   | 305 ns | UCSD Non-Volatile Systems Lab                   |
-| Send 4KB over 100 Gbps HPC fabric          |   1 μs | MVAPICH2 over Intel Omni-Path                   |
-| Compress 1KB with Google Snappy            |   3 μs |                                                 |
-| Send 4KB over 10 Gbps ethernet             |  10 μs |                                                 |
-| Write 4KB randomly to NVMe SSD             |  30 μs | DC P3608 NVMe SSD (QOS 99% is 500μs)            |
-| Transfer 1MB to/from NVLink GPU            |  30 μs | ~33GB/s on NVIDIA 40GB NVLink                 |
-| Transfer 1MB to/from PCI-E GPU             |  80 μs | ~12GB/s on PCIe 3.0 x16 link                  |
-| Read 4KB randomly from NVMe SSD            | 120 μs | DC P3608 NVMe SSD (QOS 99%)                     |
-| Read 1MB sequentially from NVMe SSD        | 208 μs | ~4.8GB/s DC P3608 NVMe SSD                    |
-| Write 4KB randomly to SATA SSD             | 500 μs | DC S3510 SATA SSD (QOS 99.9%)                   |
-| Read 4KB randomly from SATA SSD            | 500 μs | DC S3510 SATA SSD (QOS 99.9%)                   |
-| Round trip within same data center          | 500 μs | One-way ping is ~250μs                          |
-| Read 1MB sequentially from SATA SSD        |   2 ms | ~550MB/s DC S3510 SATA SSD                    |
-| Read 1MB sequentially from disk            |   5 ms | ~200MB/s server HDD                           |
-| Random Disk Access (seek+rotation)         |  10 ms |                                                 |
-| Send packet CA->Netherlands->CA            | 150 ms |                                                 |
+
+
+
+## Lebih Banyak Angka Latensi
+
+Ringkasan dalam :numref:`table_latency_numbers` dan :numref:`table_latency_numbers_tesla` berasal dari [Eliot Eshelman](https://gist.github.com/eshelman) yang terus memperbarui versi angka ini sebagai [GitHub gist](https://gist.github.com/eshelman/343a1c46cb3fba142c1afdcdeec17646).
+
+:Tabel Angka Latensi Umum.
+
+| Aksi                                   | Waktu  | Catatan                                             |
+| :------------------------------------- | ------:| :-------------------------------------------------- |
+| Referensi/hit L1 cache                 | 1.5 ns | 4 siklus                                            |
+| Penambahan/perkalian floating-point    | 1.5 ns | 4 siklus                                            |
+| Referensi/hit L2 cache                 |   5 ns | 12 ~ 17 siklus                                      |
+| Prediksi cabang gagal                  |   6 ns | 15 ~ 20 siklus                                      |
+| Hit L3 cache (cache tidak berbagi)     |  16 ns | 42 siklus                                           |
+| Hit L3 cache (berbagi di core lain)    |  25 ns | 65 siklus                                           |
+| Kunci/membuka kunci mutex              |  25 ns |                                                     |
+| Hit L3 cache (dimodifikasi di core lain)|  29 ns | 75 siklus                                           |
+| Hit L3 cache (di socket CPU lain)      |  40 ns | 100 ~ 300 siklus (40 ~ 116 ns)                      |
+| Lompatan QPI ke CPU lain (per lompatan)|  40 ns |                                                     |
+| Referensi memori 64MB (CPU lokal)      |  46 ns | TinyMemBench pada Broadwell E5-2690v4               |
+| Referensi memori 64MB (CPU jarak jauh) |  70 ns | TinyMemBench pada Broadwell E5-2690v4               |
+| Referensi memori 256MB (CPU lokal)     |  75 ns | TinyMemBench pada Broadwell E5-2690v4               |
+| Penulisan acak Intel Optane            |  94 ns | UCSD Non-Volatile Systems Lab                       |
+| Referensi memori 256MB (CPU jarak jauh)| 120 ns | TinyMemBench pada Broadwell E5-2690v4               |
+| Pembacaan acak Intel Optane            | 305 ns | UCSD Non-Volatile Systems Lab                       |
+| Kirim 4KB melalui 100 Gbps HPC fabric  |   1 μs | MVAPICH2 melalui Intel Omni-Path                    |
+| Kompres 1KB dengan Google Snappy       |   3 μs |                                                     |
+| Kirim 4KB melalui Ethernet 10 Gbps     |  10 μs |                                                     |
+| Tulis 4KB acak ke NVMe SSD             |  30 μs | DC P3608 NVMe SSD (QOS 99% adalah 500μs)            |
+| Transfer 1MB ke/dari GPU NVLink        |  30 μs | ~33GB/s pada NVIDIA 40GB NVLink                     |
+| Transfer 1MB ke/dari GPU PCI-E         |  80 μs | ~12GB/s pada PCIe 3.0 x16 link                      |
+| Baca 4KB acak dari NVMe SSD            | 120 μs | DC P3608 NVMe SSD (QOS 99%)                         |
+| Baca 1MB secara berurutan dari NVMe SSD| 208 μs | ~4.8GB/s DC P3608 NVMe SSD                          |
+| Tulis 4KB acak ke SATA SSD             | 500 μs | DC S3510 SATA SSD (QOS 99.9%)                       |
+| Baca 4KB acak dari SATA SSD            | 500 μs | DC S3510 SATA SSD (QOS 99.9%)                       |
+| Round trip dalam pusat data yang sama  | 500 μs | Satu arah ping adalah ~250μs                        |
+| Baca 1MB secara berurutan dari SATA SSD|   2 ms | ~550MB/s DC S3510 SATA SSD                          |
+| Baca 1MB secara berurutan dari disk    |   5 ms | ~200MB/s server HDD                                 |
+| Akses Disk Acak (seek + rotasi)        |  10 ms |                                                     |
+| Kirim paket CA->Belanda->CA            | 150 ms |                                                     |
 :label:`table_latency_numbers`
 
-:Latency Numbers for NVIDIA Tesla GPUs.
+:Tabel Angka Latensi untuk GPU NVIDIA Tesla.
 
-| Action | Time | Notes |
-| :------------------------------ | -----: | :---------------------------------------- |
-| GPU Shared Memory access        |  30 ns | 30~90 cycles (bank conflicts add latency) |
-| GPU Global Memory access        | 200 ns | 200~800 cycles                            |
-| Launch CUDA kernel on GPU       |  10 μs | Host CPU instructs GPU to start kernel    |
-| Transfer 1MB to/from NVLink GPU |  30 μs | ~33GB/s on NVIDIA 40GB NVLink           |
-| Transfer 1MB to/from PCI-E GPU  |  80 μs | ~12GB/s on PCI-Express x16 link         |
+| Aksi                              | Waktu  | Catatan                                             |
+| :-------------------------------- | ------:| :-------------------------------------------------- |
+| Akses Memori Bersama GPU          |  30 ns | 30~90 siklus (konflik bank menambah latensi)        |
+| Akses Memori Global GPU           | 200 ns | 200~800 siklus                                      |
+| Luncurkan kernel CUDA pada GPU    |  10 μs | Host CPU menginstruksikan GPU untuk memulai kernel  |
+| Transfer 1MB ke/dari GPU NVLink   |  30 μs | ~33GB/s pada NVIDIA 40GB NVLink                     |
+| Transfer 1MB ke/dari GPU PCI-E    |  80 μs | ~12GB/s pada PCI-Express x16 link                   |
 :label:`table_latency_numbers_tesla`
 
-## Summary
+## Ringkasan
 
-* Devices have overheads for operations. Hence it is important to aim for a small number of large transfers rather than many small ones. This applies to RAM, SSDs, networks and GPUs.
-* Vectorization is key for performance. Make sure you are aware of the specific abilities of your accelerator. E.g., some Intel Xeon CPUs are particularly good for INT8 operations, NVIDIA Volta GPUs excel at FP16 matrix-matrix operations and NVIDIA Turing shines at FP16, INT8, and INT4 operations.
-* Numerical overflow due to small data types can be a problem during training (and to a lesser extent during inference).
-* Aliasing can significantly degrade performance. For instance, memory alignment on 64 bit CPUs should be done with respect to 64 bit boundaries. On GPUs it is a good idea to keep convolution sizes aligned, e.g., to tensor cores.
-* Match your algorithms to the hardware (e.g., memory footprint, and bandwidth). Great speedup (orders of magnitude) can be achieved when fitting the parameters into caches.
-* We recommend that you sketch out the performance of a novel algorithm on paper before verifying the experimental results. Discrepancies of an order-of-magnitude or more are reasons for concern.
-* Use profilers to debug performance bottlenecks.
-* Training and inference hardware have different sweet spots in terms of price and performance.
+* Perangkat memiliki overhead untuk operasi. Oleh karena itu penting untuk bertujuan untuk transfer besar dengan jumlah kecil daripada banyak transfer kecil. Hal ini berlaku untuk RAM, SSD, jaringan, dan GPU.
+* Vektorisasi adalah kunci untuk kinerja. Pastikan Anda menyadari kemampuan spesifik dari akselerator Anda. Misalnya, beberapa CPU Intel Xeon sangat baik untuk operasi INT8, GPU NVIDIA Volta unggul dalam operasi matriks-matriks FP16, dan NVIDIA Turing cemerlang dalam operasi FP16, INT8, dan INT4.
+* Overflow numerik akibat tipe data kecil dapat menjadi masalah selama pelatihan (dan dalam skala yang lebih kecil selama inferensi).
+* Aliasing dapat secara signifikan menurunkan kinerja. Misalnya, penyelarasan memori pada CPU 64-bit harus dilakukan dengan batas 64-bit. Pada GPU, adalah ide yang baik untuk menjaga ukuran konvolusi tetap selaras, misalnya dengan tensor core.
+* Sesuaikan algoritma Anda dengan perangkat keras (misalnya, jejak memori dan bandwidth). Percepatan yang luar biasa (dalam skala besar) dapat dicapai ketika parameter cocok dengan cache.
+* Kami merekomendasikan agar Anda merancang kinerja algoritma baru di atas kertas sebelum memverifikasi hasil eksperimental. Perbedaan dalam skala besar adalah alasan untuk waspada.
+* Gunakan profiler untuk mendeteksi kemacetan kinerja.
+* Perangkat keras pelatihan dan inferensi memiliki titik manis yang berbeda dalam hal harga dan kinerja.
 
-## Exercises
+## Latihan
 
-1. Write C code to test whether there is any difference in speed between accessing memory aligned or misaligned relative to the external memory interface. Hint: be careful of caching effects.
-1. Test the difference in speed between accessing memory in sequence or with a given stride.
-1. How could you measure the cache sizes on a CPU?
-1. How would you lay out data across multiple memory channels for maximum bandwidth? How would you lay it out if you had many small threads?
-1. An enterprise-class HDD is spinning at 10,000 rpm. What is the absolutely minimum time an HDD needs to spend worst case before it can read data (you can assume that heads move almost instantaneously)? Why are 2.5" HDDs becoming popular for commercial servers (relative to 3.5" and 5.25" drives)?
-1. Assume that an HDD manufacturer increases the storage density from 1 Tbit per square inch to 5 Tbit per square inch. How much information can you store on a ring on a 2.5" HDD? Is there a difference between the inner and outer tracks?
-1. Going from 8 bit to 16 bit data types increases the amount of silicon approximately by four times. Why? Why might NVIDIA have added INT4 operations to their Turing GPUs?
-1. How much faster is it to read forward through memory vs. reading backwards? Does this number differ between different computers and CPU vendors? Why? Write C code and experiment with it.
-1. Can you measure the cache size of your disk? What is it for a typical HDD? Do SSDs need a cache?
-1. Measure the packet overhead when sending messages across the Ethernet. Look up the difference between UDP and TCP/IP connections.
-1. Direct memory access allows devices other than the CPU to write (and read) directly to (from) memory. Why is this a good idea?
-1. Look at the performance numbers for the Turing T4 GPU. Why does the performance "only" double as you go from FP16 to INT8 and INT4?
-1. What is the shortest time it should take for a packet on a round trip between San Francisco and Amsterdam? Hint: you can assume that the distance is 10,000 km.
+1. Tulis kode C untuk menguji apakah ada perbedaan kecepatan antara mengakses memori yang sejajar atau tidak sejajar relatif terhadap antarmuka memori eksternal. Petunjuk: berhati-hatilah dengan efek cache.
+2. Uji perbedaan kecepatan antara mengakses memori secara berurutan atau dengan *stride* tertentu.
+3. Bagaimana Anda bisa mengukur ukuran cache pada CPU?
+4. Bagaimana Anda akan meletakkan data di beberapa saluran memori untuk mencapai bandwidth maksimum? Bagaimana Anda akan meletakkannya jika Anda memiliki banyak *thread* kecil?
+5. HDD kelas enterprise berputar pada 10,000 rpm. Berapa waktu minimum absolut yang dibutuhkan oleh HDD dalam kasus terburuk sebelum dapat membaca data (Anda dapat mengasumsikan bahwa kepala bergerak hampir seketika)? Mengapa HDD 2,5" menjadi populer untuk server komersial (dibandingkan dengan 3,5" dan 5,25")?
+6. Asumsikan bahwa produsen HDD meningkatkan kepadatan penyimpanan dari 1 Tbit per inci persegi menjadi 5 Tbit per inci persegi. Berapa banyak informasi yang dapat Anda simpan pada satu lingkaran pada HDD 2,5"? Apakah ada perbedaan antara trek bagian dalam dan luar?
+7. Peningkatan dari tipe data 8 bit ke 16 bit meningkatkan jumlah silikon kira-kira empat kali. Mengapa? Mengapa NVIDIA menambahkan operasi INT4 ke GPU Turing mereka?
+8. Seberapa cepat membaca maju melalui memori dibandingkan dengan membaca mundur? Apakah angka ini berbeda antara komputer dan vendor CPU yang berbeda? Mengapa? Tulis kode C dan coba eksperimen.
+9. Bisakah Anda mengukur ukuran cache disk Anda? Berapa ukurannya untuk HDD tipikal? Apakah SSD memerlukan cache?
+10. Ukur overhead paket saat mengirim pesan melalui Ethernet. Cari tahu perbedaan antara koneksi UDP dan TCP/IP.
+11. *Direct memory access* memungkinkan perangkat selain CPU untuk menulis (dan membaca) langsung ke (dari) memori. Mengapa ini ide yang baik?
+12. Lihat angka kinerja untuk GPU Turing T4. Mengapa kinerja "hanya" berlipat ganda saat Anda beralih dari FP16 ke INT8 dan INT4?
+13. Berapa waktu terpendek yang diperlukan untuk paket dalam perjalanan pulang antara San Francisco dan Amsterdam? Petunjuk: Anda dapat mengasumsikan bahwa jaraknya adalah 10,000 km.
 
-
-[Discussions](https://discuss.d2l.ai/t/363)
+[Diskusi](https://discuss.d2l.ai/t/363)
