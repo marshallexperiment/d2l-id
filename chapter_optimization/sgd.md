@@ -247,7 +247,7 @@ Sejauh ini, kita sedikit longgar dalam membicarakan tentang stochastic gradient 
 
 Namun, sebenarnya ini bukan yang kita lakukan. Dalam contoh mainan di bagian ini, kita hanya menambahkan noise ke gradien yang sebenarnya non-stokastik, yaitu, kita berpura-pura memiliki pasangan $(x_i, y_i)$. Ternyata ini dibenarkan di sini (lihat latihan untuk diskusi lebih rinci). Yang lebih mengganggu adalah bahwa dalam semua diskusi sebelumnya jelas kita tidak melakukan ini. Sebaliknya, kita mengiterasi semua instance *tepat sekali*. Untuk melihat mengapa ini lebih disukai, pertimbangkan sebaliknya, yaitu kita mengambil $n$ pengamatan dari distribusi diskrit *dengan pengulangan*. Probabilitas memilih elemen $i$ secara acak adalah $1/n$. Jadi untuk memilihnya *setidaknya sekali* adalah
 
-$$P(\textrm{terpilih~} i) = 1 - P(\textrm{tidak~dipilih~} i) = 1 - (1-1/n)^n \approx 1-e^{-1} \approx 0.63.$$
+$$P(\textrm{terpilih~} i) = 1 - P(\textrm{dibuang~} i) = 1 - (1-1/n)^n \approx 1-e^{-1} \approx 0.63.$$
 
 Pemikiran serupa menunjukkan bahwa probabilitas memilih beberapa sampel (yaitu contoh pelatihan) *tepat sekali* diberikan oleh
 
