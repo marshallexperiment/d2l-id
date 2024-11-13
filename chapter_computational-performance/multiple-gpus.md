@@ -1,85 +1,78 @@
-# Training on Multiple GPUs
+# Pelatihan pada Banyak GPU
 :label:`sec_multi_gpu`
 
-So far we discussed how to train models efficiently on CPUs and GPUs. We even showed how deep learning frameworks allow one to parallelize computation and communication automatically between them in :numref:`sec_auto_para`. We also showed in :numref:`sec_use_gpu` how to list all the available GPUs on a computer using the `nvidia-smi` command.
-What we did *not* discuss is how to actually parallelize deep learning training.
-Instead, we implied in passing that one would somehow split the data across multiple devices and make it work. The present section fills in the details and shows how to train a network in parallel when starting from scratch. Details on how to take advantage of functionality in high-level APIs is relegated to :numref:`sec_multi_gpu_concise`.
-We assume that you are familiar with minibatch stochastic gradient descent algorithms such as the ones described in :numref:`sec_minibatch_sgd`.
+Sejauh ini kita telah membahas cara melatih model secara efisien pada CPU dan GPU. Kita bahkan menunjukkan bagaimana framework deep learning memungkinkan seseorang untuk melakukan paralelisasi komputasi dan komunikasi secara otomatis di antara keduanya pada :numref:`sec_auto_para`. Kita juga menunjukkan pada :numref:`sec_use_gpu` bagaimana cara mendaftar semua GPU yang tersedia di komputer menggunakan perintah `nvidia-smi`.
+Namun, yang belum kita bahas adalah bagaimana sebenarnya melakukan paralelisasi pelatihan deep learning.
+Sebaliknya, kita sempat mengisyaratkan bahwa kita dapat membagi data di beberapa perangkat dan membuatnya bekerja. Bagian ini akan menjelaskan detail tersebut dan menunjukkan cara melatih jaringan secara paralel dari awal. Detail tentang cara memanfaatkan fungsionalitas dalam API tingkat tinggi akan dibahas pada :numref:`sec_multi_gpu_concise`.
+Kami mengasumsikan bahwa Anda sudah familiar dengan algoritma minibatch stochastic gradient descent seperti yang dijelaskan pada :numref:`sec_minibatch_sgd`.
 
+## Membagi Masalah
 
-## Splitting the Problem
+Mari kita mulai dengan masalah visi komputer yang sederhana dan jaringan yang sedikit kuno, misalnya dengan beberapa lapisan konvolusi, pooling, dan mungkin beberapa lapisan fully connected pada akhirnya.
+Artinya, mari kita mulai dengan jaringan yang terlihat cukup mirip dengan LeNet :cite:`LeCun.Bottou.Bengio.ea.1998` atau AlexNet :cite:`Krizhevsky.Sutskever.Hinton.2012`.
+Diberikan beberapa GPU (2 jika itu adalah server desktop, 4 pada instance AWS g4dn.12xlarge, 8 pada p3.16xlarge, atau 16 pada p2.16xlarge), kita ingin membagi pelatihan sedemikian rupa untuk mencapai peningkatan kecepatan yang baik sambil tetap mendapatkan keuntungan dari pilihan desain yang sederhana dan dapat direproduksi. Banyak GPU, bagaimanapun, meningkatkan *memori* dan kemampuan *komputasi*. Singkatnya, kita memiliki beberapa pilihan berikut, mengingat minibatch data pelatihan yang ingin kita klasifikasikan.
 
-Let's start with a simple computer vision problem and a slightly archaic network, e.g., with multiple layers of convolutions, pooling, and possibly a few fully connected layers in the end.
-That is, let's start with a network that looks quite similar to LeNet :cite:`LeCun.Bottou.Bengio.ea.1998` or AlexNet :cite:`Krizhevsky.Sutskever.Hinton.2012`.
-Given multiple GPUs (2 if it is a desktop server, 4 on an AWS g4dn.12xlarge instance, 8 on a p3.16xlarge, or 16 on a p2.16xlarge), we want to partition training in a manner as to achieve good speedup while simultaneously benefitting from simple and reproducible design choices. Multiple GPUs, after all, increase both *memory* and *computation* ability. In a nutshell, we have the following choices, given a minibatch of training data that we want to classify.
+Pertama, kita dapat membagi jaringan di beberapa GPU. Artinya, setiap GPU menerima data yang mengalir ke lapisan tertentu, memproses data di sejumlah lapisan berikutnya, dan kemudian mengirimkan data ke GPU berikutnya.
+Ini memungkinkan kita memproses data dengan jaringan yang lebih besar dibandingkan dengan apa yang dapat ditangani oleh satu GPU.
+Selain itu,
+jejak memori per GPU dapat dikendalikan dengan baik (yaitu merupakan bagian dari total jejak jaringan).
 
-First, we could partition the network across multiple GPUs. That is, each GPU takes as input the data flowing into a particular layer, processes data across a number of subsequent layers and then sends the data to the next GPU.
-This allows us to process data with larger networks when compared with what a single GPU could handle.
-Besides,
-memory footprint per GPU can be well controlled (it is a fraction of the total network footprint).
+Namun, antarmuka antar lapisan (dan dengan demikian antar GPU) membutuhkan sinkronisasi yang ketat. Ini bisa menjadi rumit, terutama jika beban kerja komputasi tidak cocok di antara lapisan. Masalah ini diperparah jika jumlah GPU sangat besar.
+Antarmuka antar lapisan juga
+membutuhkan transfer data dalam jumlah besar,
+seperti aktivasi dan gradien.
+Ini bisa membebani bandwidth bus GPU.
+Selain itu, operasi intensif-komputasi yang bersifat sekuensial tidak mudah dibagi. Lihat misalnya :citet:`Mirhoseini.Pham.Le.ea.2017` untuk upaya terbaik dalam hal ini. Ini tetap menjadi masalah yang sulit dan belum jelas apakah mungkin untuk mencapai skalabilitas yang baik (linear) pada masalah non-sepele. Kami tidak merekomendasikan pendekatan ini kecuali terdapat dukungan framework atau sistem operasi yang sangat baik untuk menghubungkan beberapa GPU.
 
-However, the interface between layers (and thus GPUs) requires tight synchronization. This can be tricky, in particular if the computational workloads are not properly matched between layers. The problem is exacerbated for large numbers of GPUs.
-The interface between layers also
-requires large amounts of data transfer,
-such as activations and gradients.
-This may overwhelm the bandwidth of the GPU buses.
-Moreover, compute-intensive, yet sequential operations are nontrivial to partition. See e.g., :citet:`Mirhoseini.Pham.Le.ea.2017` for a best effort in this regard. It remains a difficult problem and it is unclear whether it is possible to achieve good (linear) scaling on nontrivial problems. We do not recommend it unless there is excellent framework or operating system support for chaining together multiple GPUs.
+Kedua, kita bisa membagi pekerjaan per lapisan. Misalnya, daripada menghitung 64 channel pada satu GPU, kita bisa membagi masalah tersebut ke 4 GPU, masing-masing menghasilkan data untuk 16 channel.
+Demikian pula, untuk lapisan fully connected, kita bisa membagi jumlah unit output. :numref:`fig_alexnet_original` (diambil dari :citet:`Krizhevsky.Sutskever.Hinton.2012`)
+mengilustrasikan desain ini, di mana strategi ini digunakan untuk menangani GPU yang memiliki footprint memori yang sangat kecil (2 GB pada saat itu).
+Ini memungkinkan skalabilitas yang baik dalam hal komputasi, dengan catatan jumlah channel (atau unit) tidak terlalu kecil.
+Selain itu,
+beberapa GPU dapat memproses jaringan yang semakin besar karena memori yang tersedia bertambah secara linear.
 
-
-Second, we could split the work layerwise. For instance, rather than computing 64 channels on a single GPU we could split up the problem across 4 GPUs, each of which generates data for 16 channels.
-Likewise, for a fully connected layer we could split the number of output units. :numref:`fig_alexnet_original` (taken from :citet:`Krizhevsky.Sutskever.Hinton.2012`)
-illustrates this design, where this strategy was used to deal with GPUs that had a very small memory footprint (2 GB at the time).
-This allows for good scaling in terms of computation, provided that the number of channels (or units) is not too small.
-Besides,
-multiple GPUs can process increasingly larger networks since the available memory scales linearly.
-
-![Model parallelism in the original AlexNet design due to limited GPU memory.](../img/alexnet-original.svg)
+![Paralelisme model dalam desain AlexNet asli karena keterbatasan memori GPU.](../img/alexnet-original.svg)
 :label:`fig_alexnet_original`
 
-However,
-we need a *very large* number of synchronization or barrier operations since each layer depends on the results from all the other layers.
-Moreover, the amount of data that needs to be transferred is potentially even larger than when distributing layers across GPUs. Thus, we do not recommend this approach due to its bandwidth cost and complexity.
+Namun,
+kita membutuhkan jumlah operasi sinkronisasi atau penghalang yang *sangat besar* karena setiap lapisan bergantung pada hasil dari semua lapisan lainnya.
+Selain itu, jumlah data yang perlu ditransfer berpotensi lebih besar daripada ketika mendistribusikan lapisan antar GPU. Oleh karena itu, kami tidak merekomendasikan pendekatan ini karena biaya bandwidth dan kompleksitasnya.
 
-Last, we could partition data across multiple GPUs. This way all GPUs perform the same type of work, albeit on different observations. Gradients are aggregated across GPUs after each minibatch of training data.
-This is the simplest approach and it can be applied in any situation.
-We only need to synchronize after each minibatch. That said, it is highly desirable to start exchanging gradients parameters already while others are still being computed.
-Moreover, larger numbers of GPUs lead to larger minibatch sizes, thus increasing training efficiency.
-However, adding more GPUs does not allow us to train larger models.
+Terakhir, kita bisa membagi data di beberapa GPU. Dengan cara ini semua GPU melakukan jenis pekerjaan yang sama, meskipun pada pengamatan yang berbeda. Gradien dikumpulkan di antara GPU setelah setiap minibatch data pelatihan.
+Ini adalah pendekatan yang paling sederhana dan dapat diterapkan dalam situasi apa pun.
+Kita hanya perlu melakukan sinkronisasi setelah setiap minibatch. Meski begitu, sangat diinginkan untuk mulai bertukar parameter gradien saat yang lain masih dihitung.
+Selain itu, semakin banyak GPU berarti semakin besar ukuran minibatch, sehingga meningkatkan efisiensi pelatihan.
+Namun, menambah jumlah GPU tidak memungkinkan kita melatih model yang lebih besar.
 
-
-![Parallelization on multiple GPUs. From left to right: original problem, network partitioning, layerwise partitioning, data parallelism.](../img/splitting.svg)
+![Paralelisasi pada beberapa GPU. Dari kiri ke kanan: masalah asli, pembagian jaringan, pembagian lapisan, paralelisme data.](../img/splitting.svg)
 :label:`fig_splitting`
 
+Perbandingan berbagai cara paralelisasi pada beberapa GPU ditunjukkan pada :numref:`fig_splitting`.
+Secara umum, paralelisme data adalah cara yang paling mudah untuk dilanjutkan, asalkan kita memiliki akses ke GPU dengan memori yang cukup besar. Lihat juga :cite:`Li.Andersen.Park.ea.2014` untuk deskripsi detail tentang pembagian untuk pelatihan terdistribusi. Memori GPU dulu menjadi masalah di masa-masa awal deep learning. Saat ini masalah ini telah diselesaikan untuk semua kecuali kasus yang paling tidak biasa. Kami akan fokus pada paralelisme data dalam bagian berikutnya.
 
-A comparison of different ways of parallelization on multiple GPUs is depicted in :numref:`fig_splitting`.
-By and large, data parallelism is the most convenient way to proceed, provided that we have access to GPUs with sufficiently large memory. See also :cite:`Li.Andersen.Park.ea.2014` for a detailed description of partitioning for distributed training. GPU memory used to be a problem in the early days of deep learning. By now this issue has been resolved for all but the most unusual cases. We focus on data parallelism in what follows.
+## Paralelisme Data
 
-## Data Parallelism
+Misalkan ada $k$ GPU pada sebuah mesin. Mengingat model yang akan dilatih, setiap GPU akan mempertahankan satu set lengkap parameter model secara independen meskipun nilai parameter di seluruh GPU adalah identik dan disinkronkan.
+Sebagai contoh,
+:numref:`fig_data_parallel` mengilustrasikan
+pelatihan dengan
+paralelisme data ketika $k=2$.
 
-Assume that there are $k$ GPUs on a machine. Given the model to be trained, each GPU will maintain a complete set of model parameters independently though parameter values across the GPUs are identical and synchronized.
-As an example,
-:numref:`fig_data_parallel` illustrates
-training with
-data parallelism when $k=2$.
-
-
-![Calculation of minibatch stochastic gradient descent using data parallelism on two GPUs.](../img/data-parallel.svg)
+![Perhitungan stochastic gradient descent menggunakan paralelisme data pada dua GPU.](../img/data-parallel.svg)
 :label:`fig_data_parallel`
 
-In general, the training proceeds as follows:
+Secara umum, pelatihan berlangsung sebagai berikut:
 
-* In any iteration of training, given a random minibatch, we split the examples in the batch into $k$ portions and distribute them evenly across the GPUs.
-* Each GPU calculates loss and gradient of the model parameters based on the minibatch subset it was assigned.
-* The local gradients of each of the $k$ GPUs are aggregated to obtain the current minibatch stochastic gradient.
-* The aggregate gradient is re-distributed to each GPU.
-* Each GPU uses this minibatch stochastic gradient to update the complete set of model parameters that it maintains.
+* Dalam iterasi pelatihan apa pun, diberikan satu minibatch acak, kita membagi contoh dalam batch tersebut menjadi $k$ bagian dan mendistribusikannya secara merata di seluruh GPU.
+* Setiap GPU menghitung loss dan gradien parameter model berdasarkan subset minibatch yang ditugaskan.
+* Gradien lokal dari masing-masing $k$ GPU dikumpulkan untuk mendapatkan minibatch stochastic gradient saat ini.
+* Gradien yang dikumpulkan didistribusikan kembali ke setiap GPU.
+* Setiap GPU menggunakan stochastic gradient ini untuk memperbarui set lengkap parameter model yang dipertahankannya.
 
+Perhatikan bahwa dalam praktik kita *meningkatkan* ukuran minibatch sebesar $k$-lipat ketika melatih pada $k$ GPU sehingga setiap GPU memiliki jumlah pekerjaan yang sama seperti jika kita hanya melatih pada satu GPU saja. Pada server dengan 16 GPU, ini dapat meningkatkan ukuran minibatch secara signifikan dan kita mungkin harus meningkatkan laju pembelajaran sesuai.
+Juga perhatikan bahwa batch normalization pada :numref:`sec_batch_norm` perlu disesuaikan, misalnya dengan mempertahankan koefisien batch normalization yang terpisah per GPU.
+Selanjutnya, kita akan menggunakan jaringan sederhana untuk mengilustrasikan pelatihan multi-GPU.
 
-
-
-Note that in practice we *increase* the minibatch size $k$-fold when training on $k$ GPUs such that each GPU has the same amount of work to do as if we were training on a single GPU only. On a 16-GPU server this can increase the minibatch size considerably and we may have to increase the learning rate accordingly.
-Also note that batch normalization in :numref:`sec_batch_norm` needs to be adjusted, e.g., by keeping a separate batch normalization coefficient per GPU.
-In what follows we will use a toy network to illustrate multi-GPU training.
 
 ```{.python .input}
 #@tab mxnet
@@ -98,13 +91,14 @@ from torch import nn
 from torch.nn import functional as F
 ```
 
-## [**A Toy Network**]
+## [**Jaringan Mainan**]
 
-We use LeNet as introduced in :numref:`sec_lenet` (with slight modifications). We define it from scratch to illustrate parameter exchange and synchronization in detail.
+Kita menggunakan LeNet seperti yang diperkenalkan pada :numref:`sec_lenet` (dengan sedikit modifikasi). Kita mendefinisikannya dari awal untuk mengilustrasikan pertukaran parameter dan sinkronisasi secara rinci.
+
 
 ```{.python .input}
 #@tab mxnet
-# Initialize model parameters
+# Insialisasi parameter 
 scale = 0.01
 W1 = np.random.normal(scale=scale, size=(20, 1, 3, 3))
 b1 = np.zeros(20)
@@ -140,7 +134,7 @@ loss = gluon.loss.SoftmaxCrossEntropyLoss()
 
 ```{.python .input}
 #@tab pytorch
-# Initialize model parameters
+# Insialisasi parameter
 scale = 0.01
 W1 = torch.randn(size=(20, 1, 3, 3)) * scale
 b1 = torch.zeros(20)
@@ -170,11 +164,12 @@ def lenet(X, params):
 loss = nn.CrossEntropyLoss(reduction='none')
 ```
 
-## Data Synchronization
+## Sinkronisasi Data
 
-For efficient multi-GPU training we need two basic operations.
-First we need to have the ability to [**distribute a list of parameters to multiple devices**] and to attach gradients (`get_params`). Without parameters it is impossible to evaluate the network on a GPU.
-Second, we need the ability to sum parameters across multiple devices, i.e., we need an `allreduce` function.
+Untuk pelatihan multi-GPU yang efisien, kita memerlukan dua operasi dasar.
+Pertama, kita perlu memiliki kemampuan untuk [**mendistribusikan daftar parameter ke beberapa perangkat**] dan melampirkan gradien (`get_params`). Tanpa parameter, tidak mungkin mengevaluasi jaringan pada GPU.
+Kedua, kita memerlukan kemampuan untuk menjumlahkan parameter di berbagai perangkat, yaitu, kita memerlukan fungsi `allreduce`.
+
 
 ```{.python .input}
 #@tab mxnet
@@ -194,7 +189,8 @@ def get_params(params, device):
     return new_params
 ```
 
-Let's try it out by copying the model parameters to one GPU.
+Mari kita coba dengan menyalin parameter model ke satu GPU.
+
 
 ```{.python .input}
 #@tab all
@@ -203,8 +199,10 @@ print('b1 weight:', new_params[1])
 print('b1 grad:', new_params[1].grad)
 ```
 
-Since we did not perform any computation yet, the gradient with regard to the bias parameter is still zero.
-Now let's assume that we have a vector distributed across multiple GPUs. The following [**`allreduce` function adds up all vectors and broadcasts the result back to all GPUs**]. Note that for this to work we need to copy the data to the device accumulating the results.
+Karena kita belum melakukan komputasi apa pun, gradien terkait dengan parameter bias masih bernilai nol.
+Sekarang misalkan kita memiliki sebuah vektor yang didistribusikan di beberapa GPU. Fungsi [**`allreduce` berikut menjumlahkan semua vektor dan menyiarkan hasilnya kembali ke semua GPU**]. Perhatikan bahwa agar ini dapat bekerja, kita perlu menyalin data ke perangkat yang mengakumulasi hasilnya.
+
+
 
 ```{.python .input}
 #@tab mxnet
@@ -224,28 +222,31 @@ def allreduce(data):
         data[i][:] = data[0].to(data[i].device)
 ```
 
-Let's test this by creating vectors with different values on different devices and aggregate them.
+Mari kita uji ini dengan membuat vektor dengan nilai yang berbeda pada perangkat yang berbeda dan mengagregasikannya.
+
+
 
 ```{.python .input}
 #@tab mxnet
 data = [np.ones((1, 2), ctx=d2l.try_gpu(i)) * (i + 1) for i in range(2)]
-print('before allreduce:\n', data[0], '\n', data[1])
+print('Sebelum allreduce:\n', data[0], '\n', data[1])
 allreduce(data)
-print('after allreduce:\n', data[0], '\n', data[1])
+print('Sesudah allreduce:\n', data[0], '\n', data[1])
 ```
 
 ```{.python .input}
 #@tab pytorch
 data = [torch.ones((1, 2), device=d2l.try_gpu(i)) * (i + 1) for i in range(2)]
-print('before allreduce:\n', data[0], '\n', data[1])
+print('Sebelum allreduce:\n', data[0], '\n', data[1])
 allreduce(data)
-print('after allreduce:\n', data[0], '\n', data[1])
+print('Sesudah allreduce:\n', data[0], '\n', data[1])
 ```
 
-## Distributing Data
+## Mendistribusikan Data
 
-We need a simple utility function to [**distribute a minibatch evenly across multiple GPUs**]. For instance, on two GPUs we would like to have half of the data to be copied to either of the GPUs.
-Since it is more convenient and more concise, we use the built-in function from the deep learning framework to try it out on a $4 \times 5$ matrix.
+Kita memerlukan fungsi utilitas sederhana untuk [**mendistribusikan minibatch secara merata di beberapa GPU**]. Misalnya, pada dua GPU, kita ingin agar setengah dari data disalin ke masing-masing GPU.
+Karena lebih nyaman dan ringkas, kita menggunakan fungsi bawaan dari framework deep learning untuk mencobanya pada matriks berukuran $4 \times 5$.
+
 
 ```{.python .input}
 #@tab mxnet
@@ -267,13 +268,15 @@ print('load into', devices)
 print('output:', split)
 ```
 
-For later reuse we define a `split_batch` function that splits both data and labels.
+Untuk digunakan kembali di kemudian hari, kita mendefinisikan fungsi `split_batch` yang membagi data dan label.
+
+
 
 ```{.python .input}
 #@tab mxnet
 #@save
 def split_batch(X, y, devices):
-    """Split `X` and `y` into multiple devices."""
+    """Split `X` dan `y` ke banyak devices."""
     assert X.shape[0] == y.shape[0]
     return (gluon.utils.split_and_load(X, devices),
             gluon.utils.split_and_load(y, devices))
@@ -283,62 +286,67 @@ def split_batch(X, y, devices):
 #@tab pytorch
 #@save
 def split_batch(X, y, devices):
-    """Split `X` and `y` into multiple devices."""
+    """Split `X` dan `y` ke banyak devices."""
     assert X.shape[0] == y.shape[0]
     return (nn.parallel.scatter(X, devices),
             nn.parallel.scatter(y, devices))
 ```
 
-## Training
+## Pelatihan
 
-Now we can implement [**multi-GPU training on a single minibatch**]. Its implementation is primarily based on the data parallelism approach described in this section. We will use the auxiliary functions we just discussed, `allreduce` and `split_and_load`, to synchronize the data among multiple GPUs. Note that we do not need to write any specific code to achieve parallelism. Since the computational graph does not have any dependencies across devices within a minibatch, it is executed in parallel *automatically*.
+Sekarang kita bisa mengimplementasikan [**pelatihan multi-GPU pada satu minibatch**]. Implementasinya terutama didasarkan pada pendekatan paralelisme data yang dijelaskan di bagian ini.
+Kita akan menggunakan fungsi tambahan yang baru saja kita bahas, yaitu `allreduce` dan `split_and_load`, untuk menyinkronkan data di antara beberapa GPU. 
+Perhatikan bahwa kita tidak perlu menulis kode khusus untuk mencapai paralelisme.
+Karena grafik komputasi tidak memiliki ketergantungan antar perangkat dalam satu minibatch, maka grafik tersebut dieksekusi secara paralel *secara otomatis*.
+
 
 ```{.python .input}
 #@tab mxnet
 def train_batch(X, y, device_params, devices, lr):
     X_shards, y_shards = split_batch(X, y, devices)
-    with autograd.record():  # Loss is calculated separately on each GPU
+    with autograd.record():  # Loss dihitung secara terpisah pada setiap GPU
         ls = [loss(lenet(X_shard, device_W), y_shard)
               for X_shard, y_shard, device_W in zip(
                   X_shards, y_shards, device_params)]
-    for l in ls:  # Backpropagation is performed separately on each GPU
+    for l in ls:  # Backpropagasi dilakukan secara terpisah pada setiap GPU
         l.backward()
-    # Sum all gradients from each GPU and broadcast them to all GPUs
+    # Jumlahkan semua gradien dari setiap GPU dan siarkan hasilnya ke semua GPU
     for i in range(len(device_params[0])):
         allreduce([device_params[c][i].grad for c in range(len(devices))])
-    # The model parameters are updated separately on each GPU
+    # Parameter model diperbarui secara terpisah pada setiap GPU
     for param in device_params:
-        d2l.sgd(param, lr, X.shape[0])  # Here, we use a full-size batch
+        d2l.sgd(param, lr, X.shape[0])  # Di sini, kita menggunakan ukuran batch penuh
 ```
 
 ```{.python .input}
 #@tab pytorch
 def train_batch(X, y, device_params, devices, lr):
     X_shards, y_shards = split_batch(X, y, devices)
-    # Loss is calculated separately on each GPU
+    # Loss dihitung secara terpisah pada setiap GPU
     ls = [loss(lenet(X_shard, device_W), y_shard).sum()
           for X_shard, y_shard, device_W in zip(
               X_shards, y_shards, device_params)]
-    for l in ls:  # Backpropagation is performed separately on each GPU
+    for l in ls:  # Backpropagasi dilakukan secara terpisah pada setiap GPU
         l.backward()
-    # Sum all gradients from each GPU and broadcast them to all GPUs
+    # Jumlahkan semua gradien dari setiap GPU dan siarkan hasilnya ke semua GPU
     with torch.no_grad():
         for i in range(len(device_params[0])):
             allreduce([device_params[c][i].grad for c in range(len(devices))])
-    # The model parameters are updated separately on each GPU
+    # Parameter model diperbarui secara terpisah pada setiap GPU
     for param in device_params:
-        d2l.sgd(param, lr, X.shape[0]) # Here, we use a full-size batch
+        d2l.sgd(param, lr, X.shape[0])  # Di sini, kita menggunakan ukuran batch penuh
 ```
 
-Now, we can define [**the training function**]. It is slightly different from the ones used in the previous chapters: we need to allocate the GPUs and copy all the model parameters to all the devices.
-Obviously each batch is processed using the `train_batch` function to deal with multiple GPUs. For convenience (and conciseness of code) we compute the accuracy on a single GPU, though this is *inefficient* since the other GPUs are idle.
+Sekarang, kita bisa mendefinisikan [**fungsi pelatihan**]. Fungsi ini sedikit berbeda dari yang digunakan di bab-bab sebelumnya: kita perlu mengalokasikan GPU dan menyalin semua parameter model ke semua perangkat.
+Jelas bahwa setiap batch diproses menggunakan fungsi `train_batch` untuk menangani beberapa GPU. Untuk kemudahan (dan keringkasan kode), kita menghitung akurasi pada satu GPU saja, meskipun ini *tidak efisien* karena GPU lainnya dalam keadaan tidak aktif.
+
 
 ```{.python .input}
 #@tab mxnet
 def train(num_gpus, batch_size, lr):
     train_iter, test_iter = d2l.load_data_fashion_mnist(batch_size)
     devices = [d2l.try_gpu(i) for i in range(num_gpus)]
-    # Copy model parameters to `num_gpus` GPUs
+    # Menyalin parameter model ke `num_gpus` GPU
     device_params = [get_params(params, d) for d in devices]
     num_epochs = 10
     animator = d2l.Animator('epoch', 'test acc', xlim=[1, num_epochs])
@@ -346,11 +354,11 @@ def train(num_gpus, batch_size, lr):
     for epoch in range(num_epochs):
         timer.start()
         for X, y in train_iter:
-            # Perform multi-GPU training for a single minibatch
+            # Melakukan pelatihan multi-GPU untuk satu minibatch
             train_batch(X, y, device_params, devices, lr)
             npx.waitall()
         timer.stop()
-        # Evaluate the model on GPU 0
+        # Mengevaluasi model pada GPU 0
         animator.add(epoch + 1, (d2l.evaluate_accuracy_gpu(
             lambda x: lenet(x, device_params[0]), test_iter, devices[0]),))
     print(f'test acc: {animator.Y[0][-1]:.2f}, {timer.avg():.1f} sec/epoch '
@@ -362,7 +370,7 @@ def train(num_gpus, batch_size, lr):
 def train(num_gpus, batch_size, lr):
     train_iter, test_iter = d2l.load_data_fashion_mnist(batch_size)
     devices = [d2l.try_gpu(i) for i in range(num_gpus)]
-    # Copy model parameters to `num_gpus` GPUs
+    # Menyalin parameter model ke `num_gpus` GPU
     device_params = [get_params(params, d) for d in devices]
     num_epochs = 10
     animator = d2l.Animator('epoch', 'test acc', xlim=[1, num_epochs])
@@ -370,53 +378,54 @@ def train(num_gpus, batch_size, lr):
     for epoch in range(num_epochs):
         timer.start()
         for X, y in train_iter:
-            # Perform multi-GPU training for a single minibatch
+            # Melakukan pelatihan multi-GPU untuk satu minibatch
             train_batch(X, y, device_params, devices, lr)
-            torch.cuda.synchronize()
+            torch.cuda.synchronize()  # Menyinkronkan semua operasi GPU
         timer.stop()
-        # Evaluate the model on GPU 0
+        # Mengevaluasi model pada GPU 0
         animator.add(epoch + 1, (d2l.evaluate_accuracy_gpu(
             lambda x: lenet(x, device_params[0]), test_iter, devices[0]),))
     print(f'test acc: {animator.Y[0][-1]:.2f}, {timer.avg():.1f} sec/epoch '
           f'on {str(devices)}')
 ```
 
-Let's see how well this works [**on a single GPU**].
-We first use a batch size of 256 and a learning rate of 0.2.
+Mari kita lihat seberapa baik ini bekerja [**pada satu GPU**].
+Pertama, kita menggunakan ukuran batch sebesar 256 dan laju pembelajaran sebesar 0.2.
+
 
 ```{.python .input}
 #@tab all
 train(num_gpus=1, batch_size=256, lr=0.2)
 ```
 
-By keeping the batch size and learning rate unchanged and [**increasing the number of GPUs to 2**], we can see that the test accuracy roughly stays the same compared with
-the previous experiment.
-In terms of the optimization algorithms, they are identical. Unfortunately there is no meaningful speedup to be gained here: the model is simply too small; moreover we only have a small dataset, where our slightly unsophisticated approach to implementing multi-GPU training suffered from significant Python overhead. We will encounter more complex models and more sophisticated ways of parallelization going forward.
-Let's see what happens nonetheless for Fashion-MNIST.
+Dengan mempertahankan ukuran batch dan laju pembelajaran tetap tidak berubah dan [**meningkatkan jumlah GPU menjadi 2**], kita dapat melihat bahwa akurasi pengujian kurang lebih tetap sama dibandingkan dengan percobaan sebelumnya.
+Dalam hal algoritma optimasi, mereka identik. Sayangnya, tidak ada peningkatan kecepatan yang signifikan di sini: model ini terlalu kecil; selain itu, kita hanya memiliki dataset kecil, di mana pendekatan kita yang kurang canggih dalam mengimplementasikan pelatihan multi-GPU mengalami overhead Python yang signifikan. Ke depannya, kita akan menemui model yang lebih kompleks dan cara paralelisasi yang lebih canggih.
+Mari kita lihat apa yang terjadi pada Fashion-MNIST meskipun demikian.
+
 
 ```{.python .input}
 #@tab all
 train(num_gpus=2, batch_size=256, lr=0.2)
 ```
 
-## Summary
+## Ringkasan
 
-* There are multiple ways to split deep network training over multiple GPUs. We could split them between layers, across layers, or across data. The former two require tightly choreographed data transfers. Data parallelism is the simplest strategy.
-* Data parallel training is straightforward. However, it increases the effective minibatch size to be efficient.
-* In data parallelism, data is split across multiple GPUs, where each GPU executes its own forward and backward operation and subsequently gradients are aggregated and results are broadcast back to the GPUs.
-* We may use slightly increased learning rates for larger minibatches.
+* Ada beberapa cara untuk membagi pelatihan jaringan dalam di beberapa GPU. Kita bisa membaginya di antara lapisan, di seluruh lapisan, atau di seluruh data. Dua yang pertama memerlukan transfer data yang sangat terkoordinasi. Paralelisme data adalah strategi yang paling sederhana.
+* Pelatihan dengan paralelisme data cukup mudah. Namun, ini meningkatkan ukuran minibatch efektif agar efisien.
+* Dalam paralelisme data, data dibagi di beberapa GPU, di mana setiap GPU menjalankan operasi forward dan backward sendiri, kemudian gradien dikumpulkan dan hasilnya disiarkan kembali ke GPU.
+* Kita dapat menggunakan laju pembelajaran yang sedikit lebih tinggi untuk minibatch yang lebih besar.
 
-## Exercises
+## Latihan
 
-1. When training on $k$ GPUs, change the minibatch size from $b$ to $k \cdot b$, i.e., scale it up by the number of GPUs.
-1. Compare accuracy for different learning rates. How does it scale with the number of GPUs?
-1. Implement a more efficient `allreduce` function that aggregates different parameters on different GPUs? Why is it more efficient?
-1. Implement multi-GPU test accuracy computation.
+1. Saat melatih pada $k$ GPU, ubahlah ukuran minibatch dari $b$ menjadi $k \cdot b$, yaitu skalakan sesuai dengan jumlah GPU.
+2. Bandingkan akurasi untuk berbagai laju pembelajaran. Bagaimana skala tersebut dengan jumlah GPU?
+3. Implementasikan fungsi `allreduce` yang lebih efisien yang mengumpulkan parameter yang berbeda pada GPU yang berbeda? Mengapa ini lebih efisien?
+4. Implementasikan komputasi akurasi uji multi-GPU.
 
 :begin_tab:`mxnet`
-[Discussions](https://discuss.d2l.ai/t/364)
+[Diskusi](https://discuss.d2l.ai/t/364)
 :end_tab:
 
 :begin_tab:`pytorch`
-[Discussions](https://discuss.d2l.ai/t/1669)
+[Diskusi](https://discuss.d2l.ai/t/1669)
 :end_tab:
