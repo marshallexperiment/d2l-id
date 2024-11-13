@@ -145,11 +145,12 @@ for i in range(256):
 timer.stop()
 ```
 
-A faster strategy is to perform column-wise assignment.
+Strategi yang lebih cepat adalah melakukan penugasan secara kolom.
+
 
 ```{.python .input}
 #@tab mxnet
-# Compute A = BC one column at a time
+# Hitung A = BC satu kolom pada satu waktu
 timer.start()
 for j in range(256):
     A[:, j] = np.dot(B, C[:, j])
@@ -159,7 +160,7 @@ timer.stop()
 
 ```{.python .input}
 #@tab pytorch
-# Compute A = BC one column at a time
+# Hitung A = BC satu kolom pada satu waktu
 timer.start()
 for j in range(256):
     A[:, j] = torch.mv(B, C[:, j])
@@ -174,16 +175,19 @@ for j in range(256):
 timer.stop()
 ```
 
-Last, the most effective manner is to perform the entire operation in one block. 
-Note that multiplying any two matrices $\mathbf{B} \in \mathbb{R}^{m \times n}$ and $\mathbf{C} \in \mathbb{R}^{n \times p}$ takes approximately $2mnp$ floating point operations,
-when scalar multiplication and addition are counted as separate operations (fused in practice).
-Thus, multiplying two $256 \times 256$ matrices
-takes $0.03$ billion floating point operations.
-Let's see what the respective speed of the operations is.
+
+Terakhir, cara paling efektif adalah melakukan seluruh operasi dalam satu blok.
+Perhatikan bahwa mengalikan dua matriks $\mathbf{B} \in \mathbb{R}^{m \times n}$ dan $\mathbf{C} \in \mathbb{R}^{n \times p}$ membutuhkan sekitar $2mnp$ operasi titik mengambang,
+ketika perkalian skalar dan penjumlahan dihitung sebagai operasi terpisah (digabungkan dalam praktiknya).
+Jadi, mengalikan dua matriks $256 \times 256$
+memerlukan $0.03$ miliar operasi titik mengambang.
+Mari kita lihat seberapa cepat masing-masing operasi tersebut.
+
+
 
 ```{.python .input}
 #@tab mxnet
-# Compute A = BC in one go
+# Hitung A = BC sekaligus
 timer.start()
 A = np.dot(B, C)
 A.wait_to_read()
@@ -196,7 +200,7 @@ print(f'performance in Gigaflops: element {gigaflops[0]:.3f}, '
 
 ```{.python .input}
 #@tab pytorch
-# Compute A = BC in one go
+# Hitung A = BC sekaligus
 timer.start()
 A = torch.mm(B, C)
 timer.stop()
@@ -221,17 +225,18 @@ print(f'performance in Gigaflops: element {gigaflops[0]:.3f}, '
 
 :label:`sec_minibatches`
 
-In the past we took it for granted that we would read *minibatches* of data rather than single observations to update parameters. We now give a brief justification for it. Processing single observations requires us to perform many single matrix-vector (or even vector-vector) multiplications, which is quite expensive and which incurs a significant overhead on behalf of the underlying deep learning framework. This applies both to evaluating a network when applied to data (often referred to as inference) and when computing gradients to update parameters. That is, this applies whenever we perform $\mathbf{w} \leftarrow \mathbf{w} - \eta_t \mathbf{g}_t$ where
+Sebelumnya, kita menerima begitu saja bahwa kita akan membaca *minibatches* data daripada satu observasi untuk memperbarui parameter. Sekarang kita akan memberikan justifikasi singkat untuk hal ini. Memproses observasi tunggal mengharuskan kita melakukan banyak perkalian matriks-vektor (atau bahkan vektor-vektor), yang cukup mahal dan menimbulkan overhead signifikan pada framework deep learning yang mendasarinya. Hal ini berlaku baik untuk mengevaluasi jaringan yang diterapkan pada data (sering disebut sebagai inference) maupun saat menghitung gradien untuk memperbarui parameter. Artinya, hal ini berlaku kapanpun kita melakukan $\mathbf{w} \leftarrow \mathbf{w} - \eta_t \mathbf{g}_t$ dimana
 
 $$\mathbf{g}_t = \partial_{\mathbf{w}} f(\mathbf{x}_{t}, \mathbf{w})$$
 
-We can increase the *computational* efficiency of this operation by applying it to a minibatch of observations at a time. That is, we replace the gradient $\mathbf{g}_t$ over a single observation by one over a small batch
+Kita dapat meningkatkan efisiensi *komputasi* dari operasi ini dengan menerapkannya pada minibatch observasi sekaligus. Artinya, kita menggantikan gradien $\mathbf{g}_t$ pada satu observasi dengan satu gradien pada batch kecil
 
 $$\mathbf{g}_t = \partial_{\mathbf{w}} \frac{1}{|\mathcal{B}_t|} \sum_{i \in \mathcal{B}_t} f(\mathbf{x}_{i}, \mathbf{w})$$
 
-Let's see what this does to the statistical properties of $\mathbf{g}_t$: since both $\mathbf{x}_t$ and also all elements of the minibatch $\mathcal{B}_t$ are drawn uniformly at random from the training set, the expectation of the gradient remains unchanged. The variance, on the other hand, is reduced significantly. Since the minibatch gradient is composed of $b \stackrel{\textrm{def}}{=} |\mathcal{B}_t|$ independent gradients which are being averaged, its standard deviation is reduced by a factor of $b^{-\frac{1}{2}}$. This, by itself, is a good thing, since it means that the updates are more reliably aligned with the full gradient.
+Mari kita lihat apa efeknya terhadap properti statistik dari $\mathbf{g}_t$: karena baik $\mathbf{x}_t$ maupun semua elemen dari minibatch $\mathcal{B}_t$ diambil secara acak dari set pelatihan, ekspektasi dari gradien tetap tidak berubah. Varians, di sisi lain, berkurang secara signifikan. Karena gradien pada minibatch terdiri dari $b \stackrel{\textrm{def}}{=} |\mathcal{B}_t|$ gradien independen yang sedang diambil rata-ratanya, standar deviasi berkurang dengan faktor $b^{-\frac{1}{2}}$. Ini, pada dasarnya, adalah hal yang baik, karena ini berarti bahwa pembaruan lebih selaras dengan gradien penuh secara andal.
 
-Naively this would indicate that choosing a large minibatch $\mathcal{B}_t$ would be universally desirable. Alas, after some point, the additional reduction in standard deviation is minimal when compared to the linear increase in computational cost. In practice we pick a minibatch that is large enough to offer good computational efficiency while still fitting into the memory of a GPU. To illustrate the savings let's have a look at some code. In it we perform the same matrix-matrix multiplication, but this time broken up into "minibatches" of 64 columns at a time.
+Secara naif, hal ini menunjukkan bahwa memilih minibatch yang besar $\mathcal{B}_t$ akan selalu diinginkan. Sayangnya, setelah beberapa titik, pengurangan tambahan dalam standar deviasi menjadi minimal dibandingkan dengan peningkatan linier dalam biaya komputasi. Dalam praktiknya, kita memilih minibatch yang cukup besar untuk menawarkan efisiensi komputasi yang baik namun masih dapat muat dalam memori GPU. Untuk mengilustrasikan penghematan, mari kita lihat beberapa kode. Dalam kode tersebut, kita melakukan perkalian matriks-matriks yang sama, tetapi kali ini dipecah menjadi "minibatches" dari 64 kolom sekaligus.
+
 
 ```{.python .input}
 #@tab mxnet
@@ -239,7 +244,7 @@ timer.start()
 for j in range(0, 256, 64):
     A[:, j:j+64] = np.dot(B, C[:, j:j+64])
 timer.stop()
-print(f'performance in Gigaflops: block {0.03 / timer.times[3]:.3f}')
+print(f'performa di Gigaflops: block {0.03 / timer.times[3]:.3f}')
 ```
 
 ```{.python .input}
@@ -248,7 +253,7 @@ timer.start()
 for j in range(0, 256, 64):
     A[:, j:j+64] = torch.mm(B, C[:, j:j+64])
 timer.stop()
-print(f'performance in Gigaflops: block {0.03 / timer.times[3]:.3f}')
+print(f'performa di Gigaflops: block {0.03 / timer.times[3]:.3f}')
 ```
 
 ```{.python .input}
@@ -257,14 +262,15 @@ timer.start()
 for j in range(0, 256, 64):
     A[:, j:j+64].assign(tf.tensordot(B, C[:, j:j+64], axes=1))
 timer.stop()
-print(f'performance in Gigaflops: block {0.03 / timer.times[3]:.3f}')
+print(f'performa di Gigaflops: block {0.03 / timer.times[3]:.3f}')
 ```
 
-As we can see, the computation on the minibatch is essentially as efficient as on the full matrix. A word of caution is in order. In :numref:`sec_batch_norm` we used a type of regularization that was heavily dependent on the amount of variance in a minibatch. As we increase the latter, the variance decreases and with it the benefit of the noise-injection due to batch normalization. See e.g., :citet:`Ioffe.2017` for details on how to rescale and compute the appropriate terms.
+Seperti yang kita lihat, komputasi pada minibatch pada dasarnya sama efisiennya dengan pada matriks penuh. Namun, ada hal yang perlu diperhatikan. Dalam :numref:`sec_batch_norm` kita menggunakan jenis regularisasi yang sangat bergantung pada jumlah varians dalam sebuah minibatch. Saat kita meningkatkan jumlah tersebut, varians menurun, dan seiring dengan itu manfaat dari injeksi noise akibat batch normalization juga menurun. Lihat misalnya, :citet:`Ioffe.2017` untuk detail tentang cara reskalasi dan perhitungan istilah yang sesuai.
 
-## Reading the Dataset
+## Membaca Dataset
 
-Let's have a look at how minibatches are efficiently generated from data. In the following we use a dataset developed by NASA to test the wing [noise from different aircraft](https://archive.ics.uci.edu/dataset/291/airfoil+self+noise) to compare these optimization algorithms. For convenience we only use the first $1,500$ examples. The data is whitened for preprocessing, i.e., we remove the mean and rescale the variance to $1$ per coordinate.
+Mari kita lihat bagaimana minibatch dapat dihasilkan secara efisien dari data. Dalam contoh berikut, kita menggunakan dataset yang dikembangkan oleh NASA untuk menguji [kebisingan sayap dari berbagai pesawat](https://archive.ics.uci.edu/dataset/291/airfoil+self+noise) untuk membandingkan algoritma optimasi ini. Untuk kenyamanan, kita hanya menggunakan $1,500$ contoh pertama. Data diproses terlebih dahulu dengan metode whitening, yaitu kita menghilangkan rata-rata dan menyesuaikan varians menjadi $1$ per koordinat.
+
 
 ```{.python .input}
 #@tab mxnet
@@ -314,13 +320,11 @@ def get_data_ch11(batch_size=10, n=1500):
     return data_iter, data.shape[1]-1
 ```
 
-## Implementation from Scratch
+## Implementasi dari Awal
 
-Recall the minibatch stochastic gradient descent implementation from :numref:`sec_linear_scratch`. In the following we provide a slightly more general implementation. For convenience it has the same call signature as the other optimization algorithms introduced later in this chapter. Specifically, we add the status
-input `states` and place the hyperparameter in dictionary `hyperparams`. In
-addition, we will average the loss of each minibatch example in the training
-function, so the gradient in the optimization algorithm does not need to be
-divided by the batch size.
+Ingat implementasi stochastic gradient descent dengan minibatch dari :numref:`sec_linear_scratch`. Di bagian berikut, kami menyediakan implementasi yang sedikit lebih umum. Untuk kenyamanan, implementasi ini memiliki format pemanggilan yang sama dengan algoritma optimasi lainnya yang diperkenalkan nanti di bab ini. Secara khusus, kami menambahkan input status `states` dan menempatkan hiperparameter dalam dictionary `hyperparams`. Selain itu, kami akan mengambil rata-rata dari loss setiap contoh dalam minibatch di fungsi pelatihan, sehingga gradien dalam algoritma optimasi tidak perlu dibagi dengan ukuran batch.
+
+
 
 ```{.python .input}
 #@tab mxnet
@@ -344,7 +348,8 @@ def sgd(params, grads, states, hyperparams):
         param.assign_sub(hyperparams['lr']*grad)
 ```
 
-Next, we implement a generic training function to facilitate the use of the other optimization algorithms introduced later in this chapter. It initializes a linear regression model and can be used to train the model with minibatch stochastic gradient descent and other algorithms introduced subsequently.
+Selanjutnya, kita mengimplementasikan fungsi pelatihan umum untuk memfasilitasi penggunaan algoritma optimasi lain yang diperkenalkan di bab ini. Fungsi ini menginisialisasi model regresi linier dan dapat digunakan untuk melatih model dengan stochastic gradient descent menggunakan minibatch dan algoritma lain yang akan diperkenalkan kemudian.
+
 
 ```{.python .input}
 #@tab mxnet
@@ -441,7 +446,8 @@ def train_ch11(trainer_fn, states, hyperparams, data_iter,
     return timer.cumsum(), animator.Y[0]
 ```
 
-Let's see how optimization proceeds for batch gradient descent. This can be achieved by setting the minibatch size to 1500 (i.e., to the total number of examples). As a result the model parameters are updated only once per epoch. There is little progress. In fact, after 6 steps progress stalls.
+Mari kita lihat bagaimana optimasi berjalan untuk batch gradient descent. Hal ini dapat dicapai dengan mengatur ukuran minibatch menjadi 1500 (yaitu, sama dengan jumlah total contoh). Akibatnya, parameter model hanya diperbarui sekali per epoch. Hasilnya menunjukkan sedikit kemajuan. Bahkan, setelah 6 langkah, kemajuan menjadi terhenti.
+
 
 ```{.python .input}
 #@tab all
@@ -453,28 +459,35 @@ def train_sgd(lr, batch_size, num_epochs=2):
 gd_res = train_sgd(1, 1500, 10)
 ```
 
-When the batch size equals 1, we use stochastic gradient descent for optimization. For simplicity of implementation we picked a constant (albeit small) learning rate. In stochastic gradient descent, the model parameters are updated whenever an example is processed. In our case this amounts to 1500 updates per epoch. As we can see, the decline in the value of the objective function slows down after one epoch. Although both the procedures processed 1500 examples within one epoch, stochastic gradient descent consumes more time than gradient descent in our experiment. This is because stochastic gradient descent updated the parameters more frequently and since it is less efficient to process single observations one at a time.
+Ketika ukuran batch sama dengan 1, kita menggunakan stochastic gradient descent untuk optimasi. Untuk kesederhanaan implementasi, kita memilih nilai learning rate yang konstan (meskipun kecil). Dalam stochastic gradient descent, parameter model diperbarui setiap kali contoh diproses. Dalam kasus kita, ini berarti 1500 pembaruan per epoch. Seperti yang kita lihat, penurunan nilai dari fungsi objektif melambat setelah satu epoch. Meskipun kedua prosedur memproses 1500 contoh dalam satu epoch, stochastic gradient descent menghabiskan lebih banyak waktu daripada gradient descent dalam percobaan kita. Ini karena stochastic gradient descent memperbarui parameter lebih sering dan kurang efisien untuk memproses satu observasi setiap kali.
+
 
 ```{.python .input}
 #@tab all
 sgd_res = train_sgd(0.005, 1)
 ```
 
-Finally, when the batch size equals 100, we use minibatch stochastic gradient descent for optimization. The time required per epoch is shorter than the time needed for stochastic gradient descent and the time for batch gradient descent.
+Terakhir, ketika ukuran batch sama dengan 100, kita menggunakan stochastic gradient descent dengan minibatch untuk optimasi. Waktu yang diperlukan per epoch lebih pendek dibandingkan dengan waktu yang dibutuhkan untuk stochastic gradient descent dan juga untuk batch gradient descent.
+
 
 ```{.python .input}
 #@tab all
 mini1_res = train_sgd(.4, 100)
 ```
 
-Reducing the batch size to 10, the time for each epoch increases because the workload for each batch is less efficient to execute.
+Dengan mengurangi ukuran batch menjadi 10, waktu untuk setiap epoch meningkat karena beban kerja untuk setiap batch menjadi kurang efisien untuk dieksekusi.
+
+
 
 ```{.python .input}
 #@tab all
 mini2_res = train_sgd(.05, 10)
 ```
 
-Now we can compare the time vs. loss for the previous four experiments. As can be seen, although stochastic gradient descent converges faster than GD in terms of number of examples processed, it uses more time to reach the same loss than GD because computing the gradient example by example is not as efficient. Minibatch stochastic gradient descent is able to trade-off convergence speed and computation efficiency. A minibatch size of 10 is more efficient than stochastic gradient descent; a minibatch size of 100 even outperforms GD in terms of runtime.
+Sekarang kita dapat membandingkan waktu vs. loss untuk keempat percobaan sebelumnya. Seperti yang dapat dilihat, meskipun stochastic gradient descent berkonvergensi lebih cepat dibandingkan dengan GD dalam hal jumlah contoh yang diproses, ia membutuhkan lebih banyak waktu untuk mencapai nilai loss yang sama dibandingkan GD karena menghitung gradien per contoh tidak seefisien metode batch. Minibatch stochastic gradient descent mampu melakukan trade-off antara kecepatan konvergensi dan efisiensi komputasi. Ukuran minibatch 10 lebih efisien dibandingkan dengan stochastic gradient descent; ukuran minibatch 100 bahkan mengungguli GD dalam hal waktu eksekusi.
+
+
+
 
 ```{.python .input}
 #@tab all
@@ -485,9 +498,10 @@ d2l.plot(*list(map(list, zip(gd_res, sgd_res, mini1_res, mini2_res))),
 d2l.plt.gca().set_xscale('log')
 ```
 
-## Concise Implementation
+## Implementasi Singkat
 
-In Gluon, we can use the `Trainer` class to call optimization algorithms. This is used to implement a generic training function. We will use this throughout the current chapter.
+Di Gluon, kita dapat menggunakan kelas `Trainer` untuk memanggil algoritma optimasi. Ini digunakan untuk mengimplementasikan fungsi pelatihan umum. Kita akan menggunakan ini sepanjang bab ini.
+
 
 ```{.python .input}
 #@tab mxnet
@@ -544,7 +558,7 @@ def train_concise_ch11(trainer_fn, hyperparams, data_iter, num_epochs=4):
             n += X.shape[0]
             if n % 200 == 0:
                 timer.stop()
-                # `MSELoss` computes squared error without the 1/2 factor
+                # `MSELoss` menghitung error kuadrat tanpa faktor 1/2
                 animator.add(n/X.shape[0]/len(data_iter),
                              (d2l.evaluate_loss(net, data_iter, loss) / 2,))
                 timer.start()
@@ -577,15 +591,15 @@ def train_concise_ch11(trainer_fn, hyperparams, data_iter, num_epochs=2):
                 timer.stop()
                 p = n/X.shape[0]
                 q = p/tf.data.experimental.cardinality(data_iter).numpy()
-                # `MeanSquaredError` computes squared error without the 1/2
-                # factor
+               # `MeanSquaredError` menghitung error kuadrat tanpa faktor 1/2
                 r = (d2l.evaluate_loss(net, data_iter, loss) / 2,)
                 animator.add(q, r)
                 timer.start()
     print(f'loss: {animator.Y[0][-1]:.3f}, {timer.sum()/num_epochs:.3f} sec/epoch')
 ```
 
-Using Gluon to repeat the last experiment shows identical behavior.
+Menggunakan Gluon untuk mengulangi percobaan terakhir menunjukkan perilaku yang identik.
+
 
 ```{.python .input}
 #@tab mxnet
@@ -607,30 +621,31 @@ trainer = tf.keras.optimizers.SGD
 train_concise_ch11(trainer, {'learning_rate': 0.05}, data_iter)
 ```
 
-## Summary
+## Ringkasan
 
-* Vectorization makes code more efficient due to reduced overhead arising from the deep learning framework and due to better memory locality and caching on CPUs and GPUs.
-* There is a trade-off between statistical efficiency arising from stochastic gradient descent and computational efficiency arising from processing large batches of data at a time.
-* Minibatch stochastic gradient descent offers the best of both worlds: computational and statistical efficiency.
-* In minibatch stochastic gradient descent we process batches of data obtained by a random permutation of the training data (i.e., each observation is processed only once per epoch, albeit in random order).
-* It is advisable to decay the learning rates during training.
-* In general, minibatch stochastic gradient descent is faster than stochastic gradient descent and gradient descent for convergence to a smaller risk, when measured in terms of clock time.
+* Vektorisasi membuat kode lebih efisien karena overhead yang berkurang akibat framework deep learning dan karena peningkatan locality memori dan caching pada CPU dan GPU.
+* Ada trade-off antara efisiensi statistik yang diperoleh dari stochastic gradient descent dan efisiensi komputasi yang diperoleh dari memproses batch data yang besar sekaligus.
+* Stochastic gradient descent dengan minibatch menawarkan yang terbaik dari kedua dunia: efisiensi komputasi dan statistik.
+* Dalam stochastic gradient descent dengan minibatch, kita memproses batch data yang diperoleh melalui permutasi acak dari data pelatihan (yaitu, setiap observasi hanya diproses sekali per epoch, meskipun dalam urutan acak).
+* Sangat disarankan untuk menurunkan learning rate selama pelatihan.
+* Secara umum, stochastic gradient descent dengan minibatch lebih cepat daripada stochastic gradient descent dan gradient descent untuk konvergensi pada risiko yang lebih kecil, jika diukur dalam waktu nyata (clock time).
 
-## Exercises
+## Latihan
 
-1. Modify the batch size and learning rate and observe the rate of decline for the value of the objective function and the time consumed in each epoch.
-1. Read the MXNet documentation and use the `Trainer` class `set_learning_rate` function to reduce the learning rate of the minibatch stochastic gradient descent to 1/10 of its previous value after each epoch.
-1. Compare minibatch stochastic gradient descent with a variant that actually *samples with replacement* from the training set. What happens?
-1. An evil genie replicates your dataset without telling you (i.e., each observation occurs twice and your dataset grows to twice its original size, but nobody told you). How does the behavior of stochastic gradient descent, minibatch stochastic gradient descent and that of gradient descent change?
+1. Modifikasi ukuran batch dan learning rate, lalu amati laju penurunan nilai fungsi objektif dan waktu yang dikonsumsi di setiap epoch.
+1. Baca dokumentasi MXNet dan gunakan fungsi `set_learning_rate` dari kelas `Trainer` untuk mengurangi learning rate dari stochastic gradient descent dengan minibatch menjadi 1/10 dari nilai sebelumnya setelah setiap epoch.
+1. Bandingkan stochastic gradient descent dengan minibatch dengan varian yang sebenarnya *mengambil sampel dengan pengembalian* dari set pelatihan. Apa yang terjadi?
+1. Seorang jin jahat menggandakan dataset Anda tanpa memberi tahu Anda (yaitu, setiap observasi terjadi dua kali dan dataset Anda menjadi dua kali lipat ukuran aslinya, tetapi tidak ada yang memberi tahu Anda). Bagaimana perilaku stochastic gradient descent, stochastic gradient descent dengan minibatch, dan gradient descent berubah?
 
 :begin_tab:`mxnet`
-[Discussions](https://discuss.d2l.ai/t/353)
+[Diskusi](https://discuss.d2l.ai/t/353)
 :end_tab:
 
 :begin_tab:`pytorch`
-[Discussions](https://discuss.d2l.ai/t/1068)
+[Diskusi](https://discuss.d2l.ai/t/1068)
 :end_tab:
 
 :begin_tab:`tensorflow`
-[Discussions](https://discuss.d2l.ai/t/1069)
+[Diskusi](https://discuss.d2l.ai/t/1069)
 :end_tab:
+
