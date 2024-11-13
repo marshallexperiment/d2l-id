@@ -1,119 +1,118 @@
-# Parameter Servers
+# Parameter Server
 :label:`sec_parameterserver`
 
-As we move from a single GPU to multiple GPUs and then to multiple servers containing multiple GPUs, possibly all spread out across multiple racks and network switches,
-our algorithms for distributed and parallel training need to become much more sophisticated. Details matter since different interconnects have very different bandwidth (e.g., NVLink can offer up to 100 GB/s across 6 links in an appropriate setting, PCIe 4.0 (16-lane) offers 32 GB/s, while even high speed 100GbE Ethernet only amounts to 10 GB/s). At the same time it is unreasonable to expect that a statistical modeler be an expert in networking and systems.
+Ketika kita beralih dari satu GPU ke beberapa GPU dan kemudian ke beberapa server yang masing-masing berisi banyak GPU, mungkin tersebar di beberapa rak dan switch jaringan, algoritma kita untuk pelatihan terdistribusi dan paralel perlu menjadi jauh lebih canggih. Detail sangat penting karena interkoneksi yang berbeda memiliki bandwidth yang sangat berbeda (misalnya, NVLink dapat menawarkan hingga 100 GB/s melalui 6 tautan dalam pengaturan yang tepat, PCIe 4.0 (16-lane) menawarkan 32 GB/s, sementara Ethernet 100GbE berkecepatan tinggi hanya sekitar 10 GB/s). Pada saat yang sama, tidaklah masuk akal untuk mengharapkan seorang ahli model statistik menjadi ahli dalam jaringan dan sistem.
 
-The core idea of the parameter server was introduced in :citet:`Smola.Narayanamurthy.2010` in the context of distributed latent variable models. A description of the push and pull semantics then followed in :citet:`Ahmed.Aly.Gonzalez.ea.2012` and a description of the system and an open source library followed in :citet:`Li.Andersen.Park.ea.2014`. In the following we will motivate the components needed for efficiency.
+Ide inti dari parameter server diperkenalkan dalam :citet:`Smola.Narayanamurthy.2010` dalam konteks model variabel laten terdistribusi. Deskripsi tentang semantik push dan pull kemudian diikuti dalam :citet:`Ahmed.Aly.Gonzalez.ea.2012`, dan deskripsi sistem serta pustaka sumber terbuka diberikan dalam :citet:`Li.Andersen.Park.ea.2014`. Berikut ini kita akan memotivasi komponen-komponen yang diperlukan untuk efisiensi.
 
+## Pelatihan Paralel Data
 
-## Data-Parallel Training
+Mari kita tinjau pendekatan pelatihan paralel data untuk pelatihan terdistribusi. Kita akan menggunakan ini secara eksklusif di bagian ini karena jauh lebih sederhana untuk diimplementasikan dalam praktik. Hampir tidak ada kasus penggunaan (kecuali deep learning pada graf) di mana strategi paralelisme lainnya lebih disukai karena GPU saat ini memiliki memori yang cukup besar. :numref:`fig_parameterserver` menggambarkan varian dari paralelisme data yang kita implementasikan pada :numref:`sec_multi_gpu`. Aspek kuncinya adalah agregasi gradien dilakukan pada satu GPU (GPU 0) sebelum parameter yang diperbarui disiarkan kembali ke semua GPU.
 
-Let's review the data parallel training approach to distributed training. We will use this to the exclusion of all others in this section since it is significantly simpler to implement in practice. There are virtually no use cases (besides deep learning on graphs) where any other strategy for parallelism is preferred since GPUs have plenty of memory nowadays. :numref:`fig_parameterserver` describes the variant of data parallelism that we implemented in :numref:`sec_multi_gpu`. The key aspect in it is that the aggregation of gradients occurs on one single GPU (GPU 0) before the updated parameters are rebroadcast to all GPUs.
-
-![Left: single GPU training. Right: a variant of multi-GPU training: (1) we compute loss and gradient, (2) all gradients are aggregated on one GPU, (3) parameter update happens and the parameters are re-distributed to all GPUs.](../img/ps.svg)
+![Kiri: pelatihan GPU tunggal. Kanan: varian pelatihan multi-GPU: (1) kita menghitung loss dan gradien, (2) semua gradien dikumpulkan pada satu GPU, (3) pembaruan parameter dilakukan dan parameter didistribusikan kembali ke semua GPU.](../img/ps.svg)
 :label:`fig_parameterserver`
 
-In retrospect, the decision to aggregate on GPU 0 seems rather ad-hoc. After all, we might just as well aggregate on the CPU. In fact, we could even decide to aggregate some of the parameters on one GPU and some others on another. Provided that the optimization algorithm supports this, there is no real reason for why we could not. For instance, if we have four parameter vectors with associated gradients $\mathbf{g}_1, \ldots, \mathbf{g}_4$ we could aggregate the gradients on one GPU for each $\mathbf{g}_i$ ($i = 1, \ldots, 4$).
+Jika kita tinjau kembali, keputusan untuk mengumpulkan di GPU 0 tampak agak ad-hoc. Lagi pula, kita bisa saja mengumpulkan di CPU. Bahkan, kita bisa memutuskan untuk mengumpulkan beberapa parameter di satu GPU dan beberapa lainnya di GPU lain. Dengan asumsi algoritma optimasi mendukung hal ini, tidak ada alasan sebenarnya mengapa kita tidak bisa melakukannya. Misalnya, jika kita memiliki empat vektor parameter dengan gradien terkait $\mathbf{g}_1, \ldots, \mathbf{g}_4$, kita bisa mengumpulkan gradien di satu GPU untuk setiap $\mathbf{g}_i$ ($i = 1, \ldots, 4$).
 
+Pemikiran ini tampak sewenang-wenang dan berlebihan. Bagaimanapun, matematikanya sama di semua tempat. Namun, kita berurusan dengan perangkat keras fisik nyata di mana bus yang berbeda memiliki bandwidth yang berbeda seperti yang dibahas di :numref:`sec_hardware`.
+Pertimbangkan server GPU 4-way nyata seperti yang dijelaskan pada :numref:`fig_bw_hierarchy`. Jika server tersebut terhubung dengan sangat baik, server tersebut mungkin memiliki kartu jaringan 100 GbE. Angka yang lebih umum adalah dalam rentang 1--10 GbE dengan bandwidth efektif 100 MB/s hingga 1 GB/s.
+Karena CPU memiliki terlalu sedikit jalur PCIe untuk terhubung langsung ke semua GPU (misalnya, CPU Intel kelas konsumen memiliki 24 jalur), kita memerlukan [multiplexer](https://www.broadcom.com/products/pcie-switches-bridges/pcie-switches). Bandwidth dari CPU pada link Gen3 16x adalah 16 GB/s. Ini juga merupakan kecepatan di mana *setiap* GPU terhubung ke switch. Artinya, lebih efektif untuk berkomunikasi antar perangkat.
 
-This reasoning seems arbitrary and frivolous. After all, the mathematics is the same throughout. However, we are dealing with real physical hardware where different buses have different bandwidth as discussed in :numref:`sec_hardware`.
-Consider a real 4-way GPU server as described in :numref:`fig_bw_hierarchy`. If it is particularly well connected, it might have a 100 GbE network card. More typical numbers are in the 1--10 GbE range with an effective bandwidth of 100 MB/s to 1 GB/s.
-Since the CPUs have too few PCIe lanes to connect to all GPUs directly (e.g., consumer-grade Intel CPUs have 24 lanes) we need a [multiplexer](https://www.broadcom.com/products/pcie-switches-bridges/pcie-switches). The bandwidth from the CPU on a 16x Gen3 link is 16 GB/s. This is also the speed at which *each* of the GPUs is connected to the switch. This means that it is more effective to communicate between the devices.
-
-![A 4-way GPU server.](../img/bw-hierarchy.svg)
+![Server GPU 4-way.](../img/bw-hierarchy.svg)
 :label:`fig_bw_hierarchy`
 
-For the sake of the argument let's assume that the gradients are of 160 MB. In this case it takes 30 ms to send the gradients from all 3 remaining GPUs to the fourth one (each transfer takes 10 ms = 160 MB / 16 GB/s). Adding another 30 ms to transmit the weight vectors back we arrive at a total of 60 ms.
-If we send all data to the CPU we incur a penalty of 40 ms since *each* of the four GPUs needs to send the data to the CPU, yielding a total of 80 ms. Lastly assume that we are able to split the gradients into 4 parts of 40 MB each. Now we can aggregate each of the parts on a different GPU *simultaneously* since the PCIe switch offers a full-bandwidth operation between all links. Instead of 30 ms this takes 7.5 ms, yielding a total of 15 ms for a synchronization operation. In short, depending on how we synchronize parameters the same operation can take anywhere from 15 ms to 80 ms. :numref:`fig_ps_distributed` depicts the different strategies for exchanging parameters.
+Untuk kepentingan argumen, mari kita asumsikan bahwa gradien berukuran 160 MB. Dalam kasus ini, dibutuhkan waktu 30 ms untuk mengirim gradien dari 3 GPU yang tersisa ke GPU keempat (setiap transfer memakan waktu 10 ms = 160 MB / 16 GB/s). Menambahkan 30 ms lagi untuk mentransmisikan vektor bobot kembali, kita mendapatkan total 60 ms.
+Jika kita mengirim semua data ke CPU, kita akan mengalami penalti sebesar 40 ms karena *setiap* dari empat GPU perlu mengirim data ke CPU, menghasilkan total 80 ms. Terakhir, asumsikan kita dapat membagi gradien menjadi 4 bagian masing-masing sebesar 40 MB. Sekarang kita dapat mengumpulkan setiap bagian di GPU yang berbeda *secara bersamaan* karena switch PCIe menawarkan operasi bandwidth penuh antara semua link. Alih-alih 30 ms, ini memakan waktu 7,5 ms, menghasilkan total 15 ms untuk operasi sinkronisasi. Singkatnya, tergantung pada cara kita menyinkronkan parameter, operasi yang sama dapat memakan waktu antara 15 ms hingga 80 ms. :numref:`fig_ps_distributed` menggambarkan berbagai strategi untuk pertukaran parameter.
 
-![Parameter synchronization strategies.](../img/ps-distributed.svg)
+![Strategi sinkronisasi parameter.](../img/ps-distributed.svg)
 :label:`fig_ps_distributed`
 
-Note that we have yet another tool at our disposal when it comes to improving performance: in a deep network it takes some time to compute all gradients from the top to the bottom. We can begin synchronizing gradients for some parameter groups even while we are still busy computing them for others. See e.g., :citet:`Sergeev.Del-Balso.2018` for details on how to do this in [Horovod](https://github.com/horovod/horovod).
+Perhatikan bahwa kita memiliki alat lain yang dapat kita gunakan untuk meningkatkan kinerja: dalam jaringan yang dalam, dibutuhkan beberapa waktu untuk menghitung semua gradien dari atas ke bawah. Kita bisa mulai menyinkronkan gradien untuk beberapa kelompok parameter bahkan ketika kita masih sibuk menghitungnya untuk yang lain. Lihat misalnya :citet:`Sergeev.Del-Balso.2018` untuk detail tentang bagaimana melakukan ini di [Horovod](https://github.com/horovod/horovod).
 
-## Ring Synchronization
 
-When it comes to synchronization on modern deep learning hardware we often encounter significantly bespoke network connectivity. For instance, the AWS p3.16xlarge and NVIDIA DGX-2 instances share the connectivity structure of :numref:`fig_nvlink`. Each GPU connects to a host CPU via a PCIe link which operates at best at 16 GB/s. Additionally each GPU also has 6 NVLink connections, each of which is capable of transferring 300 Gbit/s bidirectionally. This amounts to around 18 GB/s per link per direction. In short, the aggregate NVLink bandwidth is significantly higher than the PCIe bandwidth. The question is how to use it most efficiently.
 
-![NVLink connectivity on 8  V100 GPU servers (image courtesy of NVIDIA).](../img/nvlink.svg)
+
+## Sinkronisasi Cincin (Ring Synchronization)
+
+Dalam hal sinkronisasi pada perangkat keras deep learning modern, kita sering kali menemui konektivitas jaringan yang sangat khusus. Misalnya, instance AWS p3.16xlarge dan NVIDIA DGX-2 berbagi struktur konektivitas seperti yang ditunjukkan pada :numref:`fig_nvlink`. Setiap GPU terhubung ke CPU host melalui link PCIe yang bekerja paling optimal pada 16 GB/s. Selain itu, setiap GPU juga memiliki 6 koneksi NVLink, yang masing-masing mampu mentransfer data sebesar 300 Gbit/s secara bidireksional. Ini setara dengan sekitar 18 GB/s per link per arah. Singkatnya, bandwidth NVLink gabungan secara signifikan lebih tinggi dibandingkan dengan bandwidth PCIe. Pertanyaannya adalah bagaimana menggunakannya dengan paling efisien.
+
+![Konektivitas NVLink pada server GPU V100 8 (gambar milik NVIDIA).](../img/nvlink.svg)
 :label:`fig_nvlink`
 
-It turns out that the optimal synchronization strategy is to decompose the network into two rings and to use them to synchronize data directly :cite:`Wang.Li.Liberty.ea.2018`. :numref:`fig_nvlink_twoloop` illustrates that the network can be decomposed into one ring (1-2-3-4-5-6-7-8-1) with double NVLink bandwidth and into one (1-4-6-3-5-8-2-7-1) with regular bandwidth. Designing an efficient synchronization protocol in this case is nontrivial.
+Ternyata strategi sinkronisasi optimal adalah membagi jaringan menjadi dua cincin dan menggunakannya untuk menyinkronkan data secara langsung :cite:`Wang.Li.Liberty.ea.2018`. :numref:`fig_nvlink_twoloop` mengilustrasikan bahwa jaringan dapat dibagi menjadi satu cincin (1-2-3-4-5-6-7-8-1) dengan bandwidth NVLink ganda dan satu cincin (1-4-6-3-5-8-2-7-1) dengan bandwidth reguler. Merancang protokol sinkronisasi yang efisien dalam kasus ini bukanlah hal yang sepele.
 
-![Decomposition of the NVLink network into two rings.](../img/nvlink-twoloop.svg)
+![Pembagian jaringan NVLink menjadi dua cincin.](../img/nvlink-twoloop.svg)
 :label:`fig_nvlink_twoloop`
 
+Pertimbangkan eksperimen pemikiran berikut: mengingat sebuah cincin dari $n$ node komputasi (atau GPU), kita bisa mengirim gradien dari node pertama ke node kedua. Di sana, gradien ditambahkan ke gradien lokal dan kemudian dikirim ke node ketiga, dan seterusnya. Setelah $n-1$ langkah, gradien gabungan dapat ditemukan pada node terakhir yang dikunjungi. Artinya, waktu untuk mengumpulkan gradien bertambah secara linier dengan jumlah node. Namun, jika kita melakukannya, algoritma ini cukup tidak efisien. Bagaimanapun, pada saat tertentu hanya ada satu node yang melakukan komunikasi. Bagaimana jika kita membagi gradien menjadi $n$ bagian dan mulai menyinkronkan bagian $i$ dimulai dari node $i$?
+Karena setiap bagian berukuran $1/n$, total waktu sekarang adalah $(n-1)/n \approx 1$. Dengan kata lain, waktu yang dibutuhkan untuk mengumpulkan gradien *tidak bertambah* ketika kita meningkatkan ukuran cincin. Ini adalah hasil yang cukup menakjubkan. :numref:`fig_ringsync` mengilustrasikan urutan langkah-langkah pada $n=4$ node.
 
-Consider the following thought experiment: given a ring of $n$ computing nodes (or GPUs) we can send gradients from the first to the second node. There it is added to the local gradient and sent on to the third node, and so on. After $n-1$ steps the aggregate gradient can be found in the last-visited node. That is, the time to aggregate gradients grows linearly with the number of nodes. But if we do this the algorithm is quite inefficient. After all, at any time there is only one of the nodes communicating. What if we broke the gradients into $n$ chunks and started synchronizing chunk $i$ starting at node $i$?
-Since each chunk is of size $1/n$ the total time is now $(n-1)/n \approx 1$. In other words, the time spent to aggregate gradients *does not grow* as we increase the size of the ring. This is quite an astonishing result. :numref:`fig_ringsync` illustrates the sequence of steps on $n=4$ nodes.
-
-![Ring synchronization across 4 nodes. Each node starts transmitting parts of gradients to its left neighbor until the assembled gradient can be found in its right neighbor.](../img/ringsync.svg)
+![Sinkronisasi cincin di 4 node. Setiap node mulai mentransmisikan bagian dari gradien ke tetangga kirinya hingga gradien yang tersusun dapat ditemukan di tetangga kanannya.](../img/ringsync.svg)
 :label:`fig_ringsync`
 
-If we use the same example of synchronizing 160 MB across 8 V100 GPUs we arrive at approximately $2 \cdot 160 \textrm{MB} / (3 \cdot 18 \textrm{GB/s}) \approx 6 \textrm{ms}$. This is better than using the PCIe bus, even though we are now using 8 GPUs. Note that in practice these numbers are a bit worse, since deep learning frameworks often fail to assemble communication into large burst transfers.
+Jika kita menggunakan contoh yang sama untuk menyinkronkan 160 MB di 8 GPU V100, kita mendapatkan sekitar $2 \cdot 160 \textrm{MB} / (3 \cdot 18 \textrm{GB/s}) \approx 6 \textrm{ms}$. Ini lebih baik dibandingkan dengan menggunakan bus PCIe, meskipun kita sekarang menggunakan 8 GPU. Perlu dicatat bahwa dalam praktiknya angka-angka ini sedikit lebih buruk, karena framework deep learning sering gagal untuk menggabungkan komunikasi menjadi transfer burst besar.
 
-Note that there is a common misconception that ring synchronization is fundamentally different from other synchronization algorithms. The only difference is that the synchronization path is somewhat more elaborate when compared with a simple tree.
+Perhatikan bahwa ada kesalahpahaman umum bahwa sinkronisasi cincin sangat berbeda dari algoritma sinkronisasi lainnya. Satu-satunya perbedaan adalah bahwa jalur sinkronisasi sedikit lebih rumit jika dibandingkan dengan pohon sederhana.
 
-## Multi-Machine Training
 
-Distributed training on multiple machines adds a further challenge: we need to communicate with servers that are only connected across a comparatively lower bandwidth fabric that can be over an order of magnitude slower in some cases.
-Synchronization across devices is tricky. After all, different machines running training code will have subtly different speed. Hence we need to *synchronize* them if we want to use synchronous distributed optimization. :numref:`fig_ps_multimachine` illustrates how distributed parallel training occurs.
 
-1. A (different) batch of data is read on each machine, split across multiple GPUs and transferred to GPU memory. There predictions and gradients are computed on each GPU batch separately.
-2. The gradients from all local GPUs are aggregated on one GPU (or parts of it are aggregated over different GPUs).
-3. The gradients are sent to the CPUs.
-4. The CPUs send the gradients to a central parameter server which aggregates all the gradients.
-5. The aggregate gradients are then used to update the parameters and the updated parameters are broadcast back to the individual CPUs.
-6. The information is sent to one (or multiple) GPUs.
-7. The updated parameters are spread across all GPUs.
+## Pelatihan Multi-Mesin
 
-![Multi-machine multi-GPU distributed parallel training.](../img/ps-multimachine.svg)
+Pelatihan terdistribusi pada beberapa mesin menambah tantangan lebih lanjut: kita perlu berkomunikasi dengan server yang hanya terhubung melalui jaringan yang relatif lebih rendah bandwidthnya, yang dalam beberapa kasus bisa lebih lambat hingga satu order besarnya. Sinkronisasi antar perangkat menjadi rumit. Bagaimanapun, mesin-mesin yang berbeda menjalankan kode pelatihan dengan kecepatan yang sedikit berbeda. Oleh karena itu, kita perlu *menyinkronkan* mereka jika kita ingin menggunakan optimasi terdistribusi sinkron. :numref:`fig_ps_multimachine` mengilustrasikan bagaimana pelatihan paralel terdistribusi berlangsung.
+
+1. Sebuah batch data (berbeda) dibaca di setiap mesin, dibagi di beberapa GPU, dan dipindahkan ke memori GPU. Di sana, prediksi dan gradien dihitung untuk setiap batch GPU secara terpisah.
+2. Gradien dari semua GPU lokal dikumpulkan di satu GPU (atau sebagian dikumpulkan di GPU yang berbeda).
+3. Gradien dikirim ke CPU.
+4. CPU mengirimkan gradien ke server parameter pusat yang mengumpulkan semua gradien.
+5. Gradien gabungan kemudian digunakan untuk memperbarui parameter dan parameter yang diperbarui disiarkan kembali ke CPU individu.
+6. Informasi dikirim ke satu (atau lebih) GPU.
+7. Parameter yang diperbarui disebarkan ke semua GPU.
+
+![Pelatihan paralel terdistribusi multi-mesin multi-GPU.](../img/ps-multimachine.svg)
 :label:`fig_ps_multimachine`
 
-Each of these operations seems rather straightforward. And, indeed, they can be carried out efficiently *within* a single machine. Once we look at multiple machines, though, we can see that the central parameter server becomes the bottleneck. After all, the bandwidth per server is limited, hence for $m$ workers the time it takes to send all gradients to the server is $\mathcal{O}(m)$. We can break through this barrier by increasing the number of servers to $n$. At this point each server only needs to store $\mathcal{O}(1/n)$ of the parameters, hence the total time for updates and optimization becomes $\mathcal{O}(m/n)$.
-Matching both numbers yields constant scaling regardless of how many workers we are dealing with. In practice we use the *same* machines both as workers and as servers. :numref:`fig_ps_multips` illustrates the design (see also :cite:`Li.Andersen.Park.ea.2014` for details).
-In particular, ensuring that multiple machines work without unreasonable delays is nontrivial. 
+Setiap operasi ini tampaknya cukup sederhana. Dan memang, mereka dapat dilakukan secara efisien *di dalam* satu mesin. Namun, ketika kita melihat beberapa mesin, kita dapat melihat bahwa server parameter pusat menjadi bottleneck. Bagaimanapun, bandwidth per server terbatas, sehingga untuk $m$ pekerja, waktu yang dibutuhkan untuk mengirim semua gradien ke server adalah $\mathcal{O}(m)$. Kita bisa melewati hambatan ini dengan menambah jumlah server menjadi $n$. Pada titik ini, setiap server hanya perlu menyimpan $\mathcal{O}(1/n)$ dari parameter, sehingga waktu total untuk pembaruan dan optimasi menjadi $\mathcal{O}(m/n)$. Mencocokkan kedua angka ini menghasilkan skala konstan terlepas dari berapa banyak pekerja yang kita miliki. Dalam praktiknya kita menggunakan mesin *yang sama* baik sebagai pekerja maupun sebagai server. :numref:`fig_ps_multips` menggambarkan desainnya (lihat juga :cite:`Li.Andersen.Park.ea.2014` untuk detailnya).
+Secara khusus, memastikan bahwa beberapa mesin bekerja tanpa keterlambatan yang tidak masuk akal bukanlah hal yang sepele.
 
-![Top: a single parameter server is a bottleneck since its bandwidth is finite. Bottom: multiple parameter servers store parts of the parameters with aggregate bandwidth.](../img/ps-multips.svg)
+![Atas: satu server parameter adalah bottleneck karena bandwidthnya terbatas. Bawah: beberapa server parameter menyimpan bagian dari parameter dengan bandwidth gabungan.](../img/ps-multips.svg)
 :label:`fig_ps_multips`
 
-## Key--Value Stores
+## Penyimpanan Kunci-Nilai
 
-Implementing the steps required for distributed multi-GPU training in practice is nontrivial.
-This is why it pays to use a common abstraction, namely that of a *key--value store* with redefined update semantics.
+Mengimplementasikan langkah-langkah yang diperlukan untuk pelatihan multi-GPU terdistribusi dalam praktik bukanlah hal yang mudah.
+Inilah mengapa menggunakan abstraksi umum, yaitu *penyimpanan kunci-nilai* dengan semantik pembaruan yang didefinisikan ulang sangat bermanfaat.
 
-
-Across many workers and many GPUs the computation for gradient $i$ can be defined as
+Pada banyak pekerja dan banyak GPU, komputasi untuk gradien $i$ dapat didefinisikan sebagai
 
 $$\mathbf{g}_{i} = \sum_{k \in \textrm{workers}} \sum_{j \in \textrm{GPUs}} \mathbf{g}_{ijk},$$
 
-where $\mathbf{g}_{ijk}$ is part of gradient $i$ split on GPU $j$ of worker $k$.
-The key aspect in this operation is that it is a *commutative reduction*, that is, it turns many vectors into one and the order in which the operation is applied does not matter. This is great for our purposes since we do not (need to) have fine grained control over when which gradient is received. Besides, note that this operation is independent among different $i$.
+di mana $\mathbf{g}_{ijk}$ adalah bagian dari gradien $i$ yang dibagi pada GPU $j$ dari pekerja $k$.
+Aspek kunci dalam operasi ini adalah bahwa ini merupakan *reduksi komutatif*, yaitu, mengubah banyak vektor menjadi satu dan urutan penerapan operasi ini tidak penting. Ini sangat berguna untuk tujuan kita karena kita tidak (perlu) memiliki kontrol detail mengenai kapan gradien diterima. Selain itu, perhatikan bahwa operasi ini independen di antara $i$ yang berbeda.
 
-This allows us to define the following two operations: *push*, which accumulates gradients, and *pull*, which retrieves aggregate gradients. Since we have many different sets of gradients (after all, we have many layers), we need to index the gradients with a key $i$. This similarity to key--value stores, such as the one introduced in Dynamo
-:cite:`DeCandia.Hastorun.Jampani.ea.2007` is not by coincidence. They, too, satisfy many similar characteristics, in particular when it comes to distributing the parameters across multiple servers.
+Hal ini memungkinkan kita untuk mendefinisikan dua operasi berikut: *push*, yang mengumpulkan gradien, dan *pull*, yang mengambil gradien gabungan. Karena kita memiliki banyak set gradien (bagaimanapun, kita memiliki banyak lapisan), kita perlu mengindeks gradien dengan kunci $i$. Kemiripan ini dengan penyimpanan kunci-nilai, seperti yang diperkenalkan dalam Dynamo :cite:`DeCandia.Hastorun.Jampani.ea.2007` bukanlah kebetulan. Mereka juga memenuhi banyak karakteristik serupa, terutama ketika datang ke distribusi parameter di beberapa server.
 
+Operasi push dan pull untuk penyimpanan kunci-nilai dijelaskan sebagai berikut:
 
-The push and pull operations for key-value stores are described as follows:
+* **push(key, value)** mengirimkan gradien tertentu (nilai) dari pekerja ke penyimpanan umum. Di sana nilai tersebut dikumpulkan, misalnya dengan menjumlahkannya.
+* **pull(key, value)** mengambil nilai gabungan dari penyimpanan umum, misalnya setelah menggabungkan gradien dari semua pekerja.
 
-* **push(key, value)** sends a particular gradient (the value) from a worker to a common storage. There the value is aggregated, e.g., by summing it up.
-* **pull(key, value)** retrieves an aggregate value from common storage, e.g., after combining the gradients from all workers.
-
-By hiding all the complexity about synchronization behind a simple push and pull operation we can decouple the concerns of statistical modelers who want to be able to express optimization in simple terms and the system engineers who need to deal with the complexity inherent in distributed synchronization.
-
-## Summary
-
-* Synchronization needs to be highly adaptive to specific network infrastructure and connectivity within a server. This can make a significant difference to the time it takes to synchronize.
-* Ring-synchronization can be optimal for p3 and DGX-2 servers. For others possibly not so much.
-* A hierarchical synchronization strategy works well when adding multiple parameter servers for increased bandwidth.
+Dengan menyembunyikan semua kompleksitas tentang sinkronisasi di balik operasi push dan pull sederhana, kita dapat memisahkan kekhawatiran para ahli model statistik yang ingin dapat mengekspresikan optimasi dalam istilah sederhana dan para insinyur sistem yang harus menangani kompleksitas yang melekat dalam sinkronisasi terdistribusi.
 
 
-## Exercises
-
-1. Can you increase the ring synchronization even further? Hint: you can send messages in both directions.
-1. Is it possible to allow asynchronous communication (while computation is still ongoing)? How does it affect performance?
-1. What if we lost a server during a long-running computation? How can we design a *fault tolerance* mechanism to avoid restarting the computation fully?
 
 
-[Discussions](https://discuss.d2l.ai/t/366)
+
+## Ringkasan
+
+* Sinkronisasi perlu sangat adaptif terhadap infrastruktur jaringan spesifik dan konektivitas di dalam server. Hal ini dapat membuat perbedaan signifikan terhadap waktu yang dibutuhkan untuk sinkronisasi.
+* Sinkronisasi cincin (ring-synchronization) bisa optimal untuk server p3 dan DGX-2. Untuk server lain mungkin tidak seoptimal itu.
+* Strategi sinkronisasi hierarkis bekerja dengan baik ketika menambahkan beberapa server parameter untuk meningkatkan bandwidth.
+
+## Latihan
+
+1. Bisakah Anda meningkatkan sinkronisasi cincin lebih jauh lagi? Petunjuk: Anda dapat mengirim pesan ke dua arah.
+2. Apakah memungkinkan untuk mengizinkan komunikasi asinkron (saat komputasi masih berlangsung)? Bagaimana hal ini memengaruhi kinerja?
+3. Bagaimana jika kita kehilangan sebuah server selama komputasi yang berlangsung lama? Bagaimana kita bisa merancang mekanisme *fault tolerance* untuk menghindari memulai ulang komputasi secara penuh?
+
+[Diskusi](https://discuss.d2l.ai/t/366)
+
