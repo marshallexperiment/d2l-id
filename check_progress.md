@@ -148,8 +148,8 @@
 
 # 13 - chapter_computational-performance
 
-- [ ] ./chapter_computational-performance/hardware.md
-- [ ] ./chapter_computational-performance/multiple-gpus-concise.md
+- [x] ./chapter_computational-performance/hardware.md
+- [x] ./chapter_computational-performance/multiple-gpus-concise.md
 - [ ] ./chapter_computational-performance/multiple-gpus.md
 - [ ] ./chapter_computational-performance/index.md
 - [ ] ./chapter_computational-performance/auto-parallelism.md
