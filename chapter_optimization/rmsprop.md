@@ -1,32 +1,32 @@
 # RMSProp
 :label:`sec_rmsprop`
 
+Salah satu masalah utama dalam :numref:`sec_adagrad` adalah bahwa laju pembelajaran (learning rate) menurun dengan jadwal yang telah ditentukan secara efektif $\mathcal{O}(t^{-\frac{1}{2}})$. Meskipun ini umumnya sesuai untuk masalah *convex*, hal ini mungkin tidak ideal untuk masalah *nonconvex*, seperti yang sering ditemui dalam *deep learning*. Namun, adaptivitas per-koordinat dari Adagrad sangat diinginkan sebagai *preconditioner*.
 
-One of the key issues in :numref:`sec_adagrad` is that the learning rate decreases at a predefined schedule of effectively $\mathcal{O}(t^{-\frac{1}{2}})$. While this is generally appropriate for convex problems, it might not be ideal for nonconvex ones, such as those encountered in deep learning. Yet, the coordinate-wise adaptivity of Adagrad is highly desirable as a preconditioner.
+:citet:`Tieleman.Hinton.2012` mengusulkan algoritma RMSProp sebagai solusi sederhana untuk memisahkan penjadwalan laju dari laju pembelajaran adaptif per-koordinat. Masalahnya adalah bahwa Adagrad mengakumulasi kuadrat dari gradien $\mathbf{g}_t$ ke dalam vektor status $\mathbf{s}_t = \mathbf{s}_{t-1} + \mathbf{g}_t^2$. Akibatnya, $\mathbf{s}_t$ terus tumbuh tanpa batas karena kurangnya normalisasi, secara esensial linear seiring algoritma konvergen.
 
-:citet:`Tieleman.Hinton.2012` proposed the RMSProp algorithm as a simple fix to decouple rate scheduling from coordinate-adaptive learning rates. The issue is that Adagrad accumulates the squares of the gradient $\mathbf{g}_t$ into a state vector $\mathbf{s}_t = \mathbf{s}_{t-1} + \mathbf{g}_t^2$. As a result $\mathbf{s}_t$ keeps on growing without bound due to the lack of normalization, essentially linearly as the algorithm converges.
+Salah satu cara untuk memperbaiki masalah ini adalah dengan menggunakan $\mathbf{s}_t / t$. Untuk distribusi $\mathbf{g}_t$ yang wajar, ini akan konvergen. Sayangnya, bisa memakan waktu yang sangat lama sampai perilaku limit mulai berpengaruh karena prosedur ini mengingat seluruh lintasan nilai. Alternatifnya adalah menggunakan rata-rata bocor (leaky average) dengan cara yang sama seperti yang kita gunakan pada metode momentum, yaitu $\mathbf{s}_t \leftarrow \gamma \mathbf{s}_{t-1} + (1-\gamma) \mathbf{g}_t^2$ untuk beberapa parameter $\gamma > 0$. Menjaga bagian lain tetap tidak berubah menghasilkan RMSProp.
 
-One way of fixing this problem would be to use $\mathbf{s}_t / t$. For reasonable distributions of $\mathbf{g}_t$ this will converge. Unfortunately it might take a very long time until the limit behavior starts to matter since the procedure remembers the full trajectory of values. An alternative is to use a leaky average in the same way we used in the momentum method, i.e., $\mathbf{s}_t \leftarrow \gamma \mathbf{s}_{t-1} + (1-\gamma) \mathbf{g}_t^2$ for some parameter $\gamma > 0$. Keeping all other parts unchanged yields RMSProp.
+## Algoritma
 
-## The Algorithm
-
-Let's write out the equations in detail.
+Mari kita tuliskan persamaannya secara detail.
 
 $$\begin{aligned}
     \mathbf{s}_t & \leftarrow \gamma \mathbf{s}_{t-1} + (1 - \gamma) \mathbf{g}_t^2, \\
     \mathbf{x}_t & \leftarrow \mathbf{x}_{t-1} - \frac{\eta}{\sqrt{\mathbf{s}_t + \epsilon}} \odot \mathbf{g}_t.
 \end{aligned}$$
 
-The constant $\epsilon > 0$ is typically set to $10^{-6}$ to ensure that we do not suffer from division by zero or overly large step sizes. Given this expansion we are now free to control the learning rate $\eta$ independently of the scaling that is applied on a per-coordinate basis. In terms of leaky averages we can apply the same reasoning as previously applied in the case of the momentum method. Expanding the definition of $\mathbf{s}_t$ yields
+Konstanta $\epsilon > 0$ biasanya diatur ke $10^{-6}$ untuk memastikan bahwa kita tidak mengalami pembagian dengan nol atau ukuran langkah yang terlalu besar. Dengan ekspansi ini, kita sekarang bebas mengendalikan laju pembelajaran $\eta$ secara independen dari skala yang diterapkan pada setiap koordinat. Dalam hal rata-rata bocor (leaky average), kita dapat menerapkan pemikiran yang sama seperti yang sebelumnya diterapkan pada kasus metode momentum. Dengan mengembangkan definisi $\mathbf{s}_t$, kita mendapatkan
 
 $$
 \begin{aligned}
 \mathbf{s}_t & = (1 - \gamma) \mathbf{g}_t^2 + \gamma \mathbf{s}_{t-1} \\
-& = (1 - \gamma) \left(\mathbf{g}_t^2 + \gamma \mathbf{g}_{t-1}^2 + \gamma^2 \mathbf{g}_{t-2} + \ldots, \right).
+& = (1 - \gamma) \left(\mathbf{g}_t^2 + \gamma \mathbf{g}_{t-1}^2 + \gamma^2 \mathbf{g}_{t-2} + \ldots \right).
 \end{aligned}
 $$
 
-As before in :numref:`sec_momentum` we use $1 + \gamma + \gamma^2 + \ldots, = \frac{1}{1-\gamma}$. Hence the sum of weights is normalized to $1$ with a half-life time of an observation of $\gamma^{-1}$. Let's visualize the weights for the past 40 time steps for various choices of $\gamma$.
+Seperti sebelumnya dalam :numref:`sec_momentum`, kita menggunakan $1 + \gamma + \gamma^2 + \ldots = \frac{1}{1-\gamma}$. Oleh karena itu, jumlah bobot dinormalisasi menjadi $1$ dengan waktu paruh dari sebuah observasi sebesar $\gamma^{-1}$. Mari kita visualisasikan bobot untuk 40 langkah waktu terakhir untuk berbagai pilihan $\gamma$.
+
 
 ```{.python .input}
 #@tab mxnet
@@ -62,9 +62,10 @@ for gamma in gammas:
 d2l.plt.xlabel('time');
 ```
 
-## Implementation from Scratch
+## Implementasi dari Awal
 
-As before we use the quadratic function $f(\mathbf{x})=0.1x_1^2+2x_2^2$ to observe the trajectory of RMSProp. Recall that in :numref:`sec_adagrad`, when we used Adagrad with a learning rate of 0.4, the variables moved only very slowly in the later stages of the algorithm since the learning rate decreased too quickly. Since $\eta$ is controlled separately this does not happen with RMSProp.
+Seperti sebelumnya, kita menggunakan fungsi kuadrat $f(\mathbf{x}) = 0.1x_1^2 + 2x_2^2$ untuk mengamati lintasan dari RMSProp. Ingat bahwa pada :numref:`sec_adagrad`, ketika kita menggunakan Adagrad dengan laju pembelajaran sebesar 0.4, variabel-variabel bergerak sangat lambat pada tahap akhir algoritma karena laju pembelajaran menurun terlalu cepat. Karena $\eta$ dikendalikan secara terpisah, hal ini tidak terjadi pada RMSProp.
+
 
 ```{.python .input}
 #@tab all
@@ -83,7 +84,8 @@ eta, gamma = 0.4, 0.9
 d2l.show_trace_2d(f_2d, d2l.train_2d(rmsprop_2d))
 ```
 
-Next, we implement RMSProp to be used in a deep network. This is equally straightforward.
+Selanjutnya, kita mengimplementasikan RMSProp untuk digunakan dalam jaringan dalam (deep network). Implementasinya juga cukup sederhana.
+
 
 ```{.python .input}
 #@tab mxnet,pytorch
@@ -130,7 +132,9 @@ def rmsprop(params, grads, states, hyperparams):
         p[:].assign(p - hyperparams['lr'] * g / tf.math.sqrt(s + eps))
 ```
 
-We set the initial learning rate to 0.01 and the weighting term $\gamma$ to 0.9. That is, $\mathbf{s}$ aggregates on average over the past $1/(1-\gamma) = 10$ observations of the square gradient.
+Kami menetapkan laju pembelajaran awal ke 0.01 dan parameter pembobot $\gamma$ ke 0.9. Artinya, $\mathbf{s}$ mengakumulasi rata-rata dari 1/(1-\gamma) = 10 pengamatan dari kuadrat gradien sebelumnya.
+
+
 
 ```{.python .input}
 #@tab all
@@ -139,9 +143,10 @@ d2l.train_ch11(rmsprop, init_rmsprop_states(feature_dim),
                {'lr': 0.01, 'gamma': 0.9}, data_iter, feature_dim);
 ```
 
-## Concise Implementation
+## Implementasi Singkat
 
-Since RMSProp is a rather popular algorithm it is also available in the `Trainer` instance. All we need to do is instantiate it using an algorithm named `rmsprop`, assigning $\gamma$ to the parameter `gamma1`.
+Karena RMSProp adalah algoritma yang cukup populer, maka algoritma ini juga tersedia dalam instance `Trainer`. Yang perlu kita lakukan hanyalah menginstansiasi menggunakan algoritma bernama `rmsprop`, menetapkan nilai $\gamma$ ke parameter `gamma1`.
+
 
 ```{.python .input}
 #@tab mxnet
@@ -163,19 +168,19 @@ d2l.train_concise_ch11(trainer, {'learning_rate': 0.01, 'rho': 0.9},
                        data_iter)
 ```
 
-## Summary
+## Ringkasan
 
-* RMSProp is very similar to Adagrad insofar as both use the square of the gradient to scale coefficients.
-* RMSProp shares with momentum the leaky averaging. However, RMSProp uses the technique to adjust the coefficient-wise preconditioner.
-* The learning rate needs to be scheduled by the experimenter in practice.
-* The coefficient $\gamma$ determines how long the history is when adjusting the per-coordinate scale.
+* RMSProp sangat mirip dengan Adagrad sejauh keduanya menggunakan kuadrat dari gradien untuk mengatur koefisien.
+* RMSProp memiliki kesamaan dengan momentum dalam hal rata-rata eksponensial. Namun, RMSProp menggunakan teknik ini untuk menyesuaikan preconditioner per-koordinat.
+* Learning rate perlu dijadwalkan oleh eksperimen secara praktik.
+* Koefisien $\gamma$ menentukan berapa lama sejarah digunakan saat menyesuaikan skala per-koordinat.
 
-## Exercises
+## Latihan
 
-1. What happens experimentally if we set $\gamma = 1$? Why?
-1. Rotate the optimization problem to minimize $f(\mathbf{x}) = 0.1 (x_1 + x_2)^2 + 2 (x_1 - x_2)^2$. What happens to the convergence?
-1. Try out what happens to RMSProp on a real machine learning problem, such as training on Fashion-MNIST. Experiment with different choices for adjusting the learning rate.
-1. Would you want to adjust $\gamma$ as optimization progresses? How sensitive is RMSProp to this?
+1. Apa yang terjadi secara eksperimental jika kita menetapkan $\gamma = 1$? Mengapa?
+2. Rotasikan masalah optimasi untuk meminimalkan $f(\mathbf{x}) = 0.1 (x_1 + x_2)^2 + 2 (x_1 - x_2)^2$. Apa yang terjadi pada konvergensi?
+3. Coba apa yang terjadi pada RMSProp pada masalah machine learning nyata, seperti pelatihan pada Fashion-MNIST. Bereksperimenlah dengan berbagai pilihan untuk menyesuaikan learning rate.
+4. Apakah Anda ingin menyesuaikan $\gamma$ seiring perkembangan optimasi? Seberapa sensitif RMSProp terhadap hal ini?
 
 :begin_tab:`mxnet`
 [Discussions](https://discuss.d2l.ai/t/356)
