@@ -1,14 +1,15 @@
-# Computational Performance
+# Kinerja Komputasi
 :label:`chap_performance`
 
-In deep learning, 
-datasets and models are usually large,
-which involves heavy computation.
-Therefore, computational performance matters a lot.
-This chapter will focus on the major factors that affect computational performance:
-imperative programming, symbolic programming, asynchronous computing, automatic parallelism, and multi-GPU computation.
-By studying this chapter, you may further improve computational performance of those models implemented in the previous chapters,
-for example, by reducing training time without affecting accuracy.
+Dalam deep learning, 
+dataset dan model biasanya sangat besar, 
+yang melibatkan komputasi berat.
+Oleh karena itu, kinerja komputasi sangat penting.
+Bab ini akan berfokus pada faktor-faktor utama yang memengaruhi kinerja komputasi:
+pemrograman imperatif, pemrograman simbolik, komputasi asinkron, paralelisme otomatis, dan komputasi multi-GPU.
+Dengan mempelajari bab ini, Anda dapat lebih meningkatkan kinerja komputasi dari model yang telah diimplementasikan di bab sebelumnya,
+misalnya dengan mengurangi waktu pelatihan tanpa memengaruhi akurasi.
+
 
 ```toc
 :maxdepth: 2
