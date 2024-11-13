@@ -133,18 +133,18 @@
 
 # 12 - chapter_optimization
 
-- [ ] ./chapter_optimization/adam.md
-- [ ] ./chapter_optimization/adagrad.md
-- [ ] ./chapter_optimization/optimization-intro.md
-- [ ] ./chapter_optimization/momentum.md
-- [ ] ./chapter_optimization/adadelta.md
-- [ ] ./chapter_optimization/lr-scheduler.md
-- [ ] ./chapter_optimization/gd.md
-- [ ] ./chapter_optimization/minibatch-sgd.md
-- [ ] ./chapter_optimization/index.md
-- [ ] ./chapter_optimization/rmsprop.md
-- [ ] ./chapter_optimization/convexity.md
-- [ ] ./chapter_optimization/sgd.md
+- [x] ./chapter_optimization/adam.md
+- [x] ./chapter_optimization/adagrad.md
+- [x] ./chapter_optimization/optimization-intro.md
+- [x] ./chapter_optimization/momentum.md
+- [x] ./chapter_optimization/adadelta.md
+- [x] ./chapter_optimization/lr-scheduler.md
+- [x] ./chapter_optimization/gd.md
+- [x] ./chapter_optimization/minibatch-sgd.md
+- [x] ./chapter_optimization/index.md
+- [x] ./chapter_optimization/rmsprop.md
+- [x] ./chapter_optimization/convexity.md
+- [x] ./chapter_optimization/sgd.md
 
 # 13 - chapter_computational-performance
 
