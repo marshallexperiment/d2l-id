@@ -127,9 +127,9 @@ Mengganti $\eta$ dengan learning rate yang bergantung pada waktu $\eta(t)$ menam
 
 $$
 \begin{aligned}
-    \eta(t) & = \eta_i \textrm{ jika } t_i \leq t \leq t_{i+1}  && \textrm{konstanta potongan} \\
-    \eta(t) & = \eta_0 \cdot e^{-\lambda t} && \textrm{penurunan eksponensial} \\
-    \eta(t) & = \eta_0 \cdot (\beta t + 1)^{-\alpha} && \textrm{penurunan polinomial}
+    \eta(t) & = \eta_i \textrm{ jika } t_i \leq t \leq t_{i+1}  && \textrm{konstanta potongan (piecewise constant)} \\
+    \eta(t) & = \eta_0 \cdot e^{-\lambda t} && \textrm{penurunan eksponensial (exponential decay)} \\
+    \eta(t) & = \eta_0 \cdot (\beta t + 1)^{-\alpha} && \textrm{penurunan polinomial (polynomial decay)}
 \end{aligned}
 $$
 
