@@ -1,37 +1,36 @@
-# Object Detection and Bounding Boxes
+# Deteksi Objek dan Kotak Pembatas
 :label:`sec_bbox`
 
+Pada bagian sebelumnya (misalnya, :numref:`sec_alexnet`--:numref:`sec_googlenet`),
+kami memperkenalkan berbagai model untuk klasifikasi gambar.
+Pada tugas klasifikasi gambar,
+kita mengasumsikan bahwa hanya ada *satu* objek utama
+dalam gambar dan kita hanya fokus pada bagaimana
+mengenali kategorinya.
+Namun, sering kali ada *beberapa* objek
+dalam gambar yang menjadi perhatian.
+Kita tidak hanya ingin mengetahui kategorinya, tetapi juga posisi spesifiknya dalam gambar.
+Dalam visi komputer, tugas semacam ini disebut sebagai *deteksi objek* (atau *pengakuan objek*).
 
-In earlier sections (e.g., :numref:`sec_alexnet`--:numref:`sec_googlenet`),
-we introduced various models for image classification.
-In image classification tasks,
-we assume that there is only *one*
-major object
-in the image and we only focus on how to 
-recognize its category.
-However, there are often *multiple* objects
-in the image of interest.
-We not only want to know their categories, but also their specific positions in the image.
-In computer vision, we refer to such tasks as *object detection* (or *object recognition*).
+Deteksi objek telah
+banyak diterapkan di berbagai bidang.
+Sebagai contoh, kendaraan otonom perlu merencanakan
+rute perjalanan
+dengan mendeteksi posisi
+kendaraan, pejalan kaki, jalan, dan rintangan pada gambar video yang diambil.
+Selain itu,
+robot dapat menggunakan teknik ini
+untuk mendeteksi dan menentukan lokasi objek yang menarik
+selama navigasi di lingkungan.
+Selain itu,
+sistem keamanan
+mungkin perlu mendeteksi objek abnormal, seperti penyusup atau bom.
 
-Object detection has been
-widely applied in many fields.
-For example, self-driving needs to plan 
-traveling routes
-by detecting the positions
-of vehicles, pedestrians, roads, and obstacles in the captured video images.
-Besides,
-robots may use this technique
-to detect and localize objects of interest
-throughout its navigation of an environment.
-Moreover,
-security systems
-may need to detect abnormal objects, such as intruders or bombs.
+Dalam beberapa bagian berikutnya, kami akan memperkenalkan
+beberapa metode pembelajaran mendalam untuk deteksi objek.
+Kita akan mulai dengan pengenalan
+tentang *posisi* (atau *lokasi*) dari objek.
 
-In the next few sections, we will introduce 
-several deep learning methods for object detection.
-We will begin with an introduction
-to *positions* (or *locations*) of objects.
 
 ```{.python .input}
 #@tab mxnet
@@ -56,8 +55,10 @@ from d2l import tensorflow as d2l
 import tensorflow as tf
 ```
 
-We will load the sample image to be used in this section. We can see that there is a dog on the left side of the image and a cat on the right.
-They are the two major objects in this image.
+Kita akan memuat gambar sampel yang akan digunakan pada bagian ini. Kita dapat melihat bahwa ada seekor anjing di sisi kiri gambar dan seekor kucing di sisi kanan.
+Mereka adalah dua objek utama dalam gambar ini.
+
+
 
 ```{.python .input}
 #@tab mxnet
@@ -73,28 +74,27 @@ img = d2l.plt.imread('../img/catdog.jpg')
 d2l.plt.imshow(img);
 ```
 
-## Bounding Boxes
+## Kotak Pembatas
+
+Dalam deteksi objek,
+kita biasanya menggunakan *kotak pembatas* untuk mendeskripsikan lokasi spasial suatu objek.
+Kotak pembatas berbentuk persegi panjang, yang ditentukan oleh koordinat $x$ dan $y$ dari sudut kiri atas persegi panjang dan koordinat serupa dari sudut kanan bawah. 
+Representasi kotak pembatas lain yang umum digunakan adalah koordinat sumbu $(x, y)$ dari pusat kotak pembatas, serta lebar dan tinggi kotak tersebut.
+
+[**Di sini kami mendefinisikan fungsi untuk mengonversi antara**] kedua (**representasi ini**):
+`box_corner_to_center` mengonversi dari representasi dua sudut
+ke representasi pusat-lebar-tinggi,
+dan `box_center_to_corner` sebaliknya.
+Argumen input `boxes` harus berupa tensor dua dimensi dengan
+bentuk ($n$, 4), di mana $n$ adalah jumlah kotak pembatas.
 
 
-In object detection,
-we usually use a *bounding box* to describe the spatial location of an object.
-The bounding box is rectangular, which is determined by the $x$ and $y$ coordinates of the upper-left corner of the rectangle and the such coordinates of the lower-right corner. 
-Another commonly used bounding box representation is the $(x, y)$-axis
-coordinates of the bounding box center, and the width and height of the box.
-
-[**Here we define functions to convert between**] these (**two
-representations**):
-`box_corner_to_center` converts from the two-corner
-representation to the center-width-height presentation,
-and `box_center_to_corner` vice versa.
-The input argument `boxes` should be a two-dimensional tensor of
-shape ($n$, 4), where $n$ is the number of bounding boxes.
 
 ```{.python .input}
 #@tab all
 #@save
 def box_corner_to_center(boxes):
-    """Convert from (upper-left, lower-right) to (center, width, height)."""
+    """Konversi dari (kiri-atas, kanan-bawah) ke (pusat, lebar, tinggi)."""
     x1, y1, x2, y2 = boxes[:, 0], boxes[:, 1], boxes[:, 2], boxes[:, 3]
     cx = (x1 + x2) / 2
     cy = (y1 + y2) / 2
@@ -105,7 +105,7 @@ def box_corner_to_center(boxes):
 
 #@save
 def box_center_to_corner(boxes):
-    """Convert from (center, width, height) to (upper-left, lower-right)."""
+    """Konversi dari (kiri-atas, kanan-bawah) ke (pusat, lebar, tinggi)."""
     cx, cy, w, h = boxes[:, 0], boxes[:, 1], boxes[:, 2], boxes[:, 3]
     x1 = cx - 0.5 * w
     y1 = cy - 0.5 * h
@@ -115,20 +115,20 @@ def box_center_to_corner(boxes):
     return boxes
 ```
 
-We will [**define the bounding boxes of the dog and the cat in the image**] based
-on the coordinate information.
-The origin of the coordinates in the image
-is the upper-left corner of the image, and to the right and down are the
-positive directions of the $x$ and $y$ axes, respectively.
+Kita akan [**mendefinisikan kotak pembatas untuk anjing dan kucing dalam gambar**] berdasarkan informasi koordinat.
+Titik asal koordinat dalam gambar
+adalah sudut kiri atas gambar, dan ke kanan serta ke bawah merupakan
+arah positif dari sumbu $x$ dan $y$, masing-masing.
+
 
 ```{.python .input}
 #@tab all
-# Here `bbox` is the abbreviation for bounding box
+# Di sini `bbox` adalah singkatan dari bounding box
 dog_bbox, cat_bbox = [60.0, 45.0, 378.0, 516.0], [400.0, 112.0, 655.0, 493.0]
 ```
 
-We can verify the correctness of the two
-bounding box conversion functions by converting twice.
+Kita dapat memverifikasi kebenaran dari dua fungsi konversi kotak pembatas dengan melakukan konversi dua kali.
+
 
 ```{.python .input}
 #@tab all
@@ -136,24 +136,26 @@ boxes = d2l.tensor((dog_bbox, cat_bbox))
 box_center_to_corner(box_corner_to_center(boxes)) == boxes
 ```
 
-Let's [**draw the bounding boxes in the image**] to check if they are accurate.
-Before drawing, we will define a helper function `bbox_to_rect`. It represents the bounding box in the bounding box format of the  `matplotlib` package.
+Mari kita [**gambar kotak pembatas pada gambar**] untuk memeriksa apakah mereka akurat.
+Sebelum menggambar, kita akan mendefinisikan fungsi bantu `bbox_to_rect`. Fungsi ini merepresentasikan kotak pembatas dalam format kotak pembatas yang digunakan oleh paket `matplotlib`.
+
 
 ```{.python .input}
 #@tab all
 #@save
 def bbox_to_rect(bbox, color):
-    """Convert bounding box to matplotlib format."""
-    # Convert the bounding box (upper-left x, upper-left y, lower-right x,
-    # lower-right y) format to the matplotlib format: ((upper-left x,
-    # upper-left y), width, height)
+    """Mengonversi kotak pembatas ke format matplotlib."""
+    # Konversi format kotak pembatas (kiri-atas x, kiri-atas y, kanan-bawah x,
+    # kanan-bawah y) ke format matplotlib: ((kiri-atas x,
+    # kiri-atas y), lebar, tinggi)
     return d2l.plt.Rectangle(
-        xy=(bbox[0], bbox[1]), width=bbox[2]-bbox[0], height=bbox[3]-bbox[1],
+        xy=(bbox[0], bbox[1]), width=bbox[2] - bbox[0], height=bbox[3] - bbox[1],
         fill=False, edgecolor=color, linewidth=2)
 ```
 
-After adding the bounding boxes on the image,
-we can see that the main outline of the two objects are basically inside the two boxes.
+Setelah menambahkan kotak pembatas pada gambar,
+kita dapat melihat bahwa garis besar utama dari kedua objek pada dasarnya berada di dalam kedua kotak tersebut.
+
 
 ```{.python .input}
 #@tab all
@@ -162,21 +164,20 @@ fig.axes.add_patch(bbox_to_rect(dog_bbox, 'blue'))
 fig.axes.add_patch(bbox_to_rect(cat_bbox, 'red'));
 ```
 
-## Summary
+## Ringkasan
 
-* Object detection not only recognizes all the objects of interest in the image, but also their positions. The position is generally represented by a rectangular bounding box.
-* We can convert between two commonly used bounding box representations.
+* Deteksi objek tidak hanya mengenali semua objek yang relevan dalam gambar, tetapi juga posisinya. Posisi ini umumnya direpresentasikan dengan kotak pembatas berbentuk persegi panjang.
+* Kita dapat melakukan konversi antara dua representasi kotak pembatas yang umum digunakan.
 
-## Exercises
+## Latihan
 
-1. Find another image and try to label a bounding box that contains the object. Compare labeling bounding boxes and categories: which usually takes longer?
-1. Why is the innermost dimension of the input argument `boxes` of `box_corner_to_center` and `box_center_to_corner` always 4?
-
+1. Temukan gambar lain dan coba beri label kotak pembatas yang mencakup objeknya. Bandingkan pelabelan kotak pembatas dengan pelabelan kategori: mana yang biasanya memakan waktu lebih lama?
+2. Mengapa dimensi terdalam dari argumen input `boxes` pada fungsi `box_corner_to_center` dan `box_center_to_corner` selalu bernilai 4?
 
 :begin_tab:`mxnet`
-[Discussions](https://discuss.d2l.ai/t/369)
+[Diskusi](https://discuss.d2l.ai/t/369)
 :end_tab:
 
 :begin_tab:`pytorch`
-[Discussions](https://discuss.d2l.ai/t/1527)
+[Diskusi](https://discuss.d2l.ai/t/1527)
 :end_tab:
