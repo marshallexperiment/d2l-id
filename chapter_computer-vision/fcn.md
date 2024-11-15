@@ -1,30 +1,32 @@
 # Fully Convolutional Networks
 :label:`sec_fcn`
 
-As discussed in :numref:`sec_semantic_segmentation`,
-semantic segmentation
-classifies images in pixel level.
-A fully convolutional network (FCN)
-uses a convolutional neural network to
-transform image pixels to pixel classes :cite:`Long.Shelhamer.Darrell.2015`.
-Unlike the CNNs that we encountered earlier
-for image classification 
-or object detection,
-a fully convolutional network
-transforms 
-the height and width of intermediate feature maps
-back to those of the input image:
-this is achieved by
-the transposed convolutional layer
-introduced in :numref:`sec_transposed_conv`.
-As a result,
-the classification output
-and the input image 
-have a one-to-one correspondence 
-in pixel level:
-the channel dimension at any output pixel 
-holds the classification results
-for the input pixel at the same spatial position.
+Seperti yang dibahas di :numref:`sec_semantic_segmentation`,
+segmentasi semantik
+mengklasifikasikan gambar pada tingkat piksel.
+Jaringan konvolusi penuh (*fully convolutional network* atau FCN)
+menggunakan jaringan saraf konvolusi untuk
+mengubah piksel gambar menjadi kelas piksel :cite:`Long.Shelhamer.Darrell.2015`.
+Berbeda dengan CNN yang kita temui sebelumnya
+untuk klasifikasi gambar 
+atau deteksi objek,
+jaringan konvolusi penuh
+mengubah 
+tinggi dan lebar dari peta fitur antara
+kembali ke dimensi gambar input:
+ini dicapai melalui
+lapisan konvolusi transpos
+yang diperkenalkan di :numref:`sec_transposed_conv`.
+Sebagai hasilnya,
+output klasifikasi
+dan gambar input
+memiliki korespondensi satu-ke-satu 
+pada tingkat piksel:
+dimensi kanal pada setiap piksel output 
+menyimpan hasil klasifikasi
+untuk piksel input pada posisi spasial yang sama.
+
+
 
 ```{.python .input}
 #@tab mxnet
@@ -46,35 +48,35 @@ from torch import nn
 from torch.nn import functional as F
 ```
 
-## The Model
+## Model
 
-Here we describe the basic design of the fully convolutional network model. 
-As shown in :numref:`fig_fcn`,
-this model first uses a CNN to extract image features,
-then transforms the number of channels into
-the number of classes
-via a $1\times 1$ convolutional layer,
-and finally transforms the height and width of
-the feature maps
-to those
-of the input image via
-the transposed convolution introduced in :numref:`sec_transposed_conv`. 
-As a result,
-the model output has the same height and width as the input image,
-where the output channel contains the predicted classes
-for the input pixel at the same spatial position.
-
+Di sini kami menjelaskan desain dasar dari model *fully convolutional network* (FCN).
+Seperti yang ditunjukkan pada :numref:`fig_fcn`,
+model ini pertama-tama menggunakan CNN untuk mengekstraksi fitur gambar,
+kemudian mengubah jumlah kanal menjadi
+jumlah kelas
+melalui lapisan konvolusi $1\times 1$,
+dan akhirnya mengubah tinggi dan lebar
+peta fitur
+menjadi sama
+dengan gambar input melalui
+konvolusi transpos yang diperkenalkan di :numref:`sec_transposed_conv`.
+Sebagai hasilnya,
+output model memiliki tinggi dan lebar yang sama dengan gambar input,
+di mana kanal output berisi kelas yang diprediksi
+untuk piksel input pada posisi spasial yang sama.
 
 ![Fully convolutional network.](../img/fcn.svg)
 :label:`fig_fcn`
 
-Below, we [**use a ResNet-18 model pretrained on the ImageNet dataset to extract image features**]
-and denote the model instance as `pretrained_net`.
-The last few layers of this model
-include a global average pooling layer
-and a fully connected layer:
-they are not needed
-in the fully convolutional network.
+Berikutnya, kita [**menggunakan model ResNet-18 yang telah dilatih sebelumnya pada dataset ImageNet untuk mengekstrak fitur gambar**]
+dan menyebut instance model ini sebagai `pretrained_net`.
+Beberapa lapisan terakhir dari model ini
+termasuk lapisan pooling rata-rata global
+dan lapisan fully connected:
+lapisan-lapisan ini tidak diperlukan
+dalam fully convolutional network.
+
 
 ```{.python .input}
 #@tab mxnet
@@ -88,11 +90,12 @@ pretrained_net = torchvision.models.resnet18(pretrained=True)
 list(pretrained_net.children())[-3:]
 ```
 
-Next, we [**create the fully convolutional network instance `net`**].
-It copies all the pretrained layers in the ResNet-18
-except for the final global average pooling layer
-and the fully connected layer that are closest
-to the output.
+Selanjutnya, kita [**membuat instance fully convolutional network `net`**].
+Model ini menyalin semua lapisan yang telah dilatih sebelumnya dari ResNet-18
+kecuali lapisan global average pooling terakhir
+dan lapisan fully connected yang paling dekat
+dengan output.
+
 
 ```{.python .input}
 #@tab mxnet
@@ -106,9 +109,11 @@ for layer in pretrained_net.features[:-2]:
 net = nn.Sequential(*list(pretrained_net.children())[:-2])
 ```
 
-Given an input with height and width of 320 and 480 respectively,
-the forward propagation of `net`
-reduces the input height and width to 1/32 of the original, namely 10 and 15.
+Diberikan input dengan tinggi 320 dan lebar 480,
+propagasi maju dari `net`
+mengurangi tinggi dan lebar input menjadi 1/32 dari ukuran aslinya, yaitu menjadi 10 dan 15.
+
+
 
 ```{.python .input}
 #@tab mxnet
@@ -122,21 +127,21 @@ X = torch.rand(size=(1, 3, 320, 480))
 net(X).shape
 ```
 
-Next, we [**use a $1\times 1$ convolutional layer to transform the number of output channels into the number of classes (21) of the Pascal VOC2012 dataset.**]
-Finally, we need to (**increase the height and width of the feature maps by 32 times**) to change them back to the height and width of the input image. 
-Recall how to calculate 
-the output shape of a convolutional layer in :numref:`sec_padding`. 
-Since $(320-64+16\times2+32)/32=10$ and $(480-64+16\times2+32)/32=15$, we construct a transposed convolutional layer with stride of $32$, 
-setting
-the height and width of the kernel
-to $64$, the padding to $16$.
-In general,
-we can see that
-for stride $s$,
-padding $s/2$ (assuming $s/2$ is an integer),
-and the height and width of the kernel $2s$, 
-the transposed convolution will increase
-the height and width of the input by $s$ times.
+Selanjutnya, kita [**menggunakan lapisan konvolusi $1\times 1$ untuk mengubah jumlah kanal output menjadi jumlah kelas (21) pada dataset Pascal VOC2012.**]
+Akhirnya, kita perlu (**meningkatkan tinggi dan lebar peta fitur sebanyak 32 kali**) agar sesuai kembali dengan tinggi dan lebar gambar input.
+Ingat cara menghitung 
+bentuk output dari lapisan konvolusi di :numref:`sec_padding`. 
+Karena $(320-64+16\times2+32)/32=10$ dan $(480-64+16\times2+32)/32=15$, kita membangun lapisan konvolusi transpos dengan stride $32$, 
+dengan
+tinggi dan lebar kernel $64$, padding $16$.
+Secara umum,
+kita dapat melihat bahwa
+untuk stride $s$,
+padding $s/2$ (dengan asumsi $s/2$ adalah bilangan bulat),
+dan tinggi serta lebar kernel $2s$, 
+konvolusi transpos akan meningkatkan
+tinggi dan lebar input sebanyak $s$ kali.
+
 
 ```{.python .input}
 #@tab mxnet
@@ -154,39 +159,42 @@ net.add_module('transpose_conv', nn.ConvTranspose2d(num_classes, num_classes,
                                     kernel_size=64, padding=16, stride=32))
 ```
 
-## [**Initializing Transposed Convolutional Layers**]
+## [**Inisialisasi Lapisan Konvolusi Transpos**]
+
+Kita sudah tahu bahwa
+lapisan konvolusi transpos dapat meningkatkan
+tinggi dan lebar
+peta fitur.
+Dalam pemrosesan gambar, kita mungkin perlu memperbesar
+gambar, yaitu *upsampling*.
+*Interpolasi bilinear*
+adalah salah satu teknik upsampling yang umum digunakan.
+Teknik ini juga sering digunakan untuk menginisialisasi lapisan konvolusi transpos.
 
 
-We already know that
-transposed convolutional layers can increase
-the height and width of
-feature maps.
-In image processing, we may need to scale up
-an image, i.e., *upsampling*.
-*Bilinear interpolation*
-is one of the commonly used upsampling techniques.
-It is also often used for initializing transposed convolutional layers.
 
-To explain bilinear interpolation,
-say that 
-given an input image
-we want to 
-calculate each pixel 
-of the upsampled output image.
-In order to calculate the pixel of the output image
-at coordinate $(x, y)$, 
-first map $(x, y)$ to coordinate $(x', y')$ on the input image, for example, according to the ratio of the input size to the output size. 
-Note that the mapped $x'$ and $y'$ are real numbers. 
-Then, find the four pixels closest to coordinate
-$(x', y')$ on the input image. 
-Finally, the pixel of the output image at coordinate $(x, y)$ is calculated based on these four closest pixels
-on the input image and their relative distance from $(x', y')$. 
+Untuk menjelaskan interpolasi bilinear,
+misalkan 
+diberikan sebuah gambar input
+kita ingin 
+menghitung setiap piksel 
+dari gambar output yang telah di-*upsampling*.
+Untuk menghitung piksel dari gambar output
+pada koordinat $(x, y)$,
+pertama map $(x, y)$ ke koordinat $(x', y')$ pada gambar input, misalnya, sesuai dengan rasio ukuran input terhadap ukuran output. 
+Perhatikan bahwa nilai $x'$ dan $y'$ yang dipetakan adalah bilangan real. 
+Kemudian, cari empat piksel terdekat dengan koordinat
+$(x', y')$ pada gambar input. 
+Terakhir, piksel dari gambar output pada koordinat $(x, y)$ dihitung berdasarkan keempat piksel terdekat
+pada gambar input dan jarak relatif mereka dari $(x', y')$. 
 
-Upsampling of bilinear interpolation
-can be implemented by the transposed convolutional layer 
-with the kernel constructed by the following `bilinear_kernel` function. 
-Due to space limitations, we only provide the implementation of the `bilinear_kernel` function below
-without discussions on its algorithm design.
+Upsampling menggunakan interpolasi bilinear
+dapat diimplementasikan dengan lapisan konvolusi transpos
+dengan kernel yang dibangun oleh fungsi `bilinear_kernel` berikut. 
+Karena keterbatasan ruang, kami hanya memberikan implementasi fungsi `bilinear_kernel` di bawah ini
+tanpa diskusi tentang desain algoritmenya.
+
+
 
 ```{.python .input}
 #@tab mxnet
@@ -223,11 +231,14 @@ def bilinear_kernel(in_channels, out_channels, kernel_size):
     return weight
 ```
 
-Let's [**experiment with upsampling of bilinear interpolation**] 
-that is implemented by a transposed convolutional layer. 
-We construct a transposed convolutional layer that 
-doubles the height and weight,
-and initialize its kernel with the `bilinear_kernel` function.
+Mari kita [**bereksperimen dengan upsampling menggunakan interpolasi bilinear**] 
+yang diimplementasikan oleh lapisan konvolusi transpos. 
+Kita membangun lapisan konvolusi transpos yang 
+melipatgandakan tinggi dan lebar,
+dan menginisialisasi kernel-nya dengan fungsi `bilinear_kernel`.
+
+
+
 
 ```{.python .input}
 #@tab mxnet
@@ -242,7 +253,8 @@ conv_trans = nn.ConvTranspose2d(3, 3, kernel_size=4, padding=1, stride=2,
 conv_trans.weight.data.copy_(bilinear_kernel(3, 3, 4));
 ```
 
-Read the image `X` and assign the upsampling output to `Y`. In order to print the image, we need to adjust the position of the channel dimension.
+Baca gambar `X` dan tetapkan output upsampling ke `Y`. Untuk mencetak gambar, kita perlu menyesuaikan posisi dimensi kanal.
+
 
 ```{.python .input}
 #@tab mxnet
@@ -260,9 +272,11 @@ Y = conv_trans(X)
 out_img = Y[0].permute(1, 2, 0).detach()
 ```
 
-As we can see, the transposed convolutional layer increases both the height and width of the image by a factor of two.
-Except for the different scales in coordinates,
-the image scaled up by bilinear interpolation and the original image printed in :numref:`sec_bbox` look the same.
+Seperti yang kita lihat, lapisan konvolusi transpos meningkatkan tinggi dan lebar gambar sebanyak dua kali lipat.
+Kecuali untuk skala koordinat yang berbeda,
+gambar yang diperbesar dengan interpolasi bilinear dan gambar asli yang dicetak di :numref:`sec_bbox` tampak sama.
+
+
 
 ```{.python .input}
 #@tab mxnet
@@ -282,7 +296,9 @@ print('output image shape:', out_img.shape)
 d2l.plt.imshow(out_img);
 ```
 
-In a fully convolutional network, we [**initialize the transposed convolutional layer with upsampling of bilinear interpolation. For the $1\times 1$ convolutional layer, we use Xavier initialization.**]
+Dalam *fully convolutional network*, kita [**menginisialisasi lapisan konvolusi transpos dengan upsampling menggunakan interpolasi bilinear. Untuk lapisan konvolusi $1\times 1$, kita menggunakan inisialisasi Xavier.**]
+
+
 
 ```{.python .input}
 #@tab mxnet
@@ -297,13 +313,14 @@ W = bilinear_kernel(num_classes, num_classes, 64)
 net.transpose_conv.weight.data.copy_(W);
 ```
 
-## [**Reading the Dataset**]
+## [**Membaca Dataset**]
 
-We read
-the semantic segmentation dataset
-as introduced in :numref:`sec_semantic_segmentation`. 
-The output image shape of random cropping is
-specified as $320\times 480$: both the height and width are divisible by $32$.
+Kita membaca
+dataset segmentasi semantik
+seperti yang diperkenalkan di :numref:`sec_semantic_segmentation`. 
+Bentuk gambar output dari pemotongan acak
+ditentukan sebagai $320\times 480$: baik tinggi maupun lebar dapat dibagi oleh $32$.
+
 
 ```{.python .input}
 #@tab all
@@ -311,20 +328,20 @@ batch_size, crop_size = 32, (320, 480)
 train_iter, test_iter = d2l.load_data_voc(batch_size, crop_size)
 ```
 
-## [**Training**]
+## [**Pelatihan**]
 
+Sekarang kita dapat melatih
+*fully convolutional network* yang telah kita bangun.
+Fungsi loss dan perhitungan akurasi di sini
+tidak berbeda secara mendasar dari klasifikasi gambar pada bab sebelumnya. 
+Karena kita menggunakan kanal output dari
+lapisan konvolusi transpos untuk
+memprediksi kelas untuk setiap piksel,
+dimensi kanal ditentukan dalam perhitungan loss.
+Selain itu, akurasi dihitung
+berdasarkan kebenaran
+kelas yang diprediksi untuk semua piksel.
 
-Now we can train our constructed
-fully convolutional network. 
-The loss function and accuracy calculation here
-are not essentially different from those in image classification of earlier chapters. 
-Because we use the output channel of the
-transposed convolutional layer to
-predict the class for each pixel,
-the channel dimension is specified in the loss calculation.
-In addition, the accuracy is calculated
-based on correctness
-of the predicted class for all the pixels.
 
 ```{.python .input}
 #@tab mxnet
@@ -346,11 +363,12 @@ trainer = torch.optim.SGD(net.parameters(), lr=lr, weight_decay=wd)
 d2l.train_ch13(net, train_iter, test_iter, loss, trainer, num_epochs, devices)
 ```
 
-## [**Prediction**]
+## [**Prediksi**]
+
+Saat melakukan prediksi, kita perlu menstandarkan gambar input
+di setiap kanal dan mengubah gambar menjadi format input empat dimensi yang diperlukan oleh CNN.
 
 
-When predicting, we need to standardize the input image
-in each channel and transform the image into the four-dimensional input format required by the CNN.
 
 ```{.python .input}
 #@tab mxnet
@@ -369,7 +387,9 @@ def predict(img):
     return pred.reshape(pred.shape[1], pred.shape[2])
 ```
 
-To [**visualize the predicted class**] of each pixel, we map the predicted class back to its label color in the dataset.
+Untuk [**memvisualisasikan kelas yang diprediksi**] dari setiap piksel, kita memetakan kelas yang diprediksi kembali ke warna labelnya dalam dataset.
+
+
 
 ```{.python .input}
 #@tab mxnet
@@ -387,31 +407,32 @@ def label2image(pred):
     return colormap[X, :]
 ```
 
-Images in the test dataset vary in size and shape.
-Since the model uses a transposed convolutional layer with stride of 32,
-when the height or width of an input image is indivisible by 32,
-the output height or width of the
-transposed convolutional layer will deviate from the shape of the input image.
-In order to address this issue,
-we can crop multiple rectangular areas with height and width that are integer multiples of 32 in the image,
-and perform forward propagation
-on the pixels in these areas separately.
-Note that
-the union of these rectangular areas needs to completely cover the input image.
-When a pixel is covered by multiple rectangular areas,
-the average of the transposed convolution outputs
-in separate areas for this same pixel
-can be input to
-the softmax operation
-to predict the class.
+Gambar-gambar dalam dataset uji memiliki ukuran dan bentuk yang bervariasi.
+Karena model menggunakan lapisan konvolusi transpos dengan *stride* 32,
+ketika tinggi atau lebar gambar input tidak dapat dibagi oleh 32,
+tinggi atau lebar output dari
+lapisan konvolusi transpos akan menyimpang dari bentuk gambar input.
+Untuk mengatasi masalah ini,
+kita dapat memotong beberapa area persegi panjang dengan tinggi dan lebar yang merupakan kelipatan bilangan bulat dari 32 dalam gambar,
+dan melakukan propagasi maju
+pada piksel-piksel di area tersebut secara terpisah.
+Perlu diperhatikan bahwa
+gabungan dari area persegi panjang ini harus sepenuhnya mencakup gambar input.
+Ketika sebuah piksel tercakup oleh beberapa area persegi panjang,
+rata-rata dari output konvolusi transpos
+di area-area tersebut untuk piksel yang sama
+dapat digunakan sebagai input untuk
+operasi softmax untuk memprediksi kelas.
+
+Untuk menyederhanakan, kita hanya membaca beberapa gambar uji yang lebih besar,
+dan memotong area $320\times480$ untuk prediksi dimulai dari sudut kiri atas gambar.
+Untuk gambar-gambar uji ini, kita
+mencetak area yang dipotong,
+hasil prediksi,
+dan ground-truth baris demi baris.
 
 
-For simplicity, we only read a few larger test images,
-and crop a $320\times480$ area for prediction starting from the upper-left corner of an image.
-For these test images, we
-print their cropped areas,
-prediction results,
-and ground-truth row by row.
+
 
 ```{.python .input}
 #@tab mxnet
@@ -441,23 +462,23 @@ for i in range(n):
 d2l.show_images(imgs[::3] + imgs[1::3] + imgs[2::3], 3, n, scale=2);
 ```
 
-## Summary
+## Ringkasan
 
-* The fully convolutional network first uses a CNN to extract image features, then transforms the number of channels into the number of classes via a $1\times 1$ convolutional layer, and finally transforms the height and width of the feature maps to those of the input image via the transposed convolution.
-* In a fully convolutional network, we can use upsampling of bilinear interpolation to initialize the transposed convolutional layer.
+* Fully convolutional network pertama-tama menggunakan CNN untuk mengekstraksi fitur gambar, kemudian mengubah jumlah kanal menjadi jumlah kelas melalui lapisan konvolusi $1\times 1$, dan akhirnya mengubah tinggi dan lebar peta fitur menjadi sama dengan gambar input melalui konvolusi transpos.
+* Dalam fully convolutional network, kita dapat menggunakan upsampling dengan interpolasi bilinear untuk menginisialisasi lapisan konvolusi transpos.
 
+## Latihan
 
-## Exercises
-
-1. If we use Xavier initialization for the transposed convolutional layer in the experiment, how does the result change?
-1. Can you further improve the accuracy of the model by tuning the hyperparameters?
-1. Predict the classes of all pixels in test images.
-1. The original fully convolutional network paper also uses outputs of some intermediate CNN layers :cite:`Long.Shelhamer.Darrell.2015`. Try to implement this idea.
+1. Jika kita menggunakan inisialisasi Xavier untuk lapisan konvolusi transpos dalam eksperimen, bagaimana hasilnya berubah?
+2. Bisakah Anda lebih meningkatkan akurasi model dengan menyetel hiperparameter?
+3. Prediksi kelas semua piksel pada gambar uji.
+4. Dalam makalah asli fully convolutional network, output dari beberapa lapisan CNN intermediate juga digunakan :cite:`Long.Shelhamer.Darrell.2015`. Coba implementasikan ide ini.
 
 :begin_tab:`mxnet`
-[Discussions](https://discuss.d2l.ai/t/377)
+[Diskusi](https://discuss.d2l.ai/t/377)
 :end_tab:
 
 :begin_tab:`pytorch`
-[Discussions](https://discuss.d2l.ai/t/1582)
+[Diskusi](https://discuss.d2l.ai/t/1582)
 :end_tab:
+
