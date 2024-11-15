@@ -1,23 +1,22 @@
-# Anchor Boxes
+# Anchor Box
 :label:`sec_anchor`
 
+Algoritma deteksi objek biasanya
+mengambil sampel sejumlah besar wilayah pada gambar input, menentukan apakah wilayah-wilayah ini mengandung
+objek yang diinginkan, dan menyesuaikan batas-batas
+wilayah tersebut untuk memprediksi
+*kotak pembatas ground-truth* dari objek dengan lebih akurat.
+Model yang berbeda mungkin mengadopsi
+skema sampling wilayah yang berbeda.
+Di sini kita memperkenalkan salah satu metode tersebut:
+metode ini menghasilkan beberapa kotak pembatas dengan skala dan rasio aspek yang bervariasi yang berpusat di setiap piksel.
+Kotak pembatas ini disebut *kotak anchor*.
+Kita akan merancang model deteksi objek
+berdasarkan kotak anchor di :numref:`sec_ssd`.
 
-Object detection algorithms usually
-sample a large number of regions in the input image, determine whether these regions contain
-objects of interest, and adjust the boundaries
-of the regions so as to predict the
-*ground-truth bounding boxes*
-of the objects more accurately.
-Different models may adopt
-different region sampling schemes. 
-Here we introduce one of such methods:
-it generates multiple bounding boxes with varying scales and aspect ratios centered on each pixel. 
-These bounding boxes are called *anchor boxes*.
-We will design an object detection model
-based on anchor boxes in :numref:`sec_ssd`.
+Pertama, mari kita modifikasi akurasi pencetakan
+agar output lebih ringkas.
 
-First, let's modify the printing accuracy
-just for more concise outputs.
 
 ```{.python .input}
 #@tab mxnet
@@ -38,67 +37,69 @@ import torch
 torch.set_printoptions(2)  # Simplify printing accuracy
 ```
 
-## Generating Multiple Anchor Boxes
+## Menghasilkan Banyak Kotak Anchor
 
-Suppose that the input image has a height of $h$ and width of $w$. 
-We generate anchor boxes with different shapes centered on each pixel of the image.
-Let the *scale* be $s\in (0, 1]$ and
-the *aspect ratio* (ratio of width to height) is $r > 0$. 
-Then [**the width and height of the anchor box are $ws\sqrt{r}$ and $hs/\sqrt{r}$, respectively.**]
-Note that when the center position is given, an anchor box with known width and height is determined.
+Misalkan gambar input memiliki tinggi $h$ dan lebar $w$.
+Kita menghasilkan kotak anchor dengan bentuk yang berbeda yang berpusat pada setiap piksel gambar.
+Biarkan *skala* menjadi $s\in (0, 1]$ dan
+*rasio aspek* (rasio lebar terhadap tinggi) adalah $r > 0$.
+Kemudian [**lebar dan tinggi kotak anchor adalah $ws\sqrt{r}$ dan $hs/\sqrt{r}$, masing-masing.**]
+Perhatikan bahwa ketika posisi pusat diketahui, sebuah kotak anchor dengan lebar dan tinggi tertentu dapat ditentukan.
 
-To generate multiple anchor boxes with different shapes,
-let's set a series of scales
-$s_1,\ldots, s_n$ and 
-a series of aspect ratios $r_1,\ldots, r_m$.
-When using all the combinations of these scales and aspect ratios with each pixel as the center,
-the input image will have a total of $whnm$ anchor boxes. Although these anchor boxes may cover all the
-ground-truth bounding boxes, the computational complexity is easily too high.
-In practice,
-we can only (**consider those combinations
-containing**) $s_1$ or $r_1$:
+Untuk menghasilkan beberapa kotak anchor dengan bentuk yang berbeda,
+mari kita tetapkan serangkaian skala
+$s_1,\ldots, s_n$ dan
+serangkaian rasio aspek $r_1,\ldots, r_m$.
+Saat menggunakan semua kombinasi skala dan rasio aspek ini dengan setiap piksel sebagai pusatnya,
+gambar input akan memiliki total $whnm$ kotak anchor. Meskipun kotak anchor ini mungkin mencakup semua
+kotak pembatas ground-truth, kompleksitas komputasinya mudah menjadi terlalu tinggi.
+Dalam praktiknya,
+kita hanya dapat (**mempertimbangkan kombinasi
+yang mengandung**) $s_1$ atau $r_1$:
 
 (**$$(s_1, r_1), (s_1, r_2), \ldots, (s_1, r_m), (s_2, r_1), (s_3, r_1), \ldots, (s_n, r_1).$$**)
 
-That is to say, the number of anchor boxes centered on the same pixel is $n+m-1$. For the entire input image, we will generate a total of $wh(n+m-1)$ anchor boxes.
+Artinya, jumlah kotak anchor yang berpusat pada piksel yang sama adalah $n+m-1$. Untuk seluruh gambar input, kita akan menghasilkan total $wh(n+m-1)$ kotak anchor.
 
-The above method of generating anchor boxes is implemented in the following `multibox_prior` function. We specify the input image, a list of scales, and a list of aspect ratios, then this function will return all the anchor boxes.
+Metode di atas untuk menghasilkan kotak anchor diimplementasikan dalam fungsi `multibox_prior` berikut. Kita menentukan gambar input, daftar skala, dan daftar rasio aspek, lalu fungsi ini akan mengembalikan semua kotak anchor.
+
 
 ```{.python .input}
 #@tab mxnet
 #@save
+```python
 def multibox_prior(data, sizes, ratios):
-    """Generate anchor boxes with different shapes centered on each pixel."""
+    """Menghasilkan kotak anchor dengan bentuk yang berbeda yang berpusat pada setiap piksel."""
     in_height, in_width = data.shape[-2:]
     device, num_sizes, num_ratios = data.ctx, len(sizes), len(ratios)
     boxes_per_pixel = (num_sizes + num_ratios - 1)
     size_tensor = d2l.tensor(sizes, ctx=device)
     ratio_tensor = d2l.tensor(ratios, ctx=device)
-    # Offsets are required to move the anchor to the center of a pixel. Since
-    # a pixel has height=1 and width=1, we choose to offset our centers by 0.5
+    # Offset diperlukan untuk memindahkan kotak anchor ke pusat piksel. Karena
+    # sebuah piksel memiliki tinggi=1 dan lebar=1, kita memilih untuk meng-offset pusat kita sebesar 0,5
     offset_h, offset_w = 0.5, 0.5
-    steps_h = 1.0 / in_height  # Scaled steps in y-axis
-    steps_w = 1.0 / in_width  # Scaled steps in x-axis
+    steps_h = 1.0 / in_height  # Langkah yang diskalakan pada sumbu y
+    steps_w = 1.0 / in_width  # Langkah yang diskalakan pada sumbu x
 
-    # Generate all center points for the anchor boxes
+    # Menghasilkan semua titik pusat untuk kotak anchor
     center_h = (d2l.arange(in_height, ctx=device) + offset_h) * steps_h
     center_w = (d2l.arange(in_width, ctx=device) + offset_w) * steps_w
     shift_x, shift_y = d2l.meshgrid(center_w, center_h)
     shift_x, shift_y = shift_x.reshape(-1), shift_y.reshape(-1)
 
-    # Generate `boxes_per_pixel` number of heights and widths that are later
-    # used to create anchor box corner coordinates (xmin, xmax, ymin, ymax)
+    # Menghasilkan `boxes_per_pixel` jumlah tinggi dan lebar yang nantinya
+    # digunakan untuk membuat koordinat sudut kotak anchor (xmin, xmax, ymin, ymax)
     w = np.concatenate((size_tensor * np.sqrt(ratio_tensor[0]),
                         sizes[0] * np.sqrt(ratio_tensor[1:]))) \
-                        * in_height / in_width  # Handle rectangular inputs
+                        * in_height / in_width  # Menangani input berbentuk persegi panjang
     h = np.concatenate((size_tensor / np.sqrt(ratio_tensor[0]),
                         sizes[0] / np.sqrt(ratio_tensor[1:])))
-    # Divide by 2 to get half height and half width
+    # Bagi 2 untuk mendapatkan setengah tinggi dan setengah lebar
     anchor_manipulations = np.tile(np.stack((-w, -h, w, h)).T,
                                    (in_height * in_width, 1)) / 2
 
-    # Each center point will have `boxes_per_pixel` number of anchor boxes, so
-    # generate a grid of all anchor box centers with `boxes_per_pixel` repeats
+    # Setiap titik pusat akan memiliki `boxes_per_pixel` jumlah kotak anchor, jadi
+    # menghasilkan grid dari semua pusat kotak anchor dengan pengulangan `boxes_per_pixel`
     out_grid = d2l.stack([shift_x, shift_y, shift_x, shift_y],
                          axis=1).repeat(boxes_per_pixel, axis=0)
     output = out_grid + anchor_manipulations
@@ -109,45 +110,46 @@ def multibox_prior(data, sizes, ratios):
 #@tab pytorch
 #@save
 def multibox_prior(data, sizes, ratios):
-    """Generate anchor boxes with different shapes centered on each pixel."""
+    """Menghasilkan kotak anchor dengan bentuk yang berbeda yang berpusat pada setiap piksel."""
     in_height, in_width = data.shape[-2:]
     device, num_sizes, num_ratios = data.device, len(sizes), len(ratios)
     boxes_per_pixel = (num_sizes + num_ratios - 1)
     size_tensor = d2l.tensor(sizes, device=device)
     ratio_tensor = d2l.tensor(ratios, device=device)
-    # Offsets are required to move the anchor to the center of a pixel. Since
-    # a pixel has height=1 and width=1, we choose to offset our centers by 0.5
+    # Offset diperlukan untuk memindahkan kotak anchor ke pusat piksel. Karena
+    # sebuah piksel memiliki tinggi=1 dan lebar=1, kita memilih untuk meng-offset pusat kita sebesar 0,5
     offset_h, offset_w = 0.5, 0.5
-    steps_h = 1.0 / in_height  # Scaled steps in y axis
-    steps_w = 1.0 / in_width  # Scaled steps in x axis
+    steps_h = 1.0 / in_height  # Langkah yang diskalakan pada sumbu y
+    steps_w = 1.0 / in_width  # Langkah yang diskalakan pada sumbu x
 
-    # Generate all center points for the anchor boxes
+    # Menghasilkan semua titik pusat untuk kotak anchor
     center_h = (torch.arange(in_height, device=device) + offset_h) * steps_h
     center_w = (torch.arange(in_width, device=device) + offset_w) * steps_w
     shift_y, shift_x = torch.meshgrid(center_h, center_w, indexing='ij')
     shift_y, shift_x = shift_y.reshape(-1), shift_x.reshape(-1)
 
-    # Generate `boxes_per_pixel` number of heights and widths that are later
-    # used to create anchor box corner coordinates (xmin, xmax, ymin, ymax)
+    # Menghasilkan `boxes_per_pixel` jumlah tinggi dan lebar yang nantinya
+    # digunakan untuk membuat koordinat sudut kotak anchor (xmin, xmax, ymin, ymax)
     w = torch.cat((size_tensor * torch.sqrt(ratio_tensor[0]),
                    sizes[0] * torch.sqrt(ratio_tensor[1:])))\
-                   * in_height / in_width  # Handle rectangular inputs
+                   * in_height / in_width  # Menangani input berbentuk persegi panjang
     h = torch.cat((size_tensor / torch.sqrt(ratio_tensor[0]),
                    sizes[0] / torch.sqrt(ratio_tensor[1:])))
-    # Divide by 2 to get half height and half width
+    # Bagi 2 untuk mendapatkan setengah tinggi dan setengah lebar
     anchor_manipulations = torch.stack((-w, -h, w, h)).T.repeat(
                                         in_height * in_width, 1) / 2
 
-    # Each center point will have `boxes_per_pixel` number of anchor boxes, so
-    # generate a grid of all anchor box centers with `boxes_per_pixel` repeats
+    # Setiap titik pusat akan memiliki `boxes_per_pixel` jumlah kotak anchor, jadi
+    # menghasilkan grid dari semua pusat kotak anchor dengan pengulangan `boxes_per_pixel`
     out_grid = torch.stack([shift_x, shift_y, shift_x, shift_y],
                 dim=1).repeat_interleave(boxes_per_pixel, dim=0)
     output = out_grid + anchor_manipulations
     return output.unsqueeze(0)
 ```
 
-We can see that [**the shape of the returned anchor box variable `Y`**] is
-(batch size, number of anchor boxes, 4).
+Kita dapat melihat bahwa [**bentuk dari variabel kotak anchor yang dikembalikan `Y`**] adalah
+(batch size, jumlah kotak anchor, 4).
+
 
 ```{.python .input}
 #@tab mxnet
@@ -171,12 +173,13 @@ Y = multibox_prior(X, sizes=[0.75, 0.5, 0.25], ratios=[1, 2, 0.5])
 Y.shape
 ```
 
-After changing the shape of the anchor box variable `Y` to (image height, image width, number of anchor boxes centered on the same pixel, 4),
-we can obtain all the anchor boxes centered on a specified pixel position.
-In the following,
-we [**access the first anchor box centered on (250, 250)**]. It has four elements: the $(x, y)$-axis coordinates at the upper-left corner and the $(x, y)$-axis coordinates at the lower-right corner of the anchor box.
-The coordinate values of both axes
-are divided by the width and height of the image, respectively.
+Setelah mengubah bentuk variabel kotak anchor `Y` menjadi (tinggi gambar, lebar gambar, jumlah kotak anchor yang berpusat pada piksel yang sama, 4),
+kita dapat memperoleh semua kotak anchor yang berpusat pada posisi piksel tertentu.
+Berikut ini,
+kita [**mengakses kotak anchor pertama yang berpusat pada (250, 250)**]. Kotak ini memiliki empat elemen: koordinat sumbu $(x, y)$ di sudut kiri atas dan koordinat sumbu $(x, y)$ di sudut kanan bawah dari kotak anchor.
+Nilai koordinat dari kedua sumbu
+dibagi dengan lebar dan tinggi gambar, masing-masing.
+
 
 ```{.python .input}
 #@tab all
@@ -184,14 +187,15 @@ boxes = Y.reshape(h, w, 5, 4)
 boxes[250, 250, 0, :]
 ```
 
-In order to [**show all the anchor boxes centered on one pixel in the image**],
-we define the following `show_bboxes` function to draw multiple bounding boxes on the image.
+Untuk [**menampilkan semua kotak anchor yang berpusat pada satu piksel dalam gambar**],
+kita mendefinisikan fungsi `show_bboxes` berikut untuk menggambar beberapa kotak pembatas pada gambar.
+
 
 ```{.python .input}
 #@tab all
 #@save
 def show_bboxes(axes, bboxes, labels=None, colors=None):
-    """Show bounding boxes."""
+    """menunjukkan bounding boxes."""
 
     def make_list(obj, default_values=None):
         if obj is None:
@@ -213,13 +217,14 @@ def show_bboxes(axes, bboxes, labels=None, colors=None):
                       bbox=dict(facecolor=color, lw=0))
 ```
 
-As we just saw, the coordinate values of the $x$ and $y$ axes in the variable `boxes` have been divided by the width and height of the image, respectively.
-When drawing anchor boxes,
-we need to restore their original coordinate values;
-thus, we define variable `bbox_scale` below. 
-Now, we can draw all the anchor boxes centered on (250, 250) in the image.
-As you can see, the blue anchor box with a scale of 0.75 and an aspect ratio of 1 well
-surrounds the dog in the image.
+Seperti yang baru saja kita lihat, nilai koordinat dari sumbu $x$ dan $y$ dalam variabel `boxes` telah dibagi dengan lebar dan tinggi gambar, masing-masing.
+Saat menggambar kotak anchor,
+kita perlu mengembalikan nilai koordinat tersebut ke bentuk aslinya;
+oleh karena itu, kita mendefinisikan variabel `bbox_scale` di bawah ini.
+Sekarang, kita dapat menggambar semua kotak anchor yang berpusat pada (250, 250) dalam gambar.
+Seperti yang bisa Anda lihat, kotak anchor berwarna biru dengan skala 0.75 dan rasio aspek 1
+mengelilingi anjing dalam gambar dengan baik.
+
 
 ```{.python .input}
 #@tab all
@@ -233,46 +238,46 @@ show_bboxes(fig.axes, boxes[250, 250, :, :] * bbox_scale,
 
 ## [**Intersection over Union (IoU)**]
 
-We just mentioned that an anchor box "well" surrounds the dog in the image.
-If the ground-truth bounding box of the object is known, how can "well" here be quantified?
-Intuitively, we can measure the similarity between
-the anchor box and the ground-truth bounding box.
-We know that the *Jaccard index* can measure the similarity between two sets. Given sets $\mathcal{A}$ and $\mathcal{B}$, their Jaccard index is the size of their intersection divided by the size of their union:
+Kita baru saja menyebutkan bahwa sebuah kotak anchor "mengelilingi" anjing dalam gambar dengan baik.
+Jika kotak pembatas ground-truth dari objek diketahui, bagaimana "baik" ini dapat diukur secara kuantitatif?
+Secara intuitif, kita dapat mengukur kemiripan antara
+kotak anchor dan kotak pembatas ground-truth.
+Kita tahu bahwa *indeks Jaccard* dapat mengukur kemiripan antara dua himpunan. Diberikan himpunan $\mathcal{A}$ dan $\mathcal{B}$, indeks Jaccard mereka adalah ukuran dari irisan mereka dibagi dengan ukuran dari gabungan mereka:
 
 $$J(\mathcal{A},\mathcal{B}) = \frac{\left|\mathcal{A} \cap \mathcal{B}\right|}{\left| \mathcal{A} \cup \mathcal{B}\right|}.$$
 
+Sebenarnya, kita bisa menganggap area piksel dari kotak pembatas sebagai himpunan piksel.
+Dengan cara ini, kita dapat mengukur kemiripan kedua kotak pembatas melalui indeks Jaccard dari himpunan piksel mereka. Untuk dua kotak pembatas, kita biasanya menyebut indeks Jaccard mereka sebagai *intersection over union* (*IoU*), yaitu rasio antara area irisan dengan area gabungan mereka, seperti yang ditunjukkan pada :numref:`fig_iou`.
+Nilai IoU berkisar antara 0 hingga 1:
+0 berarti dua kotak pembatas tidak saling tumpang tindih sama sekali,
+sedangkan 1 menunjukkan bahwa kedua kotak pembatas tersebut sama.
 
-In fact, we can consider the pixel area of any bounding box as a set of pixels. 
-In this way, we can measure the similarity of the two bounding boxes by the Jaccard index of their pixel sets. For two bounding boxes, we usually refer their Jaccard index as *intersection over union* (*IoU*), which is the ratio of their intersection area to their union area, as shown in :numref:`fig_iou`.
-The range of an IoU is between 0 and 1:
-0 means that two bounding boxes do not overlap at all,
-while 1 indicates that the two bounding boxes are equal.
-
-![IoU is the ratio of the intersection area to the union area of two bounding boxes.](../img/iou.svg)
+![IoU adalah rasio antara area irisan dengan area gabungan dari dua kotak pembatas.](../img/iou.svg)
 :label:`fig_iou`
 
-For the remainder of this section, we will use IoU to measure the similarity between anchor boxes and ground-truth bounding boxes, and between different anchor boxes.
-Given two lists of anchor or bounding boxes,
-the following `box_iou` computes their pairwise IoU
-across these two lists.
+Untuk sisa bagian ini, kita akan menggunakan IoU untuk mengukur kemiripan antara kotak anchor dengan kotak pembatas ground-truth, dan antara kotak anchor yang berbeda.
+Diberikan dua daftar kotak anchor atau kotak pembatas,
+fungsi `box_iou` berikut menghitung IoU sepasang
+di antara dua daftar ini.
+
 
 ```{.python .input}
 #@tab mxnet
 #@save
 def box_iou(boxes1, boxes2):
-    """Compute pairwise IoU across two lists of anchor or bounding boxes."""
+    """Menghitung IoU sepasang di antara dua daftar kotak anchor atau kotak pembatas."""
     box_area = lambda boxes: ((boxes[:, 2] - boxes[:, 0]) *
                               (boxes[:, 3] - boxes[:, 1]))
-    # Shape of `boxes1`, `boxes2`, `areas1`, `areas2`: (no. of boxes1, 4),
-    # (no. of boxes2, 4), (no. of boxes1,), (no. of boxes2,)
+    # Bentuk dari `boxes1`, `boxes2`, `areas1`, `areas2`: (jumlah kotak1, 4),
+    # (jumlah kotak2, 4), (jumlah kotak1,), (jumlah kotak2,)
     areas1 = box_area(boxes1)
     areas2 = box_area(boxes2)
-    # Shape of `inter_upperlefts`, `inter_lowerrights`, `inters`: (no. of
-    # boxes1, no. of boxes2, 2)
+    # Bentuk dari `inter_upperlefts`, `inter_lowerrights`, `inters`: (jumlah
+    # kotak1, jumlah kotak2, 2)
     inter_upperlefts = np.maximum(boxes1[:, None, :2], boxes2[:, :2])
     inter_lowerrights = np.minimum(boxes1[:, None, 2:], boxes2[:, 2:])
     inters = (inter_lowerrights - inter_upperlefts).clip(min=0)
-    # Shape of `inter_areas` and `union_areas`: (no. of boxes1, no. of boxes2)
+    # Bentuk dari `inter_areas` dan `union_areas`: (jumlah kotak1, jumlah kotak2)
     inter_areas = inters[:, :, 0] * inters[:, :, 1]
     union_areas = areas1[:, None] + areas2 - inter_areas
     return inter_areas / union_areas
@@ -282,94 +287,92 @@ def box_iou(boxes1, boxes2):
 #@tab pytorch
 #@save
 def box_iou(boxes1, boxes2):
-    """Compute pairwise IoU across two lists of anchor or bounding boxes."""
+    """Menghitung IoU sepasang di antara dua daftar kotak anchor atau kotak pembatas."""
     box_area = lambda boxes: ((boxes[:, 2] - boxes[:, 0]) *
                               (boxes[:, 3] - boxes[:, 1]))
-    # Shape of `boxes1`, `boxes2`, `areas1`, `areas2`: (no. of boxes1, 4),
-    # (no. of boxes2, 4), (no. of boxes1,), (no. of boxes2,)
+    # Bentuk dari `boxes1`, `boxes2`, `areas1`, `areas2`: (jumlah kotak1, 4),
+    # (jumlah kotak2, 4), (jumlah kotak1,), (jumlah kotak2,)
     areas1 = box_area(boxes1)
     areas2 = box_area(boxes2)
-    # Shape of `inter_upperlefts`, `inter_lowerrights`, `inters`: (no. of
-    # boxes1, no. of boxes2, 2)
+    # Bentuk dari `inter_upperlefts`, `inter_lowerrights`, `inters`: (jumlah
+    # kotak1, jumlah kotak2, 2)
     inter_upperlefts = torch.max(boxes1[:, None, :2], boxes2[:, :2])
     inter_lowerrights = torch.min(boxes1[:, None, 2:], boxes2[:, 2:])
     inters = (inter_lowerrights - inter_upperlefts).clamp(min=0)
-    # Shape of `inter_areas` and `union_areas`: (no. of boxes1, no. of boxes2)
+    # Bentuk dari `inter_areas` dan `union_areas`: (jumlah kotak1, jumlah kotak2)
     inter_areas = inters[:, :, 0] * inters[:, :, 1]
     union_areas = areas1[:, None] + areas2 - inter_areas
     return inter_areas / union_areas
 ```
 
-## Labeling Anchor Boxes in Training Data
+## Memberi Label pada Kotak Anchor dalam Data Latih
 :label:`subsec_labeling-anchor-boxes`
 
+Dalam dataset pelatihan,
+kita menganggap setiap kotak anchor sebagai contoh pelatihan.
+Untuk melatih model deteksi objek,
+kita membutuhkan label *kelas* dan *offset* untuk setiap kotak anchor,
+di mana yang pertama adalah
+kelas dari objek yang relevan dengan kotak anchor
+dan yang kedua adalah offset
+kotak pembatas ground-truth relatif terhadap kotak anchor.
+Selama prediksi,
+untuk setiap gambar
+kita menghasilkan beberapa kotak anchor,
+memprediksi kelas dan offset untuk semua kotak anchor,
+menyesuaikan posisi mereka sesuai dengan offset yang diprediksi untuk memperoleh kotak pembatas yang diprediksi,
+dan akhirnya hanya mengeluarkan kotak pembatas yang
+memenuhi kriteria tertentu.
 
-In a training dataset,
-we consider each anchor box as a training example.
-In order to train an object detection model,
-we need *class* and *offset* labels for each anchor box,
-where the former is
-the class of the object relevant to the anchor box
-and the latter is the offset
-of the ground-truth bounding box relative to the anchor box.
-During the prediction,
-for each image
-we generate multiple anchor boxes,
-predict classes and offsets for all the anchor boxes,
-adjust their positions according to the predicted offsets to obtain the predicted bounding boxes,
-and finally only output those 
-predicted bounding boxes that satisfy certain criteria.
+Seperti yang kita ketahui, set pelatihan deteksi objek
+datang dengan label untuk
+lokasi *kotak pembatas ground-truth*
+dan kelas dari objek yang dikelilinginya.
+Untuk memberi label pada setiap *kotak anchor* yang dihasilkan,
+kita merujuk pada lokasi dan kelas
+kotak pembatas ground-truth yang *ditugaskan* terdekat dengan kotak anchor.
+Berikut ini,
+kami menjelaskan algoritme untuk menetapkan
+kotak pembatas ground-truth terdekat dengan kotak anchor.
 
+### [**Menetapkan Kotak Pembatas Ground-Truth ke Kotak Anchor**]
 
-As we know, an object detection training set
-comes with labels for
-locations of *ground-truth bounding boxes*
-and classes of their surrounded objects.
-To label any generated *anchor box*,
-we refer to the labeled
-location and class of its *assigned* ground-truth bounding box that is closest to the anchor box.
-In the following,
-we describe an algorithm for assigning
-closest ground-truth bounding boxes to anchor boxes. 
+Diberikan sebuah gambar,
+misalkan kotak anchor adalah $A_1, A_2, \ldots, A_{n_a}$ dan kotak pembatas ground-truth adalah $B_1, B_2, \ldots, B_{n_b}$, di mana $n_a \geq n_b$.
+Mari kita definisikan matriks $\mathbf{X} \in \mathbb{R}^{n_a \times n_b}$, yang elemennya $x_{ij}$ pada baris $i^\textrm{th}$ dan kolom $j^\textrm{th}$ adalah IoU antara kotak anchor $A_i$ dan kotak pembatas ground-truth $B_j$. Algoritme ini terdiri dari langkah-langkah berikut:
 
-### [**Assigning Ground-Truth Bounding Boxes to Anchor Boxes**]
+1. Temukan elemen terbesar dalam matriks $\mathbf{X}$ dan tandai indeks baris dan kolomnya sebagai $i_1$ dan $j_1$, masing-masing. Kemudian, kotak pembatas ground-truth $B_{j_1}$ diberikan ke kotak anchor $A_{i_1}$. Ini cukup intuitif karena $A_{i_1}$ dan $B_{j_1}$ adalah pasangan yang paling dekat di antara semua pasangan kotak anchor dan kotak pembatas ground-truth. Setelah penetapan pertama, abaikan semua elemen di baris ${i_1}^\textrm{th}$ dan kolom ${j_1}^\textrm{th}$ dalam matriks $\mathbf{X}$.
+2. Temukan elemen terbesar di sisa matriks $\mathbf{X}$ dan tandai indeks baris dan kolomnya sebagai $i_2$ dan $j_2$, masing-masing. Kami menetapkan kotak pembatas ground-truth $B_{j_2}$ ke kotak anchor $A_{i_2}$ dan mengabaikan semua elemen di baris ${i_2}^\textrm{th}$ dan kolom ${j_2}^\textrm{th}$ dalam matriks $\mathbf{X}$.
+3. Pada titik ini, elemen di dua baris dan dua kolom dalam matriks $\mathbf{X}$ telah diabaikan. Kami melanjutkan hingga semua elemen di $n_b$ kolom dalam matriks $\mathbf{X}$ diabaikan. Pada saat ini, kami telah menetapkan sebuah kotak pembatas ground-truth ke masing-masing dari $n_b$ kotak anchor.
+4. Hanya telusuri kotak anchor yang tersisa sebanyak $n_a - n_b$. Misalnya, diberikan sebuah kotak anchor $A_i$, temukan kotak pembatas ground-truth $B_j$ dengan IoU terbesar dengan $A_i$ di seluruh baris $i^\textrm{th}$ matriks $\mathbf{X}$, dan tetapkan $B_j$ ke $A_i$ hanya jika IoU ini lebih besar dari ambang batas yang telah ditentukan.
 
-Given an image,
-suppose that the anchor boxes are $A_1, A_2, \ldots, A_{n_a}$ and the ground-truth bounding boxes are $B_1, B_2, \ldots, B_{n_b}$, where $n_a \geq n_b$.
-Let's define a matrix $\mathbf{X} \in \mathbb{R}^{n_a \times n_b}$, whose element $x_{ij}$ in the $i^\textrm{th}$ row and $j^\textrm{th}$ column is the IoU of the anchor box $A_i$ and the ground-truth bounding box $B_j$. The algorithm consists of the following steps:
+Mari kita ilustrasikan algoritme di atas menggunakan contoh konkret.
+Seperti yang ditunjukkan dalam :numref:`fig_anchor_label` (kiri), dengan asumsi bahwa nilai maksimum dalam matriks $\mathbf{X}$ adalah $x_{23}$, kita menetapkan kotak pembatas ground-truth $B_3$ ke kotak anchor $A_2$.
+Kemudian, kita mengabaikan semua elemen di baris 2 dan kolom 3 dari matriks, temukan nilai terbesar $x_{71}$ pada elemen yang tersisa (daerah berbayang), dan tetapkan kotak pembatas ground-truth $B_1$ ke kotak anchor $A_7$.
+Selanjutnya, seperti yang ditunjukkan pada :numref:`fig_anchor_label` (tengah), abaikan semua elemen di baris 7 dan kolom 1 dari matriks, temukan nilai terbesar $x_{54}$ pada elemen yang tersisa (daerah berbayang), dan tetapkan kotak pembatas ground-truth $B_4$ ke kotak anchor $A_5$.
+Akhirnya, seperti yang ditunjukkan pada :numref:`fig_anchor_label` (kanan), abaikan semua elemen di baris 5 dan kolom 4 dari matriks, temukan nilai terbesar $x_{92}$ pada elemen yang tersisa (daerah berbayang), dan tetapkan kotak pembatas ground-truth $B_2$ ke kotak anchor $A_9$.
+Setelah itu, kita hanya perlu menelusuri
+kotak anchor yang tersisa $A_1, A_3, A_4, A_6, A_8$ dan menentukan apakah akan menetapkan kotak pembatas ground-truth sesuai dengan ambang batas.
 
-1. Find the largest element in matrix $\mathbf{X}$ and denote its row and column indices as $i_1$ and $j_1$, respectively. Then the ground-truth bounding box $B_{j_1}$ is assigned to the anchor box $A_{i_1}$. This is quite intuitive because $A_{i_1}$ and $B_{j_1}$ are the closest among all the pairs of anchor boxes and ground-truth bounding boxes. After the first assignment, discard all the elements in the ${i_1}^\textrm{th}$ row and the ${j_1}^\textrm{th}$ column in matrix $\mathbf{X}$. 
-1. Find the largest of the remaining elements in matrix $\mathbf{X}$ and denote its row and column indices as $i_2$ and $j_2$, respectively. We assign ground-truth bounding box $B_{j_2}$ to anchor box $A_{i_2}$ and discard all the elements in the ${i_2}^\textrm{th}$ row and the ${j_2}^\textrm{th}$ column in matrix $\mathbf{X}$.
-1. At this point, elements in two rows and two columns in  matrix $\mathbf{X}$ have been discarded. We proceed until all elements in $n_b$ columns in matrix $\mathbf{X}$ are discarded. At this time, we have assigned a ground-truth bounding box to each of $n_b$ anchor boxes.
-1. Only traverse through the remaining $n_a - n_b$ anchor boxes. For example, given any anchor box $A_i$, find the ground-truth bounding box $B_j$ with the largest IoU with $A_i$ throughout the $i^\textrm{th}$ row of matrix $\mathbf{X}$, and assign $B_j$ to $A_i$ only if this IoU is greater than a predefined threshold.
-
-Let's illustrate the above algorithm using a concrete
-example.
-As shown in :numref:`fig_anchor_label` (left), assuming that the maximum value in matrix $\mathbf{X}$ is $x_{23}$, we assign the ground-truth bounding box $B_3$ to the anchor box $A_2$.
-Then, we discard all the elements in row 2 and column 3 of the matrix, find the largest $x_{71}$ in the remaining  elements (shaded area), and assign the ground-truth bounding box $B_1$ to the anchor box $A_7$. 
-Next, as shown in :numref:`fig_anchor_label` (middle), discard all the elements in row 7 and column 1 of the matrix, find the largest $x_{54}$ in the remaining  elements (shaded area), and assign the ground-truth bounding box $B_4$ to the anchor box $A_5$. 
-Finally, as shown in :numref:`fig_anchor_label` (right), discard all the elements in row 5 and column 4 of the matrix, find the largest $x_{92}$ in the remaining elements (shaded area), and assign the ground-truth bounding box $B_2$ to the anchor box $A_9$.
-After that, we only need to traverse through
-the remaining anchor boxes $A_1, A_3, A_4, A_6, A_8$ and determine whether to assign them ground-truth bounding boxes according to the threshold.
-
-![Assigning ground-truth bounding boxes to anchor boxes.](../img/anchor-label.svg)
+![Menetapkan kotak pembatas ground-truth ke kotak anchor.](../img/anchor-label.svg)
 :label:`fig_anchor_label`
 
-This algorithm is implemented in the following `assign_anchor_to_bbox` function.
+Algoritme ini diimplementasikan dalam fungsi `assign_anchor_to_bbox` berikut.
+
 
 ```{.python .input}
 #@tab mxnet
 #@save
 def assign_anchor_to_bbox(ground_truth, anchors, device, iou_threshold=0.5):
-    """Assign closest ground-truth bounding boxes to anchor boxes."""
+    """Menetapkan kotak pembatas ground-truth terdekat ke kotak anchor."""
     num_anchors, num_gt_boxes = anchors.shape[0], ground_truth.shape[0]
-    # Element x_ij in the i-th row and j-th column is the IoU of the anchor
-    # box i and the ground-truth bounding box j
+    # Elemen x_ij di baris i dan kolom j adalah IoU dari
+    # kotak anchor i dan kotak pembatas ground-truth j
     jaccard = box_iou(anchors, ground_truth)
-    # Initialize the tensor to hold the assigned ground-truth bounding box for
-    # each anchor
+    # Inisialisasi tensor untuk menyimpan kotak pembatas ground-truth yang ditugaskan
+    # untuk setiap kotak anchor
     anchors_bbox_map = np.full((num_anchors,), -1, dtype=np.int32, ctx=device)
-    # Assign ground-truth bounding boxes according to the threshold
+    # Menetapkan kotak pembatas ground-truth sesuai dengan ambang batas
     max_ious, indices = np.max(jaccard, axis=1), np.argmax(jaccard, axis=1)
     anc_i = np.nonzero(max_ious >= iou_threshold)[0]
     box_j = indices[max_ious >= iou_threshold]
@@ -377,7 +380,7 @@ def assign_anchor_to_bbox(ground_truth, anchors, device, iou_threshold=0.5):
     col_discard = np.full((num_anchors,), -1)
     row_discard = np.full((num_gt_boxes,), -1)
     for _ in range(num_gt_boxes):
-        max_idx = np.argmax(jaccard)  # Find the largest IoU
+        max_idx = np.argmax(jaccard)  # Temukan IoU terbesar
         box_idx = (max_idx % num_gt_boxes).astype('int32')
         anc_idx = (max_idx / num_gt_boxes).astype('int32')
         anchors_bbox_map[anc_idx] = box_idx
@@ -390,16 +393,16 @@ def assign_anchor_to_bbox(ground_truth, anchors, device, iou_threshold=0.5):
 #@tab pytorch
 #@save
 def assign_anchor_to_bbox(ground_truth, anchors, device, iou_threshold=0.5):
-    """Assign closest ground-truth bounding boxes to anchor boxes."""
+    """Menetapkan kotak pembatas ground-truth terdekat ke kotak anchor."""
     num_anchors, num_gt_boxes = anchors.shape[0], ground_truth.shape[0]
-    # Element x_ij in the i-th row and j-th column is the IoU of the anchor
-    # box i and the ground-truth bounding box j
+    # Elemen x_ij di baris i dan kolom j adalah IoU dari
+    # kotak anchor i dan kotak pembatas ground-truth j
     jaccard = box_iou(anchors, ground_truth)
-    # Initialize the tensor to hold the assigned ground-truth bounding box for
-    # each anchor
+    # Inisialisasi tensor untuk menyimpan kotak pembatas ground-truth yang ditugaskan
+    # untuk setiap kotak anchor
     anchors_bbox_map = torch.full((num_anchors,), -1, dtype=torch.long,
                                   device=device)
-    # Assign ground-truth bounding boxes according to the threshold
+    # Menetapkan kotak pembatas ground-truth sesuai dengan ambang batas
     max_ious, indices = torch.max(jaccard, dim=1)
     anc_i = torch.nonzero(max_ious >= iou_threshold).reshape(-1)
     box_j = indices[max_ious >= iou_threshold]
@@ -407,7 +410,7 @@ def assign_anchor_to_bbox(ground_truth, anchors, device, iou_threshold=0.5):
     col_discard = torch.full((num_anchors,), -1)
     row_discard = torch.full((num_gt_boxes,), -1)
     for _ in range(num_gt_boxes):
-        max_idx = torch.argmax(jaccard)  # Find the largest IoU
+        max_idx = torch.argmax(jaccard)  # Temukan IoU terbesar
         box_idx = (max_idx % num_gt_boxes).long()
         anc_idx = (max_idx / num_gt_boxes).long()
         anchors_bbox_map[anc_idx] = box_idx
@@ -416,46 +419,43 @@ def assign_anchor_to_bbox(ground_truth, anchors, device, iou_threshold=0.5):
     return anchors_bbox_map
 ```
 
-### Labeling Classes and Offsets
+### Memberi Label pada Kelas dan Offset
 
-Now we can label the class and offset for each anchor box. Suppose that an anchor box $A$ is assigned
-a ground-truth bounding box $B$. 
-On the one hand,
-the class of the anchor box $A$ will be
-labeled as that of $B$.
-On the other hand,
-the offset of the anchor box $A$ 
-will be labeled according to the 
-relative position between
-the central coordinates of $B$ and $A$
-together with the relative size between
-these two boxes.
-Given varying
-positions and sizes of different boxes in the dataset,
-we can apply transformations
-to those relative positions and sizes
-that may lead to 
-more uniformly distributed offsets
-that are easier to fit.
-Here we describe a common transformation.
-[**Given the central coordinates of $A$ and $B$ as $(x_a, y_a)$ and $(x_b, y_b)$, 
-their widths as $w_a$ and $w_b$, 
-and their heights as $h_a$ and $h_b$, respectively. 
-We may label the offset of $A$ as
+Sekarang kita dapat memberi label pada kelas dan offset untuk setiap kotak anchor. Misalkan sebuah kotak anchor $A$ ditetapkan ke sebuah kotak pembatas ground-truth $B$.
+Di satu sisi,
+kelas dari kotak anchor $A$ akan
+diberi label yang sama dengan $B$.
+Di sisi lain,
+offset dari kotak anchor $A$
+akan diberi label sesuai dengan
+posisi relatif antara
+koordinat pusat $B$ dan $A$
+serta ukuran relatif antara
+kedua kotak ini.
+Diberikan posisi dan ukuran yang berbeda-beda pada setiap kotak dalam dataset,
+kita dapat menerapkan transformasi
+pada posisi dan ukuran relatif ini
+yang dapat menghasilkan distribusi offset yang lebih merata dan lebih mudah diprediksi.
+Berikut ini adalah transformasi umum yang digunakan.
+[**Diberikan koordinat pusat dari $A$ dan $B$ masing-masing sebagai $(x_a, y_a)$ dan $(x_b, y_b)$,
+lebar mereka sebagai $w_a$ dan $w_b$,
+dan tinggi mereka sebagai $h_a$ dan $h_b$.
+Kita dapat memberi label offset $A$ sebagai
 
 $$\left( \frac{ \frac{x_b - x_a}{w_a} - \mu_x }{\sigma_x},
 \frac{ \frac{y_b - y_a}{h_a} - \mu_y }{\sigma_y},
 \frac{ \log \frac{w_b}{w_a} - \mu_w }{\sigma_w},
 \frac{ \log \frac{h_b}{h_a} - \mu_h }{\sigma_h}\right),$$
 **]
-where default values of the constants are $\mu_x = \mu_y = \mu_w = \mu_h = 0, \sigma_x=\sigma_y=0.1$, and $\sigma_w=\sigma_h=0.2$.
-This transformation is implemented below in the `offset_boxes` function.
+dengan nilai default konstanta $\mu_x = \mu_y = \mu_w = \mu_h = 0, \sigma_x=\sigma_y=0.1$, dan $\sigma_w=\sigma_h=0.2$.
+Transformasi ini diimplementasikan di bawah ini dalam fungsi `offset_boxes`.
+
 
 ```{.python .input}
 #@tab all
 #@save
 def offset_boxes(anchors, assigned_bb, eps=1e-6):
-    """Transform for anchor box offsets."""
+    """Transformasi untuk Offset Kotak Anchor."""
     c_anc = d2l.box_corner_to_center(anchors)
     c_assigned_bb = d2l.box_corner_to_center(assigned_bb)
     offset_xy = 10 * (c_assigned_bb[:, :2] - c_anc[:, :2]) / c_anc[:, 2:]
@@ -464,18 +464,19 @@ def offset_boxes(anchors, assigned_bb, eps=1e-6):
     return offset
 ```
 
-If an anchor box is not assigned a ground-truth bounding box, we just label the class of the anchor box as "background".
-Anchor boxes whose classes are background are often referred to as *negative* anchor boxes,
-and the rest are called *positive* anchor boxes.
-We implement the following `multibox_target` function
-to [**label classes and offsets for anchor boxes**] (the `anchors` argument) using ground-truth bounding boxes (the `labels` argument).
-This function sets the background class to zero and increments the integer index of a new class by one.
+Jika sebuah kotak anchor tidak ditetapkan ke kotak pembatas ground-truth, kita cukup memberi label kelas dari kotak anchor tersebut sebagai "background" atau latar belakang.
+Kotak anchor yang kelasnya adalah background sering disebut sebagai kotak anchor *negatif*,
+dan sisanya disebut kotak anchor *positif*.
+Kita mengimplementasikan fungsi `multibox_target` berikut
+untuk [**memberi label kelas dan offset pada kotak anchor**] (argumen `anchors`) menggunakan kotak pembatas ground-truth (argumen `labels`).
+Fungsi ini menetapkan kelas background ke nilai nol dan menambah indeks kelas baru dengan satu.
+
 
 ```{.python .input}
 #@tab mxnet
 #@save
 def multibox_target(anchors, labels):
-    """Label anchor boxes using ground-truth bounding boxes."""
+    """Memberi label pada kotak anchor menggunakan kotak pembatas ground-truth."""
     batch_size, anchors = labels.shape[0], anchors.squeeze(0)
     batch_offset, batch_mask, batch_class_labels = [], [], []
     device, num_anchors = anchors.ctx, anchors.shape[0]
@@ -485,19 +486,17 @@ def multibox_target(anchors, labels):
             label[:, 1:], anchors, device)
         bbox_mask = np.tile((np.expand_dims((anchors_bbox_map >= 0),
                                             axis=-1)), (1, 4)).astype('int32')
-        # Initialize class labels and assigned bounding box coordinates with
-        # zeros
+        # Inisialisasi label kelas dan koordinat kotak pembatas yang ditugaskan dengan nol
         class_labels = d2l.zeros(num_anchors, dtype=np.int32, ctx=device)
         assigned_bb = d2l.zeros((num_anchors, 4), dtype=np.float32,
                                 ctx=device)
-        # Label classes of anchor boxes using their assigned ground-truth
-        # bounding boxes. If an anchor box is not assigned any, we label its
-        # class as background (the value remains zero)
+        # Memberi label kelas kotak anchor menggunakan kotak pembatas ground-truth yang ditugaskan.
+        # Jika sebuah kotak anchor tidak ditugaskan apa pun, kita label kelasnya sebagai background (nilai tetap nol)
         indices_true = np.nonzero(anchors_bbox_map >= 0)[0]
         bb_idx = anchors_bbox_map[indices_true]
         class_labels[indices_true] = label[bb_idx, 0].astype('int32') + 1
         assigned_bb[indices_true] = label[bb_idx, 1:]
-        # Offset transformation
+        # Transformasi offset
         offset = offset_boxes(anchors, assigned_bb) * bbox_mask
         batch_offset.append(offset.reshape(-1))
         batch_mask.append(bbox_mask.reshape(-1))
@@ -512,7 +511,7 @@ def multibox_target(anchors, labels):
 #@tab pytorch
 #@save
 def multibox_target(anchors, labels):
-    """Label anchor boxes using ground-truth bounding boxes."""
+    """Memberi label pada kotak anchor menggunakan kotak pembatas ground-truth."""
     batch_size, anchors = labels.shape[0], anchors.squeeze(0)
     batch_offset, batch_mask, batch_class_labels = [], [], []
     device, num_anchors = anchors.device, anchors.shape[0]
@@ -522,20 +521,18 @@ def multibox_target(anchors, labels):
             label[:, 1:], anchors, device)
         bbox_mask = ((anchors_bbox_map >= 0).float().unsqueeze(-1)).repeat(
             1, 4)
-        # Initialize class labels and assigned bounding box coordinates with
-        # zeros
+        # Inisialisasi label kelas dan koordinat kotak pembatas yang ditugaskan dengan nol
         class_labels = torch.zeros(num_anchors, dtype=torch.long,
                                    device=device)
         assigned_bb = torch.zeros((num_anchors, 4), dtype=torch.float32,
                                   device=device)
-        # Label classes of anchor boxes using their assigned ground-truth
-        # bounding boxes. If an anchor box is not assigned any, we label its
-        # class as background (the value remains zero)
+        # Memberi label kelas kotak anchor menggunakan kotak pembatas ground-truth yang ditugaskan.
+        # Jika sebuah kotak anchor tidak ditugaskan apa pun, kita label kelasnya sebagai background (nilai tetap nol)
         indices_true = torch.nonzero(anchors_bbox_map >= 0)
         bb_idx = anchors_bbox_map[indices_true]
         class_labels[indices_true] = label[bb_idx, 0].long() + 1
         assigned_bb[indices_true] = label[bb_idx, 1:]
-        # Offset transformation
+        # Transformasi offset
         offset = offset_boxes(anchors, assigned_bb) * bbox_mask
         batch_offset.append(offset.reshape(-1))
         batch_mask.append(bbox_mask.reshape(-1))
@@ -546,22 +543,23 @@ def multibox_target(anchors, labels):
     return (bbox_offset, bbox_mask, class_labels)
 ```
 
-### An Example
+### Contoh
 
-Let's illustrate anchor box labeling
-via a concrete example.
-We define ground-truth bounding boxes for the dog and cat in the loaded image,
-where the first element is the class (0 for dog and 1 for cat) and the remaining four elements are the
-$(x, y)$-axis coordinates
-at the upper-left corner and the lower-right corner
-(range is between 0 and 1). 
-We also construct five anchor boxes to be labeled
-using the coordinates of
-the upper-left corner and the lower-right corner:
-$A_0, \ldots, A_4$ (the index starts from 0).
-Then we [**plot these ground-truth bounding boxes 
-and anchor boxes 
-in the image.**]
+Mari kita ilustrasikan pelabelan kotak anchor
+melalui contoh konkret.
+Kita mendefinisikan kotak pembatas ground-truth untuk anjing dan kucing dalam gambar yang dimuat,
+di mana elemen pertama adalah kelas (0 untuk anjing dan 1 untuk kucing) dan empat elemen sisanya adalah
+koordinat sumbu $(x, y)$
+di sudut kiri atas dan sudut kanan bawah
+(dengan rentang antara 0 dan 1).
+Kita juga membangun lima kotak anchor yang akan diberi label
+menggunakan koordinat
+sudut kiri atas dan sudut kanan bawah:
+$A_0, \ldots, A_4$ (indeks dimulai dari 0).
+Kemudian kita [**plot kotak pembatas ground-truth 
+dan kotak anchor ini 
+pada gambar.**]
+
 
 ```{.python .input}
 #@tab all
@@ -576,14 +574,15 @@ show_bboxes(fig.axes, ground_truth[:, 1:] * bbox_scale, ['dog', 'cat'], 'k')
 show_bboxes(fig.axes, anchors * bbox_scale, ['0', '1', '2', '3', '4']);
 ```
 
-Using the `multibox_target` function defined above,
-we can [**label classes and offsets
-of these anchor boxes based on
-the ground-truth bounding boxes**] for the dog and cat.
-In this example, indices of
-the background, dog, and cat classes
-are 0, 1, and 2, respectively. 
-Below we add an dimension for examples of anchor boxes and ground-truth bounding boxes.
+Dengan menggunakan fungsi `multibox_target` yang telah didefinisikan di atas,
+kita dapat [**memberi label pada kelas dan offset
+kotak-kotak anchor ini berdasarkan
+kotak pembatas ground-truth**] untuk anjing dan kucing.
+Dalam contoh ini, indeks untuk
+kelas background, anjing, dan kucing
+adalah 0, 1, dan 2, secara berurutan.
+Di bawah ini, kita menambahkan satu dimensi untuk contoh kotak anchor dan kotak pembatas ground-truth.
+
 
 ```{.python .input}
 #@tab mxnet
@@ -597,72 +596,79 @@ labels = multibox_target(anchors.unsqueeze(dim=0),
                          ground_truth.unsqueeze(dim=0))
 ```
 
-There are three items in the returned result, all of which are in the tensor format.
-The third item contains the labeled classes of the input anchor boxes.
+Hasil yang dikembalikan oleh fungsi terdiri dari tiga item, yang semuanya dalam format tensor.
+Item ketiga berisi kelas yang diberi label untuk kotak anchor yang diinput.
 
-Let's analyze the returned class labels below based on
-anchor box and ground-truth bounding box positions in the image.
-First, among all the pairs of anchor boxes
-and ground-truth bounding boxes,
-the IoU of the anchor box $A_4$ and the ground-truth bounding box of the cat is the largest. 
-Thus, the class of $A_4$ is labeled as the cat.
-Taking out 
-pairs containing $A_4$ or the ground-truth bounding box of the cat, among the rest 
-the pair of the anchor box $A_1$ and the ground-truth bounding box of the dog has the largest IoU.
-So the class of $A_1$ is labeled as the dog.
-Next, we need to traverse through the remaining three unlabeled anchor boxes: $A_0$, $A_2$, and $A_3$.
-For $A_0$,
-the class of the ground-truth bounding box with the largest IoU is the dog,
-but the IoU is below the predefined threshold (0.5),
-so the class is labeled as background;
-for $A_2$,
-the class of the ground-truth bounding box with the largest IoU is the cat and the IoU exceeds the threshold, so the class is labeled as the cat;
-for $A_3$,
-the class of the ground-truth bounding box with the largest IoU is the cat, but the value is below the threshold, so the class is labeled as background.
+Mari kita analisis label kelas yang dikembalikan berdasarkan
+posisi kotak anchor dan kotak pembatas ground-truth pada gambar.
+Pertama, di antara semua pasangan kotak anchor
+dan kotak pembatas ground-truth,
+IoU antara kotak anchor $A_4$ dan kotak pembatas ground-truth untuk kucing adalah yang terbesar.
+Maka, kelas dari $A_4$ diberi label sebagai kucing.
+Setelah mengeluarkan
+pasangan yang mengandung $A_4$ atau kotak pembatas ground-truth untuk kucing, di antara pasangan yang tersisa,
+pasangan antara kotak anchor $A_1$ dan kotak pembatas ground-truth untuk anjing memiliki IoU terbesar.
+Jadi, kelas dari $A_1$ diberi label sebagai anjing.
+Selanjutnya, kita perlu menelusuri tiga kotak anchor yang belum diberi label: $A_0$, $A_2$, dan $A_3$.
+Untuk $A_0$,
+kelas dari kotak pembatas ground-truth dengan IoU terbesar adalah anjing,
+tetapi IoU ini berada di bawah ambang batas yang telah ditentukan (0,5),
+sehingga kelasnya diberi label sebagai background;
+untuk $A_2$,
+kelas dari kotak pembatas ground-truth dengan IoU terbesar adalah kucing dan IoU melebihi ambang batas, sehingga kelasnya diberi label sebagai kucing;
+untuk $A_3$,
+kelas dari kotak pembatas ground-truth dengan IoU terbesar adalah kucing, tetapi nilainya di bawah ambang batas, sehingga kelasnya diberi label sebagai background.
+
 
 ```{.python .input}
 #@tab all
 labels[2]
 ```
 
-The second returned item is a mask variable of the shape (batch size, four times the number of anchor boxes).
-Every four elements in the mask variable 
-correspond to the four offset values of each anchor box.
-Since we do not care about background detection,
-offsets of this negative class should not affect the objective function.
-Through elementwise multiplications, zeros in the mask variable will filter out negative class offsets before calculating the objective function.
+Item kedua yang dikembalikan adalah variabel mask dengan bentuk (ukuran batch, empat kali jumlah kotak anchor).
+Setiap empat elemen dalam variabel mask
+sesuai dengan empat nilai offset dari setiap kotak anchor.
+Karena kita tidak memperhitungkan deteksi background,
+offset dari kelas negatif ini seharusnya tidak memengaruhi fungsi objektif.
+Melalui perkalian elemen demi elemen, nilai nol dalam variabel mask akan menyaring offset kelas negatif sebelum menghitung fungsi objektif.
+
 
 ```{.python .input}
 #@tab all
 labels[1]
 ```
 
-The first returned item contains the four offset values labeled for each anchor box.
-Note that the offsets of negative-class anchor boxes are labeled as zeros.
+Item pertama yang dikembalikan berisi empat nilai offset yang diberi label untuk setiap kotak anchor.
+Perhatikan bahwa offset dari kotak anchor dengan kelas negatif diberi label sebagai nol.
+
+
 
 ```{.python .input}
 #@tab all
 labels[0]
 ```
 
-## Predicting Bounding Boxes with Non-Maximum Suppression
+## Memprediksi Kotak Pembatas dengan Non-Maximum Suppression
 :label:`subsec_predicting-bounding-boxes-nms`
 
-During prediction,
-we generate multiple anchor boxes for the image and predict classes and offsets for each of them.
-A *predicted bounding box*
-is thus obtained according to 
-an anchor box with its predicted offset.
-Below we implement the `offset_inverse` function
-that takes in anchors and
-offset predictions as inputs and [**applies inverse offset transformations to
-return the predicted bounding box coordinates**].
+Selama prediksi,
+kita menghasilkan beberapa kotak anchor untuk gambar dan memprediksi kelas serta offset untuk masing-masing kotak tersebut.
+Sebuah *kotak pembatas yang diprediksi*
+diperoleh berdasarkan
+kotak anchor dengan offset yang diprediksi.
+Berikut ini, kita mengimplementasikan fungsi `offset_inverse`
+yang menerima kotak anchor dan
+prediksi offset sebagai input dan [**menerapkan transformasi offset inverse untuk
+mengembalikan koordinat kotak pembatas yang diprediksi**].
+
+
+
 
 ```{.python .input}
 #@tab all
 #@save
 def offset_inverse(anchors, offset_preds):
-    """Predict bounding boxes based on anchor boxes with predicted offsets."""
+    """Memprediksi Kotak Pembatas Berdasarkan Kotak Anchor dengan Offset yang Diprediksi."""
     anc = d2l.box_corner_to_center(anchors)
     pred_bbox_xy = (offset_preds[:, :2] * anc[:, 2:] / 10) + anc[:, :2]
     pred_bbox_wh = d2l.exp(offset_preds[:, 2:] / 5) * anc[:, 2:]
@@ -671,40 +677,40 @@ def offset_inverse(anchors, offset_preds):
     return predicted_bbox
 ```
 
-When there are many anchor boxes,
-many similar (with significant overlap)
-predicted bounding boxes 
-can be potentially output for surrounding the same object.
-To simplify the output,
-we can merge similar predicted bounding boxes
-that belong to the same object
-by using *non-maximum suppression* (NMS).
+Ketika terdapat banyak kotak anchor,
+banyak kotak pembatas yang diprediksi (dengan tumpang tindih yang signifikan)
+dapat dihasilkan untuk mengelilingi objek yang sama.
+Untuk menyederhanakan output,
+kita dapat menggabungkan kotak pembatas yang diprediksi serupa
+yang termasuk ke dalam objek yang sama
+dengan menggunakan *non-maximum suppression* (NMS).
 
-Here is how non-maximum suppression works.
-For a predicted bounding box $B$,
-the object detection model calculates the predicted likelihood
-for each class.
-Denoting by $p$ the largest predicted likelihood,
-the class corresponding to this probability is the predicted class for $B$.
-Specifically, we refer to $p$ as the *confidence* (score) of the predicted bounding box $B$.
-On the same image,
-all the predicted non-background bounding boxes 
-are sorted by confidence in descending order
-to generate a list $L$.
-Then we manipulate the sorted list $L$ in the following steps:
+Berikut adalah cara kerja non-maximum suppression:
+Untuk sebuah kotak pembatas yang diprediksi $B$,
+model deteksi objek menghitung probabilitas prediksi
+untuk setiap kelas.
+Diberikan $p$ sebagai probabilitas prediksi terbesar,
+kelas yang sesuai dengan probabilitas ini adalah kelas yang diprediksi untuk $B$.
+Secara khusus, kita menyebut $p$ sebagai *confidence* (skor) dari kotak pembatas yang diprediksi $B$.
+Pada gambar yang sama,
+semua kotak pembatas yang diprediksi sebagai non-background
+diurutkan berdasarkan confidence secara menurun
+untuk menghasilkan daftar $L$.
+Kemudian kita memanipulasi daftar $L$ yang telah diurutkan dalam langkah-langkah berikut:
 
-1. Select the predicted bounding box $B_1$ with the highest confidence from $L$ as a basis and remove all non-basis predicted bounding boxes whose IoU with $B_1$ exceeds a predefined threshold $\epsilon$ from $L$. At this point, $L$ keeps the predicted bounding box with the highest confidence but drops others that are too similar to it. In a nutshell, those with *non-maximum* confidence scores are *suppressed*.
-1. Select the predicted bounding box $B_2$ with the second highest confidence from $L$ as another basis and remove all non-basis predicted bounding boxes whose IoU with $B_2$ exceeds $\epsilon$ from $L$.
-1. Repeat the above process until all the predicted bounding boxes in $L$ have been used as a basis. At this time, the IoU of any pair of predicted bounding boxes in $L$ is below the threshold $\epsilon$; thus, no pair is too similar with each other. 
-1. Output all the predicted bounding boxes in the list $L$.
+1. Pilih kotak pembatas (_Bounding Box_) yang diprediksi $B_1$ dengan confidence tertinggi dari $L$ sebagai basis dan hapus semua kotak pembatas yang diprediksi non-basis yang memiliki IoU dengan $B_1$ melebihi ambang batas yang telah ditentukan $\epsilon$ dari $L$. Pada tahap ini, $L$ menyimpan kotak pembatas yang diprediksi dengan confidence tertinggi tetapi menghapus yang lain yang terlalu mirip dengannya. Intinya, kotak dengan skor confidence *non-maximum* akan *disuppresed*.
+2. Pilih kotak pembatas (_Bounding Box_) yang diprediksi $B_2$ dengan confidence tertinggi kedua dari $L$ sebagai basis lain dan hapus semua kotak pembatas yang diprediksi non-basis yang memiliki IoU dengan $B_2$ melebihi $\epsilon$ dari $L$.
+3. Ulangi proses di atas hingga semua kotak pembatas yang diprediksi (_Bounding Box_) di $L$ telah digunakan sebagai basis. Pada titik ini, IoU dari setiap pasangan kotak pembatas yang diprediksi di $L$ berada di bawah ambang batas $\epsilon$; sehingga, tidak ada pasangan yang terlalu mirip satu sama lain.
+4. Output semua kotak pembatas yang diprediksi dalam daftar $L$.
 
-[**The following `nms` function sorts confidence scores in descending order and returns their indices.**]
+[**Fungsi `nms` berikut mengurutkan skor confidence secara menurun dan mengembalikan indeksnya.**]
+
 
 ```{.python .input}
 #@tab mxnet
 #@save
 def nms(boxes, scores, iou_threshold):
-    """Sort confidence scores of predicted bounding boxes."""
+    """Mengurutkan Skor Confidence dari bounding box yang Diprediksi."""
     B = scores.argsort()[::-1]
     keep = []  # Indices of predicted bounding boxes that will be kept
     while B.size > 0:
@@ -722,7 +728,7 @@ def nms(boxes, scores, iou_threshold):
 #@tab pytorch
 #@save
 def nms(boxes, scores, iou_threshold):
-    """Sort confidence scores of predicted bounding boxes."""
+    """Mengurutkan Skor Confidence dari bounding box yang Diprediksi."""
     B = torch.argsort(scores, dim=-1, descending=True)
     keep = []  # Indices of predicted bounding boxes that will be kept
     while B.numel() > 0:
@@ -736,19 +742,16 @@ def nms(boxes, scores, iou_threshold):
     return d2l.tensor(keep, device=boxes.device)
 ```
 
-We define the following `multibox_detection`
-to [**apply non-maximum suppression
-to predicting bounding boxes**].
-Do not worry if you find the implementation
-a bit complicated: we will show how it works
-with a concrete example right after the implementation.
+Kami mendefinisikan fungsi `multibox_detection` berikut untuk [**menerapkan non-maximum suppression (NMS) pada kotak pembatas yang diprediksi**].
+Jangan khawatir jika implementasinya terlihat sedikit rumit: kami akan menunjukkan cara kerjanya dengan contoh konkret segera setelah implementasi.
+
 
 ```{.python .input}
 #@tab mxnet
 #@save
 def multibox_detection(cls_probs, offset_preds, anchors, nms_threshold=0.5,
                        pos_threshold=0.009999999):
-    """Predict bounding boxes using non-maximum suppression."""
+    """prediksi bounding boxes menggunakan non-maximum suppression."""
     device, batch_size = cls_probs.ctx, cls_probs.shape[0]
     anchors = np.squeeze(anchors, axis=0)
     num_classes, num_anchors = cls_probs.shape[1], cls_probs.shape[2]
@@ -758,7 +761,7 @@ def multibox_detection(cls_probs, offset_preds, anchors, nms_threshold=0.5,
         conf, class_id = np.max(cls_prob[1:], 0), np.argmax(cls_prob[1:], 0)
         predicted_bb = offset_inverse(anchors, offset_pred)
         keep = nms(predicted_bb, conf, nms_threshold)
-        # Find all non-`keep` indices and set the class to background
+        # Temukan semua indeks yang bukan `keep` dan tetapkan kelasnya sebagai background
         all_idx = np.arange(num_anchors, dtype=np.int32, ctx=device)
         combined = d2l.concat((keep, all_idx))
         unique, counts = np.unique(combined, return_counts=True)
@@ -767,8 +770,7 @@ def multibox_detection(cls_probs, offset_preds, anchors, nms_threshold=0.5,
         class_id[non_keep] = -1
         class_id = class_id[all_id_sorted].astype('float32')
         conf, predicted_bb = conf[all_id_sorted], predicted_bb[all_id_sorted]
-        # Here `pos_threshold` is a threshold for positive (non-background)
-        # predictions
+        # Di sini, `pos_threshold` adalah ambang batas untuk prediksi positif (non-background)
         below_min_idx = (conf < pos_threshold)
         class_id[below_min_idx] = -1
         conf[below_min_idx] = 1 - conf[below_min_idx]
@@ -784,7 +786,7 @@ def multibox_detection(cls_probs, offset_preds, anchors, nms_threshold=0.5,
 #@save
 def multibox_detection(cls_probs, offset_preds, anchors, nms_threshold=0.5,
                        pos_threshold=0.009999999):
-    """Predict bounding boxes using non-maximum suppression."""
+    """prediksi bounding boxes menggunakan non-maximum suppression."""
     device, batch_size = cls_probs.device, cls_probs.shape[0]
     anchors = anchors.squeeze(0)
     num_classes, num_anchors = cls_probs.shape[1], cls_probs.shape[2]
@@ -794,7 +796,7 @@ def multibox_detection(cls_probs, offset_preds, anchors, nms_threshold=0.5,
         conf, class_id = torch.max(cls_prob[1:], 0)
         predicted_bb = offset_inverse(anchors, offset_pred)
         keep = nms(predicted_bb, conf, nms_threshold)
-        # Find all non-`keep` indices and set the class to background
+        # Temukan semua indeks yang bukan `keep` dan tetapkan kelasnya sebagai background
         all_idx = torch.arange(num_anchors, dtype=torch.long, device=device)
         combined = torch.cat((keep, all_idx))
         uniques, counts = combined.unique(return_counts=True)
@@ -803,8 +805,7 @@ def multibox_detection(cls_probs, offset_preds, anchors, nms_threshold=0.5,
         class_id[non_keep] = -1
         class_id = class_id[all_id_sorted]
         conf, predicted_bb = conf[all_id_sorted], predicted_bb[all_id_sorted]
-        # Here `pos_threshold` is a threshold for positive (non-background)
-        # predictions
+       # Di sini, `pos_threshold` adalah ambang batas untuk prediksi positif (non-background)
         below_min_idx = (conf < pos_threshold)
         class_id[below_min_idx] = -1
         conf[below_min_idx] = 1 - conf[below_min_idx]
@@ -815,13 +816,13 @@ def multibox_detection(cls_probs, offset_preds, anchors, nms_threshold=0.5,
     return d2l.stack(out)
 ```
 
-Now let's [**apply the above implementations
-to a concrete example with four anchor boxes**].
-For simplicity, we assume that the
-predicted offsets are all zeros.
-This means that the predicted bounding boxes are anchor boxes. 
-For each class among the background, dog, and cat,
-we also define its predicted likelihood.
+Sekarang mari kita [**menerapkan implementasi di atas pada contoh konkret dengan empat kotak anchor**].
+Untuk kesederhanaan, kita mengasumsikan bahwa
+semua offset yang diprediksi adalah nol.
+Ini berarti bahwa kotak pembatas yang diprediksi adalah kotak anchor.
+Untuk setiap kelas di antara background, anjing, dan kucing,
+kita juga mendefinisikan kemungkinan prediksinya.
+
 
 ```{.python .input}
 #@tab all
@@ -833,7 +834,9 @@ cls_probs = d2l.tensor([[0] * 4,  # Predicted background likelihood
                       [0.1, 0.2, 0.3, 0.9]])  # Predicted cat likelihood
 ```
 
-We can [**plot these predicted bounding boxes with their confidence on the image.**]
+Kita dapat [**memvisualisasikan kotak pembatas yang diprediksi ini beserta confidence-nya pada gambar.**]
+
+
 
 ```{.python .input}
 #@tab all
@@ -842,20 +845,22 @@ show_bboxes(fig.axes, anchors * bbox_scale,
             ['dog=0.9', 'dog=0.8', 'dog=0.7', 'cat=0.9'])
 ```
 
-Now we can invoke the `multibox_detection` function
-to perform non-maximum suppression,
-where the threshold is set to 0.5.
-Note that we add
-a dimension for examples in the tensor input.
+Sekarang kita dapat memanggil fungsi `multibox_detection`
+untuk melakukan non-maximum suppression,
+dengan ambang batas yang disetel ke 0,5.
+Perhatikan bahwa kita menambahkan
+dimensi untuk contoh dalam input tensor.
 
-We can see that [**the shape of the returned result**] is
-(batch size, number of anchor boxes, 6).
-The six elements in the innermost dimension
-gives the output information for the same predicted bounding box.
-The first element is the predicted class index, which starts from 0 (0 is dog and 1 is cat). The value -1 indicates background or removal in non-maximum suppression.
-The second element is the confidence of the predicted bounding box.
-The remaining four elements are the $(x, y)$-axis coordinates of the upper-left corner and 
-the lower-right corner of the predicted bounding box, respectively (range is between 0 and 1).
+Kita dapat melihat bahwa [**bentuk dari hasil yang dikembalikan**] adalah
+(ukuran batch, jumlah kotak anchor, 6).
+Enam elemen dalam dimensi terdalam
+memberikan informasi keluaran untuk kotak pembatas yang diprediksi yang sama.
+Elemen pertama adalah indeks kelas yang diprediksi, yang dimulai dari 0 (0 adalah anjing dan 1 adalah kucing). Nilai -1 menunjukkan background atau penghapusan dalam non-maximum suppression.
+Elemen kedua adalah confidence dari kotak pembatas yang diprediksi.
+Empat elemen sisanya adalah koordinat sumbu $(x, y)$ dari sudut kiri atas dan 
+sudut kanan bawah dari kotak pembatas yang diprediksi, masing-masing (rentang antara 0 dan 1).
+
+
 
 ```{.python .input}
 #@tab mxnet
@@ -875,10 +880,10 @@ output = multibox_detection(cls_probs.unsqueeze(dim=0),
 output
 ```
 
-After removing those predicted bounding boxes
-of class -1, 
-we can [**output the final predicted bounding box
-kept by non-maximum suppression**].
+Setelah menghapus kotak pembatas yang diprediksi dengan kelas -1,
+kita dapat [**mengeluarkan kotak pembatas akhir yang dipertahankan oleh non-maximum suppression**].
+
+
 
 ```{.python .input}
 #@tab all
@@ -890,32 +895,29 @@ for i in d2l.numpy(output[0]):
     show_bboxes(fig.axes, [d2l.tensor(i[2:]) * bbox_scale], label)
 ```
 
-In practice, we can remove predicted bounding boxes with lower confidence even before performing non-maximum suppression, thereby reducing computation in this algorithm.
-We may also post-process the output of non-maximum suppression, for example, by only keeping
-results with higher confidence
-in the final output.
+Dalam praktiknya, kita dapat menghapus kotak pembatas yang diprediksi dengan confidence yang lebih rendah bahkan sebelum melakukan non-maximum suppression, sehingga mengurangi komputasi dalam algoritme ini.
+Kita juga dapat melakukan post-processing pada hasil non-maximum suppression, misalnya dengan hanya mempertahankan
+hasil dengan confidence lebih tinggi pada output akhir.
 
+## Ringkasan
 
-## Summary
+* Kita menghasilkan kotak anchor dengan bentuk yang berbeda yang berpusat di setiap piksel gambar.
+* Intersection over union (IoU), juga dikenal sebagai indeks Jaccard, mengukur kemiripan dua kotak pembatas. Ini adalah rasio antara area irisan dan area gabungan mereka.
+* Dalam set pelatihan, kita memerlukan dua jenis label untuk setiap kotak anchor. Salah satunya adalah kelas dari objek yang relevan dengan kotak anchor dan yang lainnya adalah offset dari kotak pembatas ground-truth relatif terhadap kotak anchor.
+* Selama prediksi, kita dapat menggunakan non-maximum suppression (NMS) untuk menghapus kotak pembatas yang diprediksi yang serupa, sehingga menyederhanakan output.
 
-* We generate anchor boxes with different shapes centered on each pixel of the image.
-* Intersection over union (IoU), also known as Jaccard index, measures the similarity of two bounding boxes. It is the ratio of their intersection area to their union area.
-* In a training set, we need two types of labels for each anchor box. One is the class of the object relevant to the anchor box and the other is the offset of the ground-truth bounding box relative to the anchor box.
-* During prediction, we can use non-maximum suppression (NMS) to remove similar predicted bounding boxes, thereby simplifying the output.
+## Latihan
 
-
-## Exercises
-
-1. Change values of `sizes` and `ratios` in the `multibox_prior` function. What are the changes to the generated anchor boxes?
-1. Construct and visualize two bounding boxes with an IoU of 0.5. How do they overlap with each other?
-1. Modify the variable `anchors` in :numref:`subsec_labeling-anchor-boxes` and :numref:`subsec_predicting-bounding-boxes-nms`. How do the results change?
-1. Non-maximum suppression is a greedy algorithm that suppresses predicted bounding boxes by *removing* them. Is it possible that some of these removed ones are actually useful? How can this algorithm be modified to suppress *softly*? You may refer to Soft-NMS :cite:`Bodla.Singh.Chellappa.ea.2017`.
-1. Rather than being hand-crafted, can non-maximum suppression be learned?
+1. Ubah nilai `sizes` dan `ratios` dalam fungsi `multibox_prior`. Apa perubahan yang terjadi pada kotak anchor yang dihasilkan?
+2. Konstruksi dan visualisasikan dua kotak pembatas dengan IoU sebesar 0,5. Bagaimana mereka saling tumpang tindih?
+3. Modifikasi variabel `anchors` di :numref:`subsec_labeling-anchor-boxes` dan :numref:`subsec_predicting-bounding-boxes-nms`. Bagaimana hasilnya berubah?
+4. Non-maximum suppression adalah algoritme greedy yang menekan kotak pembatas yang diprediksi dengan *menghapus* kotak tersebut. Apakah mungkin bahwa beberapa kotak yang dihapus sebenarnya berguna? Bagaimana algoritme ini bisa dimodifikasi untuk menekan secara *lembut*? Anda dapat merujuk ke Soft-NMS :cite:`Bodla.Singh.Chellappa.ea.2017`.
+5. Alih-alih dibuat secara manual, bisakah non-maximum suppression dipelajari?
 
 :begin_tab:`mxnet`
-[Discussions](https://discuss.d2l.ai/t/370)
+[Diskusi](https://discuss.d2l.ai/t/370)
 :end_tab:
 
 :begin_tab:`pytorch`
-[Discussions](https://discuss.d2l.ai/t/1603)
+[Diskusi](https://discuss.d2l.ai/t/1603)
 :end_tab:
