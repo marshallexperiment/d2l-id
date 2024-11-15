@@ -170,7 +170,7 @@
 - [ ] ./chapter_computer-vision/index.md
 - [ ] ./chapter_computer-vision/rcnn.md
 - [ ] ./chapter_computer-vision/transposed-conv.md
-- [ ] ./chapter_computer-vision/fine-tuning.md
+- [x] ./chapter_computer-vision/fine-tuning.md
 - [ ] ./chapter_computer-vision/kaggle-cifar10.md
 - [ ] ./chapter_computer-vision/semantic-segmentation-and-dataset.md
 - [ ] ./chapter_computer-vision/ssd.md
