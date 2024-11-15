@@ -162,8 +162,8 @@
 - [ ] ./chapter_computer-vision/neural-style.md
 - [ ] ./chapter_computer-vision/multiscale-object-detection.md
 - [ ] ./chapter_computer-vision/kaggle-dog.md
-- [ ] ./chapter_computer-vision/fcn.md
-- [ ] ./chapter_computer-vision/bounding-box.md
+- [x] ./chapter_computer-vision/fcn.md
+- [x] ./chapter_computer-vision/bounding-box.md
 - [ ] ./chapter_computer-vision/image-augmentation.md
 - [x] ./chapter_computer-vision/anchor.md
 - [ ] ./chapter_computer-vision/object-detection-dataset.md
