@@ -1,64 +1,44 @@
 # Fine-Tuning
 :label:`sec_fine_tuning`
 
-In earlier chapters, we discussed how to train models on the Fashion-MNIST training dataset with only 60000 images. We also described ImageNet, the most widely used large-scale image dataset in academia, which has more than 10 million images and 1000 objects. However, the size of the dataset that we usually encounter is between those of the two datasets.
+Pada bab sebelumnya, kita telah membahas bagaimana melatih model pada dataset pelatihan Fashion-MNIST yang hanya memiliki 60.000 gambar. Kita juga telah mendeskripsikan ImageNet, dataset gambar skala besar yang paling banyak digunakan di dunia akademik, yang memiliki lebih dari 10 juta gambar dan 1000 objek. Namun, ukuran dataset yang biasanya kita temui berada di antara kedua dataset tersebut.
 
+Misalnya, jika kita ingin mengenali berbagai jenis kursi dari gambar, lalu merekomendasikan tautan pembelian kepada pengguna.
+Salah satu metode yang mungkin adalah dengan terlebih dahulu mengidentifikasi 100 jenis kursi yang umum, mengambil 1000 gambar dari sudut yang berbeda untuk setiap kursi, dan kemudian melatih model klasifikasi pada dataset gambar yang dikumpulkan.
+Meskipun dataset kursi ini mungkin lebih besar daripada dataset Fashion-MNIST, jumlah contoh yang dimiliki masih kurang dari sepersepuluh dari jumlah yang ada di ImageNet.
+Hal ini dapat menyebabkan *overfitting* pada model yang lebih kompleks yang cocok untuk ImageNet ketika digunakan pada dataset kursi tersebut.
+Selain itu, karena jumlah contoh pelatihan yang terbatas, akurasi model yang dilatih mungkin tidak memenuhi persyaratan praktis.
 
-Suppose that we want to recognize different types of chairs from images, and then recommend purchase links to users. 
-One possible method is to first identify
-100 common chairs,
-take 1000 images of different angles for each chair, 
-and then train a classification model on the collected image dataset.
-Although this chair dataset may be larger than the Fashion-MNIST dataset,
-the number of examples is still less than one-tenth of 
-that in ImageNet.
-This may lead to overfitting of complicated models 
-that are suitable for ImageNet on this chair dataset.
-Besides, due to the limited amount of training examples,
-the accuracy of the trained model
-may not meet practical requirements.
+Untuk mengatasi masalah di atas, solusi yang jelas adalah mengumpulkan lebih banyak data.
+Namun, mengumpulkan dan memberi label data dapat memakan banyak waktu dan biaya.
+Misalnya, dalam rangka mengumpulkan dataset ImageNet, para peneliti telah menghabiskan jutaan dolar dari dana penelitian. 
+Meskipun biaya pengumpulan data saat ini telah berkurang secara signifikan, biaya tersebut masih tidak bisa diabaikan.
 
+Solusi lain adalah dengan menerapkan *transfer learning* untuk mentransfer pengetahuan yang dipelajari dari *source dataset* ke *target dataset*. 
+Sebagai contoh, meskipun sebagian besar gambar dalam dataset ImageNet tidak ada hubungannya dengan kursi, model yang dilatih pada dataset ini mungkin dapat mengekstraksi fitur gambar yang lebih umum, yang dapat membantu mengenali tepi, tekstur, bentuk, dan komposisi objek.
+Fitur-fitur serupa ini mungkin juga efektif untuk mengenali kursi.
 
-In order to address the above problems,
-an obvious solution is to collect more data.
-However, collecting and labeling data can take a lot of time and money.
-For example, in order to collect the ImageNet dataset, researchers have spent millions of dollars from research funding.
-Although the current data collection cost has been significantly reduced, this cost still cannot be ignored.
+## Langkah-langkah
 
+Pada bagian ini, kita akan memperkenalkan teknik umum dalam *transfer learning*, yaitu *fine-tuning*. Seperti yang ditunjukkan pada :numref:`fig_finetune`, *fine-tuning* terdiri dari empat langkah berikut:
 
-Another solution is to apply *transfer learning* to transfer the knowledge learned from the *source dataset* to the *target dataset*.
-For example, although most of the images in the ImageNet dataset have nothing to do with chairs, the model trained on this dataset may extract more general image features, which can help identify edges, textures, shapes, and object composition.
-These similar features may
-also be effective for recognizing chairs.
-
-
-## Steps
-
-
-In this section, we will introduce a common technique in transfer learning: *fine-tuning*. As shown in :numref:`fig_finetune`, fine-tuning consists of the following four steps:
-
-
-1. Pretrain a neural network model, i.e., the *source model*, on a source dataset (e.g., the ImageNet dataset).
-1. Create a new neural network model, i.e., the *target model*. This copies all model designs and their parameters on the source model except the output layer. We assume that these model parameters contain the knowledge learned from the source dataset and this knowledge will also be applicable to the target dataset. We also assume that the output layer of the source model is closely related to the labels of the source dataset; thus it is not used in the target model.
-1. Add an output layer to the target model, whose number of outputs is the number of categories in the target dataset. Then randomly initialize the model parameters of this layer.
-1. Train the target model on the target dataset, such as a chair dataset. The output layer will be trained from scratch, while the parameters of all the other layers are fine-tuned based on the parameters of the source model.
+1. Melatih model jaringan saraf, yaitu *source model*, pada *source dataset* (misalnya, dataset ImageNet).
+2. Membuat model jaringan saraf baru, yaitu *target model*. Ini menyalin semua desain model dan parameter dari *source model* kecuali layer output. Kita mengasumsikan bahwa parameter model ini mengandung pengetahuan yang dipelajari dari *source dataset* dan pengetahuan ini juga dapat diterapkan pada *target dataset*. Kita juga mengasumsikan bahwa layer output dari *source model* sangat terkait dengan label dari *source dataset*, sehingga tidak digunakan pada *target model*.
+3. Menambahkan layer output ke *target model*, di mana jumlah outputnya sesuai dengan jumlah kategori di *target dataset*. Kemudian, menginisialisasi parameter model pada layer ini secara acak.
+4. Melatih *target model* pada *target dataset*, seperti dataset kursi. Layer output akan dilatih dari awal, sementara parameter dari semua layer lainnya disesuaikan (*fine-tuned*) berdasarkan parameter dari *source model*.
 
 ![Fine tuning.](../img/finetune.svg)
 :label:`fig_finetune`
 
-When target datasets are much smaller than source datasets, fine-tuning helps to improve models' generalization ability.
+Ketika *target dataset* jauh lebih kecil dari *source dataset*, *fine-tuning* membantu meningkatkan kemampuan generalisasi model.
 
+## Pengenalan Hot Dog
 
-## Hot Dog Recognition
+Mari kita demonstrasikan *fine-tuning* melalui contoh konkret: pengenalan hot dog.
+Kita akan *fine-tune* model ResNet pada dataset kecil, yang sebelumnya telah dilatih pada dataset ImageNet.
+Dataset kecil ini terdiri dari ribuan gambar yang berisi atau tidak berisi hot dog.
+Kita akan menggunakan model yang sudah disesuaikan untuk mengenali hot dog dari gambar.
 
-Let's demonstrate fine-tuning via a concrete case:
-hot dog recognition. 
-We will fine-tune a ResNet model on a small dataset,
-which was pretrained on the ImageNet dataset.
-This small dataset consists of
-thousands of images with and without hot dogs.
-We will use the fine-tuned model to recognize 
-hot dogs from images.
 
 ```{.python .input}
 #@tab mxnet
@@ -81,18 +61,15 @@ import torchvision
 import os
 ```
 
-### Reading the Dataset
+### Membaca Dataset
 
-[**The hot dog dataset we use was taken from online images**].
-This dataset consists of
-1400 positive-class images containing hot dogs,
-and as many negative-class images containing other foods.
-1000 images of both classes are used for training and the rest are for testing.
+[**Dataset hot dog yang kita gunakan diambil dari gambar yang tersedia secara online**].
+Dataset ini terdiri dari 1400 gambar *positive class* yang mengandung hot dog, dan sebanyak gambar kelas negatif yang mengandung makanan lain.
+Sebanyak 1000 gambar dari kedua kelas digunakan untuk pelatihan, dan sisanya digunakan untuk pengujian.
+
+Setelah mengekstrak dataset yang diunduh, kita akan mendapatkan dua folder `hotdog/train` dan `hotdog/test`. Kedua folder ini memiliki subfolder `hotdog` dan `not-hotdog`, yang masing-masing berisi gambar dari kelas yang sesuai.
 
 
-After unzipping the downloaded dataset,
-we obtain two folders `hotdog/train` and `hotdog/test`. Both folders have `hotdog` and `not-hotdog` subfolders, either of which contains images of
-the corresponding class.
 
 ```{.python .input}
 #@tab all
@@ -103,7 +80,8 @@ d2l.DATA_HUB['hotdog'] = (d2l.DATA_URL + 'hotdog.zip',
 data_dir = d2l.download_extract('hotdog')
 ```
 
-We create two instances to read all the image files in the training and testing datasets, respectively.
+Kita membuat dua instance untuk membaca semua file gambar yang terdapat pada dataset pelatihan dan pengujian secara berturut-turut.
+
 
 ```{.python .input}
 #@tab mxnet
@@ -119,7 +97,9 @@ train_imgs = torchvision.datasets.ImageFolder(os.path.join(data_dir, 'train'))
 test_imgs = torchvision.datasets.ImageFolder(os.path.join(data_dir, 'test'))
 ```
 
-The first 8 positive examples and the last 8 negative images are shown below. As you can see, [**the images vary in size and aspect ratio**].
+Di bawah ini ditampilkan 8 contoh positif pertama dan 8 gambar negatif terakhir. Seperti yang dapat dilihat, [**gambar-gambar tersebut bervariasi dalam ukuran dan rasio aspek**].
+
+
 
 ```{.python .input}
 #@tab all
@@ -128,22 +108,19 @@ not_hotdogs = [train_imgs[-i - 1][0] for i in range(8)]
 d2l.show_images(hotdogs + not_hotdogs, 2, 8, scale=1.4);
 ```
 
-During training, we first crop a random area of random size and random aspect ratio from the image,
-and then scale this area
-to a $224 \times 224$ input image. 
-During testing, we scale both the height and width of an image to 256 pixels, and then crop a central $224 \times 224$ area as input.
-In addition, 
-for the three RGB (red, green, and blue) color channels
-we *standardize* their values channel by channel.
-Concretely,
-the mean value of a channel is subtracted from each value of that channel and then the result is divided by the standard deviation of that channel.
+Selama pelatihan, kita terlebih dahulu memotong area acak dengan ukuran dan rasio aspek yang juga acak dari gambar, kemudian memperbesar area ini menjadi gambar input berukuran $224 \times 224$. 
 
-[~~Data augmentations~~]
+Selama pengujian, kita memperbesar baik tinggi maupun lebar gambar menjadi 256 piksel, lalu memotong area tengah berukuran $224 \times 224$ sebagai input. 
+
+Selain itu, untuk tiga saluran warna RGB (merah, hijau, dan biru), kita *standarisasi* nilainya saluran per saluran. Secara konkret, nilai rata-rata dari setiap saluran dikurangkan dari setiap nilai di saluran tersebut dan kemudian hasilnya dibagi dengan standar deviasi dari saluran tersebut.
+
+
+[~~Augmentasi Data~~]
 
 ```{.python .input}
 #@tab mxnet
-# Specify the means and standard deviations of the three RGB channels to
-# standardize each channel
+# Tentukan nilai mean dan standar deviasi dari tiga saluran RGB
+# untuk menstandarisasi setiap saluran
 normalize = gluon.data.vision.transforms.Normalize(
     [0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
 
@@ -162,8 +139,8 @@ test_augs = gluon.data.vision.transforms.Compose([
 
 ```{.python .input}
 #@tab pytorch
-# Specify the means and standard deviations of the three RGB channels to
-# standardize each channel
+# Tentukan nilai mean dan standar deviasi dari tiga saluran RGB
+# untuk menstandarisasi setiap saluran
 normalize = torchvision.transforms.Normalize(
     [0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
 
@@ -180,11 +157,12 @@ test_augs = torchvision.transforms.Compose([
     normalize])
 ```
 
-### [**Defining and Initializing the Model**]
+### [**Mendefinisikan dan Menginisialisasi Model**]
 
-We use ResNet-18, which was pretrained on the ImageNet dataset, as the source model. Here, we specify `pretrained=True` to automatically download the pretrained model parameters. 
-If this model is used for the first time,
-Internet connection is required for download.
+Kami menggunakan ResNet-18, yang telah dipra-latih pada dataset ImageNet, sebagai model sumber. Di sini, kami menentukan `pretrained=True` untuk secara otomatis mengunduh parameter model yang telah dipra-latih.  
+Jika model ini digunakan untuk pertama kalinya,  
+koneksi internet diperlukan untuk mengunduh.
+
 
 ```{.python .input}
 #@tab mxnet
@@ -197,14 +175,15 @@ pretrained_net = torchvision.models.resnet18(pretrained=True)
 ```
 
 :begin_tab:`mxnet`
-The pretrained source model instance contains two member variables: `features` and `output`. The former contains all layers of the model except the output layer, and the latter is the output layer of the model. 
-The main purpose of this division is to facilitate the fine-tuning of model parameters of all layers but the output layer. The member variable `output` of source model is shown below.
+Instansi model sumber yang dipra-latih berisi dua variabel anggota: `features` dan `output`. Yang pertama berisi semua lapisan model kecuali lapisan output, dan yang terakhir adalah lapisan output dari model.  
+Tujuan utama dari pembagian ini adalah untuk memfasilitasi fine-tuning parameter model pada semua lapisan kecuali lapisan output. Variabel anggota `output` dari model sumber ditunjukkan di bawah ini.
 :end_tab:
 
 :begin_tab:`pytorch`
-The pretrained source model instance contains a number of feature layers and an output layer `fc`.
-The main purpose of this division is to facilitate the fine-tuning of model parameters of all layers but the output layer. The member variable `fc` of source model is given below.
+Instansi model sumber yang dipra-latih berisi sejumlah lapisan fitur dan lapisan output `fc`.  
+Tujuan utama dari pembagian ini adalah untuk memfasilitasi fine-tuning parameter model pada semua lapisan kecuali lapisan output. Variabel anggota `fc` dari model sumber diberikan di bawah ini.
 :end_tab:
+
 
 ```{.python .input}
 #@tab mxnet
@@ -216,27 +195,25 @@ pretrained_net.output
 pretrained_net.fc
 ```
 
-As a fully connected layer, it transforms ResNet's final global average pooling outputs into 1000 class outputs of the ImageNet dataset.
-We then construct a new neural network as the target model. It is defined in the same way as the pretrained source model except that
-its number of outputs in the final layer
-is set to
-the number of classes in the target dataset (rather than 1000).
+Sebagai lapisan terhubung sepenuhnya (fully connected), lapisan ini mengubah output global average pooling terakhir dari ResNet menjadi 1000 output kelas dari dataset ImageNet.  
+Kemudian, kami membangun jaringan saraf baru sebagai model target. Model ini didefinisikan dengan cara yang sama seperti model sumber yang dipra-latih, kecuali bahwa  
+jumlah output pada lapisan terakhirnya disesuaikan dengan jumlah kelas dalam dataset target (bukan 1000).
 
-In the code below, the model parameters before the output layer of the target model instance `finetune_net` are initialized to model parameters of the corresponding layers from the source model.
-Since these model parameters were obtained via pretraining on ImageNet, 
-they are effective.
-Therefore, we can only use 
-a small learning rate to *fine-tune* such pretrained parameters.
-In contrast, model parameters in the output layer are randomly initialized and generally require a larger learning rate to be learned from scratch.
-Letting the base learning rate be $\eta$, a learning rate of $10\eta$ will be used to iterate the model parameters in the output layer.
+Pada kode di bawah ini, parameter model sebelum lapisan output dari instansi model target `finetune_net` diinisialisasi dengan parameter model dari lapisan yang sesuai pada model sumber.  
+Karena parameter model ini diperoleh melalui pelatihan sebelumnya pada ImageNet,  
+mereka efektif.  
+Oleh karena itu, kita hanya dapat menggunakan  
+laju pembelajaran kecil untuk *fine-tune* parameter yang dipra-latih tersebut.  
+Sebaliknya, parameter model pada lapisan output diinisialisasi secara acak dan umumnya memerlukan laju pembelajaran yang lebih besar untuk dipelajari dari awal.  
+Jika laju pembelajaran dasar adalah $\eta$, maka laju pembelajaran sebesar $10\eta$ akan digunakan untuk mengiterasi parameter model pada lapisan output.
+
 
 ```{.python .input}
 #@tab mxnet
 finetune_net = gluon.model_zoo.vision.resnet18_v2(classes=2)
 finetune_net.features = pretrained_net.features
 finetune_net.output.initialize(init.Xavier())
-# The model parameters in the output layer will be iterated using a learning
-# rate ten times greater
+# Parameter model pada lapisan output akan diiterasi menggunakan laju pembelajaran yang sepuluh kali lebih besar
 finetune_net.output.collect_params().setattr('lr_mult', 10)
 ```
 
@@ -247,9 +224,10 @@ finetune_net.fc = nn.Linear(finetune_net.fc.in_features, 2)
 nn.init.xavier_uniform_(finetune_net.fc.weight);
 ```
 
-### [**Fine-Tuning the Model**]
+### [**Fine-Tuning Model**]
 
-First, we define a training function `train_fine_tuning` that uses fine-tuning so it can be called multiple times.
+Pertama, kami mendefinisikan fungsi pelatihan `train_fine_tuning` yang menggunakan fine-tuning sehingga dapat dipanggil berkali-kali.
+
 
 ```{.python .input}
 #@tab mxnet
@@ -296,8 +274,9 @@ def train_fine_tuning(net, learning_rate, batch_size=128, num_epochs=5,
                    devices)
 ```
 
-We [**set the base learning rate to a small value**]
-in order to *fine-tune* the model parameters obtained via pretraining. Based on the previous settings, we will train the output layer parameters of the target model from scratch using a learning rate ten times greater.
+Kami [**menetapkan laju pembelajaran dasar ke nilai yang kecil**]  
+untuk *fine-tune* parameter model yang diperoleh melalui pretraining. Berdasarkan pengaturan sebelumnya, kami akan melatih parameter lapisan output dari model target dari awal menggunakan laju pembelajaran yang sepuluh kali lebih besar.
+
 
 ```{.python .input}
 #@tab mxnet
@@ -309,7 +288,10 @@ train_fine_tuning(finetune_net, 0.01)
 train_fine_tuning(finetune_net, 5e-5)
 ```
 
-[**For comparison,**] we define an identical model, but (**initialize all of its model parameters to random values**). Since the entire model needs to be trained from scratch, we can use a larger learning rate.
+[**Untuk perbandingan,**] kami mendefinisikan model yang identik, tetapi (**menginisialisasi semua parameter modelnya dengan nilai acak**).
+Karena seluruh model perlu dilatih dari awal, kami dapat menggunakan laju pembelajaran yang lebih besar.
+
+
 
 ```{.python .input}
 #@tab mxnet
@@ -325,22 +307,24 @@ scratch_net.fc = nn.Linear(scratch_net.fc.in_features, 2)
 train_fine_tuning(scratch_net, 5e-4, param_group=False)
 ```
 
-As we can see, the fine-tuned model tends to perform better for the same epoch
-because its initial parameter values are more effective.
+Seperti yang kita lihat, model yang telah di-fine-tune cenderung tampil lebih baik untuk epoch yang sama  
+karena nilai parameter awalnya lebih efektif.
 
 
-## Summary
 
-* Transfer learning transfers knowledge learned from the source dataset to the target dataset. Fine-tuning is a common technique for transfer learning.
-* The target model copies all model designs with their parameters from the source model except the output layer, and fine-tunes these parameters based on the target dataset. In contrast, the output layer of the target model needs to be trained from scratch.
-* Generally, fine-tuning parameters uses a smaller learning rate, while training the output layer from scratch can use a larger learning rate.
+## Ringkasan
+
+* Transfer learning mentransfer pengetahuan yang dipelajari dari dataset sumber ke dataset target. Fine-tuning adalah teknik umum untuk transfer learning.
+* Model target menyalin semua desain model beserta parameter-parameter mereka dari model sumber kecuali lapisan output, dan melakukan fine-tune pada parameter-parameter ini berdasarkan dataset target. Sebaliknya, lapisan output dari model target perlu dilatih dari awal.
+* Secara umum, fine-tuning parameter menggunakan laju pembelajaran yang lebih kecil, sementara melatih lapisan output dari awal dapat menggunakan laju pembelajaran yang lebih besar.
 
 
-## Exercises
+## Latihan
 
-1. Keep increasing the learning rate of `finetune_net`. How does the accuracy of the model change?
-2. Further adjust hyperparameters of `finetune_net` and `scratch_net` in the comparative experiment. Do they still differ in accuracy?
-3. Set the parameters before the output layer of `finetune_net` to those of the source model and do *not* update them during training. How does the accuracy of the model change? You can use the following code.
+1. Terus tingkatkan laju pembelajaran dari `finetune_net`. Bagaimana perubahan akurasi model?
+2. Sesuaikan lagi hiperparameter dari `finetune_net` dan `scratch_net` dalam eksperimen perbandingan. Apakah mereka masih berbeda dalam akurasi?
+3. Tentukan parameter sebelum lapisan output dari `finetune_net` sesuai dengan parameter dari model sumber dan *jangan* perbarui selama pelatihan. Bagaimana perubahan akurasi model? Anda dapat menggunakan kode berikut.
+
 
 ```{.python .input}
 #@tab mxnet
@@ -353,7 +337,8 @@ for param in finetune_net.parameters():
     param.requires_grad = False
 ```
 
-4. In fact, there is a "hotdog" class in the `ImageNet` dataset. Its corresponding weight parameter in the output layer can be obtained via the following code. How can we leverage this weight parameter?
+4. Sebenarnya, terdapat kelas "hotdog" dalam dataset `ImageNet`. Parameter bobot yang sesuai di lapisan output dapat diperoleh melalui kode berikut. Bagaimana kita dapat memanfaatkan parameter bobot ini?
+
 
 ```{.python .input}
 #@tab mxnet
@@ -370,9 +355,9 @@ hotdog_w.shape
 ```
 
 :begin_tab:`mxnet`
-[Discussions](https://discuss.d2l.ai/t/368)
+[Diskusi](https://discuss.d2l.ai/t/368)
 :end_tab:
 
 :begin_tab:`pytorch`
-[Discussions](https://discuss.d2l.ai/t/1439)
+[Diskusi](https://discuss.d2l.ai/t/1439)
 :end_tab:
