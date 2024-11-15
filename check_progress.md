@@ -165,7 +165,7 @@
 - [ ] ./chapter_computer-vision/fcn.md
 - [ ] ./chapter_computer-vision/bounding-box.md
 - [ ] ./chapter_computer-vision/image-augmentation.md
-- [ ] ./chapter_computer-vision/anchor.md
+- [x] ./chapter_computer-vision/anchor.md
 - [ ] ./chapter_computer-vision/object-detection-dataset.md
 - [ ] ./chapter_computer-vision/index.md
 - [ ] ./chapter_computer-vision/rcnn.md
